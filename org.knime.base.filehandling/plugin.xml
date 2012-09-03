@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="org.knime.workbench.repository.nodes">
+   </extension>
+   <extension
+         point="org.knime.workbench.repository.categories">
+      <category
+            description="KNIME Preview nodes -- part of future KNIME releases"
+            icon="icons/preview.png"
+            level-id="preview"
+            name="Preview"
+            path="/">
+      </category>
+   </extension>
+
+</plugin>
