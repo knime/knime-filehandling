@@ -96,7 +96,7 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
         FlowVariableModel targetFvmModel =
                 super.createFlowVariableModel(SettingsFactory
                         .createTargetSettings());
-        final FlowVariableModel prefixFvmModel =
+        FlowVariableModel prefixFvmModel =
                 super.createFlowVariableModel(SettingsFactory
                         .createPrefixSettings());
         // URL Column
