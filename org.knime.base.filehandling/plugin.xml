@@ -1,17 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?eclipse version="3.2"?>
+
 <plugin>
-   <extension
-         point="org.knime.workbench.repository.nodes">
-   </extension>
-   <extension
-         point="org.knime.workbench.repository.categories">
-      <category
-            description="KNIME Preview nodes -- part of future KNIME releases"
-            icon="icons/preview.png"
-            level-id="preview"
-            name="Preview"
-            path="/">
+   <extension point="org.knime.workbench.repository.nodes">
+   <node category-path="/misc/zip" factory-class="org.knime.base.filehandling.zip.ZipNodeFactory" id="org.knime.base.filehandling.zip.ZipNodeFactory"/>
+</extension>
+   <extension point="org.knime.workbench.repository.categories">
+      <category description="Nodes to handle zip files" icon="icons/preview.png" level-id="zip" name="Zip" path="/misc/">
       </category>
    </extension>
 

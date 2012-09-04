@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./zip.png" type="Sink">
+	<name>Zip files</name>
+
+	<shortDescription>
+		Zips files into a zip file
+	</shortDescription>
+
+	<fullDescription>
+		<intro>This node zips files into a zip file. The URL to the files has
+			to be contained in the input table.</intro>
+
+
+		<option name="URL Column">The column that contains the URL to the files that
+			should be zipped. The URL has to contain the absolute path, or if a
+			prefix gets used the path from that point onward.</option>
+		<option name="Output file location">The location where the zip file gets saved.
+		</option>
+		<option name="Use prefix">If enabled a prefix directory for the URL has to
+			be set. The path to the directory will be put before the files URLs.
+			The resulting zip file will not contain the path to this directory.
+		</option>
+		<option name="Prefix directory">Path to the prefix directory.</option>
+		<option name="If zip file exists...">
+			Specifies the behavior if a zip file with the same name already
+			exists.
+			<br />
+			<b>Overwrite</b>
+			<br />
+			Overwrites the hole file and ignores its content.
+			<br />
+			<b>Append (Overwrite)</b>
+			<br />
+			Appends the new files into the existing zip file. It will overwrite
+			files within the zip file that have the same name as new ones.
+			<br />
+			<b>Append (Abort)</b>
+			<br />
+			Appends the new files into the existing zip file. It will abort if
+			the zip files contains files that would need to be overwritten. In
+			this case the old file will be retained as it is.
+			<br />
+			<b>Abort</b>
+			<br />
+			Will abort if the zip file already exists, while keeping the file
+			untouched.
+		</option>
+	</fullDescription>
+
+	<ports>
+		<inPort index="0" name="Input table">Has to have a column that contains the
+			URL to the files that should be zipped.
+		</inPort>
+	</ports>
+</knimeNode>
