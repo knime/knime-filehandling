@@ -87,25 +87,31 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
     private SettingsModelString m_ifexists = SettingsFactory
             .createIfExistsSettings();
 
+    private FlowVariableModel m_targetFvmModel = super
+            .createFlowVariableModel(SettingsFactory.createTargetSettings());
+
+    private FlowVariableModel m_prefixFvmModel = super
+            .createFlowVariableModel(SettingsFactory.createPrefixSettings());
+
     /**
      * New pane for configuring Zip node dialog.
      */
     @SuppressWarnings("unchecked")
     protected ZipNodeDialog() {
         super();
-        FlowVariableModel targetFvmModel =
-                super.createFlowVariableModel(SettingsFactory
-                        .createTargetSettings());
-        FlowVariableModel prefixFvmModel =
-                super.createFlowVariableModel(SettingsFactory
-                        .createPrefixSettings());
+        m_prefix.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                m_prefix.setEnabled(isPrefixEnabled());
+            }
+        });
         // URL Column
         addDialogComponent(new DialogComponentColumnNameSelection(m_urlcolumn,
                 "URL Column", 0, StringValue.class));
         // Target zip file
         addDialogComponent(new DialogComponentFileChooser(m_target,
                 "targetHistory", JFileChooser.SAVE_DIALOG, false,
-                targetFvmModel));
+                m_targetFvmModel));
         // Prefix
         createNewGroup("Prefix");
         DialogComponentBoolean usePrefixDialog =
@@ -114,13 +120,13 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
         m_useprefix.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                m_prefix.setEnabled(m_useprefix.getBooleanValue());
+                m_prefix.setEnabled(isPrefixEnabled());
             }
         });
         addDialogComponent(usePrefixDialog);
         addDialogComponent(new DialogComponentFileChooser(m_prefix,
                 "prefixHistory", JFileChooser.OPEN_DIALOG, true,
-                prefixFvmModel));
+                m_prefixFvmModel));
         closeCurrentGroup();
         // Overwrite policy
         String[] policy =
@@ -130,4 +136,15 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
         addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
                 "If zip file exists...", policy));
     }
+
+    /**
+     * Checks if the prefix component should be enabled.
+     * 
+     * @return true if the prefix component should be enabled
+     */
+    private boolean isPrefixEnabled() {
+        return m_useprefix.getBooleanValue()
+                && !m_prefixFvmModel.isVariableReplacementEnabled();
+    }
+
 }
