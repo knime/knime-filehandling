@@ -164,14 +164,11 @@ public class ZipNodeModel extends NodeModel {
         boolean useprefix = m_useprefix.getBooleanValue();
         String prefix = m_prefix.getStringValue();
         boolean fileExists = newFile.exists();
+        String fileprefix = useprefix ? prefix + "/" : "";
         // Create files for each filename
         File[] files = new File[filenames.length];
         for (int i = 0; i < files.length; i++) {
-            files[i] = new File(filenames[i]);
-            // Remove prefix from filenames
-            if (useprefix) {
-                filenames[i] = filenames[i].replaceFirst(prefix, "");
-            }
+            files[i] = new File(fileprefix + filenames[i]);
         }
         try {
             byte[] buffer = new byte[1024];

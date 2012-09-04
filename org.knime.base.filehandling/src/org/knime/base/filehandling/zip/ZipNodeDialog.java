@@ -55,6 +55,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.StringValue;
+import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
@@ -92,12 +93,19 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
     @SuppressWarnings("unchecked")
     protected ZipNodeDialog() {
         super();
+        FlowVariableModel targetFvmModel =
+                super.createFlowVariableModel(SettingsFactory
+                        .createTargetSettings());
+        final FlowVariableModel prefixFvmModel =
+                super.createFlowVariableModel(SettingsFactory
+                        .createPrefixSettings());
         // URL Column
         addDialogComponent(new DialogComponentColumnNameSelection(m_urlcolumn,
                 "URL Column", 0, StringValue.class));
         // Target zip file
         addDialogComponent(new DialogComponentFileChooser(m_target,
-                "targetHistory", JFileChooser.SAVE_DIALOG, false));
+                "targetHistory", JFileChooser.SAVE_DIALOG, false,
+                targetFvmModel));
         // Prefix
         createNewGroup("Prefix");
         DialogComponentBoolean usePrefixDialog =
@@ -106,12 +114,13 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
         m_useprefix.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                m_prefix.setEnabled(!m_prefix.isEnabled());
+                m_prefix.setEnabled(m_useprefix.getBooleanValue());
             }
         });
         addDialogComponent(usePrefixDialog);
         addDialogComponent(new DialogComponentFileChooser(m_prefix,
-                "prefixHistory", JFileChooser.OPEN_DIALOG, true));
+                "prefixHistory", JFileChooser.OPEN_DIALOG, true,
+                prefixFvmModel));
         closeCurrentGroup();
         // Overwrite policy
         String[] policy =
