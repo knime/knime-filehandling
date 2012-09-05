@@ -13,13 +13,26 @@
 
 
 		<option name="URL Column">The column that contains the URL to the files that
-			should be zipped. The URL has to contain the absolute path, or if a
-			prefix gets used the path from that point onward.</option>
+			should be zipped. The URL has to contain the absolute path.</option>
 		<option name="Output file location">The location where the zip file gets saved.
 		</option>
-		<option name="Use prefix">If enabled a prefix directory for the URL has to
-			be set. The path to the directory will be put before the files URLs.
-			The resulting zip file will not contain the path to this directory.
+		<option name="Path handling">
+			Specifies how the file path shall be handled inside the zip file.
+			<br />
+			<b>Use full path</b>
+			<br />
+			The full filepath will be used for every file.
+			<br />
+			<b>Use only filename</b>
+			<br />
+			Only the filename will be used, so the zip file will contain no
+			directories.
+			<br />
+			<b>Truncate prefix</b>
+			<br />
+			The given prefix will be cut off the files path inside the zip file.
+			To locate the files, the full path is still required in the input
+			table.
 		</option>
 		<option name="Prefix directory">Path to the prefix directory.</option>
 		<option name="If zip file exists...">

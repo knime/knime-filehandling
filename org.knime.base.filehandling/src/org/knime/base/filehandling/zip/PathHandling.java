@@ -50,77 +50,51 @@
  */
 package org.knime.base.filehandling.zip;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
-
 /**
- * Factory for SettingsModels.
+ * Enums for path handling.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class SettingsFactory {
+public enum PathHandling {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    /**
+     * Uses full input path in the zip file.
+     */
+    FULL_PATH("Use full path"),
+
+    /**
+     * Uses only the filename in the zip file without directories.
+     */
+    ONLY_FILENAME("Use only filename"),
+
+    /**
+     * Truncates the prefix from the path inside the zip file.
+     */
+    TRUNCATE_PREFIX("Truncate prefix");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this option
+     */
+    PathHandling(final String name) {
+        m_name = name;
     }
 
     /**
-     * Factory method for the URL column.
-     * 
-     * 
-     * @return URL column <code>SettingsModel</code>
+     * @return Name of this option
      */
-    public static SettingsModelString createURLColumnSettings() {
-        return new SettingsModelString("urlcolumn", "");
+    public String getName() {
+        return m_name;
     }
 
     /**
-     * Factory method for the target.
-     * 
-     * 
-     * @return Target <code>SettingsModel</code>
+     * @return Array of all path handling settings
      */
-    public static SettingsModelString createTargetSettings() {
-        return new SettingsModelString("target", "");
-    }
-
-    /**
-     * Factory method for the path handling setting.
-     * 
-     * 
-     * @return Path handling <code>SettingsModel</code>
-     */
-    public static SettingsModelString createPathHandlingSettings() {
-        return new SettingsModelString("pathhandling",
-                PathHandling.FULL_PATH.getName());
-    }
-
-    /**
-     * Factory method for the prefix.
-     * 
-     * 
-     * @param pathhandling <code>SettingsModel</code> for the path handling
-     *            setting
-     * 
-     * @return Prefix <code>SettingsModel</code>
-     */
-    public static SettingsModelString createPrefixSettings(
-            final SettingsModelString pathhandling) {
-        SettingsModelString prefix = new SettingsModelString("prefix", "");
-        prefix.setEnabled(pathhandling.getStringValue().equals(
-                PathHandling.TRUNCATE_PREFIX));
-        return prefix;
-    }
-
-    /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
-     */
-    public static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+    public static String[] getAllSettings() {
+        return new String[]{FULL_PATH.getName(), ONLY_FILENAME.getName(),
+                TRUNCATE_PREFIX.getName()};
     }
 
 }

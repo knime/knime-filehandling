@@ -51,35 +51,55 @@
 package org.knime.base.filehandling.zip;
 
 /**
- * Constants for overwrite policies.
+ * Enums for overwrite policies.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class OverwritePolicy {
-    
-    private OverwritePolicy() {
-        // Disables default constructor
-    }
+public enum OverwritePolicy {
 
     /**
      * Overwrite old zip file.
      */
-    public static final String OVERWRITE = "Overwrite";
+    OVERWRITE("Overwrite"),
 
     /**
      * Append to old zip file and overwrite existing files.
      */
-    public static final String APPEND_OVERWRITE = "Append (Overwrite)";
+    APPEND_OVERWRITE("Append (Overwrite)"),
 
     /**
      * Append to old zip file and abort if one of the files exists.
      */
-    public static final String APPEND_ABORT = "Append (Abort)";
+    APPEND_ABORT("Append (Abort)"),
 
     /**
      * Abort if zip file exists.
      */
-    public static final String ABORT = "Abort";
+    ABORT("Abort");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this policy
+     */
+    OverwritePolicy(final String name) {
+        m_name = name;
+    }
+
+    /**
+     * @return Name of this policy
+     */
+    public String getName() {
+        return m_name;
+    }
+
+    /**
+     * @return Array of all path handling settings
+     */
+    public static String[] getAllSettings() {
+        return new String[]{OVERWRITE.getName(), APPEND_OVERWRITE.getName(),
+                APPEND_ABORT.getName(), ABORT.getName()};
+    }
 
 }

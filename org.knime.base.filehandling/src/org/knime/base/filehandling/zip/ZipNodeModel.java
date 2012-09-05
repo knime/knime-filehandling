@@ -72,7 +72,6 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -92,11 +91,11 @@ public class ZipNodeModel extends NodeModel {
     private SettingsModelString m_target = SettingsFactory
             .createTargetSettings();
 
-    private SettingsModelString m_prefix = SettingsFactory
-            .createPrefixSettings();
+    private SettingsModelString m_pathhandling = SettingsFactory
+            .createPathHandlingSettings();
 
-    private SettingsModelBoolean m_useprefix = SettingsFactory
-            .createUsePrefixSettings();
+    private SettingsModelString m_prefix = SettingsFactory
+            .createPrefixSettings(m_pathhandling);
 
     private SettingsModelString m_ifexists = SettingsFactory
             .createIfExistsSettings();
@@ -120,12 +119,13 @@ public class ZipNodeModel extends NodeModel {
         String ifExists = m_ifexists.getStringValue();
         File targetFile = new File(target);
         // Abort if zip file exists and policy is abort
-        if (ifExists.equals(OverwritePolicy.ABORT) && targetFile.exists()) {
+        if (ifExists.equals(OverwritePolicy.ABORT.getName())
+                && targetFile.exists()) {
             throw new RuntimeException("File \"" + targetFile.getAbsolutePath()
                     + "\" exists, overwrite policy: \"" + ifExists + "\"");
         }
         // Remove old zip file if policy is overwrite
-        if (ifExists.equals(OverwritePolicy.OVERWRITE)) {
+        if (ifExists.equals(OverwritePolicy.OVERWRITE.getName())) {
             if (targetFile.delete()) {
                 LOGGER.info("Replacing existing zip file \""
                         + targetFile.getAbsolutePath() + "\"");
@@ -161,14 +161,13 @@ public class ZipNodeModel extends NodeModel {
         InputStream in = null;
         File newFile = new File(target);
         File oldFile = new File(target + ".old");
-        boolean useprefix = m_useprefix.getBooleanValue();
+        String pathhandling = m_pathhandling.getStringValue();
         String prefix = m_prefix.getStringValue();
         boolean fileExists = newFile.exists();
-        String fileprefix = useprefix ? prefix + "/" : "";
         // Create files for each filename
         File[] files = new File[filenames.length];
         for (int i = 0; i < files.length; i++) {
-            files[i] = new File(fileprefix + filenames[i]);
+            files[i] = new File(filenames[i]);
         }
         try {
             byte[] buffer = new byte[1024];
@@ -185,7 +184,14 @@ public class ZipNodeModel extends NodeModel {
             // Add new files to zip file
             for (int i = 0; i < files.length; i++) {
                 in = new FileInputStream(files[i]);
-                zout.putNextEntry(new ZipEntry(filenames[i]));
+                String filename = filenames[i];
+                if (pathhandling.equals(PathHandling.ONLY_FILENAME.getName())) {
+                    filename = files[i].getName();
+                } else if (pathhandling.equals(PathHandling.TRUNCATE_PREFIX
+                        .getName())) {
+                    filename = filename.replaceFirst(prefix, "");
+                }
+                zout.putNextEntry(new ZipEntry(filename));
                 int length;
                 while ((length = in.read(buffer)) > 0) {
                     zout.write(buffer, 0, length);
@@ -242,7 +248,8 @@ public class ZipNodeModel extends NodeModel {
                 for (int i = 0; i < filenames.length; i++) {
                     if (filenames[i].equals(name)) {
                         // Abort if the policy is append abort
-                        if (ifExists.equals(OverwritePolicy.APPEND_ABORT)) {
+                        if (ifExists.equals(OverwritePolicy.APPEND_ABORT
+                                .getName())) {
                             throw new IOException("File \"" + name
                                     + "\" exists in zip file, overwrite"
                                     + " policy: \"" + ifExists + "\"");
@@ -259,8 +266,7 @@ public class ZipNodeModel extends NodeModel {
                         zout.write(buffer, 0, length);
                     }
                 } else {
-                    LOGGER.info("Replacing existing file \""
-                            + name + "\"");
+                    LOGGER.info("Replacing existing file \"" + name + "\"");
                 }
                 entry = zin.getNextEntry();
             }
@@ -284,7 +290,7 @@ public class ZipNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
-        return new DataTableSpec[]{null};
+        return new DataTableSpec[]{};
     }
 
     /**
@@ -296,7 +302,7 @@ public class ZipNodeModel extends NodeModel {
         m_target.saveSettingsTo(settings);
         m_ifexists.saveSettingsTo(settings);
         m_prefix.saveSettingsTo(settings);
-        m_useprefix.saveSettingsTo(settings);
+        m_pathhandling.saveSettingsTo(settings);
     }
 
     /**
@@ -309,7 +315,7 @@ public class ZipNodeModel extends NodeModel {
         m_target.loadSettingsFrom(settings);
         m_ifexists.loadSettingsFrom(settings);
         m_prefix.loadSettingsFrom(settings);
-        m_useprefix.loadSettingsFrom(settings);
+        m_pathhandling.loadSettingsFrom(settings);
     }
 
     /**
@@ -322,7 +328,7 @@ public class ZipNodeModel extends NodeModel {
         m_target.validateSettings(settings);
         m_ifexists.validateSettings(settings);
         m_prefix.validateSettings(settings);
-        m_useprefix.validateSettings(settings);
+        m_pathhandling.validateSettings(settings);
     }
 
     /**

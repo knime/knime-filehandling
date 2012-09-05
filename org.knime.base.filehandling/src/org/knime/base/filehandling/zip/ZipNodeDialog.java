@@ -57,11 +57,9 @@ import javax.swing.event.ChangeListener;
 import org.knime.core.data.StringValue;
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -72,26 +70,19 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 public class ZipNodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsModelString m_urlcolumn = SettingsFactory
-            .createURLColumnSettings();
+    private SettingsModelString m_urlcolumn;
 
-    private SettingsModelString m_target = SettingsFactory
-            .createTargetSettings();
+    private SettingsModelString m_target;
 
-    private SettingsModelString m_prefix = SettingsFactory
-            .createPrefixSettings();
+    private SettingsModelString m_pathhandling;
 
-    private SettingsModelBoolean m_useprefix = SettingsFactory
-            .createUsePrefixSettings();
+    private SettingsModelString m_prefix;
 
-    private SettingsModelString m_ifexists = SettingsFactory
-            .createIfExistsSettings();
+    private SettingsModelString m_ifexists;
 
-    private FlowVariableModel m_targetFvmModel = super
-            .createFlowVariableModel(SettingsFactory.createTargetSettings());
+    private FlowVariableModel m_targetFvmModel;
 
-    private FlowVariableModel m_prefixFvmModel = super
-            .createFlowVariableModel(SettingsFactory.createPrefixSettings());
+    private FlowVariableModel m_prefixFvmModel;
 
     /**
      * New pane for configuring Zip node dialog.
@@ -99,6 +90,13 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
     @SuppressWarnings("unchecked")
     protected ZipNodeDialog() {
         super();
+        m_urlcolumn = SettingsFactory.createURLColumnSettings();
+        m_target = SettingsFactory.createTargetSettings();
+        m_pathhandling = SettingsFactory.createPathHandlingSettings();
+        m_prefix = SettingsFactory.createPrefixSettings(m_pathhandling);
+        m_ifexists = SettingsFactory.createIfExistsSettings();
+        m_targetFvmModel = super.createFlowVariableModel(m_target);
+        m_prefixFvmModel = super.createFlowVariableModel(m_prefix);
         m_prefix.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
@@ -112,38 +110,35 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
         addDialogComponent(new DialogComponentFileChooser(m_target,
                 "targetHistory", JFileChooser.SAVE_DIALOG, false,
                 m_targetFvmModel));
-        // Prefix
-        createNewGroup("Prefix");
-        DialogComponentBoolean usePrefixDialog =
-                new DialogComponentBoolean(m_useprefix, "Use prefix");
+        // Path handling
+        createNewGroup("Path handling");
+        addDialogComponent(new DialogComponentButtonGroup(m_pathhandling, false,
+                "Path handling", PathHandling.getAllSettings()));
         // Enable/disable prefix setting if checkbox is clicked
-        m_useprefix.addChangeListener(new ChangeListener() {
+        m_pathhandling.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
                 m_prefix.setEnabled(isPrefixEnabled());
             }
         });
-        addDialogComponent(usePrefixDialog);
         addDialogComponent(new DialogComponentFileChooser(m_prefix,
                 "prefixHistory", JFileChooser.OPEN_DIALOG, true,
                 m_prefixFvmModel));
         closeCurrentGroup();
         // Overwrite policy
-        String[] policy =
-                new String[]{OverwritePolicy.OVERWRITE,
-                        OverwritePolicy.APPEND_OVERWRITE,
-                        OverwritePolicy.APPEND_ABORT, OverwritePolicy.ABORT};
         addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
-                "If zip file exists...", policy));
+                "If zip file exists...", OverwritePolicy.getAllSettings()));
     }
 
     /**
      * Checks if the prefix component should be enabled.
      * 
+     * 
      * @return true if the prefix component should be enabled
      */
     private boolean isPrefixEnabled() {
-        return m_useprefix.getBooleanValue()
+        return m_pathhandling.getStringValue().equals(
+                PathHandling.TRUNCATE_PREFIX.getName())
                 && !m_prefixFvmModel.isVariableReplacementEnabled();
     }
 
