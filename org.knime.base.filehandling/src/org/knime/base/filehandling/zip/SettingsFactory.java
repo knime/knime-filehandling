@@ -50,6 +50,7 @@
  */
 package org.knime.base.filehandling.zip;
 
+import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -58,7 +59,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class SettingsFactory {
+final class SettingsFactory {
 
     private SettingsFactory() {
         // Disables default constructor
@@ -70,7 +71,7 @@ public final class SettingsFactory {
      * 
      * @return URL column <code>SettingsModel</code>
      */
-    public static SettingsModelString createURLColumnSettings() {
+    static SettingsModelString createURLColumnSettings() {
         return new SettingsModelString("urlcolumn", "");
     }
 
@@ -80,7 +81,7 @@ public final class SettingsFactory {
      * 
      * @return Target <code>SettingsModel</code>
      */
-    public static SettingsModelString createTargetSettings() {
+    static SettingsModelString createTargetSettings() {
         return new SettingsModelString("target", "");
     }
 
@@ -90,7 +91,7 @@ public final class SettingsFactory {
      * 
      * @return Path handling <code>SettingsModel</code>
      */
-    public static SettingsModelString createPathHandlingSettings() {
+    static SettingsModelString createPathHandlingSettings() {
         return new SettingsModelString("pathhandling",
                 PathHandling.FULL_PATH.getName());
     }
@@ -104,7 +105,7 @@ public final class SettingsFactory {
      * 
      * @return Prefix <code>SettingsModel</code>
      */
-    public static SettingsModelString createPrefixSettings(
+    static SettingsModelString createPrefixSettings(
             final SettingsModelString pathhandling) {
         SettingsModelString prefix = new SettingsModelString("prefix", "");
         prefix.setEnabled(pathhandling.getStringValue().equals(
@@ -118,9 +119,19 @@ public final class SettingsFactory {
      * 
      * @return If exists <code>SettingsModel</code>
      */
-    public static SettingsModelString createIfExistsSettings() {
+    static SettingsModelString createIfExistsSettings() {
         return new SettingsModelString("ifexists",
                 OverwritePolicy.ABORT.getName());
+    }
+
+    /**
+     * Factory method for the compression level setting.
+     * 
+     * 
+     * @return Compression level <code>SettingsModel</code>
+     */
+    static SettingsModelIntegerBounded createCompressionLevelSettings() {
+        return new SettingsModelIntegerBounded("compressionlevel", 0, 0, 9);
     }
 
 }

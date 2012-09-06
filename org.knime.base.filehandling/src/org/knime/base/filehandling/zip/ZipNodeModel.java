@@ -72,6 +72,7 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -80,31 +81,34 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class ZipNodeModel extends NodeModel {
+class ZipNodeModel extends NodeModel {
 
     private static final NodeLogger LOGGER = NodeLogger
             .getLogger(ZipNodeModel.class);
 
-    private SettingsModelString m_urlcolumn = SettingsFactory
-            .createURLColumnSettings();
+    private SettingsModelString m_urlcolumn;
 
-    private SettingsModelString m_target = SettingsFactory
-            .createTargetSettings();
+    private SettingsModelString m_target;
 
-    private SettingsModelString m_pathhandling = SettingsFactory
-            .createPathHandlingSettings();
+    private SettingsModelString m_pathhandling;
 
-    private SettingsModelString m_prefix = SettingsFactory
-            .createPrefixSettings(m_pathhandling);
+    private SettingsModelString m_prefix;
 
-    private SettingsModelString m_ifexists = SettingsFactory
-            .createIfExistsSettings();
+    private SettingsModelString m_ifexists;
+
+    private SettingsModelIntegerBounded m_compressionlevel;
 
     /**
      * Constructor for the node model.
      */
     protected ZipNodeModel() {
         super(1, 0);
+        m_urlcolumn = SettingsFactory.createURLColumnSettings();
+        m_target = SettingsFactory.createTargetSettings();
+        m_pathhandling = SettingsFactory.createPathHandlingSettings();
+        m_prefix = SettingsFactory.createPrefixSettings(m_pathhandling);
+        m_ifexists = SettingsFactory.createIfExistsSettings();
+        m_compressionlevel = SettingsFactory.createCompressionLevelSettings();
     }
 
     /**
@@ -118,15 +122,16 @@ public class ZipNodeModel extends NodeModel {
         String target = m_target.getStringValue();
         String ifExists = m_ifexists.getStringValue();
         File targetFile = new File(target);
+        File oldFile = new File(target + ".old");
         // Abort if zip file exists and policy is abort
         if (ifExists.equals(OverwritePolicy.ABORT.getName())
                 && targetFile.exists()) {
             throw new RuntimeException("File \"" + targetFile.getAbsolutePath()
                     + "\" exists, overwrite policy: \"" + ifExists + "\"");
         }
-        // Remove old zip file if policy is overwrite
+        // Move old zip file if policy is overwrite
         if (ifExists.equals(OverwritePolicy.OVERWRITE.getName())) {
-            if (targetFile.delete()) {
+            if (targetFile.renameTo(oldFile)) {
                 LOGGER.info("Replacing existing zip file \""
                         + targetFile.getAbsolutePath() + "\"");
             }
@@ -140,7 +145,7 @@ public class ZipNodeModel extends NodeModel {
         }
         String[] filenames = entries.toArray(new String[entries.size()]);
         // Write files to zip file
-        writeToZip(filenames, target);
+        writeToZip(filenames, target, exec);
         return new BufferedDataTable[0];
     }
 
@@ -153,10 +158,14 @@ public class ZipNodeModel extends NodeModel {
      * 
      * @param filenames Path to the files
      * @param target Path to the zip file
-     * @throws IOException When abort condition is met
+     * @param exec Execution context for <code>checkCanceled()</code> and
+     *            <code>setProgress()</code>
+     * @throws Exception When abort condition is met or user canceled
      */
-    private void writeToZip(final String[] filenames, final String target)
-            throws IOException {
+    private void writeToZip(final String[] filenames, final String target,
+            final ExecutionContext exec) throws Exception {
+        int count = 0;
+        int amount = filenames.length;
         ZipOutputStream zout = null;
         InputStream in = null;
         File newFile = new File(target);
@@ -177,12 +186,15 @@ public class ZipNodeModel extends NodeModel {
                 newFile.renameTo(oldFile);
             }
             zout = new ZipOutputStream(new FileOutputStream(newFile));
+            zout.setLevel(m_compressionlevel.getIntValue());
             // Copy existing files into new zip file
             if (fileExists) {
-                addOldFiles(oldFile, zout, filenames);
+                amount += filesInZip(oldFile, exec);
+                count += addOldFiles(oldFile, zout, filenames, amount, exec);
             }
             // Add new files to zip file
             for (int i = 0; i < files.length; i++) {
+                exec.setProgress((double)count / amount);
                 in = new FileInputStream(files[i]);
                 String filename = filenames[i];
                 if (pathhandling.equals(PathHandling.ONLY_FILENAME.getName())) {
@@ -194,16 +206,18 @@ public class ZipNodeModel extends NodeModel {
                 zout.putNextEntry(new ZipEntry(filename));
                 int length;
                 while ((length = in.read(buffer)) > 0) {
+                    exec.checkCanceled();
                     zout.write(buffer, 0, length);
                 }
                 zout.closeEntry();
                 in.close();
+                count++;
             }
             zout.close();
             // Remove old file
             oldFile.delete();
-        } catch (IOException e) {
-            // Close all streams and restore old file if algorithm got aborted
+        } catch (Exception e) {
+            // Close all streams and restore old file if node got aborted
             if (in != null) {
                 in.close();
             }
@@ -231,10 +245,16 @@ public class ZipNodeModel extends NodeModel {
      * @param oldFile Zip file that contains the files to copy
      * @param zout Zip stream where the files get added
      * @param filenames Name of the files that will later be added
-     * @throws IOException When abort condition is met
+     * @param amount Total amount of files that go into the zip
+     * @param exec Execution context for <code>checkCanceled()</code> and
+     *            <code>setProgress()</code>
+     * @return Amount of files that got added by this method
+     * @throws Exception When abort condition is met or user canceled
      */
-    private void addOldFiles(final File oldFile, final ZipOutputStream zout,
-            final String[] filenames) throws IOException {
+    private int addOldFiles(final File oldFile, final ZipOutputStream zout,
+            final String[] filenames, final int amount,
+            final ExecutionContext exec) throws Exception {
+        int count = 0;
         String ifExists = m_ifexists.getStringValue();
         FileInputStream in = new FileInputStream(oldFile);
         ZipInputStream zin = new ZipInputStream(in);
@@ -242,11 +262,13 @@ public class ZipNodeModel extends NodeModel {
             byte[] buffer = new byte[1024];
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
+                exec.setProgress((double)count / amount);
                 String name = entry.getName();
                 boolean notInFiles = true;
                 // Check if new files contain a file by the same name
                 for (int i = 0; i < filenames.length; i++) {
                     if (filenames[i].equals(name)) {
+                        exec.checkCanceled();
                         // Abort if the policy is append abort
                         if (ifExists.equals(OverwritePolicy.APPEND_ABORT
                                 .getName())) {
@@ -263,17 +285,54 @@ public class ZipNodeModel extends NodeModel {
                     zout.putNextEntry(new ZipEntry(name));
                     int length;
                     while ((length = zin.read(buffer)) > 0) {
+                        exec.checkCanceled();
                         zout.write(buffer, 0, length);
                     }
                 } else {
                     LOGGER.info("Replacing existing file \"" + name + "\"");
                 }
+                count++;
                 entry = zin.getNextEntry();
             }
         } finally {
             in.close();
             zin.close();
         }
+        return count;
+    }
+
+    /**
+     * Count the files in a zip file.
+     * 
+     * 
+     * @param file The zip file
+     * @param exec Execution context for <code>checkCanceled()</code>
+     * @return Number of files in the zip file
+     * @throws Exception If the file can not be read or user canceled
+     */
+    private int filesInZip(final File file, final ExecutionContext exec)
+            throws Exception {
+        int count = 0;
+        FileInputStream in = null;
+        ZipInputStream zin = null;
+        try {
+            in = new FileInputStream(file);
+            zin = new ZipInputStream(in);
+            ZipEntry entry = zin.getNextEntry();
+            while (entry != null) {
+                exec.checkCanceled();
+                count++;
+                entry = zin.getNextEntry();
+            }
+        } finally {
+            if (in != null) {
+                in.close();
+            }
+            if (zin != null) {
+                zin.close();
+            }
+        }
+        return count;
     }
 
     /**
@@ -290,6 +349,18 @@ public class ZipNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
+        if (m_urlcolumn.getStringValue().equals("")) {
+            throw new InvalidSettingsException("URL column not set");
+        }
+        if (m_target.getStringValue().equals("")) {
+            throw new InvalidSettingsException("Target not set");
+        }
+        if (m_pathhandling.getStringValue().equals(
+                PathHandling.TRUNCATE_PREFIX.getName())
+                && !new File(m_prefix.getStringValue()).exists()) {
+            throw new InvalidSettingsException(
+                    "Prefix directory does not exist");
+        }
         return new DataTableSpec[]{};
     }
 
@@ -303,6 +374,7 @@ public class ZipNodeModel extends NodeModel {
         m_ifexists.saveSettingsTo(settings);
         m_prefix.saveSettingsTo(settings);
         m_pathhandling.saveSettingsTo(settings);
+        m_compressionlevel.saveSettingsTo(settings);
     }
 
     /**
@@ -316,6 +388,7 @@ public class ZipNodeModel extends NodeModel {
         m_ifexists.loadSettingsFrom(settings);
         m_prefix.loadSettingsFrom(settings);
         m_pathhandling.loadSettingsFrom(settings);
+        m_compressionlevel.loadSettingsFrom(settings);
     }
 
     /**
@@ -329,6 +402,7 @@ public class ZipNodeModel extends NodeModel {
         m_ifexists.validateSettings(settings);
         m_prefix.validateSettings(settings);
         m_pathhandling.validateSettings(settings);
+        m_compressionlevel.validateSettings(settings);
     }
 
     /**

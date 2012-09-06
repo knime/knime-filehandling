@@ -4,6 +4,7 @@
 <plugin>
    <extension point="org.knime.workbench.repository.nodes">
    <node category-path="/misc/zip" factory-class="org.knime.base.filehandling.zip.ZipNodeFactory" id="org.knime.base.filehandling.zip.ZipNodeFactory"/>
+   <node category-path="/misc/zip" factory-class="org.knime.base.filehandling.unzip.UnzipNodeFactory" id="org.knime.base.filehandling.unzip.UnzipNodeFactory"/>
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category description="Nodes to handle zip files" icon="icons/preview.png" level-id="zip" name="Zip" path="/misc/">

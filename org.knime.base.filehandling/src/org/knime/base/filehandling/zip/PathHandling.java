@@ -56,7 +56,7 @@ package org.knime.base.filehandling.zip;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public enum PathHandling {
+enum PathHandling {
 
     /**
      * Uses full input path in the zip file.
@@ -85,14 +85,14 @@ public enum PathHandling {
     /**
      * @return Name of this option
      */
-    public String getName() {
+    String getName() {
         return m_name;
     }
 
     /**
      * @return Array of all path handling settings
      */
-    public static String[] getAllSettings() {
+    static String[] getAllSettings() {
         return new String[]{FULL_PATH.getName(), ONLY_FILENAME.getName(),
                 TRUNCATE_PREFIX.getName()};
     }

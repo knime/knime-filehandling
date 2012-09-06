@@ -48,7 +48,7 @@
  * History
  *   Sep 3, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.zip;
+package org.knime.base.filehandling.unzip;
 
 /**
  * Enums for overwrite policies.
@@ -62,16 +62,6 @@ enum OverwritePolicy {
      * Overwrite old zip file.
      */
     OVERWRITE("Overwrite"),
-
-    /**
-     * Append to old zip file and overwrite existing files.
-     */
-    APPEND_OVERWRITE("Append (Overwrite)"),
-
-    /**
-     * Append to old zip file and abort if one of the files exists.
-     */
-    APPEND_ABORT("Append (Abort)"),
 
     /**
      * Abort if zip file exists.
@@ -98,8 +88,7 @@ enum OverwritePolicy {
      * @return Array of all path handling settings
      */
     static String[] getAllSettings() {
-        return new String[]{OVERWRITE.getName(), APPEND_OVERWRITE.getName(),
-                APPEND_ABORT.getName(), ABORT.getName()};
+        return new String[]{OVERWRITE.getName(), ABORT.getName()};
     }
 
 }

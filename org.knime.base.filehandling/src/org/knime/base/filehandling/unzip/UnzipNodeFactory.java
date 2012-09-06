@@ -46,60 +46,61 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.zip;
+package org.knime.base.filehandling.unzip;
+
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
- * Enums for overwrite policies.
+ * <code>NodeFactory</code> for the "Unzip" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-enum OverwritePolicy {
+public class UnzipNodeFactory extends NodeFactory<UnzipNodeModel> {
 
     /**
-     * Overwrite old zip file.
+     * {@inheritDoc}
      */
-    OVERWRITE("Overwrite"),
-
-    /**
-     * Append to old zip file and overwrite existing files.
-     */
-    APPEND_OVERWRITE("Append (Overwrite)"),
-
-    /**
-     * Append to old zip file and abort if one of the files exists.
-     */
-    APPEND_ABORT("Append (Abort)"),
-
-    /**
-     * Abort if zip file exists.
-     */
-    ABORT("Abort");
-
-    private final String m_name;
-
-    /**
-     * @param name Name of this policy
-     */
-    OverwritePolicy(final String name) {
-        m_name = name;
+    @Override
+    public UnzipNodeModel createNodeModel() {
+        return new UnzipNodeModel();
     }
 
     /**
-     * @return Name of this policy
+     * {@inheritDoc}
      */
-    String getName() {
-        return m_name;
+    @Override
+    public int getNrNodeViews() {
+        return 0;
     }
 
     /**
-     * @return Array of all path handling settings
+     * {@inheritDoc}
      */
-    static String[] getAllSettings() {
-        return new String[]{OVERWRITE.getName(), APPEND_OVERWRITE.getName(),
-                APPEND_ABORT.getName(), ABORT.getName()};
+    @Override
+    public NodeView<UnzipNodeModel> createNodeView(final int viewIndex,
+            final UnzipNodeModel nodeModel) {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasDialog() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeDialogPane createNodeDialogPane() {
+        return new UnzipNodeDialog();
     }
 
 }

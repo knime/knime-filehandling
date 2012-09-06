@@ -46,60 +46,56 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.zip;
+package org.knime.base.filehandling.unzip;
+
+import javax.swing.JFileChooser;
+
+import org.knime.core.node.FlowVariableModel;
+import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
+import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * Enums for overwrite policies.
+ * <code>NodeDialog</code> for the "Unzip" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-enum OverwritePolicy {
+class UnzipNodeDialog extends DefaultNodeSettingsPane {
+
+    private SettingsModelString m_source;
+
+    private SettingsModelString m_targetdirectory;
+
+    private SettingsModelString m_ifexists;
+
+    private FlowVariableModel m_sourceFvm;
+
+    private FlowVariableModel m_targetdirectoryFvm;
 
     /**
-     * Overwrite old zip file.
+     * 
      */
-    OVERWRITE("Overwrite"),
-
-    /**
-     * Append to old zip file and overwrite existing files.
-     */
-    APPEND_OVERWRITE("Append (Overwrite)"),
-
-    /**
-     * Append to old zip file and abort if one of the files exists.
-     */
-    APPEND_ABORT("Append (Abort)"),
-
-    /**
-     * Abort if zip file exists.
-     */
-    ABORT("Abort");
-
-    private final String m_name;
-
-    /**
-     * @param name Name of this policy
-     */
-    OverwritePolicy(final String name) {
-        m_name = name;
-    }
-
-    /**
-     * @return Name of this policy
-     */
-    String getName() {
-        return m_name;
-    }
-
-    /**
-     * @return Array of all path handling settings
-     */
-    static String[] getAllSettings() {
-        return new String[]{OVERWRITE.getName(), APPEND_OVERWRITE.getName(),
-                APPEND_ABORT.getName(), ABORT.getName()};
+    protected UnzipNodeDialog() {
+        super();
+        m_source = SettingsFactory.createSourceSettings();
+        m_targetdirectory = SettingsFactory.createTargetDirectorySettings();
+        m_ifexists = SettingsFactory.createIfExistsSettings();
+        m_sourceFvm = super.createFlowVariableModel(m_source);
+        m_targetdirectoryFvm = super.createFlowVariableModel(m_targetdirectory);
+        // Source
+        addDialogComponent(new DialogComponentFileChooser(m_source,
+                "sourceHistory", JFileChooser.SAVE_DIALOG, false, m_sourceFvm));
+        // Target directory
+        addDialogComponent(new DialogComponentFileChooser(m_targetdirectory,
+                "targetdirectoryHistory", JFileChooser.OPEN_DIALOG, true,
+                m_targetdirectoryFvm));
+        // Overwrite policy
+        addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
+                "If a file exists...", OverwritePolicy.getAllSettings()));
     }
 
 }

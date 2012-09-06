@@ -60,6 +60,8 @@ import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
+import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
+import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -68,7 +70,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class ZipNodeDialog extends DefaultNodeSettingsPane {
+class ZipNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_urlcolumn;
 
@@ -80,9 +82,11 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_ifexists;
 
-    private FlowVariableModel m_targetFvmModel;
+    private SettingsModelIntegerBounded m_compressionlevel;
 
-    private FlowVariableModel m_prefixFvmModel;
+    private FlowVariableModel m_targetFvm;
+
+    private FlowVariableModel m_prefixFvm;
 
     /**
      * New pane for configuring Zip node dialog.
@@ -95,8 +99,9 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
         m_pathhandling = SettingsFactory.createPathHandlingSettings();
         m_prefix = SettingsFactory.createPrefixSettings(m_pathhandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
-        m_targetFvmModel = super.createFlowVariableModel(m_target);
-        m_prefixFvmModel = super.createFlowVariableModel(m_prefix);
+        m_compressionlevel = SettingsFactory.createCompressionLevelSettings();
+        m_targetFvm = super.createFlowVariableModel(m_target);
+        m_prefixFvm = super.createFlowVariableModel(m_prefix);
         m_prefix.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
@@ -105,16 +110,18 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
         });
         // URL Column
         addDialogComponent(new DialogComponentColumnNameSelection(m_urlcolumn,
-                "URL Column", 0, StringValue.class));
+                "URL column", 0, StringValue.class));
         // Target zip file
         addDialogComponent(new DialogComponentFileChooser(m_target,
-                "targetHistory", JFileChooser.SAVE_DIALOG, false,
-                m_targetFvmModel));
+                "targetHistory", JFileChooser.SAVE_DIALOG, false, m_targetFvm));
+        // Compression level
+        addDialogComponent(new DialogComponentNumber(m_compressionlevel,
+                "Compression level", 1, 1));
         // Path handling
         createNewGroup("Path handling");
-        addDialogComponent(new DialogComponentButtonGroup(m_pathhandling, false,
-                "Path handling", PathHandling.getAllSettings()));
-        // Enable/disable prefix setting if checkbox is clicked
+        addDialogComponent(new DialogComponentButtonGroup(m_pathhandling,
+                false, "", PathHandling.getAllSettings()));
+        // Enable/disable prefix setting based on the path handling
         m_pathhandling.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
@@ -122,8 +129,7 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
             }
         });
         addDialogComponent(new DialogComponentFileChooser(m_prefix,
-                "prefixHistory", JFileChooser.OPEN_DIALOG, true,
-                m_prefixFvmModel));
+                "prefixHistory", JFileChooser.OPEN_DIALOG, true, m_prefixFvm));
         closeCurrentGroup();
         // Overwrite policy
         addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
@@ -139,7 +145,7 @@ public class ZipNodeDialog extends DefaultNodeSettingsPane {
     private boolean isPrefixEnabled() {
         return m_pathhandling.getStringValue().equals(
                 PathHandling.TRUNCATE_PREFIX.getName())
-                && !m_prefixFvmModel.isVariableReplacementEnabled();
+                && !m_prefixFvm.isVariableReplacementEnabled();
     }
 
 }

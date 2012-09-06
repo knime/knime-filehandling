@@ -46,60 +46,53 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.zip;
+package org.knime.base.filehandling.unzip;
+
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * Enums for overwrite policies.
+ * Factory for SettingsModels.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-enum OverwritePolicy {
+final class SettingsFactory {
 
-    /**
-     * Overwrite old zip file.
-     */
-    OVERWRITE("Overwrite"),
-
-    /**
-     * Append to old zip file and overwrite existing files.
-     */
-    APPEND_OVERWRITE("Append (Overwrite)"),
-
-    /**
-     * Append to old zip file and abort if one of the files exists.
-     */
-    APPEND_ABORT("Append (Abort)"),
-
-    /**
-     * Abort if zip file exists.
-     */
-    ABORT("Abort");
-
-    private final String m_name;
-
-    /**
-     * @param name Name of this policy
-     */
-    OverwritePolicy(final String name) {
-        m_name = name;
+    private SettingsFactory() {
+        // Disables default constructor
     }
 
     /**
-     * @return Name of this policy
+     * Factory method for the source.
+     * 
+     * 
+     * @return Source <code>SettingsModel</code>
      */
-    String getName() {
-        return m_name;
+    static SettingsModelString createSourceSettings() {
+        return new SettingsModelString("source", "");
     }
 
     /**
-     * @return Array of all path handling settings
+     * Factory method for the target directory.
+     * 
+     * 
+     * @return Target directory <code>SettingsModel</code>
      */
-    static String[] getAllSettings() {
-        return new String[]{OVERWRITE.getName(), APPEND_OVERWRITE.getName(),
-                APPEND_ABORT.getName(), ABORT.getName()};
+    static SettingsModelString createTargetDirectorySettings() {
+        return new SettingsModelString("targetdirectory", "");
+    }
+
+    /**
+     * Factory method for the if exists setting.
+     * 
+     * 
+     * @return If exists <code>SettingsModel</code>
+     */
+    static SettingsModelString createIfExistsSettings() {
+        return new SettingsModelString("ifexists",
+                OverwritePolicy.ABORT.getName());
     }
 
 }
