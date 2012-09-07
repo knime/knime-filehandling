@@ -144,11 +144,7 @@ class UnzipNodeModel extends NodeModel {
         int amount = 0;
         List<String> filenames = new LinkedList<String>();
         File source = new File(m_source.getStringValue());
-        String directory = m_targetdirectory.getStringValue();
-        // Append slash if directories path is without ending slash
-        if (!directory.endsWith("/")) {
-            directory += "/";
-        }
+        File directory = new File(m_targetdirectory.getStringValue());
         FileInputStream in = null;
         ZipInputStream zin = null;
         FileOutputStream out = null;
@@ -162,15 +158,15 @@ class UnzipNodeModel extends NodeModel {
             while (entry != null) {
                 exec.setProgress((double)rowID / amount);
                 // Generate full path to file
-                String name = directory + entry.getName();
-                filenames.add(name);
-                File file = new File(name);
+                File file = new File(directory, entry.getName());
+                filenames.add(file.getAbsolutePath());
                 // Replace old file if it exists
                 if (file.exists()) {
                     file.delete();
                     LOGGER.info("Replacing existing file \""
                             + file.getAbsolutePath() + "\"");
                 }
+                file.getParentFile().mkdirs();
                 file.createNewFile();
                 out = new FileOutputStream(file);
                 int length;
@@ -291,7 +287,8 @@ class UnzipNodeModel extends NodeModel {
         if (m_targetdirectory.getStringValue().equals("")) {
             throw new InvalidSettingsException("Target directory not set");
         }
-        if (!new File(m_targetdirectory.getStringValue()).exists()) {
+        File targetdirectory = new File(m_targetdirectory.getStringValue());
+        if (!targetdirectory.isDirectory()) {
             throw new InvalidSettingsException(
                     "Target directory does not exist");
         }

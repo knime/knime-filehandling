@@ -185,6 +185,7 @@ class ZipNodeModel extends NodeModel {
                 oldFile.delete();
                 newFile.renameTo(oldFile);
             }
+            newFile.getParentFile().mkdirs();
             zout = new ZipOutputStream(new FileOutputStream(newFile));
             zout.setLevel(m_compressionlevel.getIntValue());
             // Copy existing files into new zip file
