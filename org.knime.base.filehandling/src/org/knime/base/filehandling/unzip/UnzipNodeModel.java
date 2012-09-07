@@ -141,7 +141,8 @@ class UnzipNodeModel extends NodeModel {
     private void extractZip(final BufferedDataContainer outContainer,
             final ExecutionContext exec) throws Exception {
         int rowID = 0;
-        int amount = 0;
+        long size = 0;
+        long processedSize = 0;
         List<String> filenames = new LinkedList<String>();
         File source = new File(m_source.getStringValue());
         File directory = new File(m_targetdirectory.getStringValue());
@@ -150,13 +151,12 @@ class UnzipNodeModel extends NodeModel {
         FileOutputStream out = null;
         try {
             byte[] buffer = new byte[1024];
-            // Check for abort condition and get total number of files
-            amount = checkFiles(exec);
+            // Check for abort condition and get total size of files
+            size = checkFiles(exec);
             in = new FileInputStream(source);
             zin = new ZipInputStream(in);
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
-                exec.setProgress((double)rowID / amount);
                 // Generate full path to file
                 File file = new File(directory, entry.getName());
                 filenames.add(file.getAbsolutePath());
@@ -173,7 +173,9 @@ class UnzipNodeModel extends NodeModel {
                 // Copy content into new file
                 while ((length = zin.read(buffer)) > 0) {
                     exec.checkCanceled();
+                    exec.setProgress((double)processedSize / size);
                     out.write(buffer, 0, length);
+                    processedSize += length;
                 }
                 out.close();
                 // Create row with path and URL
@@ -206,29 +208,28 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Checks if any of the files in the zip already exist and returns the
-     * number of files in the zip file.
+     * size of all files in the zip file.
      * 
      * 
      * @param exec Execution context for <code>checkCanceled()</code>
-     * @return Number of files in the zip file
+     * @return Uncompressed size of all files in the zip file
      * @throws Exception When abort condition is met or user canceled
      */
-    private int checkFiles(final ExecutionContext exec) throws Exception {
-        int count = 0;
+    private long checkFiles(final ExecutionContext exec) throws Exception {
+        long size = 0;
         FileInputStream in = null;
         ZipInputStream zin = null;
         try {
             File source = new File(m_source.getStringValue());
-            String directory = m_targetdirectory.getStringValue();
+            File directory = new File(m_targetdirectory.getStringValue());
             String ifExists = m_ifexists.getStringValue();
             in = new FileInputStream(source);
             zin = new ZipInputStream(in);
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
                 exec.checkCanceled();
-                count++;
-                String name = directory + entry.getName();
-                File file = new File(name);
+                size += entry.getSize();
+                File file = new File(directory, entry.getName());
                 // If file exists and policy is abort throw an exception
                 if (file.exists()) {
                     if (ifExists.equals(OverwritePolicy.ABORT.getName())) {
@@ -248,7 +249,7 @@ class UnzipNodeModel extends NodeModel {
                 zin.close();
             }
         }
-        return count;
+        return size;
     }
 
     /**

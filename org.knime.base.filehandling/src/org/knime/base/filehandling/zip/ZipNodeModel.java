@@ -164,8 +164,8 @@ class ZipNodeModel extends NodeModel {
      */
     private void writeToZip(final String[] filenames, final String target,
             final ExecutionContext exec) throws Exception {
-        int count = 0;
-        int amount = filenames.length;
+        long processedSize = 0;
+        long size = 0;
         ZipOutputStream zout = null;
         InputStream in = null;
         File newFile = new File(target);
@@ -188,14 +188,20 @@ class ZipNodeModel extends NodeModel {
             newFile.getParentFile().mkdirs();
             zout = new ZipOutputStream(new FileOutputStream(newFile));
             zout.setLevel(m_compressionlevel.getIntValue());
+            // Calculate size of files
+            for (int i = 0; i < filenames.length; i++) {
+                size += new File(filenames[i]).length();
+            }
             // Copy existing files into new zip file
             if (fileExists) {
-                amount += filesInZip(oldFile, exec);
-                count += addOldFiles(oldFile, zout, filenames, amount, exec);
+                // Add size of files in the old zip file
+                size += filesInZip(oldFile, exec);
+                processedSize +=
+                        addOldFiles(oldFile, zout, filenames, size, exec);
             }
             // Add new files to zip file
             for (int i = 0; i < files.length; i++) {
-                exec.setProgress((double)count / amount);
+                exec.setProgress((double)processedSize / size);
                 in = new FileInputStream(files[i]);
                 String filename = filenames[i];
                 if (pathhandling.equals(PathHandling.ONLY_FILENAME.getName())) {
@@ -208,11 +214,12 @@ class ZipNodeModel extends NodeModel {
                 int length;
                 while ((length = in.read(buffer)) > 0) {
                     exec.checkCanceled();
+                    exec.setProgress((double)processedSize / size);
                     zout.write(buffer, 0, length);
+                    processedSize += length;
                 }
                 zout.closeEntry();
                 in.close();
-                count++;
             }
             zout.close();
             // Remove old file
@@ -246,16 +253,16 @@ class ZipNodeModel extends NodeModel {
      * @param oldFile Zip file that contains the files to copy
      * @param zout Zip stream where the files get added
      * @param filenames Name of the files that will later be added
-     * @param amount Total amount of files that go into the zip
+     * @param size Total size of all files that go into the zip
      * @param exec Execution context for <code>checkCanceled()</code> and
      *            <code>setProgress()</code>
      * @return Amount of files that got added by this method
      * @throws Exception When abort condition is met or user canceled
      */
-    private int addOldFiles(final File oldFile, final ZipOutputStream zout,
-            final String[] filenames, final int amount,
+    private long addOldFiles(final File oldFile, final ZipOutputStream zout,
+            final String[] filenames, final long size,
             final ExecutionContext exec) throws Exception {
-        int count = 0;
+        long processedSize = 0;
         String ifExists = m_ifexists.getStringValue();
         FileInputStream in = new FileInputStream(oldFile);
         ZipInputStream zin = new ZipInputStream(in);
@@ -263,7 +270,6 @@ class ZipNodeModel extends NodeModel {
             byte[] buffer = new byte[1024];
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
-                exec.setProgress((double)count / amount);
                 String name = entry.getName();
                 boolean notInFiles = true;
                 // Check if new files contain a file by the same name
@@ -287,33 +293,34 @@ class ZipNodeModel extends NodeModel {
                     int length;
                     while ((length = zin.read(buffer)) > 0) {
                         exec.checkCanceled();
+                        exec.setProgress((double)processedSize / size);
                         zout.write(buffer, 0, length);
+                        processedSize += length;
                     }
                 } else {
                     LOGGER.info("Replacing existing file \"" + name + "\"");
                 }
-                count++;
                 entry = zin.getNextEntry();
             }
         } finally {
             in.close();
             zin.close();
         }
-        return count;
+        return processedSize;
     }
 
     /**
-     * Count the files in a zip file.
+     * Calculates the size off all files in a zip file.
      * 
      * 
      * @param file The zip file
      * @param exec Execution context for <code>checkCanceled()</code>
-     * @return Number of files in the zip file
+     * @return Uncompressed size of files in the zip file
      * @throws Exception If the file can not be read or user canceled
      */
-    private int filesInZip(final File file, final ExecutionContext exec)
+    private long filesInZip(final File file, final ExecutionContext exec)
             throws Exception {
-        int count = 0;
+        long size = 0;
         FileInputStream in = null;
         ZipInputStream zin = null;
         try {
@@ -322,7 +329,7 @@ class ZipNodeModel extends NodeModel {
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
                 exec.checkCanceled();
-                count++;
+                size += entry.getSize();
                 entry = zin.getNextEntry();
             }
         } finally {
@@ -333,7 +340,7 @@ class ZipNodeModel extends NodeModel {
                 zin.close();
             }
         }
-        return count;
+        return size;
     }
 
     /**
