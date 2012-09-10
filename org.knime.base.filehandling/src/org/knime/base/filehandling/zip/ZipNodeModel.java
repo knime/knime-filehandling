@@ -54,8 +54,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -100,6 +102,8 @@ class ZipNodeModel extends NodeModel {
     private long m_processedSize;
 
     private long m_size;
+
+    private Set<String> m_newfiles;
 
     /**
      * Constructor for the node model.
@@ -169,6 +173,7 @@ class ZipNodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
         m_processedSize = 0;
         m_size = 0;
+        m_newfiles = new HashSet<String>();
         ZipOutputStream zout = null;
         File newFile = new File(target);
         File oldFile = new File(target + ".old");
@@ -179,6 +184,8 @@ class ZipNodeModel extends NodeModel {
             files[i] = new File(filenames[i]);
         }
         try {
+            // Resolve directories
+            files = resolveDirectories(files);
             // Rename existing file
             if (fileExists) {
                 oldFile.delete();
@@ -191,9 +198,12 @@ class ZipNodeModel extends NodeModel {
             m_size = sizeOfFiles(files);
             // Copy existing files into new zip file
             if (fileExists) {
+                for (int i = 0; i < files.length; i++) {
+                    m_newfiles.add(getName(files[i]));
+                }
                 // Add size of files in the old zip file
-                m_size += filesInZip(oldFile, exec);
-                addOldFiles(oldFile, zout, filenames, exec);
+                m_size += checkFilesInZip(oldFile, exec);
+                addOldFiles(oldFile, zout, exec);
             }
             // Add new files to zip file
             for (int i = 0; i < files.length; i++) {
@@ -228,16 +238,14 @@ class ZipNodeModel extends NodeModel {
      * 
      * @param oldFile Zip file that contains the files to copy
      * @param zout Zip stream where the files get added
-     * @param filenames Name of the files that will later be added
+     * @param files Name of the files that will later be added
      * @param size Total size of all files that go into the zip
      * @param exec Execution context for <code>checkCanceled()</code> and
      *            <code>setProgress()</code>
      * @throws Exception When abort condition is met or user canceled
      */
     private void addOldFiles(final File oldFile, final ZipOutputStream zout,
-            final String[] filenames, final ExecutionContext exec)
-            throws Exception {
-        String ifExists = m_ifexists.getStringValue();
+            final ExecutionContext exec) throws Exception {
         FileInputStream in = new FileInputStream(oldFile);
         ZipInputStream zin = new ZipInputStream(in);
         try {
@@ -247,19 +255,9 @@ class ZipNodeModel extends NodeModel {
                 String name = entry.getName();
                 boolean notInFiles = true;
                 // Check if new files contain a file by the same name
-                for (int i = 0; i < filenames.length; i++) {
-                    if (filenames[i].equals(name)) {
-                        exec.checkCanceled();
-                        // Abort if the policy is append abort
-                        if (ifExists.equals(OverwritePolicy.APPEND_ABORT
-                                .getName())) {
-                            throw new IOException("File \"" + name
-                                    + "\" exists in zip file, overwrite"
-                                    + " policy: \"" + ifExists + "\"");
-                        }
-                        notInFiles = false;
-                        break;
-                    }
+                if (m_newfiles.contains(name)) {
+                    exec.checkCanceled();
+                    notInFiles = false;
                 }
                 if (notInFiles) {
                     // Add file to new zip file
@@ -291,8 +289,9 @@ class ZipNodeModel extends NodeModel {
      * @return Uncompressed size of files in the zip file
      * @throws Exception If the file can not be read or user canceled
      */
-    private long filesInZip(final File file, final ExecutionContext exec)
+    private long checkFilesInZip(final File file, final ExecutionContext exec)
             throws Exception {
+        String ifExists = m_ifexists.getStringValue();
         long size = 0;
         FileInputStream in = null;
         ZipInputStream zin = null;
@@ -302,7 +301,14 @@ class ZipNodeModel extends NodeModel {
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
                 exec.checkCanceled();
-                size += entry.getSize();
+                if (!m_newfiles.contains(entry.getName())) {
+                    size += entry.getSize();
+                } else if (ifExists.equals(OverwritePolicy.APPEND_ABORT
+                        .getName())) {
+                    throw new IOException("File \"" + entry.getName()
+                            + "\" exists in zip file, overwrite"
+                            + " policy: \"" + ifExists + "\"");
+                }
                 entry = zin.getNextEntry();
             }
         } finally {
@@ -329,11 +335,7 @@ class ZipNodeModel extends NodeModel {
     private long sizeOfFiles(final File[] files) {
         long size = 0;
         for (int i = 0; i < files.length; i++) {
-            if (files[i].isDirectory()) {
-                size += sizeOfFiles(files[i].listFiles());
-            } else {
-                size += files[i].length();
-            }
+            size += files[i].length();
         }
         return size;
     }
@@ -341,9 +343,6 @@ class ZipNodeModel extends NodeModel {
     /**
      * Adds the given file into the zip stream.
      * 
-     * 
-     * Add given file into the zip stream. If the file points to a directory the
-     * whole contents of the directory will be added.
      * 
      * @param file The file to add
      * @param zout The zip stream where the file will be added
@@ -357,37 +356,64 @@ class ZipNodeModel extends NodeModel {
         try {
             byte[] buffer = new byte[1024];
             exec.setProgress((double)m_processedSize / m_size);
-            if (file.isDirectory()) {
-                File[] files = file.listFiles();
-                for (int i = 0; i < files.length; i++) {
-                    addFile(files[i], zout, exec);
-                }
-            } else {
-                in = new FileInputStream(file);
-                String filename = file.getAbsolutePath();
-                String pathhandling = m_pathhandling.getStringValue();
-                String prefix = m_prefix.getStringValue();
-                if (pathhandling.equals(PathHandling.ONLY_FILENAME.getName())) {
-                    filename = file.getName();
-                } else if (pathhandling.equals(PathHandling.TRUNCATE_PREFIX
-                        .getName())) {
-                    filename = filename.replaceFirst(prefix, "");
-                }
-                zout.putNextEntry(new ZipEntry(filename));
-                int length;
-                while ((length = in.read(buffer)) > 0) {
-                    exec.checkCanceled();
-                    exec.setProgress((double)m_processedSize / m_size);
-                    zout.write(buffer, 0, length);
-                    m_processedSize += length;
-                }
-                zout.closeEntry();
+            in = new FileInputStream(file);
+            String filename = getName(file);
+            zout.putNextEntry(new ZipEntry(filename));
+            int length;
+            while ((length = in.read(buffer)) > 0) {
+                exec.checkCanceled();
+                exec.setProgress((double)m_processedSize / m_size);
+                zout.write(buffer, 0, length);
+                m_processedSize += length;
             }
+            zout.closeEntry();
         } finally {
             if (in != null) {
                 in.close();
             }
         }
+    }
+
+    /**
+     * Returns the correct file name according to the path handling policy.
+     * 
+     * 
+     * @param file File for the name
+     * @return Name of the given file with cut path
+     */
+    private String getName(final File file) {
+        String name = file.getAbsolutePath();
+        String pathhandling = m_pathhandling.getStringValue();
+        String prefix = m_prefix.getStringValue();
+        if (pathhandling.equals(PathHandling.ONLY_FILENAME.getName())) {
+            name = file.getName();
+        }
+        if (pathhandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
+            name = name.replaceFirst(prefix, "");
+        }
+        return name;
+    }
+
+    /**
+     * Replaces directories in the given file array by all contained files.
+     * 
+     * 
+     * @param files Array of files that potentially contains directories
+     * @return List of all files with directories resolved
+     */
+    private File[] resolveDirectories(final File[] files) {
+        List<File> allFiles = new LinkedList<File>();
+        for (int i = 0; i < files.length; i++) {
+            if (files[i].isDirectory()) {
+                File[] innerFiles = resolveDirectories(files[i].listFiles());
+                for (int j = 0; j < innerFiles.length; j++) {
+                    allFiles.add(innerFiles[j]);
+                }
+            } else {
+                allFiles.add(files[i]);
+            }
+        }
+        return allFiles.toArray(new File[allFiles.size()]);
     }
 
     /**
