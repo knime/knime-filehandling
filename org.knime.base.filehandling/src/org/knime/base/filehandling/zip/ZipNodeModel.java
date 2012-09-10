@@ -433,6 +433,11 @@ class ZipNodeModel extends NodeModel {
         if (m_urlcolumn.getStringValue().equals("")) {
             throw new InvalidSettingsException("URL column not set");
         }
+        int columnIndex =
+                inSpecs[0].findColumnIndex(m_urlcolumn.getStringValue());
+        if (columnIndex < 0) {
+            throw new InvalidSettingsException("URL column not set");
+        }
         if (m_target.getStringValue().equals("")) {
             throw new InvalidSettingsException("Target not set");
         }
