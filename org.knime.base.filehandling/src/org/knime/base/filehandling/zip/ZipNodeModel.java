@@ -54,11 +54,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
@@ -137,6 +139,7 @@ class ZipNodeModel extends NodeModel {
                     + "\" exists, overwrite policy: \"" + ifExists + "\"");
         }
         // Move old zip file if policy is overwrite
+        // In case the execution gets canceled, the old file can be restored
         if (ifExists.equals(OverwritePolicy.OVERWRITE.getName())) {
             if (targetFile.renameTo(oldFile)) {
                 LOGGER.info("Replacing existing zip file \""
@@ -191,8 +194,10 @@ class ZipNodeModel extends NodeModel {
                 oldFile.delete();
                 newFile.renameTo(oldFile);
             }
+            // Create directories if they do not exist
             newFile.getParentFile().mkdirs();
             zout = new ZipOutputStream(new FileOutputStream(newFile));
+            // Set compression level
             zout.setLevel(m_compressionlevel.getIntValue());
             // Calculate size of files
             m_size = sizeOfFiles(files);
@@ -203,6 +208,7 @@ class ZipNodeModel extends NodeModel {
                 }
                 // Add size of files in the old zip file
                 m_size += checkFilesInZip(oldFile, exec);
+                // Add old files to new zip file
                 addOldFiles(oldFile, zout, exec);
             }
             // Add new files to zip file
@@ -233,12 +239,10 @@ class ZipNodeModel extends NodeModel {
      * 
      * 
      * Behavior is controlled by the overwrite policy in the if existing
-     * setting.
+     * setting. Files in the <code>m_newfiles</code> list will not be added.
      * 
      * @param oldFile Zip file that contains the files to copy
      * @param zout Zip stream where the files get added
-     * @param files Name of the files that will later be added
-     * @param size Total size of all files that go into the zip
      * @param exec Execution context for <code>checkCanceled()</code> and
      *            <code>setProgress()</code>
      * @throws Exception When abort condition is met or user canceled
@@ -280,7 +284,8 @@ class ZipNodeModel extends NodeModel {
     }
 
     /**
-     * Calculates the size off all files in a zip file.
+     * Calculates the size off the files in the zip file, except the ones that
+     * will get replaced.
      * 
      * 
      * @param file The zip file
@@ -291,31 +296,23 @@ class ZipNodeModel extends NodeModel {
     private long checkFilesInZip(final File file, final ExecutionContext exec)
             throws Exception {
         String ifExists = m_ifexists.getStringValue();
+        String appendAbortPolicy = OverwritePolicy.APPEND_ABORT.getName();
         long size = 0;
-        FileInputStream in = null;
-        ZipInputStream zin = null;
-        try {
-            in = new FileInputStream(file);
-            zin = new ZipInputStream(in);
-            ZipEntry entry = zin.getNextEntry();
-            while (entry != null) {
-                exec.checkCanceled();
-                if (!m_newfiles.contains(entry.getName())) {
-                    size += entry.getSize();
-                } else if (ifExists.equals(OverwritePolicy.APPEND_ABORT
-                        .getName())) {
-                    throw new IOException("File \"" + entry.getName()
-                            + "\" exists in zip file, overwrite"
-                            + " policy: \"" + ifExists + "\"");
-                }
-                entry = zin.getNextEntry();
-            }
-        } finally {
-            if (in != null) {
-                in.close();
-            }
-            if (zin != null) {
-                zin.close();
+        ZipFile zipFile = new ZipFile(file);
+        Enumeration<? extends ZipEntry> entries = zipFile.entries();
+        // Get the file size of each entry that will not be overwritten and
+        // check for abort condition
+        while (entries.hasMoreElements()) {
+            exec.checkCanceled();
+            ZipEntry entry = entries.nextElement();
+            // If file does not exist add its size, else check for abort
+            // condition
+            if (!m_newfiles.contains(entry.getName())) {
+                size += entry.getSize();
+            } else if (ifExists.equals(appendAbortPolicy)) {
+                throw new IOException("File \"" + entry.getName()
+                        + "\" exists in zip file, overwrite" + " policy: \""
+                        + ifExists + "\"");
             }
         }
         return size;
@@ -324,9 +321,6 @@ class ZipNodeModel extends NodeModel {
     /**
      * Calculate the total size of the given files.
      * 
-     * 
-     * Calculate the sum of all the files sizes. Goes recursively through
-     * directories.
      * 
      * @param files The files for the calculation
      * @return Size of all the files
@@ -404,6 +398,7 @@ class ZipNodeModel extends NodeModel {
         List<File> allFiles = new LinkedList<File>();
         for (int i = 0; i < files.length; i++) {
             if (files[i].isDirectory()) {
+                // Get inner files through recursive call and add them
                 File[] innerFiles = resolveDirectories(files[i].listFiles());
                 for (int j = 0; j < innerFiles.length; j++) {
                     allFiles.add(innerFiles[j]);
@@ -429,17 +424,21 @@ class ZipNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
+        // Is the URL column set?
         if (m_urlcolumn.getStringValue().equals("")) {
             throw new InvalidSettingsException("URL column not set");
         }
+        // Does the URL column setting reference an existing column?
         int columnIndex =
                 inSpecs[0].findColumnIndex(m_urlcolumn.getStringValue());
         if (columnIndex < 0) {
             throw new InvalidSettingsException("URL column not set");
         }
+        // Is the target set?
         if (m_target.getStringValue().equals("")) {
             throw new InvalidSettingsException("Target not set");
         }
+        // Does the prefix directory exist? (If it is needet)
         if (m_pathhandling.getStringValue().equals(
                 PathHandling.TRUNCATE_PREFIX.getName())
                 && !new File(m_prefix.getStringValue()).exists()) {

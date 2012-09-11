@@ -77,7 +77,7 @@ class UnzipNodeDialog extends DefaultNodeSettingsPane {
     private FlowVariableModel m_targetdirectoryFvm;
 
     /**
-     * 
+     * New pane for configuring Unzip node dialog.
      */
     protected UnzipNodeDialog() {
         super();

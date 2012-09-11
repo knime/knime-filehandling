@@ -116,14 +116,8 @@ class UnzipNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
-        // Create spec for output table
-        DataColumnSpec[] columnSpec = new DataColumnSpec[2];
-        columnSpec[0] =
-                new DataColumnSpecCreator("Location", StringCell.TYPE)
-                        .createSpec();
-        columnSpec[1] =
-                new DataColumnSpecCreator("URL", StringCell.TYPE).createSpec();
-        DataTableSpec outSpec = new DataTableSpec(columnSpec);
+        // Create output spec and container
+        DataTableSpec outSpec = createOutSpec();
         BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
         // Extract files from zip file
         extractZip(outContainer, exec);
@@ -166,12 +160,13 @@ class UnzipNodeModel extends NodeModel {
                 // Generate full path to file
                 File file = new File(directory, entry.getName());
                 filenames.add(file.getAbsolutePath());
-                // Replace old file if it exists
+                // Remove old file if it exists
                 if (file.exists()) {
                     file.delete();
                     LOGGER.info("Replacing existing file \""
                             + file.getAbsolutePath() + "\"");
                 }
+                // Create directories if necessary
                 file.getParentFile().mkdirs();
                 file.createNewFile();
                 out = new FileOutputStream(file);
@@ -259,6 +254,24 @@ class UnzipNodeModel extends NodeModel {
             file.delete();
         }
     }
+    
+    /**
+     * Factory method for the output table spec.
+     * 
+     * 
+     * @return Output table spec
+     */
+    private DataTableSpec createOutSpec() {
+        DataColumnSpec[] columnSpec = new DataColumnSpec[2];
+        // Column with location information
+        columnSpec[0] =
+                new DataColumnSpecCreator("Location", StringCell.TYPE)
+                        .createSpec();
+        // Column in URL format
+        columnSpec[1] =
+                new DataColumnSpecCreator("URL", StringCell.TYPE).createSpec();
+        return new DataTableSpec(columnSpec);
+    }
 
     /**
      * {@inheritDoc}
@@ -274,25 +287,21 @@ class UnzipNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
+        // Is the source set?
         if (m_source.getStringValue().equals("")) {
             throw new InvalidSettingsException("Source not set");
         }
+        // Is the target set?
         if (m_targetdirectory.getStringValue().equals("")) {
             throw new InvalidSettingsException("Target directory not set");
         }
+        // Does the target directory exist?
         File targetdirectory = new File(m_targetdirectory.getStringValue());
         if (!targetdirectory.isDirectory()) {
             throw new InvalidSettingsException(
                     "Target directory does not exist");
         }
-        DataColumnSpec[] columnSpec = new DataColumnSpec[2];
-        columnSpec[0] =
-                new DataColumnSpecCreator("Location", StringCell.TYPE)
-                        .createSpec();
-        columnSpec[1] =
-                new DataColumnSpecCreator("URL", StringCell.TYPE).createSpec();
-        DataTableSpec outSpec = new DataTableSpec(columnSpec);
-        return new DataTableSpec[]{outSpec};
+        return new DataTableSpec[]{createOutSpec()};
     }
 
     /**

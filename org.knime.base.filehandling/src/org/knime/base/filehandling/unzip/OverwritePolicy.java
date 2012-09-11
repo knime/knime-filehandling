@@ -85,7 +85,7 @@ enum OverwritePolicy {
     }
 
     /**
-     * @return Array of all path handling settings
+     * @return Array of all overwrite policy settings
      */
     static String[] getAllSettings() {
         return new String[]{OVERWRITE.getName(), ABORT.getName()};
