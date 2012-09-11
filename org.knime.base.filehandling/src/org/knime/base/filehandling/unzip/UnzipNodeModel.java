@@ -93,6 +93,10 @@ class UnzipNodeModel extends NodeModel {
     private SettingsModelString m_targetdirectory;
 
     private SettingsModelString m_ifexists;
+    
+    private long m_size;
+    
+    private long m_processedSize;
 
     /**
      * Constructor for the node model.
@@ -141,8 +145,8 @@ class UnzipNodeModel extends NodeModel {
     private void extractZip(final BufferedDataContainer outContainer,
             final ExecutionContext exec) throws Exception {
         int rowID = 0;
-        long size = 0;
-        long processedSize = 0;
+        m_size = 0;
+        m_processedSize = 0;
         List<String> filenames = new LinkedList<String>();
         File source = new File(m_source.getStringValue());
         File directory = new File(m_targetdirectory.getStringValue());
@@ -152,7 +156,7 @@ class UnzipNodeModel extends NodeModel {
         try {
             byte[] buffer = new byte[1024];
             // Check for abort condition and get total size of files
-            size = checkFiles(exec);
+            m_size = checkFiles(exec);
             in = new FileInputStream(source);
             zin = new ZipInputStream(in);
             ZipEntry entry = zin.getNextEntry();
@@ -173,9 +177,9 @@ class UnzipNodeModel extends NodeModel {
                 // Copy content into new file
                 while ((length = zin.read(buffer)) > 0) {
                     exec.checkCanceled();
-                    exec.setProgress((double)processedSize / size);
+                    exec.setProgress((double)m_processedSize / m_size);
                     out.write(buffer, 0, length);
-                    processedSize += length;
+                    m_processedSize += length;
                 }
                 out.close();
                 // Create row with path and URL
