@@ -54,6 +54,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -222,42 +223,22 @@ class UnzipNodeModel extends NodeModel {
      */
     private long checkFiles(final ExecutionContext exec) throws Exception {
         long size = 0;
-        FileInputStream in = null;
-        ZipInputStream zin = null;
-        List<String> names = new LinkedList<String>();
-        try {
-            File source = new File(m_source.getStringValue());
-            File directory = new File(m_targetdirectory.getStringValue());
-            String ifExists = m_ifexists.getStringValue();
-            in = new FileInputStream(source);
-            zin = new ZipInputStream(in);
-            ZipEntry entry = zin.getNextEntry();
-            while (entry != null) {
-                exec.checkCanceled();
-                names.add(entry.getName());
-                File file = new File(directory, entry.getName());
-                // If file exists and policy is abort throw an exception
-                if (file.exists()) {
-                    if (ifExists.equals(OverwritePolicy.ABORT.getName())) {
-                        throw new IOException("File \""
-                                + file.getAbsolutePath()
-                                + "\" exists, overwrite policy: \"" + ifExists
-                                + "\"");
-                    }
-                }
-                entry = zin.getNextEntry();
-            }
-            for (int i = 0; i < names.size(); i++) {
-                ZipFile zipFile = new ZipFile(source);
-                entry = zipFile.getEntry(names.get(i));
-                size += entry.getSize();
-            }
-        } finally {
-            if (in != null) {
-                in.close();
-            }
-            if (zin != null) {
-                zin.close();
+        File source = new File(m_source.getStringValue());
+        File directory = new File(m_targetdirectory.getStringValue());
+        String ifExists = m_ifexists.getStringValue();
+        ZipFile zipFile = new ZipFile(source);
+        Enumeration<? extends ZipEntry> entries = zipFile.entries();
+        // Get the file size of each entry and check for abort condition
+        while (entries.hasMoreElements()) {
+            exec.checkCanceled();
+            ZipEntry entry = entries.nextElement();
+            size += entry.getSize();
+            File file = new File(directory, entry.getName());
+            // If file exists and policy is abort throw an exception
+            if (file.exists()
+                    && ifExists.equals(OverwritePolicy.ABORT.getName())) {
+                throw new IOException("File \"" + file.getAbsolutePath()
+                        + "\" exists, overwrite policy: \"" + ifExists + "\"");
             }
         }
         return size;
