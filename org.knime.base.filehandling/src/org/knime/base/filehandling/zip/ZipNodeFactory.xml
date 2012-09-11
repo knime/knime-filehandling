@@ -41,7 +41,7 @@
 			<br />
 			<b>Overwrite</b>
 			<br />
-			Overwrites the hole file and ignores its content.
+			Overwrites the whole file and ignores its content.
 			<br />
 			<b>Append (Overwrite)</b>
 			<br />
