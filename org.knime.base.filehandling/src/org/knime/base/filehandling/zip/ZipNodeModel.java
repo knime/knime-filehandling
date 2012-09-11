@@ -224,7 +224,6 @@ class ZipNodeModel extends NodeModel {
             // Remove unfinished new file and restore old file
             newFile.delete();
             oldFile.renameTo(newFile);
-            e.printStackTrace();
             throw e;
         }
     }

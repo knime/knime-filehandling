@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import org.knime.core.data.DataCell;
@@ -93,9 +94,9 @@ class UnzipNodeModel extends NodeModel {
     private SettingsModelString m_targetdirectory;
 
     private SettingsModelString m_ifexists;
-    
+
     private long m_size;
-    
+
     private long m_processedSize;
 
     /**
@@ -211,8 +212,8 @@ class UnzipNodeModel extends NodeModel {
     }
 
     /**
-     * Checks if any of the files in the zip already exist and returns the
-     * size of all files in the zip file.
+     * Checks if any of the files in the zip already exist and returns the size
+     * of all files in the zip file.
      * 
      * 
      * @param exec Execution context for <code>checkCanceled()</code>
@@ -223,6 +224,7 @@ class UnzipNodeModel extends NodeModel {
         long size = 0;
         FileInputStream in = null;
         ZipInputStream zin = null;
+        List<String> names = new LinkedList<String>();
         try {
             File source = new File(m_source.getStringValue());
             File directory = new File(m_targetdirectory.getStringValue());
@@ -232,7 +234,7 @@ class UnzipNodeModel extends NodeModel {
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
                 exec.checkCanceled();
-                size += entry.getSize();
+                names.add(entry.getName());
                 File file = new File(directory, entry.getName());
                 // If file exists and policy is abort throw an exception
                 if (file.exists()) {
@@ -244,6 +246,11 @@ class UnzipNodeModel extends NodeModel {
                     }
                 }
                 entry = zin.getNextEntry();
+            }
+            for (int i = 0; i < names.size(); i++) {
+                ZipFile zipFile = new ZipFile(source);
+                entry = zipFile.getEntry(names.get(i));
+                size += entry.getSize();
             }
         } finally {
             if (in != null) {
