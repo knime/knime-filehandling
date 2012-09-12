@@ -48,51 +48,61 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.unzip;
+package org.knime.base.filehandling.filestobinaryobjects;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
- * Factory for SettingsModels.
+ * <code>NodeFactory</code> for the "Files to Binary Objects" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-final class SettingsFactory {
+public class FilesToBinaryObjectsNodeFactory extends
+        NodeFactory<FilesToBinaryObjectsNodeModel> {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public FilesToBinaryObjectsNodeModel createNodeModel() {
+        return new FilesToBinaryObjectsNodeModel();
     }
 
     /**
-     * Factory method for the source setting.
-     * 
-     * 
-     * @return Source <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createSourceSettings() {
-        return new SettingsModelString("source", "");
+    @Override
+    public int getNrNodeViews() {
+        return 0;
     }
 
     /**
-     * Factory method for the target directory setting.
-     * 
-     * 
-     * @return Target directory <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createTargetDirectorySettings() {
-        return new SettingsModelString("targetdirectory", "");
+    @Override
+    public NodeView<FilesToBinaryObjectsNodeModel> createNodeView(
+            final int viewIndex,
+            final FilesToBinaryObjectsNodeModel nodeModel) {
+        return null;
     }
 
     /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+    @Override
+    public boolean hasDialog() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeDialogPane createNodeDialogPane() {
+        return new FilesToBinaryObjectsNodeDialog();
     }
 
 }

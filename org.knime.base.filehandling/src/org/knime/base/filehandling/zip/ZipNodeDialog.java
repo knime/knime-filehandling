@@ -89,7 +89,7 @@ class ZipNodeDialog extends DefaultNodeSettingsPane {
     private FlowVariableModel m_prefixFvm;
 
     /**
-     * New pane for configuring Zip node dialog.
+     * New pane for configuring the Zip node dialog.
      */
     @SuppressWarnings("unchecked")
     protected ZipNodeDialog() {

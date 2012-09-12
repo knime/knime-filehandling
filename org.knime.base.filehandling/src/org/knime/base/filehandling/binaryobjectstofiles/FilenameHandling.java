@@ -46,53 +46,49 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.unzip;
-
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+package org.knime.base.filehandling.binaryobjectstofiles;
 
 /**
- * Factory for SettingsModels.
+ * Enums for filename handling.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-final class SettingsFactory {
+enum FilenameHandling {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    /**
+     * Use name column.
+     */
+    FROMCOLUMN("From column"),
+
+    /**
+     * Generate from name pattern.
+     */
+    GENERATE("Generate");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this option
+     */
+    FilenameHandling(final String name) {
+        m_name = name;
     }
 
     /**
-     * Factory method for the source setting.
-     * 
-     * 
-     * @return Source <code>SettingsModel</code>
+     * @return Name of this option
      */
-    static SettingsModelString createSourceSettings() {
-        return new SettingsModelString("source", "");
+    String getName() {
+        return m_name;
     }
 
     /**
-     * Factory method for the target directory setting.
-     * 
-     * 
-     * @return Target directory <code>SettingsModel</code>
+     * @return Array of all filename handling settings
      */
-    static SettingsModelString createTargetDirectorySettings() {
-        return new SettingsModelString("targetdirectory", "");
-    }
-
-    /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
-     */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+    static String[] getAllSettings() {
+        return new String[]{FROMCOLUMN.getName(), GENERATE.getName()};
     }
 
 }

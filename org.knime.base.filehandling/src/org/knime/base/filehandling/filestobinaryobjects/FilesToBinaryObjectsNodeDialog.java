@@ -48,51 +48,44 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.unzip;
+package org.knime.base.filehandling.filestobinaryobjects;
 
+import org.knime.core.data.StringValue;
+import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
+import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * Factory for SettingsModels.
+ * <code>NodeDialog</code> for the "Files to Binary Objects" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-final class SettingsFactory {
+class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsFactory() {
-        // Disables default constructor
-    }
+    private SettingsModelString m_locationcolumn;
 
-    /**
-     * Factory method for the source setting.
-     * 
-     * 
-     * @return Source <code>SettingsModel</code>
-     */
-    static SettingsModelString createSourceSettings() {
-        return new SettingsModelString("source", "");
-    }
+    private SettingsModelString m_bocolumnname;
+
+    private SettingsModelString m_replacepolicy;
 
     /**
-     * Factory method for the target directory setting.
-     * 
-     * 
-     * @return Target directory <code>SettingsModel</code>
+     * New pane for configuring the Files to Binary Objects node dialog.
      */
-    static SettingsModelString createTargetDirectorySettings() {
-        return new SettingsModelString("targetdirectory", "");
+    @SuppressWarnings("unchecked")
+    protected FilesToBinaryObjectsNodeDialog() {
+        super();
+        m_locationcolumn = SettingsFactory.createLocationColumnSettings();
+        m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
+        m_replacepolicy = SettingsFactory.createReplacePolicySettings();
+        addDialogComponent(new DialogComponentColumnNameSelection(
+                m_locationcolumn, "Location column", 0, StringValue.class));
+        addDialogComponent(new DialogComponentString(m_bocolumnname,
+                "Binary object column name"));
+        addDialogComponent(new DialogComponentButtonGroup(m_replacepolicy,
+                false, "Append column or replace location?",
+                ReplacePolicy.getAllSettings()));
     }
-
-    /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
-     */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
-    }
-
 }

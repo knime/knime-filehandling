@@ -46,53 +46,49 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.unzip;
-
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+package org.knime.base.filehandling.filestobinaryobjects;
 
 /**
- * Factory for SettingsModels.
+ * Enums for replace policies.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-final class SettingsFactory {
+enum ReplacePolicy {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    /**
+     * Append new column.
+     */
+    APPEND("Append"),
+
+    /**
+     * Replace location column.
+     */
+    REPLACE("Replace");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this policy
+     */
+    ReplacePolicy(final String name) {
+        m_name = name;
     }
 
     /**
-     * Factory method for the source setting.
-     * 
-     * 
-     * @return Source <code>SettingsModel</code>
+     * @return Name of this policy
      */
-    static SettingsModelString createSourceSettings() {
-        return new SettingsModelString("source", "");
+    String getName() {
+        return m_name;
     }
 
     /**
-     * Factory method for the target directory setting.
-     * 
-     * 
-     * @return Target directory <code>SettingsModel</code>
+     * @return Array of all replace policy settings
      */
-    static SettingsModelString createTargetDirectorySettings() {
-        return new SettingsModelString("targetdirectory", "");
-    }
-
-    /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
-     */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+    static String[] getAllSettings() {
+        return new String[]{APPEND.getName(), REPLACE.getName()};
     }
 
 }

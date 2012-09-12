@@ -48,51 +48,70 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.unzip;
+package org.knime.base.filehandling.binaryobjectstofiles;
 
+import javax.swing.JFileChooser;
+
+import org.knime.core.data.StringValue;
+import org.knime.core.node.FlowVariableModel;
+import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
+import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
+import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * Factory for SettingsModels.
+ * <code>NodeDialog</code> for the "Files to Binary Objects" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-final class SettingsFactory {
+class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsFactory() {
-        // Disables default constructor
-    }
+    private SettingsModelString m_bocolumn;
 
-    /**
-     * Factory method for the source setting.
-     * 
-     * 
-     * @return Source <code>SettingsModel</code>
-     */
-    static SettingsModelString createSourceSettings() {
-        return new SettingsModelString("source", "");
-    }
+    private SettingsModelString m_outputdirectory;
 
-    /**
-     * Factory method for the target directory setting.
-     * 
-     * 
-     * @return Target directory <code>SettingsModel</code>
-     */
-    static SettingsModelString createTargetDirectorySettings() {
-        return new SettingsModelString("targetdirectory", "");
-    }
+    private SettingsModelString m_filenames;
+
+    private SettingsModelString m_namecolumn;
+
+    private SettingsModelString m_namepattern;
+
+    private SettingsModelString m_ifexists;
+
+    private FlowVariableModel m_outputdirectoryFvm;
 
     /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
+     * New pane for configuring the Binary Objects to Files node dialog.
      */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+    @SuppressWarnings("unchecked")
+    protected BinaryObjectsToFilesNodeDialog() {
+        super();
+        m_bocolumn = SettingsFactory.createBinaryObjectColumnSettings();
+        m_outputdirectory = SettingsFactory.createOutputDirectorySettings();
+        m_filenames = SettingsFactory.createFilenamesSettings();
+        m_namecolumn = SettingsFactory.createNameColumnSettings();
+        m_namepattern = SettingsFactory.createNamePatternSettings();
+        m_ifexists = SettingsFactory.createIfExistsSettings();
+        m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
+        // TODO change classtype to BinaryObjectValue
+        addDialogComponent(new DialogComponentColumnNameSelection(m_bocolumn,
+                "Binary object column", 0, StringValue.class));
+        addDialogComponent(new DialogComponentFileChooser(m_outputdirectory,
+                "outputdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
+                m_outputdirectoryFvm));
+        createNewGroup("Filenames...");
+        addDialogComponent(new DialogComponentButtonGroup(m_filenames, false,
+                "", FilenameHandling.getAllSettings()));
+        // TODO change classtype to URIValue
+        addDialogComponent(new DialogComponentColumnNameSelection(m_namecolumn,
+                "Name column", 0, StringValue.class));
+        addDialogComponent(new DialogComponentString(m_namepattern,
+                "Name pattern"));
+        closeCurrentGroup();
+        addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
+                "If a file exists...", OverwritePolicy.getAllSettings()));
     }
-
 }

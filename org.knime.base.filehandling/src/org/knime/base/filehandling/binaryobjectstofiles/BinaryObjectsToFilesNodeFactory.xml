@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./binaryobjectstofiles.png" type="Manipulator">
+	<name>Binary Objects to Files</name>
+
+	<shortDescription>
+		Write the binary objects of a table as files.
+	</shortDescription>
+
+	<fullDescription>
+		<intro>
+			This node writes the files of a table with binary objects. It
+			will append the locations of the files to the output table.
+		</intro>
+
+
+		<option name="Binary object column">Column with binary objects.</option>
+		<option name="Output directory">The directory where the files will be put</option>
+		<option name="Filenames...">
+			<b>From column</b>
+			<br />
+			The names can be found in a column of the input table.
+			<br />
+			<b>Generate</b>
+			<br />
+			The names will be generated using a pattern.
+		</option>
+		<option name="Name column">The column where the filenames can be found
+		</option>
+		<option name="Name pattern">The pattern that will be used to generate the
+			filenames. The ? will be replaced by the index of the corresponding
+			row.</option>
+		<option name="If a file exists...">
+			Specifies the behavior when one of the files already exists.
+			<br />
+			<b>Overwrite</b>
+			<br />
+			Overwrite the existing column.
+			<br />
+			<b>Abort</b>
+			<br />
+			The nodes execution will be aborted.
+		</option>
+	</fullDescription>
+
+	<ports>
+		<inPort name="Input table" index="0">
+			Table that contains the binary
+			objects that will be written. Filenames for the output files can also
+			be used, if the are available in the table.
+		</inPort>
+		<outPort name="Output table" index="0">
+			Input table with the location and URL for each file.
+		</outPort>
+	</ports>
+</knimeNode>

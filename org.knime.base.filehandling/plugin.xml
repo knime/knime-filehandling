@@ -5,10 +5,12 @@
    <extension point="org.knime.workbench.repository.nodes">
    <node category-path="/misc/zip" factory-class="org.knime.base.filehandling.zip.ZipNodeFactory" id="org.knime.base.filehandling.zip.ZipNodeFactory"/>
    <node category-path="/misc/zip" factory-class="org.knime.base.filehandling.unzip.UnzipNodeFactory" id="org.knime.base.filehandling.unzip.UnzipNodeFactory"/>
+   <node category-path="/misc/binaryobjects" factory-class="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory" id="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory"/>
+   <node category-path="/misc/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory" id="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory"/>
 </extension>
    <extension point="org.knime.workbench.repository.categories">
-      <category description="Nodes to handle zip files" icon="icons/missing.gif" level-id="zip" name="Zip" path="/misc/">
-      </category>
+      <category description="Nodes to handle zip files" icon="icons/missing.gif" level-id="zip" name="Zip" path="/misc/" />
+      <category description="Nodes to handle binary objects" icon="icons/missing.gif" level-id="binaryobjects" name="Binary Objects" path="/misc/" />
    </extension>
 
 </plugin>

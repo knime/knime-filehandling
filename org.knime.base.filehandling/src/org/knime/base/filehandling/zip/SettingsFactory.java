@@ -66,7 +66,7 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the URL column.
+     * Factory method for the URL column setting.
      * 
      * 
      * @return URL column <code>SettingsModel</code>
@@ -76,7 +76,7 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the target.
+     * Factory method for the target setting.
      * 
      * 
      * @return Target <code>SettingsModel</code>
@@ -97,7 +97,7 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the prefix.
+     * Factory method for the prefix setting.
      * 
      * 
      * @param pathhandling <code>SettingsModel</code> for the path handling

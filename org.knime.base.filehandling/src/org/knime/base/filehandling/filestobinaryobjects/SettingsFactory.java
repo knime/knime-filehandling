@@ -48,7 +48,7 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.unzip;
+package org.knime.base.filehandling.filestobinaryobjects;
 
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
@@ -65,34 +65,34 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the source setting.
+     * Factory method for the location column setting.
      * 
      * 
-     * @return Source <code>SettingsModel</code>
+     * @return Location column <code>SettingsModel</code>
      */
-    static SettingsModelString createSourceSettings() {
-        return new SettingsModelString("source", "");
+    static SettingsModelString createLocationColumnSettings() {
+        return new SettingsModelString("locationcolumn", "");
     }
 
     /**
-     * Factory method for the target directory setting.
+     * Factory method for the binary object column name setting.
      * 
      * 
-     * @return Target directory <code>SettingsModel</code>
+     * @return Binary object column name <code>SettingsModel</code>
      */
-    static SettingsModelString createTargetDirectorySettings() {
-        return new SettingsModelString("targetdirectory", "");
+    static SettingsModelString createBinaryObjectColumnNameSettings() {
+        return new SettingsModelString("binaryobjectcolumnname",
+                "Binary Object");
     }
 
     /**
-     * Factory method for the if exists setting.
+     * Factory method for the replace policy setting.
      * 
      * 
-     * @return If exists <code>SettingsModel</code>
+     * @return Replace policy <code>SettingsModel</code>
      */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+    static SettingsModelString createReplacePolicySettings() {
+        return new SettingsModelString("replacepolicy", "");
     }
 
 }

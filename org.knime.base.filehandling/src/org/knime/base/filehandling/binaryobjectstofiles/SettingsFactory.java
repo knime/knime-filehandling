@@ -48,7 +48,7 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.unzip;
+package org.knime.base.filehandling.binaryobjectstofiles;
 
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
@@ -65,23 +65,53 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the source setting.
+     * Factory method for the binary object column setting.
      * 
      * 
-     * @return Source <code>SettingsModel</code>
+     * @return Binary object column <code>SettingsModel</code>
      */
-    static SettingsModelString createSourceSettings() {
-        return new SettingsModelString("source", "");
+    static SettingsModelString createBinaryObjectColumnSettings() {
+        return new SettingsModelString("binaryobjectcolumn", "");
     }
 
     /**
-     * Factory method for the target directory setting.
+     * Factory method for the output directory setting.
      * 
      * 
-     * @return Target directory <code>SettingsModel</code>
+     * @return Output directory <code>SettingsModel</code>
      */
-    static SettingsModelString createTargetDirectorySettings() {
-        return new SettingsModelString("targetdirectory", "");
+    static SettingsModelString createOutputDirectorySettings() {
+        return new SettingsModelString("outputdirectory", "");
+    }
+
+    /**
+     * Factory method for the filenames setting.
+     * 
+     * 
+     * @return Filenames <code>SettingsModel</code>
+     */
+    static SettingsModelString createFilenamesSettings() {
+        return new SettingsModelString("filenames", "");
+    }
+
+    /**
+     * Factory method for the name column setting.
+     * 
+     * 
+     * @return Name column <code>SettingsModel</code>
+     */
+    static SettingsModelString createNameColumnSettings() {
+        return new SettingsModelString("namecolumn", "");
+    }
+
+    /**
+     * Factory method for the name pattern setting.
+     * 
+     * 
+     * @return Name pattern <code>SettingsModel</code>
+     */
+    static SettingsModelString createNamePatternSettings() {
+        return new SettingsModelString("namepattern", "");
     }
 
     /**
@@ -91,8 +121,7 @@ final class SettingsFactory {
      * @return If exists <code>SettingsModel</code>
      */
     static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+        return new SettingsModelString("ifexists", "");
     }
 
 }
