@@ -82,7 +82,7 @@ final class SettingsFactory {
      */
     static SettingsModelString createBinaryObjectColumnNameSettings() {
         return new SettingsModelString("binaryobjectcolumnname",
-                "Binary Object");
+                "BinaryObject");
     }
 
     /**

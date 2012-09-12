@@ -119,6 +119,10 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         if (columnIndex < 0) {
             throw new InvalidSettingsException("Location column not set");
         }
+        if (m_bocolumnname.getStringValue().equals("")) {
+            throw new InvalidSettingsException(
+                    "Binary object column name not set");
+        }
         return new DataTableSpec[]{null};
     }
 
