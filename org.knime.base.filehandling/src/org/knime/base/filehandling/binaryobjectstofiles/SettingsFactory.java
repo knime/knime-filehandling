@@ -85,33 +85,52 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the filenames setting.
+     * Factory method for the filename handling setting.
      * 
      * 
-     * @return Filenames <code>SettingsModel</code>
+     * @return Filename handling <code>SettingsModel</code>
      */
-    static SettingsModelString createFilenamesSettings() {
-        return new SettingsModelString("filenames", "");
+    static SettingsModelString createFilenameHandlingSettings() {
+        return new SettingsModelString("filenamehandling",
+                FilenameHandling.GENERATE.getName());
     }
 
     /**
      * Factory method for the name column setting.
      * 
      * 
+     * @param filenamehandling <code>SettingsModel</code> for the filename
+     *            handling setting
+     * 
      * @return Name column <code>SettingsModel</code>
      */
-    static SettingsModelString createNameColumnSettings() {
-        return new SettingsModelString("namecolumn", "");
+    static SettingsModelString createNameColumnSettings(
+            final SettingsModelString filenamehandling) {
+        SettingsModelString namecolumn =
+                new SettingsModelString("namecolumn", "");
+        String handling = filenamehandling.getStringValue();
+        namecolumn.setEnabled(handling.equals(FilenameHandling.FROMCOLUMN
+                .getName()));
+        return namecolumn;
     }
 
     /**
      * Factory method for the name pattern setting.
      * 
      * 
+     * @param filenamehandling <code>SettingsModel</code> for the filename
+     *            handling setting
+     * 
      * @return Name pattern <code>SettingsModel</code>
      */
-    static SettingsModelString createNamePatternSettings() {
-        return new SettingsModelString("namepattern", "");
+    static SettingsModelString createNamePatternSettings(
+            final SettingsModelString filenamehandling) {
+        SettingsModelString namepattern =
+                new SettingsModelString("namepattern", "file_?.dat");
+        String handling = filenamehandling.getStringValue();
+        namepattern.setEnabled(handling.equals(FilenameHandling.GENERATE
+                .getName()));
+        return namepattern;
     }
 
     /**
@@ -121,7 +140,8 @@ final class SettingsFactory {
      * @return If exists <code>SettingsModel</code>
      */
     static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists", "");
+        return new SettingsModelString("ifexists",
+                OverwritePolicy.ABORT.getName());
     }
 
 }

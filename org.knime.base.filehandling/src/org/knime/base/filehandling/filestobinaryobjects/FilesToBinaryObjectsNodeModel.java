@@ -111,6 +111,14 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
+        if (m_locationcolumn.getStringValue().equals("")) {
+            throw new InvalidSettingsException("Location column not set");
+        }
+        int columnIndex =
+                inSpecs[0].findColumnIndex(m_locationcolumn.getStringValue());
+        if (columnIndex < 0) {
+            throw new InvalidSettingsException("Location column not set");
+        }
         return new DataTableSpec[]{null};
     }
 

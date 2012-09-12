@@ -76,7 +76,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     private SettingsModelString m_outputdirectory;
 
-    private SettingsModelString m_filenames;
+    private SettingsModelString m_filenamehandling;
 
     private SettingsModelString m_namecolumn;
 
@@ -91,9 +91,11 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         super(1, 1);
         m_bocolumn = SettingsFactory.createBinaryObjectColumnSettings();
         m_outputdirectory = SettingsFactory.createOutputDirectorySettings();
-        m_filenames = SettingsFactory.createFilenamesSettings();
-        m_namecolumn = SettingsFactory.createNameColumnSettings();
-        m_namepattern = SettingsFactory.createNamePatternSettings();
+        m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
+        m_namecolumn =
+                SettingsFactory.createNameColumnSettings(m_filenamehandling);
+        m_namepattern =
+                SettingsFactory.createNamePatternSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
     }
 
@@ -120,6 +122,38 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
+        if (m_bocolumn.getStringValue().equals("")) {
+            throw new InvalidSettingsException("Binary object column not set");
+        }
+        int columnIndex =
+                inSpecs[0].findColumnIndex(m_bocolumn.getStringValue());
+        if (columnIndex < 0) {
+            throw new InvalidSettingsException("Binary object column not set");
+        }
+        File outputdirectory = new File(m_outputdirectory.getStringValue());
+        if (!outputdirectory.isDirectory()) {
+            throw new InvalidSettingsException(
+                    "Output directory does not exist");
+        }
+        if (m_filenamehandling.getStringValue().equals(
+                FilenameHandling.FROMCOLUMN.getName())) {
+            if (m_namecolumn.getStringValue().equals("")) {
+                throw new InvalidSettingsException("Name column not set");
+            }
+            columnIndex =
+                    inSpecs[0].findColumnIndex(m_namecolumn.getStringValue());
+            if (columnIndex < 0) {
+                throw new InvalidSettingsException("Name column not set");
+            }
+        }
+        if (m_filenamehandling.getStringValue().equals(
+                FilenameHandling.GENERATE.getName())) {
+            String pattern = m_namepattern.getStringValue();
+            if (!pattern.contains("?")) {
+                throw new InvalidSettingsException("Pattern has to contain"
+                        + " a ?");
+            }
+        }
         return new DataTableSpec[]{null};
     }
 
@@ -130,7 +164,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_bocolumn.saveSettingsTo(settings);
         m_outputdirectory.saveSettingsTo(settings);
-        m_filenames.saveSettingsTo(settings);
+        m_filenamehandling.saveSettingsTo(settings);
         m_namecolumn.saveSettingsTo(settings);
         m_namepattern.saveSettingsTo(settings);
         m_ifexists.saveSettingsTo(settings);
@@ -144,7 +178,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             throws InvalidSettingsException {
         m_bocolumn.loadSettingsFrom(settings);
         m_outputdirectory.loadSettingsFrom(settings);
-        m_filenames.loadSettingsFrom(settings);
+        m_filenamehandling.loadSettingsFrom(settings);
         m_namecolumn.loadSettingsFrom(settings);
         m_namepattern.loadSettingsFrom(settings);
         m_ifexists.loadSettingsFrom(settings);
@@ -158,7 +192,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             throws InvalidSettingsException {
         m_bocolumn.validateSettings(settings);
         m_outputdirectory.validateSettings(settings);
-        m_filenames.validateSettings(settings);
+        m_filenamehandling.validateSettings(settings);
         m_namecolumn.validateSettings(settings);
         m_namepattern.validateSettings(settings);
         m_ifexists.validateSettings(settings);

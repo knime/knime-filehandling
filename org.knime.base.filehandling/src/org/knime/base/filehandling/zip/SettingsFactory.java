@@ -109,7 +109,7 @@ final class SettingsFactory {
             final SettingsModelString pathhandling) {
         SettingsModelString prefix = new SettingsModelString("prefix", "");
         prefix.setEnabled(pathhandling.getStringValue().equals(
-                PathHandling.TRUNCATE_PREFIX));
+                PathHandling.TRUNCATE_PREFIX.getName()));
         return prefix;
     }
 

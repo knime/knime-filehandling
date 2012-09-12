@@ -92,7 +92,8 @@ final class SettingsFactory {
      * @return Replace policy <code>SettingsModel</code>
      */
     static SettingsModelString createReplacePolicySettings() {
-        return new SettingsModelString("replacepolicy", "");
+        return new SettingsModelString("replacepolicy",
+                ReplacePolicy.APPEND.getName());
     }
 
 }

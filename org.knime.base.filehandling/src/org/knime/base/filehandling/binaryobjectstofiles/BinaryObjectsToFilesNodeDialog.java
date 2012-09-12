@@ -51,6 +51,8 @@
 package org.knime.base.filehandling.binaryobjectstofiles;
 
 import javax.swing.JFileChooser;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.StringValue;
 import org.knime.core.node.FlowVariableModel;
@@ -73,7 +75,7 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_outputdirectory;
 
-    private SettingsModelString m_filenames;
+    private SettingsModelString m_filenamehandling;
 
     private SettingsModelString m_namecolumn;
 
@@ -91,11 +93,23 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
         super();
         m_bocolumn = SettingsFactory.createBinaryObjectColumnSettings();
         m_outputdirectory = SettingsFactory.createOutputDirectorySettings();
-        m_filenames = SettingsFactory.createFilenamesSettings();
-        m_namecolumn = SettingsFactory.createNameColumnSettings();
-        m_namepattern = SettingsFactory.createNamePatternSettings();
+        m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
+        m_namecolumn =
+                SettingsFactory.createNameColumnSettings(m_filenamehandling);
+        m_namepattern =
+                SettingsFactory.createNamePatternSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
         m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
+        m_filenamehandling.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                String handling = m_filenamehandling.getStringValue();
+                m_namecolumn.setEnabled(handling
+                        .equals(FilenameHandling.FROMCOLUMN.getName()));
+                m_namepattern.setEnabled(handling
+                        .equals(FilenameHandling.GENERATE.getName()));
+            }
+        });
         // TODO change classtype to BinaryObjectValue
         addDialogComponent(new DialogComponentColumnNameSelection(m_bocolumn,
                 "Binary object column", 0, StringValue.class));
@@ -103,8 +117,8 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
                 "outputdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
                 m_outputdirectoryFvm));
         createNewGroup("Filenames...");
-        addDialogComponent(new DialogComponentButtonGroup(m_filenames, false,
-                "", FilenameHandling.getAllSettings()));
+        addDialogComponent(new DialogComponentButtonGroup(m_filenamehandling,
+                false, "", FilenameHandling.getAllSettings()));
         // TODO change classtype to URIValue
         addDialogComponent(new DialogComponentColumnNameSelection(m_namecolumn,
                 "Name column", 0, StringValue.class));
