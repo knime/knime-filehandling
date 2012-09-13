@@ -55,6 +55,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.StringValue;
+import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
@@ -112,9 +113,8 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
             }
         });
         // Binary object column
-        // TODO change classtype to BinaryObjectValue
         addDialogComponent(new DialogComponentColumnNameSelection(m_bocolumn,
-                "Binary object column", 0, StringValue.class));
+                "Binary object column", 0, BinaryObjectDataValue.class));
         // Output directory
         addDialogComponent(new DialogComponentFileChooser(m_outputdirectory,
                 "outputdirectoryHistory", JFileChooser.SAVE_DIALOG, true,

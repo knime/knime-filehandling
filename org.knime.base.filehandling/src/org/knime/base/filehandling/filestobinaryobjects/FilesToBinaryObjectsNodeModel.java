@@ -51,11 +51,20 @@
 package org.knime.base.filehandling.filestobinaryobjects;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
+import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
+import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.blob.BinaryObjectCellFactory;
+import org.knime.core.data.blob.BinaryObjectDataCell;
+import org.knime.core.data.container.CellFactory;
+import org.knime.core.data.container.ColumnRearranger;
+import org.knime.core.data.container.SingleCellFactory;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
@@ -97,9 +106,52 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
-        // TODO create new table, create binary objects out of files and put
-        // them in the table
-        return new BufferedDataTable[]{null};
+        ColumnRearranger rearranger =
+                createColumnRearranger(inData[0].getDataTableSpec(), exec);
+        BufferedDataTable out =
+                exec.createColumnRearrangeTable(inData[0], rearranger, exec);
+        return new BufferedDataTable[]{out};
+    }
+
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
+            final ExecutionContext exec) {
+        String locationcolumn = m_locationcolumn.getStringValue();
+        String bocolumnname = m_bocolumnname.getStringValue();
+        String replacepolicy = m_replacepolicy.getStringValue();
+        ColumnRearranger rearranger = new ColumnRearranger(inSpec);
+        DataColumnSpec colSpec =
+                new DataColumnSpecCreator(bocolumnname,
+                        BinaryObjectDataCell.TYPE).createSpec();
+        CellFactory factory = new SingleCellFactory(colSpec) {
+            @Override
+            public DataCell getCell(final DataRow row) {
+                return createBinaryObjectCell(row, inSpec, exec);
+            }
+        };
+        if (replacepolicy.equals(ReplacePolicy.APPEND.getName())) {
+            rearranger.append(factory);
+        }
+        if (replacepolicy.equals(ReplacePolicy.REPLACE.getName())) {
+            int index = inSpec.findColumnIndex(locationcolumn);
+            rearranger.replace(factory, index);
+        }
+        return rearranger;
+    }
+
+    private DataCell createBinaryObjectCell(final DataRow row,
+            final DataTableSpec inSpec, final ExecutionContext exec) {
+        DataCell result = null;
+        int locationIndex =
+                inSpec.findColumnIndex(m_locationcolumn.getStringValue());
+        String location =
+                ((StringCell)(row.getCell(locationIndex))).getStringValue();
+        try {
+            InputStream input = new FileInputStream(location);
+            result = new BinaryObjectCellFactory(exec).create(input);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        return result;
     }
 
     /**
@@ -131,59 +183,9 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
             throw new InvalidSettingsException(
                     "Binary object column name can not be empty");
         }
-        DataTableSpec outSpec = createOutSpec(inSpecs[0]);
+        DataTableSpec outSpec =
+                createColumnRearranger(inSpecs[0], null).createSpec();
         return new DataTableSpec[]{outSpec};
-    }
-
-    /**
-     * Factory method for the output table spec.
-     * 
-     * 
-     * The output table spec will either have the binary object column appended
-     * or it will replace the location column, depending on the settings.
-     * 
-     * @param inSpec Input table spec
-     * @return Output table spec
-     */
-    private DataTableSpec createOutSpec(final DataTableSpec inSpec) {
-        String replacepolicy = m_replacepolicy.getStringValue();
-        String bocolumnname = m_bocolumnname.getStringValue();
-        DataTableSpec outSpec = null;
-        // If the policy is replace then replace the location column with the
-        // binary object column
-        if (replacepolicy.equals(ReplacePolicy.REPLACE.getName())) {
-            // Get position of the column that will be replaced
-            int locationIndex =
-                    inSpec.findColumnIndex(m_locationcolumn.getStringValue());
-            // Create new column specs
-            DataColumnSpec[] columnSpecs =
-                    new DataColumnSpec[inSpec.getNumColumns()];
-            for (int i = 0; i < columnSpecs.length; i++) {
-                // If the index is not the index of the location column copy
-                // over the old column else replace it with the new one
-                if (i != locationIndex) {
-                    columnSpecs[i] = inSpec.getColumnSpec(i);
-                } else {
-                    // TODO replace StringCell with BinaryObjectCell
-                    columnSpecs[i] =
-                            new DataColumnSpecCreator(bocolumnname,
-                                    StringCell.TYPE).createSpec();
-                }
-            }
-            outSpec = new DataTableSpec(columnSpecs);
-        }
-        // If the policy is append than append the binary object column
-        if (replacepolicy.equals(ReplacePolicy.APPEND.getName())) {
-            DataColumnSpec[] columnSpecs = new DataColumnSpec[1];
-            // TODO replace StringCell with BinaryObjectCell
-            columnSpecs[0] =
-                    new DataColumnSpecCreator(bocolumnname, StringCell.TYPE)
-                            .createSpec();
-            DataTableSpec newSpec = new DataTableSpec(columnSpecs);
-            // Append the new spec to the in spec
-            outSpec = new DataTableSpec(inSpec, newSpec);
-        }
-        return outSpec;
     }
 
     /**

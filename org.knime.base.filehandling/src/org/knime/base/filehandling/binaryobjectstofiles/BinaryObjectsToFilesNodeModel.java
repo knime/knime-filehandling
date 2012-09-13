@@ -51,11 +51,20 @@
 package org.knime.base.filehandling.binaryobjectstofiles;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
+import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
+import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.blob.BinaryObjectFileStoreDataCell;
+import org.knime.core.data.container.AbstractCellFactory;
+import org.knime.core.data.container.CellFactory;
+import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
@@ -108,8 +117,83 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
-        // TODO create new table and write files
-        return new BufferedDataTable[]{null};
+        ColumnRearranger rearranger =
+                createColumnRearranger(inData[0].getDataTableSpec());
+        BufferedDataTable out =
+                exec.createColumnRearrangeTable(inData[0], rearranger, exec);
+        return new BufferedDataTable[]{out};
+    }
+
+    private ColumnRearranger createColumnRearranger(
+            final DataTableSpec inSpec) {
+        ColumnRearranger rearranger = new ColumnRearranger(inSpec);
+        DataColumnSpec[] colSpecs = new DataColumnSpec[2];
+        colSpecs[0] =
+                new DataColumnSpecCreator("Location", StringCell.TYPE)
+                        .createSpec();
+        colSpecs[1] =
+                new DataColumnSpecCreator("URL", StringCell.TYPE).createSpec();
+        CellFactory factory = new AbstractCellFactory(colSpecs) {
+            @Override
+            public DataCell[] getCells(final DataRow row) {
+                return createFile(row, inSpec);
+            }
+        };
+        rearranger.append(factory);
+        return rearranger;
+    }
+
+    private DataCell[] createFile(final DataRow row,
+            final DataTableSpec inSpec) {
+        String boColumn = m_bocolumn.getStringValue();
+        int boIndex = inSpec.findColumnIndex(boColumn);
+        String filenameHandling = m_filenamehandling.getStringValue();
+        String outputDirectory = m_outputdirectory.getStringValue();
+        String ifExists = m_ifexists.getStringValue();
+        String filename = "";
+        StringCell location = null;
+        StringCell url = null;
+        if (filenameHandling.equals(FilenameHandling.FROMCOLUMN.getName())) {
+            int nameIndex =
+                    inSpec.findColumnIndex(m_namecolumn.getStringValue());
+            filename = ((StringCell)(row.getCell(nameIndex))).getStringValue();
+        }
+        if (filenameHandling.equals(FilenameHandling.GENERATE.getName())) {
+            // TODO generate filename from pattern
+        }
+        try {
+            File file = new File(outputDirectory, filename);
+            if (file.exists()) {
+                if (ifExists.equals(OverwritePolicy.ABORT)) {
+                    throw new RuntimeException("File \""
+                            + file.getAbsolutePath()
+                            + "\" exists, overwrite policy: \"" + ifExists
+                            + "\"");
+                }
+                if (ifExists.equals(OverwritePolicy.OVERWRITE)) {
+                    file.delete();
+                }
+            }
+            byte[] buffer = new byte[1024];
+            file.createNewFile();
+            BinaryObjectFileStoreDataCell bocell =
+                    (BinaryObjectFileStoreDataCell)row.getCell(boIndex);
+            InputStream input = bocell.openInputStream();
+            OutputStream output = new FileOutputStream(file);
+            int length;
+            while ((length = input.read(buffer)) > 0) {
+                output.write(buffer, 0, length);
+            }
+            input.close();
+            output.close();
+            location = new StringCell(file.getAbsolutePath());
+            url =
+                    new StringCell(file.getAbsoluteFile().toURI().toURL()
+                            .toString());
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        return new DataCell[]{location, url};
     }
 
     /**
@@ -130,7 +214,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         if (m_bocolumn.getStringValue().equals("")) {
             throw new InvalidSettingsException("Binary object column not set");
         }
-        // Does the binary object column setting reference to an existing column?
+        // Does the binary object column setting reference to an existing
+        // column?
         int columnIndex =
                 inSpecs[0].findColumnIndex(m_bocolumn.getStringValue());
         if (columnIndex < 0) {
@@ -166,32 +251,9 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                         + " a ?");
             }
         }
-        DataTableSpec outSpec = createOutSpec(inSpecs[0]);
+        DataTableSpec outSpec =
+                createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};
-    }
-
-    /**
-     * Factory method for the output table spec.
-     * 
-     * 
-     * The output table spec will have two additional columns, for the location
-     * and URL.
-     * 
-     * @param inSpec Input table spec
-     * @return Output table spec
-     */
-    private DataTableSpec createOutSpec(final DataTableSpec inSpec) {
-        // TODO change to one URICell
-        DataColumnSpec[] columnSpecs = new DataColumnSpec[2];
-        columnSpecs[0] =
-                new DataColumnSpecCreator("Location", StringCell.TYPE)
-                        .createSpec();
-        columnSpecs[1] =
-                new DataColumnSpecCreator("URL", StringCell.TYPE).createSpec();
-        DataTableSpec newSpec = new DataTableSpec(columnSpecs);
-        // Append the new spec to the in spec
-        DataTableSpec outSpec = new DataTableSpec(inSpec, newSpec);
-        return outSpec;
     }
 
     /**
