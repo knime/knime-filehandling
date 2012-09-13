@@ -100,6 +100,7 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
                 SettingsFactory.createNamePatternSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
         m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
+        // Enable/disable settings according to filename handling
         m_filenamehandling.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
@@ -110,21 +111,27 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
                         .equals(FilenameHandling.GENERATE.getName()));
             }
         });
+        // Binary object column
         // TODO change classtype to BinaryObjectValue
         addDialogComponent(new DialogComponentColumnNameSelection(m_bocolumn,
                 "Binary object column", 0, StringValue.class));
+        // Output directory
         addDialogComponent(new DialogComponentFileChooser(m_outputdirectory,
                 "outputdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
                 m_outputdirectoryFvm));
+        // Filename handling
         createNewGroup("Filenames...");
         addDialogComponent(new DialogComponentButtonGroup(m_filenamehandling,
                 false, "", FilenameHandling.getAllSettings()));
+        // Name column
         // TODO change classtype to URIValue
         addDialogComponent(new DialogComponentColumnNameSelection(m_namecolumn,
                 "Name column", 0, StringValue.class));
+        // Name pattern
         addDialogComponent(new DialogComponentString(m_namepattern,
                 "Name pattern"));
         closeCurrentGroup();
+        // Overwrite policy
         addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
                 "If a file exists...", OverwritePolicy.getAllSettings()));
     }

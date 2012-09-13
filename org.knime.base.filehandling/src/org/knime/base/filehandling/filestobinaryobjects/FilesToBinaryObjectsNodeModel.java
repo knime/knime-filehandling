@@ -53,7 +53,10 @@ package org.knime.base.filehandling.filestobinaryobjects;
 import java.io.File;
 import java.io.IOException;
 
+import org.knime.core.data.DataColumnSpec;
+import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -94,6 +97,8 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
+        // TODO create new table, create binary objects out of files and put
+        // them in the table
         return new BufferedDataTable[]{null};
     }
 
@@ -111,19 +116,74 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
+        // Is the location column set?
         if (m_locationcolumn.getStringValue().equals("")) {
             throw new InvalidSettingsException("Location column not set");
         }
+        // Does the location column setting reference to an existing column?
         int columnIndex =
                 inSpecs[0].findColumnIndex(m_locationcolumn.getStringValue());
         if (columnIndex < 0) {
             throw new InvalidSettingsException("Location column not set");
         }
+        // Is the binary object column name empty?
         if (m_bocolumnname.getStringValue().equals("")) {
             throw new InvalidSettingsException(
-                    "Binary object column name not set");
+                    "Binary object column name can not be empty");
         }
-        return new DataTableSpec[]{null};
+        DataTableSpec outSpec = createOutSpec(inSpecs[0]);
+        return new DataTableSpec[]{outSpec};
+    }
+
+    /**
+     * Factory method for the output table spec.
+     * 
+     * 
+     * The output table spec will either have the binary object column appended
+     * or it will replace the location column, depending on the settings.
+     * 
+     * @param inSpec Input table spec
+     * @return Output table spec
+     */
+    private DataTableSpec createOutSpec(final DataTableSpec inSpec) {
+        String replacepolicy = m_replacepolicy.getStringValue();
+        String bocolumnname = m_bocolumnname.getStringValue();
+        DataTableSpec outSpec = null;
+        // If the policy is replace then replace the location column with the
+        // binary object column
+        if (replacepolicy.equals(ReplacePolicy.REPLACE.getName())) {
+            // Get position of the column that will be replaced
+            int locationIndex =
+                    inSpec.findColumnIndex(m_locationcolumn.getStringValue());
+            // Create new column specs
+            DataColumnSpec[] columnSpecs =
+                    new DataColumnSpec[inSpec.getNumColumns()];
+            for (int i = 0; i < columnSpecs.length; i++) {
+                // If the index is not the index of the location column copy
+                // over the old column else replace it with the new one
+                if (i != locationIndex) {
+                    columnSpecs[i] = inSpec.getColumnSpec(i);
+                } else {
+                    // TODO replace StringCell with BinaryObjectCell
+                    columnSpecs[i] =
+                            new DataColumnSpecCreator(bocolumnname,
+                                    StringCell.TYPE).createSpec();
+                }
+            }
+            outSpec = new DataTableSpec(columnSpecs);
+        }
+        // If the policy is append than append the binary object column
+        if (replacepolicy.equals(ReplacePolicy.APPEND.getName())) {
+            DataColumnSpec[] columnSpecs = new DataColumnSpec[1];
+            // TODO replace StringCell with BinaryObjectCell
+            columnSpecs[0] =
+                    new DataColumnSpecCreator(bocolumnname, StringCell.TYPE)
+                            .createSpec();
+            DataTableSpec newSpec = new DataTableSpec(columnSpecs);
+            // Append the new spec to the in spec
+            outSpec = new DataTableSpec(inSpec, newSpec);
+        }
+        return outSpec;
     }
 
     /**

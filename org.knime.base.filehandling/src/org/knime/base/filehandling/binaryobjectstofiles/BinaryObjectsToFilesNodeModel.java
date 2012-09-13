@@ -53,7 +53,10 @@ package org.knime.base.filehandling.binaryobjectstofiles;
 import java.io.File;
 import java.io.IOException;
 
+import org.knime.core.data.DataColumnSpec;
+import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -105,6 +108,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
+        // TODO create new table and write files
         return new BufferedDataTable[]{null};
     }
 
@@ -122,39 +126,72 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
+        // Is the binary object column set?
         if (m_bocolumn.getStringValue().equals("")) {
             throw new InvalidSettingsException("Binary object column not set");
         }
+        // Does the binary object column setting reference to an existing column?
         int columnIndex =
                 inSpecs[0].findColumnIndex(m_bocolumn.getStringValue());
         if (columnIndex < 0) {
             throw new InvalidSettingsException("Binary object column not set");
         }
+        // Does the output directory exist?
         File outputdirectory = new File(m_outputdirectory.getStringValue());
         if (!outputdirectory.isDirectory()) {
             throw new InvalidSettingsException(
                     "Output directory does not exist");
         }
+        // Check settings only if filename handling is from column
         if (m_filenamehandling.getStringValue().equals(
                 FilenameHandling.FROMCOLUMN.getName())) {
+            // Is the name column set?
             if (m_namecolumn.getStringValue().equals("")) {
                 throw new InvalidSettingsException("Name column not set");
             }
+            // Does the name column setting reference to an existing column?
             columnIndex =
                     inSpecs[0].findColumnIndex(m_namecolumn.getStringValue());
             if (columnIndex < 0) {
                 throw new InvalidSettingsException("Name column not set");
             }
         }
+        // Check settings only if filename handling is generate
         if (m_filenamehandling.getStringValue().equals(
                 FilenameHandling.GENERATE.getName())) {
+            // Does the name pattern at least contain a '?'?
             String pattern = m_namepattern.getStringValue();
             if (!pattern.contains("?")) {
                 throw new InvalidSettingsException("Pattern has to contain"
                         + " a ?");
             }
         }
-        return new DataTableSpec[]{null};
+        DataTableSpec outSpec = createOutSpec(inSpecs[0]);
+        return new DataTableSpec[]{outSpec};
+    }
+
+    /**
+     * Factory method for the output table spec.
+     * 
+     * 
+     * The output table spec will have two additional columns, for the location
+     * and URL.
+     * 
+     * @param inSpec Input table spec
+     * @return Output table spec
+     */
+    private DataTableSpec createOutSpec(final DataTableSpec inSpec) {
+        // TODO change to one URICell
+        DataColumnSpec[] columnSpecs = new DataColumnSpec[2];
+        columnSpecs[0] =
+                new DataColumnSpecCreator("Location", StringCell.TYPE)
+                        .createSpec();
+        columnSpecs[1] =
+                new DataColumnSpecCreator("URL", StringCell.TYPE).createSpec();
+        DataTableSpec newSpec = new DataTableSpec(columnSpecs);
+        // Append the new spec to the in spec
+        DataTableSpec outSpec = new DataTableSpec(inSpec, newSpec);
+        return outSpec;
     }
 
     /**

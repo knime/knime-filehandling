@@ -80,10 +80,13 @@ class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
         m_locationcolumn = SettingsFactory.createLocationColumnSettings();
         m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
         m_replacepolicy = SettingsFactory.createReplacePolicySettings();
+        // Location column
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_locationcolumn, "Location column", 0, StringValue.class));
+        // Binary object column name
         addDialogComponent(new DialogComponentString(m_bocolumnname,
                 "Binary object column name"));
+        // Replace policy
         addDialogComponent(new DialogComponentButtonGroup(m_replacepolicy,
                 false, "Append column or replace location?",
                 ReplacePolicy.getAllSettings()));

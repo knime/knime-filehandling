@@ -428,7 +428,7 @@ class ZipNodeModel extends NodeModel {
         if (m_urlcolumn.getStringValue().equals("")) {
             throw new InvalidSettingsException("URL column not set");
         }
-        // Does the URL column setting reference an existing column?
+        // Does the URL column setting reference to an existing column?
         int columnIndex =
                 inSpecs[0].findColumnIndex(m_urlcolumn.getStringValue());
         if (columnIndex < 0) {
