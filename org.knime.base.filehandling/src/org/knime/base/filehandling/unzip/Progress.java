@@ -48,7 +48,7 @@
  * History
  *   Sep 14, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.binaryobjectstofiles;
+package org.knime.base.filehandling.unzip;
 
 /**
  * Convenience class for progress tracking.

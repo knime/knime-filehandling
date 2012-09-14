@@ -103,10 +103,6 @@ class ZipNodeModel extends NodeModel {
 
     private SettingsModelIntegerBounded m_compressionlevel;
 
-    private long m_processedSize;
-
-    private long m_size;
-
     private Set<String> m_newfiles;
 
     /**
@@ -176,8 +172,6 @@ class ZipNodeModel extends NodeModel {
      */
     private void writeToZip(final String[] filenames, final String target,
             final ExecutionContext exec) throws Exception {
-        m_processedSize = 0;
-        m_size = 0;
         m_newfiles = new HashSet<String>();
         ZipOutputStream zout = null;
         File newFile = new File(target);
@@ -202,20 +196,23 @@ class ZipNodeModel extends NodeModel {
             // Set compression level
             zout.setLevel(m_compressionlevel.getIntValue());
             // Calculate size of files
-            m_size = sizeOfFiles(files);
+            long size = sizeOfFiles(files);
             // Copy existing files into new zip file
             if (fileExists) {
                 for (int i = 0; i < files.length; i++) {
                     m_newfiles.add(getName(files[i]));
                 }
                 // Add size of files in the old zip file
-                m_size += checkFilesInZip(oldFile, exec);
+                size += checkFilesInZip(oldFile, exec);
+            }
+            Progress progress = new Progress(size);
+            if (fileExists) {
                 // Add old files to new zip file
-                addOldFiles(oldFile, zout, exec);
+                addOldFiles(oldFile, zout, progress, exec);
             }
             // Add new files to zip file
             for (int i = 0; i < files.length; i++) {
-                addFile(files[i], zout, exec);
+                addFile(files[i], zout, progress, exec);
             }
             zout.close();
             // Remove old file
@@ -250,7 +247,8 @@ class ZipNodeModel extends NodeModel {
      * @throws Exception When abort condition is met or user canceled
      */
     private void addOldFiles(final File oldFile, final ZipOutputStream zout,
-            final ExecutionContext exec) throws Exception {
+            final Progress progress, final ExecutionContext exec)
+            throws Exception {
         FileInputStream in = new FileInputStream(oldFile);
         ZipInputStream zin = new ZipInputStream(in);
         try {
@@ -270,9 +268,9 @@ class ZipNodeModel extends NodeModel {
                     int length;
                     while ((length = zin.read(buffer)) > 0) {
                         exec.checkCanceled();
-                        exec.setProgress((double)m_processedSize / m_size);
+                        exec.setProgress(progress.getProgressInPercent());
                         zout.write(buffer, 0, length);
-                        m_processedSize += length;
+                        progress.advance(length);
                     }
                 } else {
                     LOGGER.info("Replacing existing file \"" + name + "\"");
@@ -346,20 +344,21 @@ class ZipNodeModel extends NodeModel {
      * @throws Exception If the file can not be read or user canceled
      */
     private void addFile(final File file, final ZipOutputStream zout,
-            final ExecutionContext exec) throws Exception {
+            final Progress progress, final ExecutionContext exec)
+            throws Exception {
         FileInputStream in = null;
         try {
             byte[] buffer = new byte[1024];
-            exec.setProgress((double)m_processedSize / m_size);
+            exec.setProgress(progress.getProgressInPercent());
             in = new FileInputStream(file);
             String filename = getName(file);
             zout.putNextEntry(new ZipEntry(filename));
             int length;
             while ((length = in.read(buffer)) > 0) {
                 exec.checkCanceled();
-                exec.setProgress((double)m_processedSize / m_size);
+                exec.setProgress(progress.getProgressInPercent());
                 zout.write(buffer, 0, length);
-                m_processedSize += length;
+                progress.advance(length);
             }
             zout.closeEntry();
         } finally {
