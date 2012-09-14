@@ -136,10 +136,19 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         return new BufferedDataTable[]{out};
     }
 
-    private void cleanUp(final String[] files) {
-        for (int i = 0; i < files.length; i++) {
+    /**
+     * Delete all the given files.
+     * 
+     * 
+     * This method should be called, in case the execution got aborted. It will
+     * delete all files referenced by the array.
+     * 
+     * @param filenames Files that should be deleted.
+     */
+    private void cleanUp(final String[] filenames) {
+        for (int i = 0; i < filenames.length; i++) {
             try {
-                File file = new File(files[0]);
+                File file = new File(filenames[0]);
                 file.delete();
             } catch (Exception e) {
                 // If one file fails, the others should still be deleted
@@ -147,6 +156,17 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         }
     }
 
+    /**
+     * Create a rearranger that adds the location and URL columns.
+     * 
+     * 
+     * @param inSpec Specification of the input table
+     * @param filenames Set of files that have already been created
+     * @param exec Context of this execution
+     * @return Rearranger that will add columns for the location and URL of the
+     *         created files.
+     * @throws InvalidSettingsException If the settings are incorrect
+     */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
             final Set<String> filenames, final ExecutionContext exec)
             throws InvalidSettingsException {
@@ -180,6 +200,13 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         return rearranger;
     }
 
+    /**
+     * Check if the settings are all valid.
+     * 
+     * 
+     * @param inSpec Specification of the input table
+     * @throws InvalidSettingsException If the settings are incorrect
+     */
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
         // Is the binary object column set?
@@ -236,6 +263,21 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         }
     }
 
+    /**
+     * Creates a file from the binary object, contained in the row.
+     * 
+     * 
+     * This method creates a file out of the binary object, that is contained in
+     * the row. The filename is either also extracted from the row or generated
+     * by using the set pattern and the rows number.
+     * 
+     * @param row Row with the needet data
+     * @param rowNr Number of the row in the table
+     * @param filenames Set of files that have already been created
+     * @param inSpec Specification of the input table
+     * @param exec Context of this execution
+     * @return Cells containing the location and URL to the created file
+     */
     private DataCell[] createFile(final DataRow row, final int rowNr,
             final Set<String> filenames, final DataTableSpec inSpec,
             final ExecutionContext exec) {
@@ -243,19 +285,20 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         int boIndex = inSpec.findColumnIndex(boColumn);
         String filenameHandling = m_filenamehandling.getStringValue();
         String outputDirectory = m_outputdirectory.getStringValue();
+        String fromColumn = FilenameHandling.FROMCOLUMN.getName();
+        String generate = FilenameHandling.GENERATE.getName();
         String ifExists = m_ifexists.getStringValue();
         String filename = "";
         DataCell location = DataType.getMissingCell();
         DataCell url = DataType.getMissingCell();
         if (!row.getCell(boIndex).isMissing()) {
-            if (filenameHandling.equals(
-                    FilenameHandling.FROMCOLUMN.getName())) {
+            if (filenameHandling.equals(fromColumn)) {
                 int nameIndex =
                         inSpec.findColumnIndex(m_namecolumn.getStringValue());
                 filename =
                         ((StringCell)(row.getCell(nameIndex))).getStringValue();
             }
-            if (filenameHandling.equals(FilenameHandling.GENERATE.getName())) {
+            if (filenameHandling.equals(generate)) {
                 filename =
                         m_namepattern.getStringValue().replace("?", "" + rowNr);
             }
@@ -317,8 +360,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
         DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0], null, null)
-                        .createSpec();
+                createColumnRearranger(inSpecs[0], null, null).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 

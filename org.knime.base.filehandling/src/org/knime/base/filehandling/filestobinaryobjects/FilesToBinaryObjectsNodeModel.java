@@ -114,6 +114,15 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         return new BufferedDataTable[]{out};
     }
 
+    /**
+     * Create a rearranger that adds the binary objects to the table.
+     * 
+     * 
+     * @param inSpec Specification of the input table
+     * @param exec Context of this execution
+     * @return Rearranger that will add a binary object column
+     * @throws InvalidSettingsException If the settings are incorrect
+     */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
             final ExecutionContext exec) throws InvalidSettingsException {
         checkSettings(inSpec);
@@ -142,6 +151,13 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         return rearranger;
     }
 
+    /**
+     * Check if the settings are all valid.
+     * 
+     * 
+     * @param inSpec Specification of the input table
+     * @throws InvalidSettingsException If the settings are incorrect
+     */
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
         // Is the location column set?
@@ -167,6 +183,18 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         }
     }
 
+    /**
+     * Create a cell containing the binary object.
+     * 
+     * 
+     * Create a cell containing the binary object to the file referenced by the
+     * location cell of the row.
+     * 
+     * @param row
+     * @param inSpec
+     * @param bocellfactory
+     * @return Cell containing the binary object
+     */
     private DataCell createBinaryObjectCell(final DataRow row,
             final DataTableSpec inSpec,
             final BinaryObjectCellFactory bocellfactory) {
