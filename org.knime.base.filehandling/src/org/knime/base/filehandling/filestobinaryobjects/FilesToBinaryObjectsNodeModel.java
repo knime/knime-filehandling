@@ -125,16 +125,20 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
             final ExecutionContext exec) throws InvalidSettingsException {
+        // Check settings for correctness
         checkSettings(inSpec);
+        // Create binary object factory
         final BinaryObjectCellFactory bocellfactory =
                 new BinaryObjectCellFactory(exec);
         String locationcolumn = m_locationcolumn.getStringValue();
         String bocolumnname = m_bocolumnname.getStringValue();
         String replacepolicy = m_replacepolicy.getStringValue();
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
+        // Create column of the binary objects
         DataColumnSpec colSpec =
                 new DataColumnSpecCreator(bocolumnname,
                         BinaryObjectDataCell.TYPE).createSpec();
+        // Factory that creates the binary objects
         CellFactory factory = new SingleCellFactory(colSpec) {
             @Override
             public DataCell getCell(final DataRow row) {
@@ -142,9 +146,11 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
             }
         };
         if (replacepolicy.equals(ReplacePolicy.APPEND.getName())) {
+            // Append the binary object column
             rearranger.append(factory);
         }
         if (replacepolicy.equals(ReplacePolicy.REPLACE.getName())) {
+            // Replace location column with the binary object column
             int index = inSpec.findColumnIndex(locationcolumn);
             rearranger.replace(factory, index);
         }
@@ -198,20 +204,21 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     private DataCell createBinaryObjectCell(final DataRow row,
             final DataTableSpec inSpec,
             final BinaryObjectCellFactory bocellfactory) {
-        DataCell result = null;
+        // Assume missing cell
+        DataCell result = DataType.getMissingCell();
         int locationIndex =
                 inSpec.findColumnIndex(m_locationcolumn.getStringValue());
         if (!row.getCell(locationIndex).isMissing()) {
+            // Get location
             String location =
                     ((StringValue)row.getCell(locationIndex)).getStringValue();
             try {
+                // Create input stream and give it to the factory
                 InputStream input = new FileInputStream(location);
                 result = bocellfactory.create(input);
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
             }
-        } else {
-            result = DataType.getMissingCell();
         }
         return result;
     }
@@ -230,6 +237,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
+        // createColumnRearranger will check the settings
         DataTableSpec outSpec =
                 createColumnRearranger(inSpecs[0], null).createSpec();
         return new DataTableSpec[]{outSpec};

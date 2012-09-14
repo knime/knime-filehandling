@@ -123,6 +123,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
         BufferedDataTable out = null;
+        // HashSet for duplicate checking and cleanup
         Set<String> filenames = new HashSet<String>();
         try {
             ColumnRearranger rearranger =
@@ -130,6 +131,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                             filenames, exec);
             out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         } catch (Exception e) {
+            // In case of exception, delete all created files
             cleanUp(filenames.toArray(new String[filenames.size()]));
             throw e;
         }
@@ -170,14 +172,19 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
             final Set<String> filenames, final ExecutionContext exec)
             throws InvalidSettingsException {
+        // Check settings for correctness
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec[] colSpecs = new DataColumnSpec[2];
+        // Create column for the location of the files
         colSpecs[0] =
                 new DataColumnSpecCreator("Location", StringCell.TYPE)
                         .createSpec();
+        // Create column for the URL of the files
         colSpecs[1] =
                 new DataColumnSpecCreator("URL", StringCell.TYPE).createSpec();
+        // Factory that creates the files and the corresponding location and URL
+        // cells
         CellFactory factory = new AbstractCellFactory(colSpecs) {
             private int m_rownr = 0;
 
@@ -193,6 +200,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             public void setProgress(final int curRowNr, final int rowCount,
                     final RowKey lastKey, final ExecutionMonitor exec2) {
                 super.setProgress(curRowNr, rowCount, lastKey, exec2);
+                // Save the row for pattern creation
                 m_rownr = curRowNr;
             }
         };
@@ -289,51 +297,64 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         String generate = FilenameHandling.GENERATE.getName();
         String ifExists = m_ifexists.getStringValue();
         String filename = "";
+        // Assume missing binary object
         DataCell location = DataType.getMissingCell();
         DataCell url = DataType.getMissingCell();
         if (!row.getCell(boIndex).isMissing()) {
             if (filenameHandling.equals(fromColumn)) {
+                // Get filename from table
                 int nameIndex =
                         inSpec.findColumnIndex(m_namecolumn.getStringValue());
                 filename =
                         ((StringCell)(row.getCell(nameIndex))).getStringValue();
             }
             if (filenameHandling.equals(generate)) {
+                // Generate filename using pattern, by replacing the ? with the
+                // row number
                 filename =
                         m_namepattern.getStringValue().replace("?", "" + rowNr);
             }
             try {
                 File file = new File(outputDirectory, filename);
+                // Check if a file with the same name has already been created
                 if (filenames.contains(file.getAbsolutePath())) {
                     throw new RuntimeException("Duplicate entry \""
                             + file.getAbsolutePath()
                             + "\" in the filenames column");
                 }
+                // Check if a file with the same name already exists (but was
+                // not created by this execution)
                 if (file.exists()) {
+                    // Abort if policy is abort
                     if (ifExists.equals(OverwritePolicy.ABORT)) {
                         throw new RuntimeException("File \""
                                 + file.getAbsolutePath()
                                 + "\" exists, overwrite policy: \"" + ifExists
                                 + "\"");
                     }
+                    // Remove if policy is overwrite
                     if (ifExists.equals(OverwritePolicy.OVERWRITE)) {
                         file.delete();
                     }
                 }
-                filenames.add(file.getAbsolutePath());
                 byte[] buffer = new byte[1024];
                 file.createNewFile();
+                // Add file to created files
+                filenames.add(file.getAbsolutePath());
+                // Get input stream from the binary object
                 BinaryObjectDataValue bocell =
                         (BinaryObjectDataValue)row.getCell(boIndex);
                 InputStream input = bocell.openInputStream();
                 OutputStream output = new FileOutputStream(file);
                 int length;
+                // Copy data from binary object to file
                 while ((length = input.read(buffer)) > 0) {
                     exec.checkCanceled();
                     output.write(buffer, 0, length);
                 }
                 input.close();
                 output.close();
+                // Create cells with the location and URL information
                 location = new StringCell(file.getAbsolutePath());
                 url =
                         new StringCell(file.getAbsoluteFile().toURI().toURL()
@@ -359,6 +380,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
+        // createColumnRearranger will check the settings
         DataTableSpec outSpec =
                 createColumnRearranger(inSpecs[0], null, null).createSpec();
         return new DataTableSpec[]{outSpec};
