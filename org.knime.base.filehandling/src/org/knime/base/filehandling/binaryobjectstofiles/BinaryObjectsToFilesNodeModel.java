@@ -125,11 +125,9 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         BufferedDataTable out = null;
         Set<String> filenames = new HashSet<String>();
         try {
-            long size = inspectData(inData[0], exec);
-            Progress progress = new Progress(size);
             ColumnRearranger rearranger =
                     createColumnRearranger(inData[0].getDataTableSpec(),
-                            filenames, progress, exec);
+                            filenames, exec);
             out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         } catch (Exception e) {
             cleanUp(filenames.toArray(new String[filenames.size()]));
@@ -149,24 +147,9 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         }
     }
 
-    private long inspectData(final BufferedDataTable inData,
-            final ExecutionContext exec) throws Exception {
-        long size = 0;
-        int index =
-                inData.getDataTableSpec().findColumnIndex(
-                        m_bocolumn.getStringValue());
-        for (DataRow row : inData) {
-            exec.checkCanceled();
-            if (!row.getCell(index).isMissing()) {
-                size += ((BinaryObjectDataValue)row.getCell(index)).length();
-            }
-        }
-        return size;
-    }
-
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final Set<String> filenames, final Progress progress,
-            final ExecutionContext exec) throws InvalidSettingsException {
+            final Set<String> filenames, final ExecutionContext exec)
+            throws InvalidSettingsException {
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec[] colSpecs = new DataColumnSpec[2];
@@ -180,8 +163,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
             @Override
             public DataCell[] getCells(final DataRow row) {
-                return createFile(row, m_rownr, filenames, progress, inSpec,
-                        exec);
+                return createFile(row, m_rownr, filenames, inSpec, exec);
             }
 
             /**
@@ -190,7 +172,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             @Override
             public void setProgress(final int curRowNr, final int rowCount,
                     final RowKey lastKey, final ExecutionMonitor exec2) {
-                exec.setProgress(progress.getProgressInPercent());
+                super.setProgress(curRowNr, rowCount, lastKey, exec2);
                 m_rownr = curRowNr;
             }
         };
@@ -255,8 +237,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     }
 
     private DataCell[] createFile(final DataRow row, final int rowNr,
-            final Set<String> filenames, final Progress progress,
-            final DataTableSpec inSpec, final ExecutionContext exec) {
+            final Set<String> filenames, final DataTableSpec inSpec,
+            final ExecutionContext exec) {
         String boColumn = m_bocolumn.getStringValue();
         int boIndex = inSpec.findColumnIndex(boColumn);
         String filenameHandling = m_filenamehandling.getStringValue();
@@ -305,9 +287,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 int length;
                 while ((length = input.read(buffer)) > 0) {
                     exec.checkCanceled();
-                    exec.setProgress(progress.getProgressInPercent());
                     output.write(buffer, 0, length);
-                    progress.advance(length);
                 }
                 input.close();
                 output.close();
@@ -337,8 +317,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
         DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0], null, null,
-                        null).createSpec();
+                createColumnRearranger(inSpecs[0], null, null)
+                        .createSpec();
         return new DataTableSpec[]{outSpec};
     }
 
