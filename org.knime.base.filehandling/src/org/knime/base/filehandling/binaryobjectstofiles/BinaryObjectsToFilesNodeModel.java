@@ -63,6 +63,7 @@ import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
 import org.knime.core.data.RowKey;
+import org.knime.core.data.StringValue;
 import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.core.data.container.AbstractCellFactory;
 import org.knime.core.data.container.CellFactory;
@@ -189,6 +190,12 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         if (columnIndex < 0) {
             throw new InvalidSettingsException("Binary object column not set");
         }
+        // Is the binary object column setting referencing to a column of the
+        // type binary object data value?
+        DataType type = inSpec.getColumnSpec(columnIndex).getType();
+        if (!type.isCompatible(BinaryObjectDataValue.class)) {
+            throw new InvalidSettingsException("Binary object column not set");
+        }
         // Does the output directory exist?
         File outputdirectory = new File(m_outputdirectory.getStringValue());
         if (!outputdirectory.isDirectory()) {
@@ -206,6 +213,13 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             columnIndex = inSpec.findColumnIndex(m_namecolumn.getStringValue());
             if (columnIndex < 0) {
                 throw new InvalidSettingsException("Name column not set");
+            }
+            // Is the name column setting referencing to a column of the type
+            // string data value?
+            type = inSpec.getColumnSpec(columnIndex).getType();
+            if (!type.isCompatible(StringValue.class)) {
+                throw new InvalidSettingsException(
+                        "Binary object column not set");
             }
         }
         // Check settings only if filename handling is generate

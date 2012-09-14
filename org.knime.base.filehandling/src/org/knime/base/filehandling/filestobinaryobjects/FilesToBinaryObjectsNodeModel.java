@@ -154,6 +154,12 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         if (columnIndex < 0) {
             throw new InvalidSettingsException("Location column not set");
         }
+        // Is the location column setting referencing to a column of the type
+        // string value?
+        DataType type = inSpec.getColumnSpec(columnIndex).getType();
+        if (!type.isCompatible(StringValue.class)) {
+            throw new InvalidSettingsException("Location column not set");
+        }
         // Is the binary object column name empty?
         if (m_bocolumnname.getStringValue().equals("")) {
             throw new InvalidSettingsException(

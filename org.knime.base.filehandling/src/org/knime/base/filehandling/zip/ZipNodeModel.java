@@ -66,6 +66,8 @@ import java.util.zip.ZipOutputStream;
 
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
+import org.knime.core.data.StringValue;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -432,6 +434,12 @@ class ZipNodeModel extends NodeModel {
         int columnIndex =
                 inSpecs[0].findColumnIndex(m_urlcolumn.getStringValue());
         if (columnIndex < 0) {
+            throw new InvalidSettingsException("URL column not set");
+        }
+        // Is the URL column setting referencing to a column of the type
+        // string value?
+        DataType type = inSpecs[0].getColumnSpec(columnIndex).getType();
+        if (!type.isCompatible(StringValue.class)) {
             throw new InvalidSettingsException("URL column not set");
         }
         // Is the target set?
