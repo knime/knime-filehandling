@@ -61,6 +61,7 @@ import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
 import org.knime.core.data.RowKey;
 import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.core.data.container.AbstractCellFactory;
@@ -97,10 +98,6 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     private SettingsModelString m_ifexists;
 
-    private long m_size;
-
-    private long m_processedsize;
-
     /**
      * Constructor for the node model.
      */
@@ -122,30 +119,35 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
-        inspectData(inData[0], exec);
+        long size = inspectData(inData[0], exec);
+        Progress progress = new Progress(size);
         ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec(), exec);
+                createColumnRearranger(inData[0].getDataTableSpec(), progress,
+                        exec);
         BufferedDataTable out =
                 exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
-    private void inspectData(final BufferedDataTable inData,
+    private long inspectData(final BufferedDataTable inData,
             final ExecutionContext exec) throws Exception {
-        m_size = 0;
+        long size = 0;
         int index =
                 inData.getDataTableSpec().findColumnIndex(
                         m_bocolumn.getStringValue());
         for (DataRow row : inData) {
             exec.checkCanceled();
             if (!row.getCell(index).isMissing()) {
-                m_size += ((BinaryObjectDataValue)row.getCell(index)).length();
+                size += ((BinaryObjectDataValue)row.getCell(index)).length();
             }
         }
+        return size;
     }
 
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final ExecutionContext exec) {
+            final Progress progress, final ExecutionContext exec)
+            throws InvalidSettingsException {
+        checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec[] colSpecs = new DataColumnSpec[2];
         colSpecs[0] =
@@ -158,7 +160,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
             @Override
             public DataCell[] getCells(final DataRow row) {
-                return createFile(row, m_rownr, inSpec, exec);
+                return createFile(row, m_rownr, progress, inSpec, exec);
             }
 
             /**
@@ -167,7 +169,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             @Override
             public void setProgress(final int curRowNr, final int rowCount,
                     final RowKey lastKey, final ExecutionMonitor exec2) {
-                exec.setProgress((double)m_processedsize / m_size);
+                exec.setProgress(progress.getProgressInPercent());
                 m_rownr = curRowNr;
             }
         };
@@ -175,58 +177,107 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         return rearranger;
     }
 
+    private void checkSettings(final DataTableSpec inSpec)
+            throws InvalidSettingsException {
+        // Is the binary object column set?
+        if (m_bocolumn.getStringValue().equals("")) {
+            throw new InvalidSettingsException("Binary object column not set");
+        }
+        // Does the binary object column setting reference to an existing
+        // column?
+        int columnIndex = inSpec.findColumnIndex(m_bocolumn.getStringValue());
+        if (columnIndex < 0) {
+            throw new InvalidSettingsException("Binary object column not set");
+        }
+        // Does the output directory exist?
+        File outputdirectory = new File(m_outputdirectory.getStringValue());
+        if (!outputdirectory.isDirectory()) {
+            throw new InvalidSettingsException(
+                    "Output directory does not exist");
+        }
+        // Check settings only if filename handling is from column
+        if (m_filenamehandling.getStringValue().equals(
+                FilenameHandling.FROMCOLUMN.getName())) {
+            // Is the name column set?
+            if (m_namecolumn.getStringValue().equals("")) {
+                throw new InvalidSettingsException("Name column not set");
+            }
+            // Does the name column setting reference to an existing column?
+            columnIndex = inSpec.findColumnIndex(m_namecolumn.getStringValue());
+            if (columnIndex < 0) {
+                throw new InvalidSettingsException("Name column not set");
+            }
+        }
+        // Check settings only if filename handling is generate
+        if (m_filenamehandling.getStringValue().equals(
+                FilenameHandling.GENERATE.getName())) {
+            // Does the name pattern at least contain a '?'?
+            String pattern = m_namepattern.getStringValue();
+            if (!pattern.contains("?")) {
+                throw new InvalidSettingsException("Pattern has to contain"
+                        + " a ?");
+            }
+        }
+    }
+
     private DataCell[] createFile(final DataRow row, final int rowNr,
-            final DataTableSpec inSpec, final ExecutionContext exec) {
+            final Progress progress, final DataTableSpec inSpec,
+            final ExecutionContext exec) {
         String boColumn = m_bocolumn.getStringValue();
         int boIndex = inSpec.findColumnIndex(boColumn);
         String filenameHandling = m_filenamehandling.getStringValue();
         String outputDirectory = m_outputdirectory.getStringValue();
         String ifExists = m_ifexists.getStringValue();
         String filename = "";
-        StringCell location = null;
-        StringCell url = null;
-        if (filenameHandling.equals(FilenameHandling.FROMCOLUMN.getName())) {
-            int nameIndex =
-                    inSpec.findColumnIndex(m_namecolumn.getStringValue());
-            filename = ((StringCell)(row.getCell(nameIndex))).getStringValue();
-        }
-        if (filenameHandling.equals(FilenameHandling.GENERATE.getName())) {
-            filename = m_namepattern.getStringValue().replace("?", "" + rowNr);
-        }
-        try {
-            File file = new File(outputDirectory, filename);
-            if (file.exists()) {
-                if (ifExists.equals(OverwritePolicy.ABORT)) {
-                    throw new RuntimeException("File \""
-                            + file.getAbsolutePath()
-                            + "\" exists, overwrite policy: \"" + ifExists
-                            + "\"");
-                }
-                if (ifExists.equals(OverwritePolicy.OVERWRITE)) {
-                    file.delete();
-                }
+        DataCell location = DataType.getMissingCell();
+        DataCell url = DataType.getMissingCell();
+        if (!row.getCell(boIndex).isMissing()) {
+            if (filenameHandling.equals(
+                    FilenameHandling.FROMCOLUMN.getName())) {
+                int nameIndex =
+                        inSpec.findColumnIndex(m_namecolumn.getStringValue());
+                filename =
+                        ((StringCell)(row.getCell(nameIndex))).getStringValue();
             }
-            byte[] buffer = new byte[1024];
-            file.createNewFile();
-            BinaryObjectDataValue bocell =
-                    (BinaryObjectDataValue)row.getCell(boIndex);
-            InputStream input = bocell.openInputStream();
-            OutputStream output = new FileOutputStream(file);
-            int length;
-            while ((length = input.read(buffer)) > 0) {
-                exec.checkCanceled();
-                exec.setProgress((double)m_processedsize / m_size);
-                output.write(buffer, 0, length);
-                m_processedsize += length;
+            if (filenameHandling.equals(FilenameHandling.GENERATE.getName())) {
+                filename =
+                        m_namepattern.getStringValue().replace("?", "" + rowNr);
             }
-            input.close();
-            output.close();
-            location = new StringCell(file.getAbsolutePath());
-            url =
-                    new StringCell(file.getAbsoluteFile().toURI().toURL()
-                            .toString());
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            try {
+                File file = new File(outputDirectory, filename);
+                if (file.exists()) {
+                    if (ifExists.equals(OverwritePolicy.ABORT)) {
+                        throw new RuntimeException("File \""
+                                + file.getAbsolutePath()
+                                + "\" exists, overwrite policy: \"" + ifExists
+                                + "\"");
+                    }
+                    if (ifExists.equals(OverwritePolicy.OVERWRITE)) {
+                        file.delete();
+                    }
+                }
+                byte[] buffer = new byte[1024];
+                file.createNewFile();
+                BinaryObjectDataValue bocell =
+                        (BinaryObjectDataValue)row.getCell(boIndex);
+                InputStream input = bocell.openInputStream();
+                OutputStream output = new FileOutputStream(file);
+                int length;
+                while ((length = input.read(buffer)) > 0) {
+                    exec.checkCanceled();
+                    exec.setProgress(progress.getProgressInPercent());
+                    output.write(buffer, 0, length);
+                    progress.advance(length);
+                }
+                input.close();
+                output.close();
+                location = new StringCell(file.getAbsolutePath());
+                url =
+                        new StringCell(file.getAbsoluteFile().toURI().toURL()
+                                .toString());
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage());
+            }
         }
         return new DataCell[]{location, url};
     }
@@ -245,49 +296,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
-        // Is the binary object column set?
-        if (m_bocolumn.getStringValue().equals("")) {
-            throw new InvalidSettingsException("Binary object column not set");
-        }
-        // Does the binary object column setting reference to an existing
-        // column?
-        int columnIndex =
-                inSpecs[0].findColumnIndex(m_bocolumn.getStringValue());
-        if (columnIndex < 0) {
-            throw new InvalidSettingsException("Binary object column not set");
-        }
-        // Does the output directory exist?
-        File outputdirectory = new File(m_outputdirectory.getStringValue());
-        if (!outputdirectory.isDirectory()) {
-            throw new InvalidSettingsException(
-                    "Output directory does not exist");
-        }
-        // Check settings only if filename handling is from column
-        if (m_filenamehandling.getStringValue().equals(
-                FilenameHandling.FROMCOLUMN.getName())) {
-            // Is the name column set?
-            if (m_namecolumn.getStringValue().equals("")) {
-                throw new InvalidSettingsException("Name column not set");
-            }
-            // Does the name column setting reference to an existing column?
-            columnIndex =
-                    inSpecs[0].findColumnIndex(m_namecolumn.getStringValue());
-            if (columnIndex < 0) {
-                throw new InvalidSettingsException("Name column not set");
-            }
-        }
-        // Check settings only if filename handling is generate
-        if (m_filenamehandling.getStringValue().equals(
-                FilenameHandling.GENERATE.getName())) {
-            // Does the name pattern at least contain a '?'?
-            String pattern = m_namepattern.getStringValue();
-            if (!pattern.contains("?")) {
-                throw new InvalidSettingsException("Pattern has to contain"
-                        + " a ?");
-            }
-        }
         DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0], null).createSpec();
+                createColumnRearranger(inSpecs[0], null, null).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 

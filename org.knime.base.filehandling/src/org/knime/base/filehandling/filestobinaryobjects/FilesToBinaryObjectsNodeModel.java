@@ -60,12 +60,13 @@ import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
+import org.knime.core.data.StringValue;
 import org.knime.core.data.blob.BinaryObjectCellFactory;
 import org.knime.core.data.blob.BinaryObjectDataCell;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.data.container.SingleCellFactory;
-import org.knime.core.data.def.StringCell;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -90,8 +91,6 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     private SettingsModelString m_replacepolicy;
 
-    private BinaryObjectCellFactory m_bocellfactory;
-
     /**
      * Constructor for the node model.
      */
@@ -108,16 +107,18 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
-        m_bocellfactory = new BinaryObjectCellFactory(exec);
         ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec());
+                createColumnRearranger(inData[0].getDataTableSpec(), exec);
         BufferedDataTable out =
                 exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
-    private ColumnRearranger createColumnRearranger(
-            final DataTableSpec inSpec) {
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
+            final ExecutionContext exec) throws InvalidSettingsException {
+        checkSettings(inSpec);
+        final BinaryObjectCellFactory bocellfactory =
+                new BinaryObjectCellFactory(exec);
         String locationcolumn = m_locationcolumn.getStringValue();
         String bocolumnname = m_bocolumnname.getStringValue();
         String replacepolicy = m_replacepolicy.getStringValue();
@@ -128,7 +129,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         CellFactory factory = new SingleCellFactory(colSpec) {
             @Override
             public DataCell getCell(final DataRow row) {
-                return createBinaryObjectCell(row, inSpec);
+                return createBinaryObjectCell(row, inSpec, bocellfactory);
             }
         };
         if (replacepolicy.equals(ReplacePolicy.APPEND.getName())) {
@@ -141,18 +142,42 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         return rearranger;
     }
 
+    private void checkSettings(final DataTableSpec inSpec)
+            throws InvalidSettingsException {
+        // Is the location column set?
+        if (m_locationcolumn.getStringValue().equals("")) {
+            throw new InvalidSettingsException("Location column not set");
+        }
+        // Does the location column setting reference to an existing column?
+        int columnIndex =
+                inSpec.findColumnIndex(m_locationcolumn.getStringValue());
+        if (columnIndex < 0) {
+            throw new InvalidSettingsException("Location column not set");
+        }
+        // Is the binary object column name empty?
+        if (m_bocolumnname.getStringValue().equals("")) {
+            throw new InvalidSettingsException(
+                    "Binary object column name can not be empty");
+        }
+    }
+
     private DataCell createBinaryObjectCell(final DataRow row,
-            final DataTableSpec inSpec) {
+            final DataTableSpec inSpec,
+            final BinaryObjectCellFactory bocellfactory) {
         DataCell result = null;
         int locationIndex =
                 inSpec.findColumnIndex(m_locationcolumn.getStringValue());
-        String location =
-                ((StringCell)(row.getCell(locationIndex))).getStringValue();
-        try {
-            InputStream input = new FileInputStream(location);
-            result = m_bocellfactory.create(input);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+        if (!row.getCell(locationIndex).isMissing()) {
+            String location =
+                    ((StringValue)row.getCell(locationIndex)).getStringValue();
+            try {
+                InputStream input = new FileInputStream(location);
+                result = bocellfactory.create(input);
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        } else {
+            result = DataType.getMissingCell();
         }
         return result;
     }
@@ -171,22 +196,8 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
-        // Is the location column set?
-        if (m_locationcolumn.getStringValue().equals("")) {
-            throw new InvalidSettingsException("Location column not set");
-        }
-        // Does the location column setting reference to an existing column?
-        int columnIndex =
-                inSpecs[0].findColumnIndex(m_locationcolumn.getStringValue());
-        if (columnIndex < 0) {
-            throw new InvalidSettingsException("Location column not set");
-        }
-        // Is the binary object column name empty?
-        if (m_bocolumnname.getStringValue().equals("")) {
-            throw new InvalidSettingsException(
-                    "Binary object column name can not be empty");
-        }
-        DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
+        DataTableSpec outSpec =
+                createColumnRearranger(inSpecs[0], null).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 
