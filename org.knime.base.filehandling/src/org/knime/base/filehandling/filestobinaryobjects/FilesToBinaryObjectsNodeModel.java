@@ -90,6 +90,8 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     private SettingsModelString m_replacepolicy;
 
+    private BinaryObjectCellFactory m_bocellfactory;
+
     /**
      * Constructor for the node model.
      */
@@ -106,15 +108,16 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
+        m_bocellfactory = new BinaryObjectCellFactory(exec);
         ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec(), exec);
+                createColumnRearranger(inData[0].getDataTableSpec());
         BufferedDataTable out =
                 exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
-    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final ExecutionContext exec) {
+    private ColumnRearranger createColumnRearranger(
+            final DataTableSpec inSpec) {
         String locationcolumn = m_locationcolumn.getStringValue();
         String bocolumnname = m_bocolumnname.getStringValue();
         String replacepolicy = m_replacepolicy.getStringValue();
@@ -125,7 +128,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         CellFactory factory = new SingleCellFactory(colSpec) {
             @Override
             public DataCell getCell(final DataRow row) {
-                return createBinaryObjectCell(row, inSpec, exec);
+                return createBinaryObjectCell(row, inSpec);
             }
         };
         if (replacepolicy.equals(ReplacePolicy.APPEND.getName())) {
@@ -139,7 +142,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     }
 
     private DataCell createBinaryObjectCell(final DataRow row,
-            final DataTableSpec inSpec, final ExecutionContext exec) {
+            final DataTableSpec inSpec) {
         DataCell result = null;
         int locationIndex =
                 inSpec.findColumnIndex(m_locationcolumn.getStringValue());
@@ -147,7 +150,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
                 ((StringCell)(row.getCell(locationIndex))).getStringValue();
         try {
             InputStream input = new FileInputStream(location);
-            result = new BinaryObjectCellFactory(exec).create(input);
+            result = m_bocellfactory.create(input);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -183,8 +186,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
             throw new InvalidSettingsException(
                     "Binary object column name can not be empty");
         }
-        DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0], null).createSpec();
+        DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 

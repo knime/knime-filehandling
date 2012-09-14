@@ -61,7 +61,8 @@ import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.blob.BinaryObjectFileStoreDataCell;
+import org.knime.core.data.RowKey;
+import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.core.data.container.AbstractCellFactory;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
@@ -96,6 +97,10 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     private SettingsModelString m_ifexists;
 
+    private long m_size;
+
+    private long m_processedsize;
+
     /**
      * Constructor for the node model.
      */
@@ -117,15 +122,30 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
+        inspectData(inData[0], exec);
         ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec());
+                createColumnRearranger(inData[0].getDataTableSpec(), exec);
         BufferedDataTable out =
                 exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
-    private ColumnRearranger createColumnRearranger(
-            final DataTableSpec inSpec) {
+    private void inspectData(final BufferedDataTable inData,
+            final ExecutionContext exec) throws Exception {
+        m_size = 0;
+        int index =
+                inData.getDataTableSpec().findColumnIndex(
+                        m_bocolumn.getStringValue());
+        for (DataRow row : inData) {
+            exec.checkCanceled();
+            if (!row.getCell(index).isMissing()) {
+                m_size += ((BinaryObjectDataValue)row.getCell(index)).length();
+            }
+        }
+    }
+
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
+            final ExecutionContext exec) {
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec[] colSpecs = new DataColumnSpec[2];
         colSpecs[0] =
@@ -134,17 +154,29 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         colSpecs[1] =
                 new DataColumnSpecCreator("URL", StringCell.TYPE).createSpec();
         CellFactory factory = new AbstractCellFactory(colSpecs) {
+            private int m_rownr = 0;
+
             @Override
             public DataCell[] getCells(final DataRow row) {
-                return createFile(row, inSpec);
+                return createFile(row, m_rownr, inSpec, exec);
+            }
+
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public void setProgress(final int curRowNr, final int rowCount,
+                    final RowKey lastKey, final ExecutionMonitor exec2) {
+                exec.setProgress((double)m_processedsize / m_size);
+                m_rownr = curRowNr;
             }
         };
         rearranger.append(factory);
         return rearranger;
     }
 
-    private DataCell[] createFile(final DataRow row,
-            final DataTableSpec inSpec) {
+    private DataCell[] createFile(final DataRow row, final int rowNr,
+            final DataTableSpec inSpec, final ExecutionContext exec) {
         String boColumn = m_bocolumn.getStringValue();
         int boIndex = inSpec.findColumnIndex(boColumn);
         String filenameHandling = m_filenamehandling.getStringValue();
@@ -159,7 +191,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             filename = ((StringCell)(row.getCell(nameIndex))).getStringValue();
         }
         if (filenameHandling.equals(FilenameHandling.GENERATE.getName())) {
-            // TODO generate filename from pattern
+            filename = m_namepattern.getStringValue().replace("?", "" + rowNr);
         }
         try {
             File file = new File(outputDirectory, filename);
@@ -176,13 +208,16 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             }
             byte[] buffer = new byte[1024];
             file.createNewFile();
-            BinaryObjectFileStoreDataCell bocell =
-                    (BinaryObjectFileStoreDataCell)row.getCell(boIndex);
+            BinaryObjectDataValue bocell =
+                    (BinaryObjectDataValue)row.getCell(boIndex);
             InputStream input = bocell.openInputStream();
             OutputStream output = new FileOutputStream(file);
             int length;
             while ((length = input.read(buffer)) > 0) {
+                exec.checkCanceled();
+                exec.setProgress((double)m_processedsize / m_size);
                 output.write(buffer, 0, length);
+                m_processedsize += length;
             }
             input.close();
             output.close();
@@ -252,7 +287,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             }
         }
         DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0]).createSpec();
+                createColumnRearranger(inSpecs[0], null).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 
