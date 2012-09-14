@@ -305,6 +305,10 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 // Get filename from table
                 int nameIndex =
                         inSpec.findColumnIndex(m_namecolumn.getStringValue());
+                if (row.getCell(nameIndex).isMissing()) {
+                    throw new RuntimeException("Filename in row \""
+                            + row.getKey() + "\" is missing");
+                }
                 filename =
                         ((StringCell)(row.getCell(nameIndex))).getStringValue();
             }
