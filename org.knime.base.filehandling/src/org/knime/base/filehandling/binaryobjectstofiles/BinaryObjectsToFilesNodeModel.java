@@ -55,6 +55,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -120,14 +122,31 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
-        long size = inspectData(inData[0], exec);
-        Progress progress = new Progress(size);
-        ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec(), progress,
-                        exec);
-        BufferedDataTable out =
-                exec.createColumnRearrangeTable(inData[0], rearranger, exec);
+        BufferedDataTable out = null;
+        Set<String> filenames = new HashSet<String>();
+        try {
+            long size = inspectData(inData[0], exec);
+            Progress progress = new Progress(size);
+            ColumnRearranger rearranger =
+                    createColumnRearranger(inData[0].getDataTableSpec(),
+                            filenames, progress, exec);
+            out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
+        } catch (Exception e) {
+            cleanUp(filenames.toArray(new String[filenames.size()]));
+            throw e;
+        }
         return new BufferedDataTable[]{out};
+    }
+
+    private void cleanUp(final String[] files) {
+        for (int i = 0; i < files.length; i++) {
+            try {
+                File file = new File(files[0]);
+                file.delete();
+            } catch (Exception e) {
+                // If one file fails, the others should still be deleted
+            }
+        }
     }
 
     private long inspectData(final BufferedDataTable inData,
@@ -146,8 +165,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     }
 
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final Progress progress, final ExecutionContext exec)
-            throws InvalidSettingsException {
+            final Set<String> filenames, final Progress progress,
+            final ExecutionContext exec) throws InvalidSettingsException {
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec[] colSpecs = new DataColumnSpec[2];
@@ -161,7 +180,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
             @Override
             public DataCell[] getCells(final DataRow row) {
-                return createFile(row, m_rownr, progress, inSpec, exec);
+                return createFile(row, m_rownr, filenames, progress, inSpec,
+                        exec);
             }
 
             /**
@@ -235,8 +255,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     }
 
     private DataCell[] createFile(final DataRow row, final int rowNr,
-            final Progress progress, final DataTableSpec inSpec,
-            final ExecutionContext exec) {
+            final Set<String> filenames, final Progress progress,
+            final DataTableSpec inSpec, final ExecutionContext exec) {
         String boColumn = m_bocolumn.getStringValue();
         int boIndex = inSpec.findColumnIndex(boColumn);
         String filenameHandling = m_filenamehandling.getStringValue();
@@ -259,6 +279,11 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             }
             try {
                 File file = new File(outputDirectory, filename);
+                if (filenames.contains(file.getAbsolutePath())) {
+                    throw new RuntimeException("Duplicate entry \""
+                            + file.getAbsolutePath()
+                            + "\" in the filenames column");
+                }
                 if (file.exists()) {
                     if (ifExists.equals(OverwritePolicy.ABORT)) {
                         throw new RuntimeException("File \""
@@ -270,6 +295,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                         file.delete();
                     }
                 }
+                filenames.add(file.getAbsolutePath());
                 byte[] buffer = new byte[1024];
                 file.createNewFile();
                 BinaryObjectDataValue bocell =
@@ -311,7 +337,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
         DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0], null, null).createSpec();
+                createColumnRearranger(inSpecs[0], null, null,
+                        null).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 

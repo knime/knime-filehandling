@@ -103,8 +103,6 @@ class ZipNodeModel extends NodeModel {
 
     private SettingsModelIntegerBounded m_compressionlevel;
 
-    private Set<String> m_newfiles;
-
     /**
      * Constructor for the node model.
      */
@@ -172,7 +170,7 @@ class ZipNodeModel extends NodeModel {
      */
     private void writeToZip(final String[] filenames, final String target,
             final ExecutionContext exec) throws Exception {
-        m_newfiles = new HashSet<String>();
+        Set<String> newfiles = new HashSet<String>();
         ZipOutputStream zout = null;
         File newFile = new File(target);
         File oldFile = new File(target + ".old");
@@ -200,15 +198,15 @@ class ZipNodeModel extends NodeModel {
             // Copy existing files into new zip file
             if (fileExists) {
                 for (int i = 0; i < files.length; i++) {
-                    m_newfiles.add(getName(files[i]));
+                    newfiles.add(getName(files[i]));
                 }
                 // Add size of files in the old zip file
-                size += checkFilesInZip(oldFile, exec);
+                size += checkFilesInZip(oldFile, newfiles, exec);
             }
             Progress progress = new Progress(size);
             if (fileExists) {
                 // Add old files to new zip file
-                addOldFiles(oldFile, zout, progress, exec);
+                addOldFiles(oldFile, zout, progress, newfiles, exec);
             }
             // Add new files to zip file
             for (int i = 0; i < files.length; i++) {
@@ -238,17 +236,19 @@ class ZipNodeModel extends NodeModel {
      * 
      * 
      * Behavior is controlled by the overwrite policy in the if existing
-     * setting. Files in the <code>m_newfiles</code> list will not be added.
+     * setting. Files in the newfiles set will not be added.
      * 
      * @param oldFile Zip file that contains the files to copy
      * @param zout Zip stream where the files get added
+     * @param progress Progress of this nodes execution
+     * @param newfiles Set of newfiles for duplicate checking
      * @param exec Execution context for <code>checkCanceled()</code> and
      *            <code>setProgress()</code>
      * @throws Exception When abort condition is met or user canceled
      */
     private void addOldFiles(final File oldFile, final ZipOutputStream zout,
-            final Progress progress, final ExecutionContext exec)
-            throws Exception {
+            final Progress progress, final Set<String> newfiles,
+            final ExecutionContext exec) throws Exception {
         FileInputStream in = new FileInputStream(oldFile);
         ZipInputStream zin = new ZipInputStream(in);
         try {
@@ -258,7 +258,7 @@ class ZipNodeModel extends NodeModel {
                 String name = entry.getName();
                 boolean notInFiles = true;
                 // Check if new files contain a file by the same name
-                if (m_newfiles.contains(name)) {
+                if (newfiles.contains(name)) {
                     exec.checkCanceled();
                     notInFiles = false;
                 }
@@ -289,12 +289,13 @@ class ZipNodeModel extends NodeModel {
      * 
      * 
      * @param file The zip file
+     * @param newfiles Set of new files for conflict checking
      * @param exec Execution context for <code>checkCanceled()</code>
      * @return Uncompressed size of files in the zip file
      * @throws Exception If the file can not be read or user canceled
      */
-    private long checkFilesInZip(final File file, final ExecutionContext exec)
-            throws Exception {
+    private long checkFilesInZip(final File file, final Set<String> newfiles,
+            final ExecutionContext exec) throws Exception {
         String ifExists = m_ifexists.getStringValue();
         String appendAbortPolicy = OverwritePolicy.APPEND_ABORT.getName();
         long size = 0;
@@ -307,7 +308,7 @@ class ZipNodeModel extends NodeModel {
             ZipEntry entry = entries.nextElement();
             // If file does not exist add its size, else check for abort
             // condition
-            if (!m_newfiles.contains(entry.getName())) {
+            if (!newfiles.contains(entry.getName())) {
                 size += entry.getSize();
             } else if (ifExists.equals(appendAbortPolicy)) {
                 throw new IOException("File \"" + entry.getName()
@@ -339,6 +340,7 @@ class ZipNodeModel extends NodeModel {
      * 
      * @param file The file to add
      * @param zout The zip stream where the file will be added
+     * @param progress Progress of this nodes execution
      * @param exec Execution context for <code>checkCanceled()</code> and
      *            <code>setProgress()</code>
      * @throws Exception If the file can not be read or user canceled
