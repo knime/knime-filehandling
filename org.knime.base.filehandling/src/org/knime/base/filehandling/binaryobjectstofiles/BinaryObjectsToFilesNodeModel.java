@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
@@ -83,8 +83,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation of Files to Binary Objects.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, University of Konstanz
  */
 class BinaryObjectsToFilesNodeModel extends NodeModel {
@@ -140,11 +140,11 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Delete all the given files.
-     * 
-     * 
+     *
+     *
      * This method should be called, in case the execution got aborted. It will
      * delete all files referenced by the array.
-     * 
+     *
      * @param filenames Files that should be deleted.
      */
     private void cleanUp(final String[] filenames) {
@@ -160,8 +160,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Create a rearranger that adds the location and URL columns.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @param filenames Set of files that have already been created
      * @param exec Context of this execution
@@ -177,12 +177,14 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec[] colSpecs = new DataColumnSpec[2];
         // Create column for the location of the files
+        String locationColName = DataTableSpec.getUniqueColumnName(inSpec, "Location");
         colSpecs[0] =
-                new DataColumnSpecCreator("Location", StringCell.TYPE)
+                new DataColumnSpecCreator(locationColName, StringCell.TYPE)
                         .createSpec();
         // Create column for the URL of the files
+        String urlColName = DataTableSpec.getUniqueColumnName(inSpec, "URL");
         colSpecs[1] =
-                new DataColumnSpecCreator("URL", StringCell.TYPE).createSpec();
+                new DataColumnSpecCreator(urlColName, StringCell.TYPE).createSpec();
         // Factory that creates the files and the corresponding location and URL
         // cells
         CellFactory factory = new AbstractCellFactory(colSpecs) {
@@ -210,8 +212,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Check if the settings are all valid.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -236,8 +238,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         // Does the output directory exist?
         File outputdirectory = new File(m_outputdirectory.getStringValue());
         if (!outputdirectory.isDirectory()) {
-            throw new InvalidSettingsException(
-                    "Output directory does not exist");
+            throw new InvalidSettingsException("Output directory \""
+                    + outputdirectory.getAbsoluteFile() + "\" does not exist");
         }
         // Check settings only if filename handling is from column
         if (m_filenamehandling.getStringValue().equals(
@@ -273,12 +275,12 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Creates a file from the binary object, contained in the row.
-     * 
-     * 
+     *
+     *
      * This method creates a file out of the binary object, that is contained in
      * the row. The filename is either also extracted from the row or generated
      * by using the set pattern and the rows number.
-     * 
+     *
      * @param row Row with the needet data
      * @param rowNr Number of the row in the table
      * @param filenames Set of files that have already been created

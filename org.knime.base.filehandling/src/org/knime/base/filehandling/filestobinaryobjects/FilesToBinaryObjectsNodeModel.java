@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
@@ -79,8 +79,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation of Files to Binary Objects.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, University of Konstanz
  */
 class FilesToBinaryObjectsNodeModel extends NodeModel {
@@ -116,8 +116,8 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     /**
      * Create a rearranger that adds the binary objects to the table.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @param exec Context of this execution
      * @return Rearranger that will add a binary object column
@@ -127,9 +127,9 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
             final ExecutionContext exec) throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
-        // Create binary object factory
-        final BinaryObjectCellFactory bocellfactory =
-                new BinaryObjectCellFactory(exec);
+        // Create binary object factory -- only assign during execution
+        final BinaryObjectCellFactory bocellfactory = exec == null 
+            ? null : new BinaryObjectCellFactory(exec);
         String locationcolumn = m_locationcolumn.getStringValue();
         String bocolumnname = m_bocolumnname.getStringValue();
         String replacepolicy = m_replacepolicy.getStringValue();
@@ -159,8 +159,8 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     /**
      * Check if the settings are all valid.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -191,11 +191,11 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     /**
      * Create a cell containing the binary object.
-     * 
-     * 
+     *
+     *
      * Create a cell containing the binary object to the file referenced by the
      * location cell of the row.
-     * 
+     *
      * @param row
      * @param inSpec
      * @param bocellfactory
