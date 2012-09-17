@@ -79,12 +79,13 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation of Files to Binary Objects.
- *
- *
+ * 
+ * 
  * @author Patrick Winter, University of Konstanz
  */
 class BinaryObjectsToFilesNodeModel extends NodeModel {
@@ -101,6 +102,10 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     private SettingsModelString m_ifexists;
 
+    private SettingsModelBoolean m_removebocolumn;
+
+    private SettingsModelBoolean m_appendlocationcolumns;
+
     /**
      * Constructor for the node model.
      */
@@ -114,6 +119,10 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_namepattern =
                 SettingsFactory.createNamePatternSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
+        m_removebocolumn =
+                SettingsFactory.createRemoveBinaryObjectColumnSettings();
+        m_appendlocationcolumns =
+                SettingsFactory.createAppendLocationColumnsSettings();
     }
 
     /**
@@ -140,11 +149,11 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Delete all the given files.
-     *
-     *
+     * 
+     * 
      * This method should be called, in case the execution got aborted. It will
      * delete all files referenced by the array.
-     *
+     * 
      * @param filenames Files that should be deleted.
      */
     private void cleanUp(final String[] filenames) {
@@ -160,8 +169,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Create a rearranger that adds the location and URL columns.
-     *
-     *
+     * 
+     * 
      * @param inSpec Specification of the input table
      * @param filenames Set of files that have already been created
      * @param exec Context of this execution
@@ -175,45 +184,56 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         // Check settings for correctness
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
-        DataColumnSpec[] colSpecs = new DataColumnSpec[2];
-        // Create column for the location of the files
-        String locationColName = DataTableSpec.getUniqueColumnName(inSpec, "Location");
-        colSpecs[0] =
-                new DataColumnSpecCreator(locationColName, StringCell.TYPE)
-                        .createSpec();
-        // Create column for the URL of the files
-        String urlColName = DataTableSpec.getUniqueColumnName(inSpec, "URL");
-        colSpecs[1] =
-                new DataColumnSpecCreator(urlColName, StringCell.TYPE).createSpec();
-        // Factory that creates the files and the corresponding location and URL
-        // cells
-        CellFactory factory = new AbstractCellFactory(colSpecs) {
-            private int m_rownr = 0;
+        // Append location and URL column if selected
+        if (m_appendlocationcolumns.getBooleanValue()) {
+            DataColumnSpec[] colSpecs = new DataColumnSpec[2];
+            // Create column for the location of the files
+            String locationColName =
+                    DataTableSpec.getUniqueColumnName(inSpec, "Location");
+            colSpecs[0] =
+                    new DataColumnSpecCreator(locationColName, StringCell.TYPE)
+                            .createSpec();
+            // Create column for the URL of the files
+            String urlColName =
+                    DataTableSpec.getUniqueColumnName(inSpec, "URL");
+            colSpecs[1] =
+                    new DataColumnSpecCreator(urlColName, StringCell.TYPE)
+                            .createSpec();
+            // Factory that creates the files and the corresponding location and
+            // URL
+            // cells
+            CellFactory factory = new AbstractCellFactory(colSpecs) {
+                private int m_rownr = 0;
 
-            @Override
-            public DataCell[] getCells(final DataRow row) {
-                return createFile(row, m_rownr, filenames, inSpec, exec);
-            }
+                @Override
+                public DataCell[] getCells(final DataRow row) {
+                    return createFile(row, m_rownr, filenames, inSpec, exec);
+                }
 
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public void setProgress(final int curRowNr, final int rowCount,
-                    final RowKey lastKey, final ExecutionMonitor exec2) {
-                super.setProgress(curRowNr, rowCount, lastKey, exec2);
-                // Save the row for pattern creation
-                m_rownr = curRowNr;
-            }
-        };
-        rearranger.append(factory);
+                /**
+                 * {@inheritDoc}
+                 */
+                @Override
+                public void setProgress(final int curRowNr, final int rowCount,
+                        final RowKey lastKey, final ExecutionMonitor exec2) {
+                    super.setProgress(curRowNr, rowCount, lastKey, exec2);
+                    // Save the row for pattern creation
+                    m_rownr = curRowNr;
+                }
+            };
+            rearranger.append(factory);
+        }
+        // Remove binary object column if selected
+        if (m_removebocolumn.getBooleanValue()) {
+            rearranger.remove(m_bocolumn.getStringValue());
+        }
         return rearranger;
     }
 
     /**
      * Check if the settings are all valid.
-     *
-     *
+     * 
+     * 
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -275,12 +295,12 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Creates a file from the binary object, contained in the row.
-     *
-     *
+     * 
+     * 
      * This method creates a file out of the binary object, that is contained in
      * the row. The filename is either also extracted from the row or generated
      * by using the set pattern and the rows number.
-     *
+     * 
      * @param row Row with the needet data
      * @param rowNr Number of the row in the table
      * @param filenames Set of files that have already been created
@@ -403,6 +423,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_namecolumn.saveSettingsTo(settings);
         m_namepattern.saveSettingsTo(settings);
         m_ifexists.saveSettingsTo(settings);
+        m_removebocolumn.saveSettingsTo(settings);
+        m_appendlocationcolumns.saveSettingsTo(settings);
     }
 
     /**
@@ -417,6 +439,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_namecolumn.loadSettingsFrom(settings);
         m_namepattern.loadSettingsFrom(settings);
         m_ifexists.loadSettingsFrom(settings);
+        m_removebocolumn.loadSettingsFrom(settings);
+        m_appendlocationcolumns.loadSettingsFrom(settings);
     }
 
     /**
@@ -431,6 +455,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_namecolumn.validateSettings(settings);
         m_namepattern.validateSettings(settings);
         m_ifexists.validateSettings(settings);
+        m_removebocolumn.validateSettings(settings);
+        m_appendlocationcolumns.validateSettings(settings);
     }
 
     /**

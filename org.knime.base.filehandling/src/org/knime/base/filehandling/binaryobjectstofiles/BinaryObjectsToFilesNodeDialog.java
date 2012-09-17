@@ -58,10 +58,12 @@ import org.knime.core.data.StringValue;
 import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -84,6 +86,10 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_ifexists;
 
+    private SettingsModelBoolean m_removebocolumn;
+
+    private SettingsModelBoolean m_appendlocationcolumns;
+
     private FlowVariableModel m_outputdirectoryFvm;
 
     /**
@@ -100,6 +106,10 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
         m_namepattern =
                 SettingsFactory.createNamePatternSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
+        m_removebocolumn =
+                SettingsFactory.createRemoveBinaryObjectColumnSettings();
+        m_appendlocationcolumns =
+                SettingsFactory.createAppendLocationColumnsSettings();
         m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
         // Enable/disable settings according to filename handling
         m_filenamehandling.addChangeListener(new ChangeListener() {
@@ -131,6 +141,12 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
         addDialogComponent(new DialogComponentString(m_namepattern,
                 "Name pattern"));
         closeCurrentGroup();
+        // Remove binary object column
+        addDialogComponent(new DialogComponentBoolean(m_removebocolumn,
+                "Remove binary object column"));
+        // Append location and URL columns
+        addDialogComponent(new DialogComponentBoolean(m_appendlocationcolumns,
+                "Append location and URL columns"));
         // Overwrite policy
         addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
                 "If a file exists...", OverwritePolicy.getAllSettings()));

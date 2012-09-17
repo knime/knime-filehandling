@@ -50,6 +50,7 @@
  */
 package org.knime.base.filehandling.binaryobjectstofiles;
 
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -142,6 +143,26 @@ final class SettingsFactory {
     static SettingsModelString createIfExistsSettings() {
         return new SettingsModelString("ifexists",
                 OverwritePolicy.ABORT.getName());
+    }
+
+    /**
+     * Factory method for the remove binary object column setting.
+     * 
+     * 
+     * @return Remove binary object <code>SettingsModel</code>
+     */
+    static SettingsModelBoolean createRemoveBinaryObjectColumnSettings() {
+        return new SettingsModelBoolean("removebinaryobjectcolumn", true);
+    }
+
+    /**
+     * Factory method for the append location columns setting.
+     * 
+     * 
+     * @return Append location columns <code>SettingsModel</code>
+     */
+    static SettingsModelBoolean createAppendLocationColumnsSettings() {
+        return new SettingsModelBoolean("appendlocationcolumn", true);
     }
 
 }
