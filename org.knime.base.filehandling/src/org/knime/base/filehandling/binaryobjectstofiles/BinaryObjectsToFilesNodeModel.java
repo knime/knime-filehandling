@@ -135,9 +135,24 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         // HashSet for duplicate checking and cleanup
         Set<String> filenames = new HashSet<String>();
         try {
+            int rows = inData[0].getRowCount();
+            // Array of the locations values
+            DataCell[][] locationCells = new DataCell[rows][];
+            int i = 0;
+            // Create the file for each row
+            for (DataRow row : inData[0]) {
+                exec.checkCanceled();
+                exec.setProgress((double)i / rows);
+                locationCells[i] =
+                        createFile(row, i, filenames,
+                                inData[0].getDataTableSpec(), exec);
+                i++;
+            }
+            // Rearrange the columns and fill them with the location values if
+            // needet
             ColumnRearranger rearranger =
                     createColumnRearranger(inData[0].getDataTableSpec(),
-                            filenames, exec);
+                            filenames, locationCells, exec);
             out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         } catch (Exception e) {
             // In case of exception, delete all created files
@@ -173,20 +188,23 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * 
      * @param inSpec Specification of the input table
      * @param filenames Set of files that have already been created
+     * @param dataCells Data cells that contain the values for the appended
+     *            columns
      * @param exec Context of this execution
      * @return Rearranger that will add columns for the location and URL of the
      *         created files.
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final Set<String> filenames, final ExecutionContext exec)
-            throws InvalidSettingsException {
+            final Set<String> filenames, final DataCell[][] dataCells,
+            final ExecutionContext exec) throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
+        DataColumnSpec[] colSpecs = new DataColumnSpec[0];
         // Append location and URL column if selected
         if (m_appendlocationcolumns.getBooleanValue()) {
-            DataColumnSpec[] colSpecs = new DataColumnSpec[2];
+            colSpecs = new DataColumnSpec[2];
             // Create column for the location of the files
             String locationColName =
                     DataTableSpec.getUniqueColumnName(inSpec, "Location");
@@ -207,7 +225,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
                 @Override
                 public DataCell[] getCells(final DataRow row) {
-                    return createFile(row, m_rownr, filenames, inSpec, exec);
+                    return dataCells[m_rownr];
                 }
 
                 /**
@@ -216,7 +234,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 @Override
                 public void setProgress(final int curRowNr, final int rowCount,
                         final RowKey lastKey, final ExecutionMonitor exec2) {
-                    super.setProgress(curRowNr, rowCount, lastKey, exec2);
+                    // super.setProgress(curRowNr, rowCount, lastKey, exec2);
                     // Save the row for pattern creation
                     m_rownr = curRowNr;
                 }
@@ -352,14 +370,14 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 // not created by this execution)
                 if (file.exists()) {
                     // Abort if policy is abort
-                    if (ifExists.equals(OverwritePolicy.ABORT)) {
+                    if (ifExists.equals(OverwritePolicy.ABORT.getName())) {
                         throw new RuntimeException("File \""
                                 + file.getAbsolutePath()
                                 + "\" exists, overwrite policy: \"" + ifExists
                                 + "\"");
                     }
                     // Remove if policy is overwrite
-                    if (ifExists.equals(OverwritePolicy.OVERWRITE)) {
+                    if (ifExists.equals(OverwritePolicy.OVERWRITE.getName())) {
                         file.delete();
                     }
                 }
@@ -409,7 +427,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             throws InvalidSettingsException {
         // createColumnRearranger will check the settings
         DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0], null, null).createSpec();
+                createColumnRearranger(inSpecs[0], null, null, null)
+                        .createSpec();
         return new DataTableSpec[]{outSpec};
     }
 
