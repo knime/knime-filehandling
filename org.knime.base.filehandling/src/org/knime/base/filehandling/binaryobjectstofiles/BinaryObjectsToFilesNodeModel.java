@@ -364,6 +364,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                     }
                 }
                 byte[] buffer = new byte[1024];
+                file.getParentFile().mkdirs();
                 file.createNewFile();
                 // Add file to created files
                 filenames.add(file.getAbsolutePath());
