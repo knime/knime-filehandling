@@ -50,7 +50,7 @@
  */
 package org.knime.base.filehandling.uritostring;
 
-import org.knime.core.data.uri.cell.URIDataValue;
+import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnFilter;
 import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;

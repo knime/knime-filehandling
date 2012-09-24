@@ -20,7 +20,7 @@
 
 	<ports>
 		<inPort name="Input table" index="0">
-			Table that contains one or more string columns with uri information.
+			Table that contains one or more string columns with URI information.
 		</inPort>
 		<outPort name="Output table" index="0">
 			Input table with the selected columns replaced by there corresponding URI column.

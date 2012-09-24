@@ -21,7 +21,7 @@
 	<ports>
 		<inPort name="Input table" index="0">
 			Table that contains one or
-			more uri columns.
+			more URI columns.
 		</inPort>
 		<outPort name="Output table" index="0">
 			Input table with the

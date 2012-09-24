@@ -61,12 +61,13 @@ import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
 import org.knime.core.data.StringValue;
 import org.knime.core.data.container.AbstractCellFactory;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.data.uri.URIContent;
-import org.knime.core.data.uri.cell.URIDataCell;
+import org.knime.core.data.uri.URIDataCell;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -108,45 +109,108 @@ class StringToURINodeModel extends NodeModel {
         return new BufferedDataTable[]{out};
     }
 
-    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec) {
+    /**
+     * Create a rearranger that replaces the selected columns with there URI
+     * counterpart.
+     * 
+     * 
+     * @param inSpec Specification of the input table
+     * @return Rearranger that will replace the selected columns
+     * @throws InvalidSettingsException If the settings are incorrect
+     */
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec)
+            throws InvalidSettingsException {
+        // Check settings for correctness
+        checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
+        // Get selected columns and create arrays for there indexes and
+        // replacements specs
         List<String> columns = m_columnselection.getIncludeList();
         DataColumnSpec[] colSpecs = new DataColumnSpec[columns.size()];
         int[] colIndexes = new int[columns.size()];
+        // Create new specification for each column
         for (int i = 0; i < columns.size(); i++) {
             colIndexes[i] = inSpec.findColumnIndex(columns.get(i));
             colSpecs[i] =
                     new DataColumnSpecCreator(columns.get(i), URIDataCell.TYPE)
                             .createSpec();
         }
+        // Factory that will generate the replacements
         CellFactory factory = new AbstractCellFactory(colSpecs) {
             @Override
             public DataCell[] getCells(final DataRow row) {
                 return createURICells(row, inSpec);
             }
         };
+        // Replace old columns with new ones
         rearranger.replace(factory, colIndexes);
         return rearranger;
     }
 
+    /**
+     * Create the correspondent URI cells to the selected string cells.
+     * 
+     * 
+     * @param row The row with the string cells
+     * @param spec Specification of the input table
+     * @return Replacement cells
+     */
     private DataCell[] createURICells(final DataRow row,
             final DataTableSpec spec) {
         List<String> columns = m_columnselection.getIncludeList();
         DataCell[] cells = new DataCell[columns.size()];
+        // Create new cell for each selected cell
         for (int i = 0; i < columns.size(); i++) {
             DataCell oldCell =
                     row.getCell(spec.findColumnIndex(columns.get(i)));
-            String value = ((StringValue)oldCell).getStringValue();
-            String uri = value;
-            String extension = FilenameUtils.getExtension(value);
-            try {
-                cells[i] =
-                        new URIDataCell(new URIContent(new URI(uri), extension));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            // Is the cell missing?
+            if (oldCell.isMissing()) {
+                cells[i] = DataType.getMissingCell();
+            } else {
+                // Get URI and extension
+                String uri = ((StringValue)oldCell).getStringValue();
+                String extension = FilenameUtils.getExtension(uri);
+                try {
+                    cells[i] =
+                            new URIDataCell(new URIContent(new URI(uri),
+                                    extension));
+                } catch (Exception e) {
+                    // If the string could not be converted to an URI
+                    throw new RuntimeException(e);
+                }
             }
         }
         return cells;
+    }
+
+    /**
+     * Check if the settings are all valid.
+     * 
+     * 
+     * @param inSpec Specification of the input table
+     * @throws InvalidSettingsException If the settings are incorrect
+     */
+    private void checkSettings(final DataTableSpec inSpec)
+            throws InvalidSettingsException {
+        List<String> columns = m_columnselection.getIncludeList();
+        // Is at least one column selected?
+        if (columns.size() < 1) {
+            throw new InvalidSettingsException("No column selected");
+        }
+        // Are all the selected columns of the right type
+        for (int i = 0; i < columns.size(); i++) {
+            String column = columns.get(i);
+            int index = inSpec.findColumnIndex(column);
+            // Does the column exist?
+            if (index < 0) {
+                throw new InvalidSettingsException("Columns not set");
+            }
+            DataType type = inSpec.getColumnSpec(index).getType();
+            if (!type.isCompatible(StringValue.class)) {
+                throw new InvalidSettingsException("Column \"" + column
+                        + "\" is not of the type string");
+            }
+        }
     }
 
     /**
