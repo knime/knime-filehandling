@@ -48,31 +48,30 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.stringtouri;
+package org.knime.base.filehandling.uritostring;
 
-import org.knime.core.data.StringValue;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnFilter;
 import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
 
 /**
- * <code>NodeDialog</code> for the "String To URI" Node.
+ * Factory for SettingsModels.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class StringToURINodeDialog extends DefaultNodeSettingsPane {
+final class SettingsFactory {
 
-    private SettingsModelFilterString m_columnselection;
+    private SettingsFactory() {
+        // Disables default constructor
+    }
 
     /**
-     * New pane for configuring the string to URI node dialog.
+     * Factory method for the column selection setting.
+     * 
+     * 
+     * @return Column selection <code>SettingsModel</code>
      */
-    @SuppressWarnings("unchecked")
-    protected StringToURINodeDialog() {
-        super();
-        m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        addDialogComponent(new DialogComponentColumnFilter(m_columnselection,
-                0, true, StringValue.class));
+    static SettingsModelFilterString createColumnSelectionSettings() {
+        return new SettingsModelFilterString("columnsellection");
     }
+
 }

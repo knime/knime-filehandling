@@ -48,25 +48,22 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.stringtouri;
+package org.knime.base.filehandling.uritostring;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.StringValue;
 import org.knime.core.data.container.AbstractCellFactory;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
-import org.knime.core.data.uri.URIContent;
-import org.knime.core.data.uri.cell.URIDataCell;
+import org.knime.core.data.def.StringCell;
+import org.knime.core.data.uri.cell.URIDataValue;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -78,19 +75,19 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
 
 /**
- * This is the model implementation of string to URI.
+ * This is the model implementation of URI to string.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class StringToURINodeModel extends NodeModel {
+class URIToStringNodeModel extends NodeModel {
 
     private SettingsModelFilterString m_columnselection;
 
     /**
      * Constructor for the node model.
      */
-    protected StringToURINodeModel() {
+    protected URIToStringNodeModel() {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
     }
@@ -116,35 +113,29 @@ class StringToURINodeModel extends NodeModel {
         for (int i = 0; i < columns.size(); i++) {
             colIndexes[i] = inSpec.findColumnIndex(columns.get(i));
             colSpecs[i] =
-                    new DataColumnSpecCreator(columns.get(i), URIDataCell.TYPE)
+                    new DataColumnSpecCreator(columns.get(i), StringCell.TYPE)
                             .createSpec();
         }
         CellFactory factory = new AbstractCellFactory(colSpecs) {
             @Override
             public DataCell[] getCells(final DataRow row) {
-                return createURICells(row, inSpec);
+                return createStringCells(row, inSpec);
             }
         };
         rearranger.replace(factory, colIndexes);
         return rearranger;
     }
 
-    private DataCell[] createURICells(final DataRow row,
+    private DataCell[] createStringCells(final DataRow row,
             final DataTableSpec spec) {
         List<String> columns = m_columnselection.getIncludeList();
         DataCell[] cells = new DataCell[columns.size()];
         for (int i = 0; i < columns.size(); i++) {
             DataCell oldCell =
                     row.getCell(spec.findColumnIndex(columns.get(i)));
-            String value = ((StringValue)oldCell).getStringValue();
-            String uri = value;
-            String extension = FilenameUtils.getExtension(value);
-            try {
-                cells[i] =
-                        new URIDataCell(new URIContent(new URI(uri), extension));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            String value =
+                    ((URIDataValue)oldCell).getURIContent().getURI().toString();
+            cells[i] = new StringCell(value);
         }
         return cells;
     }

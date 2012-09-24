@@ -9,6 +9,7 @@
    <node category-path="/misc/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory" id="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory"/>
    <node category-path="/misc/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory" id="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory"/>
    <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.stringtouri.StringToURINodeFactory" id="org.knime.base.filehandling.stringtouri.StringToURINodeFactory" />
+   <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.uritostring.URIToStringNodeFactory" id="org.knime.base.filehandling.uritostring.URIToStringNodeFactory" />
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category description="Nodes to handle files" icon="icons/missing.gif" level-id="filehandling" name="Filehandling" path="/misc" />

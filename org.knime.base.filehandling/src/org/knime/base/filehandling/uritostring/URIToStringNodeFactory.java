@@ -48,31 +48,61 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.stringtouri;
+package org.knime.base.filehandling.uritostring;
 
-import org.knime.core.data.StringValue;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnFilter;
-import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
- * <code>NodeDialog</code> for the "String To URI" Node.
+ * <code>NodeFactory</code> for the "Files to Binary Objects" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class StringToURINodeDialog extends DefaultNodeSettingsPane {
-
-    private SettingsModelFilterString m_columnselection;
+public class URIToStringNodeFactory extends
+        NodeFactory<URIToStringNodeModel> {
 
     /**
-     * New pane for configuring the string to URI node dialog.
+     * {@inheritDoc}
      */
-    @SuppressWarnings("unchecked")
-    protected StringToURINodeDialog() {
-        super();
-        m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        addDialogComponent(new DialogComponentColumnFilter(m_columnselection,
-                0, true, StringValue.class));
+    @Override
+    public URIToStringNodeModel createNodeModel() {
+        return new URIToStringNodeModel();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getNrNodeViews() {
+        return 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeView<URIToStringNodeModel> createNodeView(
+            final int viewIndex,
+            final URIToStringNodeModel nodeModel) {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasDialog() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeDialogPane createNodeDialogPane() {
+        return new URIToStringNodeDialog();
+    }
+
 }
