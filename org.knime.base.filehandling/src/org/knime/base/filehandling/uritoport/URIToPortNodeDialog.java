@@ -48,61 +48,31 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.uritostring;
+package org.knime.base.filehandling.uritoport;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.knime.core.data.uri.URIDataValue;
+import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeFactory</code> for the "URI To String" Node.
+ * <code>NodeDialog</code> for the "URI To Port" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class URIToStringNodeFactory extends
-        NodeFactory<URIToStringNodeModel> {
+class URIToPortNodeDialog extends DefaultNodeSettingsPane {
+
+    private SettingsModelString m_uricolumn;
 
     /**
-     * {@inheritDoc}
+     * New pane for configuring the URI to port node dialog.
      */
-    @Override
-    public URIToStringNodeModel createNodeModel() {
-        return new URIToStringNodeModel();
+    @SuppressWarnings("unchecked")
+    protected URIToPortNodeDialog() {
+        super();
+        m_uricolumn = SettingsFactory.createURIColumnSettings();
+        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
+                "URI column", 0, URIDataValue.class));
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int getNrNodeViews() {
-        return 0;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeView<URIToStringNodeModel> createNodeView(
-            final int viewIndex,
-            final URIToStringNodeModel nodeModel) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new URIToStringNodeDialog();
-    }
-
 }

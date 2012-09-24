@@ -48,61 +48,30 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.uritostring;
+package org.knime.base.filehandling.uritoport;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeFactory</code> for the "URI To String" Node.
+ * Factory for SettingsModels.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class URIToStringNodeFactory extends
-        NodeFactory<URIToStringNodeModel> {
+final class SettingsFactory {
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public URIToStringNodeModel createNodeModel() {
-        return new URIToStringNodeModel();
+    private SettingsFactory() {
+        // Disables default constructor
     }
 
     /**
-     * {@inheritDoc}
+     * Factory method for the URI column setting.
+     * 
+     * 
+     * @return URI column <code>SettingsModel</code>
      */
-    @Override
-    public int getNrNodeViews() {
-        return 0;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeView<URIToStringNodeModel> createNodeView(
-            final int viewIndex,
-            final URIToStringNodeModel nodeModel) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new URIToStringNodeDialog();
+    static SettingsModelString createURIColumnSettings() {
+        return new SettingsModelString("uricolumn", "");
     }
 
 }

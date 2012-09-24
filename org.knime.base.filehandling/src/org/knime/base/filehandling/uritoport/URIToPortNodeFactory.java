@@ -48,27 +48,27 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.uritostring;
+package org.knime.base.filehandling.uritoport;
 
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
 
 /**
- * <code>NodeFactory</code> for the "URI To String" Node.
+ * <code>NodeFactory</code> for the "URI To Port" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class URIToStringNodeFactory extends
-        NodeFactory<URIToStringNodeModel> {
+public class URIToPortNodeFactory extends
+        NodeFactory<URIToPortNodeModel> {
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public URIToStringNodeModel createNodeModel() {
-        return new URIToStringNodeModel();
+    public URIToPortNodeModel createNodeModel() {
+        return new URIToPortNodeModel();
     }
 
     /**
@@ -83,9 +83,9 @@ public class URIToStringNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<URIToStringNodeModel> createNodeView(
+    public NodeView<URIToPortNodeModel> createNodeView(
             final int viewIndex,
-            final URIToStringNodeModel nodeModel) {
+            final URIToPortNodeModel nodeModel) {
         return null;
     }
 
@@ -102,7 +102,7 @@ public class URIToStringNodeFactory extends
      */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new URIToStringNodeDialog();
+        return new URIToPortNodeDialog();
     }
 
 }
