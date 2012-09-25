@@ -66,13 +66,13 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the URI column setting.
+     * Factory method for the location column setting.
      * 
      * 
-     * @return URI column <code>SettingsModel</code>
+     * @return Location column <code>SettingsModel</code>
      */
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
+    static SettingsModelString createLocationColumnSettings() {
+        return new SettingsModelString("locationcolumn", "");
     }
 
 }
