@@ -11,7 +11,8 @@
 	<fullDescription>
 		<intro>
 			This node collects the URIs from a table column and puts them
-			into an URI port object.
+			into an URI port object. Missing values in the column will be
+			ignored.
 		</intro>
 
 

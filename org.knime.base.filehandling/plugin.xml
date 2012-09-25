@@ -11,6 +11,7 @@
    <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.stringtouri.StringToURINodeFactory" id="org.knime.base.filehandling.stringtouri.StringToURINodeFactory" />
    <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.uritostring.URIToStringNodeFactory" id="org.knime.base.filehandling.uritostring.URIToStringNodeFactory" />
    <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.uritoport.URIToPortNodeFactory" id="org.knime.base.filehandling.uritoport.URIToPortNodeFactory" />
+   <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.porttouri.PortToURINodeFactory" id="org.knime.base.filehandling.porttouri.PortToURINodeFactory" />
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category description="Nodes to handle files" icon="icons/missing.gif" level-id="filehandling" name="Filehandling" path="/misc" />

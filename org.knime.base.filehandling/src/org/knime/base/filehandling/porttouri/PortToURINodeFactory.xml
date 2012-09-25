@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./porttouri.png" type="Manipulator">
+	<name>Port To URI</name>
+
+	<shortDescription>
+		Output the URIs from an URI port object to a table.
+	</shortDescription>
+
+	<fullDescription>
+		<intro>
+			This node collects the URIs from an URI port object and puts
+			them into a table.
+		</intro>
+
+
+	</fullDescription>
+
+	<ports>
+		<inPort name="URI Port" index="0">
+			URI port object containing URIs.
+		</inPort>
+		<outPort name="Output Table" index="0">
+			The collected URIs in a column named URI.
+		</outPort>
+	</ports>
+</knimeNode>
