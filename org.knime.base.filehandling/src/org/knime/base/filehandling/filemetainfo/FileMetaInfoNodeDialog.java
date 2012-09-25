@@ -50,7 +50,7 @@
  */
 package org.knime.base.filehandling.filemetainfo;
 
-import org.knime.core.data.StringValue;
+import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
@@ -62,8 +62,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * @author Patrick Winter, University of Konstanz
  */
 class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
-    
-    private SettingsModelString m_locationcolumn;
+
+    private SettingsModelString m_uricolumn;
 
     /**
      * New pane for configuring the Binary Objects to Files node dialog.
@@ -71,9 +71,9 @@ class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
     @SuppressWarnings("unchecked")
     protected FileMetaInfoNodeDialog() {
         super();
-        m_locationcolumn = SettingsFactory.createLocationColumnSettings();
-        // Location column
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_locationcolumn, "Location column", 0, StringValue.class));
+        m_uricolumn = SettingsFactory.createURIColumnSettings();
+        // URI column
+        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
+                "URI column", 0, URIDataValue.class));
     }
 }

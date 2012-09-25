@@ -60,7 +60,6 @@ import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
-import org.knime.core.data.StringValue;
 import org.knime.core.data.container.AbstractCellFactory;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
@@ -68,6 +67,7 @@ import org.knime.core.data.date.DateAndTimeCell;
 import org.knime.core.data.def.BooleanCell;
 import org.knime.core.data.def.LongCell;
 import org.knime.core.data.def.StringCell;
+import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -86,14 +86,14 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 class FileMetaInfoNodeModel extends NodeModel {
 
-    private SettingsModelString m_locationcolumn;
+    private SettingsModelString m_uricolumn;
 
     /**
      * Constructor for the node model.
      */
     protected FileMetaInfoNodeModel() {
         super(1, 1);
-        m_locationcolumn = SettingsFactory.createLocationColumnSettings();
+        m_uricolumn = SettingsFactory.createURIColumnSettings();
     }
 
     /**
@@ -122,8 +122,8 @@ class FileMetaInfoNodeModel extends NodeModel {
             final ExecutionContext exec) throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
-        final int locationIndex =
-                inSpec.findColumnIndex(m_locationcolumn.getStringValue());
+        final int uriIndex =
+                inSpec.findColumnIndex(m_uricolumn.getStringValue());
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         // Create columns for the meta information using the attributes array
         Attributes[] attributes = Attributes.getAllAttributes();
@@ -142,7 +142,7 @@ class FileMetaInfoNodeModel extends NodeModel {
         CellFactory factory = new AbstractCellFactory(colSpecs) {
             @Override
             public DataCell[] getCells(final DataRow row) {
-                return inspectFile(row, locationIndex);
+                return inspectFile(row, uriIndex);
             }
         };
         rearranger.append(factory);
@@ -153,24 +153,24 @@ class FileMetaInfoNodeModel extends NodeModel {
      * Find the attributes of a file.
      * 
      * 
-     * Find out the attributes of a file. The files location has to be contained
-     * in one of the rows cells. Will return missing cells if the file does not
+     * Find out the attributes of a file. The files URI has to be contained in
+     * one of the rows cells. Will return missing cells if the file does not
      * exist.
      * 
      * @param row Row with the location cell in it
-     * @param locationIndex Index of the location cell
+     * @param uriIndex Index of the URI cell
      * @return Data cells with the attributes of the file
      */
-    private DataCell[] inspectFile(final DataRow row, final int locationIndex) {
+    private DataCell[] inspectFile(final DataRow row, final int uriIndex) {
         DataCell[] cells = new DataCell[Attributes.getAllAttributes().length];
         // Assume missing cells
         for (int i = 0; i < cells.length; i++) {
             cells[i] = DataType.getMissingCell();
         }
-        if (!row.getCell(locationIndex).isMissing()) {
+        if (!row.getCell(uriIndex).isMissing()) {
             // Get location
-            String location =
-                    ((StringValue)row.getCell(locationIndex)).getStringValue();
+            URIDataValue value = (URIDataValue)row.getCell(uriIndex);
+            String location = value.getURIContent().getURI().getPath();
             File file = new File(location);
             if (file.exists()) {
                 try {
@@ -242,21 +242,20 @@ class FileMetaInfoNodeModel extends NodeModel {
      */
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
-        // Is the location column set?
-        if (m_locationcolumn.getStringValue().equals("")) {
-            throw new InvalidSettingsException("Location column not set");
+        // Is the uri column set?
+        if (m_uricolumn.getStringValue().equals("")) {
+            throw new InvalidSettingsException("URI column not set");
         }
-        // Does the location column setting reference to an existing column?
-        int columnIndex =
-                inSpec.findColumnIndex(m_locationcolumn.getStringValue());
+        // Does the URI column setting reference to an existing column?
+        int columnIndex = inSpec.findColumnIndex(m_uricolumn.getStringValue());
         if (columnIndex < 0) {
-            throw new InvalidSettingsException("Location column not set");
+            throw new InvalidSettingsException("URI column not set");
         }
-        // Is the location column setting referencing to a column of the type
+        // Is the URI column setting referencing to a column of the type
         // string value?
         DataType type = inSpec.getColumnSpec(columnIndex).getType();
-        if (!type.isCompatible(StringValue.class)) {
-            throw new InvalidSettingsException("Location column not set");
+        if (!type.isCompatible(URIDataValue.class)) {
+            throw new InvalidSettingsException("URI column not set");
         }
     }
 
@@ -274,7 +273,7 @@ class FileMetaInfoNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
-        // createColumnRearranger will check the settings
+        // createColumnRearranger() will check the settings
         DataTableSpec outSpec =
                 createColumnRearranger(inSpecs[0], null).createSpec();
         return new DataTableSpec[]{outSpec};
@@ -285,7 +284,7 @@ class FileMetaInfoNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_locationcolumn.saveSettingsTo(settings);
+        m_uricolumn.saveSettingsTo(settings);
     }
 
     /**
@@ -294,7 +293,7 @@ class FileMetaInfoNodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_locationcolumn.loadSettingsFrom(settings);
+        m_uricolumn.loadSettingsFrom(settings);
     }
 
     /**
@@ -303,7 +302,7 @@ class FileMetaInfoNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_locationcolumn.validateSettings(settings);
+        m_uricolumn.validateSettings(settings);
     }
 
     /**

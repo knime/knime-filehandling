@@ -10,16 +10,16 @@
 	<fullDescription>
 		<intro>
 			This node finds out meta information about the files given in
-			the location column and appends them to the table.
+			the URI column and appends them to the table.
 		</intro>
 
-		<option name="Location column">Column with the path to the files.</option>
+		<option name="URI column">Column with the path to the files.</option>
 	</fullDescription>
 
 	<ports>
 		<inPort name="Input table" index="0">
 			Table that contains the
-			location of the files in a column.
+			URI of the files in a column.
 		</inPort>
 		<outPort name="Output table" index="0">
 			Input table with the meta information appended. Contained
