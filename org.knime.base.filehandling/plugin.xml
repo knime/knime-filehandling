@@ -8,16 +8,11 @@
    <node category-path="/misc/filehandling/zip" factory-class="org.knime.base.filehandling.unzip.UnzipNodeFactory" id="org.knime.base.filehandling.unzip.UnzipNodeFactory"/>
    <node category-path="/misc/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory" id="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory"/>
    <node category-path="/misc/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory" id="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory"/>
-   <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.stringtouri.StringToURINodeFactory" id="org.knime.base.filehandling.stringtouri.StringToURINodeFactory" />
-   <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.uritostring.URIToStringNodeFactory" id="org.knime.base.filehandling.uritostring.URIToStringNodeFactory" />
-   <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.uritoport.URIToPortNodeFactory" id="org.knime.base.filehandling.uritoport.URIToPortNodeFactory" />
-   <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.porttouri.PortToURINodeFactory" id="org.knime.base.filehandling.porttouri.PortToURINodeFactory" />
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category description="Nodes to handle files" icon="icons/missing.gif" level-id="filehandling" name="Filehandling" path="/misc" />
       <category description="Nodes to handle zip files" icon="icons/missing.gif" level-id="zip" name="Zip" path="/misc/filehandling" />
       <category description="Nodes to handle binary objects" icon="icons/missing.gif" level-id="binaryobjects" name="Binary Objects" path="/misc/filehandling" />
-      <category description="Nodes to handle URI conversion" icon="icons/missing.gif" level-id="uri" name="URI" path="/misc/filehandling" />
    </extension>
 
 </plugin>
