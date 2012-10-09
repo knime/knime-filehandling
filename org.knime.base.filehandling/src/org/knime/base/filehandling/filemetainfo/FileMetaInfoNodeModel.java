@@ -54,6 +54,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 
+import org.apache.commons.io.FileUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -183,6 +184,10 @@ class FileMetaInfoNodeModel extends NodeModel {
                     // Size
                     long size = getFileSize(file);
                     cells[Attributes.SIZE.getPosition()] = new LongCell(size);
+                    // Size (human readable)
+                    String humansize = FileUtils.byteCountToDisplaySize(size);
+                    cells[Attributes.HUMANSIZE.getPosition()] =
+                            new StringCell(humansize);
                     // Last modified
                     long modifyDate = file.lastModified();
                     Calendar calendar = Calendar.getInstance();
