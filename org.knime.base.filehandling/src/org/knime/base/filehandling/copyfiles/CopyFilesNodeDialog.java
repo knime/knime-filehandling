@@ -71,6 +71,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
 
+    private SettingsModelString m_copyormove;
+
     private SettingsModelString m_sourcecolumn;
 
     private SettingsModelString m_filenamehandling;
@@ -80,6 +82,8 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
     private SettingsModelString m_pattern;
 
     private SettingsModelString m_targetcolumn;
+    
+    private SettingsModelString m_ifexists;
 
     private FlowVariableModel m_outputdirectoryFvm;
 
@@ -89,6 +93,7 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
     @SuppressWarnings("unchecked")
     protected CopyFilesNodeDialog() {
         super();
+        m_copyormove = SettingsFactory.createCopyOrMoveSettings();
         m_sourcecolumn = SettingsFactory.createSourceColumnSettings();
         m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
         m_outputdirectory =
@@ -97,6 +102,7 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
         m_pattern = SettingsFactory.createPatternSettings(m_filenamehandling);
         m_targetcolumn =
                 SettingsFactory.createTargetColumnSettings(m_filenamehandling);
+        m_ifexists = SettingsFactory.createIfExistsSettings();
         m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
         m_filenamehandling.addChangeListener(new ChangeListener() {
             @Override
@@ -109,6 +115,8 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
                         .getName()));
             }
         });
+        addDialogComponent(new DialogComponentButtonGroup(m_copyormove, false,
+                "Copy or move?", CopyOrMove.getAllSettings()));
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_sourcecolumn, "Source column", 0, URIDataValue.class));
         createNewGroup("Target filenames...");
@@ -122,6 +130,9 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
                 m_outputdirectoryFvm));
         addDialogComponent(new DialogComponentString(m_pattern, "Pattern"));
         closeCurrentGroup();
+        // Overwrite policy
+        addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
+                "If a file exists...", OverwritePolicy.getAllSettings()));
     }
 
     /**

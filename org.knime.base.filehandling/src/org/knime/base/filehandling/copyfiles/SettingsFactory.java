@@ -65,6 +65,16 @@ final class SettingsFactory {
     }
 
     /**
+     * Factory method for the copy or move setting.
+     * 
+     * 
+     * @return Copy or move <code>SettingsModel</code>
+     */
+    static SettingsModelString createCopyOrMoveSettings() {
+        return new SettingsModelString("copyormove", CopyOrMove.COPY.getName());
+    }
+
+    /**
      * Factory method for the source column setting.
      * 
      * 
@@ -81,7 +91,8 @@ final class SettingsFactory {
      * @return Filename handling <code>SettingsModel</code>
      */
     static SettingsModelString createFilenameHandlingSettings() {
-        return new SettingsModelString("filenamehandling", "");
+        return new SettingsModelString("filenamehandling",
+                FilenameHandling.FROMCOLUMN.getName());
     }
 
     /**
@@ -130,6 +141,17 @@ final class SettingsFactory {
         targetcolumn.setEnabled(filenameHandling.getStringValue().equals(
                 FilenameHandling.FROMCOLUMN.getName()));
         return targetcolumn;
+    }
+
+    /**
+     * Factory method for the if exists setting.
+     * 
+     * 
+     * @return If exists <code>SettingsModel</code>
+     */
+    static SettingsModelString createIfExistsSettings() {
+        return new SettingsModelString("ifexists",
+                OverwritePolicy.ABORT.getName());
     }
 
 }
