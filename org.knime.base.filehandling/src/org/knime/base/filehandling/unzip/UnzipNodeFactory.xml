@@ -8,14 +8,24 @@
 	</shortDescription>
 
 	<fullDescription>
-		<intro>This node unzips files from a zip file. The path and URL to the
-			files will
+		<intro>This node unzips files from a zip file. The path to the
+			files
+			will
 			be contained in the output table.</intro>
 
 
 		<option name="Source directory">Path to the zip file.</option>
 		<option name="Output directory">Path to the output directory, where the files will
 			be extracted to.</option>
+		<option name="Output...">
+			Specifies the content of the output table.
+			<br />
+			<b>Location</b>
+			A string column with the path to the extracted files.
+			<br />
+			<b>URI</b>
+			An URI column with the URIs to the extracted files.
+		</option>
 		<option name="If a file exists...">
 			Specifies the behavior if a file with the same name already
 			exists.
@@ -32,7 +42,7 @@
 
 	<ports>
 		<outPort index="0" name="Output table">
-			Path and URL to every extracted file
+			Path to every extracted file
 		</outPort>
 	</ports>
 </knimeNode>

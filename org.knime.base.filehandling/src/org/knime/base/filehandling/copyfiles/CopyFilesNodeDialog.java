@@ -46,92 +46,65 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.zip;
+package org.knime.base.filehandling.copyfiles;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import org.knime.core.data.uri.URIDataValue;
+import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
+import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * Factory for SettingsModels.
+ * <code>NodeDialog</code> for the "Copy Files" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-final class SettingsFactory {
+class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsFactory() {
-        // Disables default constructor
-    }
+    private SettingsModelString m_sourcecolumn;
 
-    /**
-     * Factory method for the location column setting.
-     * 
-     * 
-     * @return Location column <code>SettingsModel</code>
-     */
-    static SettingsModelString createLocationColumnSettings() {
-        return new SettingsModelString("locationcolumn", "");
-    }
+    private SettingsModelString m_filenamehandling;
+
+    private SettingsModelString m_pattern;
+
+    private SettingsModelString m_targetcolumn;
 
     /**
-     * Factory method for the target setting.
-     * 
-     * 
-     * @return Target <code>SettingsModel</code>
+     * New pane for configuring the copy files node dialog.
      */
-    static SettingsModelString createTargetSettings() {
-        return new SettingsModelString("target", "");
+    @SuppressWarnings("unchecked")
+    protected CopyFilesNodeDialog() {
+        super();
+        m_sourcecolumn = SettingsFactory.createSourceColumnSettings();
+        m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
+        m_pattern = SettingsFactory.createPatternSettings(m_filenamehandling);
+        m_targetcolumn =
+                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
+        m_filenamehandling.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                String handling = m_filenamehandling.getStringValue();
+                m_targetcolumn.setEnabled(handling
+                        .equals(FilenameHandling.FROMCOLUMN.getName()));
+                m_pattern.setEnabled(handling.equals(FilenameHandling.GENERATE
+                        .getName()));
+            }
+        });
+        addDialogComponent(new DialogComponentColumnNameSelection(
+                m_sourcecolumn, "Source column", 0, URIDataValue.class));
+        createNewGroup("Target filenames...");
+        addDialogComponent(new DialogComponentButtonGroup(m_filenamehandling,
+                false, "", FilenameHandling.getAllSettings()));
+        addDialogComponent(new DialogComponentColumnNameSelection(
+                m_targetcolumn, "Target column", 0, URIDataValue.class));
+        addDialogComponent(new DialogComponentString(m_pattern, "Pattern"));
+        closeCurrentGroup();
     }
-
-    /**
-     * Factory method for the path handling setting.
-     * 
-     * 
-     * @return Path handling <code>SettingsModel</code>
-     */
-    static SettingsModelString createPathHandlingSettings() {
-        return new SettingsModelString("pathhandling",
-                PathHandling.FULL_PATH.getName());
-    }
-
-    /**
-     * Factory method for the prefix setting.
-     * 
-     * 
-     * @param pathhandling <code>SettingsModel</code> for the path handling
-     *            setting
-     * 
-     * @return Prefix <code>SettingsModel</code>
-     */
-    static SettingsModelString createPrefixSettings(
-            final SettingsModelString pathhandling) {
-        SettingsModelString prefix = new SettingsModelString("prefix", "");
-        prefix.setEnabled(pathhandling.getStringValue().equals(
-                PathHandling.TRUNCATE_PREFIX.getName()));
-        return prefix;
-    }
-
-    /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
-     */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
-    }
-
-    /**
-     * Factory method for the compression level setting.
-     * 
-     * 
-     * @return Compression level <code>SettingsModel</code>
-     */
-    static SettingsModelIntegerBounded createCompressionLevelSettings() {
-        return new SettingsModelIntegerBounded("compressionlevel", 0, 0, 9);
-    }
-
 }

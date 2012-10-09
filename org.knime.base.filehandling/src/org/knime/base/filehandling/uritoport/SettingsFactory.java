@@ -46,11 +46,10 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.zip;
+package org.knime.base.filehandling.uritoport;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -66,72 +65,13 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the location column setting.
+     * Factory method for the URI column setting.
      * 
      * 
-     * @return Location column <code>SettingsModel</code>
+     * @return URI column <code>SettingsModel</code>
      */
-    static SettingsModelString createLocationColumnSettings() {
-        return new SettingsModelString("locationcolumn", "");
-    }
-
-    /**
-     * Factory method for the target setting.
-     * 
-     * 
-     * @return Target <code>SettingsModel</code>
-     */
-    static SettingsModelString createTargetSettings() {
-        return new SettingsModelString("target", "");
-    }
-
-    /**
-     * Factory method for the path handling setting.
-     * 
-     * 
-     * @return Path handling <code>SettingsModel</code>
-     */
-    static SettingsModelString createPathHandlingSettings() {
-        return new SettingsModelString("pathhandling",
-                PathHandling.FULL_PATH.getName());
-    }
-
-    /**
-     * Factory method for the prefix setting.
-     * 
-     * 
-     * @param pathhandling <code>SettingsModel</code> for the path handling
-     *            setting
-     * 
-     * @return Prefix <code>SettingsModel</code>
-     */
-    static SettingsModelString createPrefixSettings(
-            final SettingsModelString pathhandling) {
-        SettingsModelString prefix = new SettingsModelString("prefix", "");
-        prefix.setEnabled(pathhandling.getStringValue().equals(
-                PathHandling.TRUNCATE_PREFIX.getName()));
-        return prefix;
-    }
-
-    /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
-     */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
-    }
-
-    /**
-     * Factory method for the compression level setting.
-     * 
-     * 
-     * @return Compression level <code>SettingsModel</code>
-     */
-    static SettingsModelIntegerBounded createCompressionLevelSettings() {
-        return new SettingsModelIntegerBounded("compressionlevel", 0, 0, 9);
+    static SettingsModelString createURIColumnSettings() {
+        return new SettingsModelString("uricolumn", "");
     }
 
 }

@@ -54,6 +54,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
@@ -61,12 +62,15 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.io.FilenameUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.StringCell;
+import org.knime.core.data.uri.URIContent;
+import org.knime.core.data.uri.URIDataCell;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
@@ -94,6 +98,8 @@ class UnzipNodeModel extends NodeModel {
 
     private SettingsModelString m_targetdirectory;
 
+    private SettingsModelString m_output;
+
     private SettingsModelString m_ifexists;
 
     /**
@@ -103,6 +109,7 @@ class UnzipNodeModel extends NodeModel {
         super(0, 1);
         m_source = SettingsFactory.createSourceSettings();
         m_targetdirectory = SettingsFactory.createTargetDirectorySettings();
+        m_output = SettingsFactory.createOutputSettings();
         m_ifexists = SettingsFactory.createIfExistsSettings();
     }
 
@@ -174,13 +181,19 @@ class UnzipNodeModel extends NodeModel {
                 }
                 out.close();
                 // Create row with path and URL
-                DataCell[] cells = new DataCell[2];
-                cells[0] = new StringCell(file.getAbsolutePath());
-                cells[1] =
-                        new StringCell(file.getAbsoluteFile().toURI().toURL()
-                                .toString());
-                outContainer
-                        .addRowToTable(new DefaultRow("Row " + rowID, cells));
+                DataCell cell = null;
+                String outputSelection = m_output.getStringValue();
+                if (outputSelection.equals(OutputSelection.LOCATION.getName())) {
+                    cell = new StringCell(file.getAbsolutePath());
+                }
+                if (outputSelection.equals(OutputSelection.URI.getName())) {
+                    URI uri = file.getAbsoluteFile().toURI();
+                    String extension =
+                            FilenameUtils.getExtension(uri.getPath());
+                    URIContent content = new URIContent(uri, extension);
+                    cell = new URIDataCell(content);
+                }
+                outContainer.addRowToTable(new DefaultRow("Row" + rowID, cell));
                 rowID++;
                 entry = zin.getNextEntry();
             }
@@ -248,7 +261,7 @@ class UnzipNodeModel extends NodeModel {
             file.delete();
         }
     }
-    
+
     /**
      * Factory method for the output table spec.
      * 
@@ -256,14 +269,18 @@ class UnzipNodeModel extends NodeModel {
      * @return Output table spec
      */
     private DataTableSpec createOutSpec() {
-        DataColumnSpec[] columnSpec = new DataColumnSpec[2];
-        // Column with location information
-        columnSpec[0] =
-                new DataColumnSpecCreator("Location", StringCell.TYPE)
-                        .createSpec();
-        // Column in URL format
-        columnSpec[1] =
-                new DataColumnSpecCreator("URL", StringCell.TYPE).createSpec();
+        DataColumnSpec columnSpec = null;
+        String output = m_output.getStringValue();
+        if (output.equals(OutputSelection.LOCATION.getName())) {
+            columnSpec =
+                    new DataColumnSpecCreator("Location", StringCell.TYPE)
+                            .createSpec();
+        }
+        if (output.equals(OutputSelection.URI.getName())) {
+            columnSpec =
+                    new DataColumnSpecCreator("URI", URIDataCell.TYPE)
+                            .createSpec();
+        }
         return new DataTableSpec(columnSpec);
     }
 
@@ -305,6 +322,7 @@ class UnzipNodeModel extends NodeModel {
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_source.saveSettingsTo(settings);
         m_targetdirectory.saveSettingsTo(settings);
+        m_output.saveSettingsTo(settings);
         m_ifexists.saveSettingsTo(settings);
     }
 
@@ -316,6 +334,7 @@ class UnzipNodeModel extends NodeModel {
             throws InvalidSettingsException {
         m_source.loadSettingsFrom(settings);
         m_targetdirectory.loadSettingsFrom(settings);
+        m_output.loadSettingsFrom(settings);
         m_ifexists.loadSettingsFrom(settings);
     }
 
@@ -327,6 +346,7 @@ class UnzipNodeModel extends NodeModel {
             throws InvalidSettingsException {
         m_source.validateSettings(settings);
         m_targetdirectory.validateSettings(settings);
+        m_output.validateSettings(settings);
         m_ifexists.validateSettings(settings);
     }
 

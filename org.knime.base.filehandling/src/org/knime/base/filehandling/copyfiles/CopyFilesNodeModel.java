@@ -44,94 +44,126 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.zip;
+package org.knime.base.filehandling.copyfiles;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
+import java.io.File;
+import java.io.IOException;
+
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.node.BufferedDataTable;
+import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.ExecutionContext;
+import org.knime.core.node.ExecutionMonitor;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeModel;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * Factory for SettingsModels.
+ * This is the model implementation of URI to string.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-final class SettingsFactory {
+class CopyFilesNodeModel extends NodeModel {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    private SettingsModelString m_sourcecolumn;
+
+    /**
+     * Constructor for the node model.
+     */
+    protected CopyFilesNodeModel() {
+        super(1, 0);
+        m_sourcecolumn = SettingsFactory.createSourceColumnSettings();
     }
 
     /**
-     * Factory method for the location column setting.
-     * 
-     * 
-     * @return Location column <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createLocationColumnSettings() {
-        return new SettingsModelString("locationcolumn", "");
+    @Override
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
+            final ExecutionContext exec) throws Exception {
+        return new BufferedDataTable[]{};
     }
 
     /**
-     * Factory method for the target setting.
+     * Check if the settings are all valid.
      * 
      * 
-     * @return Target <code>SettingsModel</code>
+     * @param inSpec Specification of the input table
+     * @throws InvalidSettingsException If the settings are incorrect
      */
-    static SettingsModelString createTargetSettings() {
-        return new SettingsModelString("target", "");
+    private void checkSettings(final DataTableSpec inSpec)
+            throws InvalidSettingsException {
     }
 
     /**
-     * Factory method for the path handling setting.
-     * 
-     * 
-     * @return Path handling <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createPathHandlingSettings() {
-        return new SettingsModelString("pathhandling",
-                PathHandling.FULL_PATH.getName());
+    @Override
+    protected void reset() {
+        // Not used
     }
 
     /**
-     * Factory method for the prefix setting.
-     * 
-     * 
-     * @param pathhandling <code>SettingsModel</code> for the path handling
-     *            setting
-     * 
-     * @return Prefix <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createPrefixSettings(
-            final SettingsModelString pathhandling) {
-        SettingsModelString prefix = new SettingsModelString("prefix", "");
-        prefix.setEnabled(pathhandling.getStringValue().equals(
-                PathHandling.TRUNCATE_PREFIX.getName()));
-        return prefix;
+    @Override
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
+            throws InvalidSettingsException {
+        checkSettings(inSpecs[0]);
+        return new DataTableSpec[]{};
     }
 
     /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+    @Override
+    protected void saveSettingsTo(final NodeSettingsWO settings) {
+        m_sourcecolumn.saveSettingsTo(settings);
     }
 
     /**
-     * Factory method for the compression level setting.
-     * 
-     * 
-     * @return Compression level <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelIntegerBounded createCompressionLevelSettings() {
-        return new SettingsModelIntegerBounded("compressionlevel", 0, 0, 9);
+    @Override
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
+        m_sourcecolumn.loadSettingsFrom(settings);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void validateSettings(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
+        m_sourcecolumn.validateSettings(settings);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadInternals(final File internDir,
+            final ExecutionMonitor exec) throws IOException,
+            CanceledExecutionException {
+        // Not used
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void saveInternals(final File internDir,
+            final ExecutionMonitor exec) throws IOException,
+            CanceledExecutionException {
+        // Not used
     }
 
 }

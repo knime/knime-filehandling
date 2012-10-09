@@ -8,12 +8,24 @@
 	</shortDescription>
 
 	<fullDescription>
-		<intro>This node zips files into a zip file. The URL to the files has
+		<intro>This node zips files into a zip file. The path to the files has
 			to be contained in the input table.</intro>
 
 
-		<option name="URL Column">The column that contains the URL to the files that
-			should be zipped. The URL has to contain the absolute path.</option>
+		<option name="From...">
+			<b>Location</b>
+			<br />
+			Use string column with location information.
+			<br />
+			<b>URI</b>
+			Use URI column.
+		</option>
+		<option name="Location column">The column that contains the location to the files
+			that
+			should be zipped. The location has to contain the absolute path.
+		</option>
+		<option name="URI column">The column that contains the URI to the files that
+			should be zipped.</option>
 		<option name="Output file location">The location where the zip file gets saved.
 		</option>
 		<option name="Path handling">
@@ -63,7 +75,7 @@
 
 	<ports>
 		<inPort index="0" name="Input table">Has to have a column that contains the
-			URL to the files that should be zipped.
+			path to the files that should be zipped.
 		</inPort>
 	</ports>
 </knimeNode>

@@ -46,92 +46,33 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.zip;
+package org.knime.base.filehandling.uritoport;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
+import org.knime.core.data.uri.URIDataValue;
+import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * Factory for SettingsModels.
+ * <code>NodeDialog</code> for the "URI To Port" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-final class SettingsFactory {
+class URIToPortNodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsFactory() {
-        // Disables default constructor
-    }
+    private SettingsModelString m_uricolumn;
 
     /**
-     * Factory method for the location column setting.
-     * 
-     * 
-     * @return Location column <code>SettingsModel</code>
+     * New pane for configuring the URI to port node dialog.
      */
-    static SettingsModelString createLocationColumnSettings() {
-        return new SettingsModelString("locationcolumn", "");
+    @SuppressWarnings("unchecked")
+    protected URIToPortNodeDialog() {
+        super();
+        m_uricolumn = SettingsFactory.createURIColumnSettings();
+        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
+                "URI column", 0, URIDataValue.class));
     }
-
-    /**
-     * Factory method for the target setting.
-     * 
-     * 
-     * @return Target <code>SettingsModel</code>
-     */
-    static SettingsModelString createTargetSettings() {
-        return new SettingsModelString("target", "");
-    }
-
-    /**
-     * Factory method for the path handling setting.
-     * 
-     * 
-     * @return Path handling <code>SettingsModel</code>
-     */
-    static SettingsModelString createPathHandlingSettings() {
-        return new SettingsModelString("pathhandling",
-                PathHandling.FULL_PATH.getName());
-    }
-
-    /**
-     * Factory method for the prefix setting.
-     * 
-     * 
-     * @param pathhandling <code>SettingsModel</code> for the path handling
-     *            setting
-     * 
-     * @return Prefix <code>SettingsModel</code>
-     */
-    static SettingsModelString createPrefixSettings(
-            final SettingsModelString pathhandling) {
-        SettingsModelString prefix = new SettingsModelString("prefix", "");
-        prefix.setEnabled(pathhandling.getStringValue().equals(
-                PathHandling.TRUNCATE_PREFIX.getName()));
-        return prefix;
-    }
-
-    /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
-     */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
-    }
-
-    /**
-     * Factory method for the compression level setting.
-     * 
-     * 
-     * @return Compression level <code>SettingsModel</code>
-     */
-    static SettingsModelIntegerBounded createCompressionLevelSettings() {
-        return new SettingsModelIntegerBounded("compressionlevel", 0, 0, 9);
-    }
-
 }

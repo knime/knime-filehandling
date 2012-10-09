@@ -46,92 +46,63 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.zip;
+package org.knime.base.filehandling.uritoport;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
- * Factory for SettingsModels.
+ * <code>NodeFactory</code> for the "URI To Port" Node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-final class SettingsFactory {
+public class URIToPortNodeFactory extends
+        NodeFactory<URIToPortNodeModel> {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public URIToPortNodeModel createNodeModel() {
+        return new URIToPortNodeModel();
     }
 
     /**
-     * Factory method for the location column setting.
-     * 
-     * 
-     * @return Location column <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createLocationColumnSettings() {
-        return new SettingsModelString("locationcolumn", "");
+    @Override
+    public int getNrNodeViews() {
+        return 0;
     }
 
     /**
-     * Factory method for the target setting.
-     * 
-     * 
-     * @return Target <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createTargetSettings() {
-        return new SettingsModelString("target", "");
+    @Override
+    public NodeView<URIToPortNodeModel> createNodeView(
+            final int viewIndex,
+            final URIToPortNodeModel nodeModel) {
+        return null;
     }
 
     /**
-     * Factory method for the path handling setting.
-     * 
-     * 
-     * @return Path handling <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createPathHandlingSettings() {
-        return new SettingsModelString("pathhandling",
-                PathHandling.FULL_PATH.getName());
+    @Override
+    public boolean hasDialog() {
+        return true;
     }
 
     /**
-     * Factory method for the prefix setting.
-     * 
-     * 
-     * @param pathhandling <code>SettingsModel</code> for the path handling
-     *            setting
-     * 
-     * @return Prefix <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createPrefixSettings(
-            final SettingsModelString pathhandling) {
-        SettingsModelString prefix = new SettingsModelString("prefix", "");
-        prefix.setEnabled(pathhandling.getStringValue().equals(
-                PathHandling.TRUNCATE_PREFIX.getName()));
-        return prefix;
-    }
-
-    /**
-     * Factory method for the if exists setting.
-     * 
-     * 
-     * @return If exists <code>SettingsModel</code>
-     */
-    static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
-    }
-
-    /**
-     * Factory method for the compression level setting.
-     * 
-     * 
-     * @return Compression level <code>SettingsModel</code>
-     */
-    static SettingsModelIntegerBounded createCompressionLevelSettings() {
-        return new SettingsModelIntegerBounded("compressionlevel", 0, 0, 9);
+    @Override
+    public NodeDialogPane createNodeDialogPane() {
+        return new URIToPortNodeDialog();
     }
 
 }

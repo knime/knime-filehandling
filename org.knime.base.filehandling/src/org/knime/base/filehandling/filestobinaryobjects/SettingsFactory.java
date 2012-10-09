@@ -65,13 +65,13 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the location column setting.
+     * Factory method for the URI column setting.
      * 
      * 
-     * @return Location column <code>SettingsModel</code>
+     * @return URI column <code>SettingsModel</code>
      */
-    static SettingsModelString createLocationColumnSettings() {
-        return new SettingsModelString("locationcolumn", "");
+    static SettingsModelString createURIColumnSettings() {
+        return new SettingsModelString("uricolumn", "");
     }
 
     /**
@@ -81,8 +81,7 @@ final class SettingsFactory {
      * @return Binary object column name <code>SettingsModel</code>
      */
     static SettingsModelString createBinaryObjectColumnNameSettings() {
-        return new SettingsModelString("binaryobjectcolumnname",
-                "BinaryObject");
+        return new SettingsModelString("binaryobjectcolumnname", "BinaryObject");
     }
 
     /**

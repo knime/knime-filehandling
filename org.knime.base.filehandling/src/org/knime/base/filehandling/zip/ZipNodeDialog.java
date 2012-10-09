@@ -55,6 +55,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.StringValue;
+import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
@@ -72,7 +73,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 class ZipNodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsModelString m_urlcolumn;
+
+    private SettingsModelString m_locationcolumn;
 
     private SettingsModelString m_target;
 
@@ -94,7 +96,7 @@ class ZipNodeDialog extends DefaultNodeSettingsPane {
     @SuppressWarnings("unchecked")
     protected ZipNodeDialog() {
         super();
-        m_urlcolumn = SettingsFactory.createURLColumnSettings();
+        m_locationcolumn = SettingsFactory.createLocationColumnSettings();
         m_target = SettingsFactory.createTargetSettings();
         m_pathhandling = SettingsFactory.createPathHandlingSettings();
         m_prefix = SettingsFactory.createPrefixSettings(m_pathhandling);
@@ -108,9 +110,10 @@ class ZipNodeDialog extends DefaultNodeSettingsPane {
                 m_prefix.setEnabled(isPrefixEnabled());
             }
         });
-        // URL Column
-        addDialogComponent(new DialogComponentColumnNameSelection(m_urlcolumn,
-                "URL column", 0, StringValue.class));
+        // Location column
+        addDialogComponent(new DialogComponentColumnNameSelection(
+                m_locationcolumn, "Location column", 0, false,
+                StringValue.class, URIDataValue.class));
         // Target zip file
         addDialogComponent(new DialogComponentFileChooser(m_target,
                 "targetHistory", JFileChooser.SAVE_DIALOG, false, m_targetFvm));
@@ -128,6 +131,7 @@ class ZipNodeDialog extends DefaultNodeSettingsPane {
                 m_prefix.setEnabled(isPrefixEnabled());
             }
         });
+        // Prefix
         addDialogComponent(new DialogComponentFileChooser(m_prefix,
                 "prefixHistory", JFileChooser.OPEN_DIALOG, true, m_prefixFvm));
         closeCurrentGroup();

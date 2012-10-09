@@ -68,6 +68,7 @@ import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
 import org.knime.core.data.StringValue;
+import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -91,7 +92,7 @@ class ZipNodeModel extends NodeModel {
     private static final NodeLogger LOGGER = NodeLogger
             .getLogger(ZipNodeModel.class);
 
-    private SettingsModelString m_urlcolumn;
+    private SettingsModelString m_locationcolumn;
 
     private SettingsModelString m_target;
 
@@ -108,7 +109,7 @@ class ZipNodeModel extends NodeModel {
      */
     protected ZipNodeModel() {
         super(1, 0);
-        m_urlcolumn = SettingsFactory.createURLColumnSettings();
+        m_locationcolumn = SettingsFactory.createLocationColumnSettings();
         m_target = SettingsFactory.createTargetSettings();
         m_pathhandling = SettingsFactory.createPathHandlingSettings();
         m_prefix = SettingsFactory.createPrefixSettings(m_pathhandling);
@@ -123,7 +124,6 @@ class ZipNodeModel extends NodeModel {
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
         List<String> entries = new LinkedList<String>();
-        String column = m_urlcolumn.getStringValue();
         String target = m_target.getStringValue();
         String ifExists = m_ifexists.getStringValue();
         File targetFile = new File(target);
@@ -143,10 +143,26 @@ class ZipNodeModel extends NodeModel {
             }
         }
         // Read filenames from table
+        String column = m_locationcolumn.getStringValue();
         int index = inData[0].getDataTableSpec().findColumnIndex(column);
-        for (DataRow row : inData[0]) {
-            if (!row.getCell(index).isMissing()) {
-                entries.add(row.getCell(index).toString());
+        DataType type =
+                inData[0].getDataTableSpec().getColumnSpec(index).getType();
+        boolean isString = type.isCompatible(StringValue.class);
+        boolean isURI = type.isCompatible(URIDataValue.class);
+        if (isString) {
+            for (DataRow row : inData[0]) {
+                if (!row.getCell(index).isMissing()) {
+                    StringValue value = (StringValue)row.getCell(index);
+                    entries.add(value.getStringValue());
+                }
+            }
+        }
+        if (isURI) {
+            for (DataRow row : inData[0]) {
+                if (!row.getCell(index).isMissing()) {
+                    URIDataValue value = (URIDataValue)row.getCell(index);
+                    entries.add(value.getURIContent().getURI().getPath());
+                }
             }
         }
         String[] filenames = entries.toArray(new String[entries.size()]);
@@ -427,21 +443,23 @@ class ZipNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
-        // Is the URL column set?
-        if (m_urlcolumn.getStringValue().equals("")) {
-            throw new InvalidSettingsException("URL column not set");
+        // Is the location column set?
+        if (m_locationcolumn.getStringValue().equals("")) {
+            throw new InvalidSettingsException("Location column not set");
         }
-        // Does the URL column setting reference to an existing column?
+        // Does the location column setting reference to an existing column?
         int columnIndex =
-                inSpecs[0].findColumnIndex(m_urlcolumn.getStringValue());
+                inSpecs[0].findColumnIndex(m_locationcolumn.getStringValue());
         if (columnIndex < 0) {
-            throw new InvalidSettingsException("URL column not set");
+            throw new InvalidSettingsException("Location column not set");
         }
-        // Is the URL column setting referencing to a column of the type
-        // string value?
+        // Is the location column setting referencing to a column of the
+        // type string value or URI data value?
         DataType type = inSpecs[0].getColumnSpec(columnIndex).getType();
-        if (!type.isCompatible(StringValue.class)) {
-            throw new InvalidSettingsException("URL column not set");
+        boolean isString = type.isCompatible(StringValue.class);
+        boolean isURI = type.isCompatible(URIDataValue.class);
+        if (!(isString || isURI)) {
+            throw new InvalidSettingsException("Location column not set");
         }
         // Is the target set?
         if (m_target.getStringValue().equals("")) {
@@ -462,7 +480,7 @@ class ZipNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_urlcolumn.saveSettingsTo(settings);
+        m_locationcolumn.saveSettingsTo(settings);
         m_target.saveSettingsTo(settings);
         m_ifexists.saveSettingsTo(settings);
         m_prefix.saveSettingsTo(settings);
@@ -476,7 +494,7 @@ class ZipNodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_urlcolumn.loadSettingsFrom(settings);
+        m_locationcolumn.loadSettingsFrom(settings);
         m_target.loadSettingsFrom(settings);
         m_ifexists.loadSettingsFrom(settings);
         m_prefix.loadSettingsFrom(settings);
@@ -490,7 +508,7 @@ class ZipNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_urlcolumn.validateSettings(settings);
+        m_locationcolumn.validateSettings(settings);
         m_target.validateSettings(settings);
         m_ifexists.validateSettings(settings);
         m_prefix.validateSettings(settings);

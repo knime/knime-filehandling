@@ -64,7 +64,7 @@ enum ReplacePolicy {
     APPEND("Append"),
 
     /**
-     * Replace location column.
+     * Replace URI column.
      */
     REPLACE("Replace");
 

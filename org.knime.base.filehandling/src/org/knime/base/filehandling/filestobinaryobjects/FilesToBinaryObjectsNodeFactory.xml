@@ -14,30 +14,31 @@
 		</intro>
 
 
-		<option name="Location column">Column with the path to the files.</option>
+		<option name="URI column">Column with the path to the files.</option>
 		<option name="Binary object column name">Name for the new column with the binary objects.
 		</option>
-		<option name="Append column or replace location">
+		<option name="Append column or replace URI">
 			<b>Append</b>
 			<br />
 			A new column will be appended.
 			<br />
 			<b>Replace</b>
 			<br />
-			The existing location column will be replaced by the new binary
-			object column.
+			The existing URI column will be replaced by the new binary
+			object
+			column.
 		</option>
 	</fullDescription>
 
 	<ports>
 		<inPort name="Input table" index="0">
-			Table that contains location
-			information. The files referenced will be loaded as binary objects.
+			Table that contains an URI
+			column. The files referenced will be loaded as binary objects.
 		</inPort>
 		<outPort name="Output table" index="0">
 			Input table with the binary
 			objects added. The binary object column will either be appended to
-			the table or will replace the location column, depending on the set
+			the table or will replace the URI column, depending on the set
 			settings.
 		</outPort>
 	</ports>

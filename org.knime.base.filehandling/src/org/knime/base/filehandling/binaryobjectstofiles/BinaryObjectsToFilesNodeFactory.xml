@@ -10,7 +10,7 @@
 	<fullDescription>
 		<intro>
 			This node writes the files of a table with binary objects. It
-			will append the locations of the files to the output table.
+			will append the URIs to the files to the output table.
 		</intro>
 
 
@@ -31,10 +31,12 @@
 			filenames. The ? will be replaced by the index of the corresponding
 			row.</option>
 		<option name="Remove binary object column">
-			Removes the column with the binary objects from the output table.
+			Removes the column with the binary objects from
+			the output table.
 		</option>
-		<option name="Append location and URL columns">
-			Appends columns with the location and URL to the written file, to the output
+		<option name="Append URI column">
+			Appends column with the URI to the written file,
+			to the output
 			table.
 		</option>
 		<option name="If a file exists...">
@@ -58,7 +60,8 @@
 		</inPort>
 		<outPort name="Output table" index="0">
 			Input table with the
-			location and URL for each file.
+			URI to
+			each file.
 		</outPort>
 	</ports>
 </knimeNode>

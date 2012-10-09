@@ -48,12 +48,11 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.filestobinaryobjects;
+package org.knime.base.filehandling.uritostring;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.List;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -61,11 +60,10 @@ import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
-import org.knime.core.data.blob.BinaryObjectCellFactory;
-import org.knime.core.data.blob.BinaryObjectDataCell;
+import org.knime.core.data.container.AbstractCellFactory;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
-import org.knime.core.data.container.SingleCellFactory;
+import org.knime.core.data.def.StringCell;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
@@ -75,30 +73,24 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
 
 /**
- * This is the model implementation of Files to Binary Objects.
+ * This is the model implementation of URI to string.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class FilesToBinaryObjectsNodeModel extends NodeModel {
+class URIToStringNodeModel extends NodeModel {
 
-    private SettingsModelString m_uricolumn;
-
-    private SettingsModelString m_bocolumnname;
-
-    private SettingsModelString m_replacepolicy;
+    private SettingsModelFilterString m_columnselection;
 
     /**
      * Constructor for the node model.
      */
-    protected FilesToBinaryObjectsNodeModel() {
+    protected URIToStringNodeModel() {
         super(1, 1);
-        m_uricolumn = SettingsFactory.createURIColumnSettings();
-        m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
-        m_replacepolicy = SettingsFactory.createReplacePolicySettings();
+        m_columnselection = SettingsFactory.createColumnSelectionSettings();
     }
 
     /**
@@ -108,53 +100,78 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
         ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec(), exec);
+                createColumnRearranger(inData[0].getDataTableSpec());
         BufferedDataTable out =
                 exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
     /**
-     * Create a rearranger that adds the binary objects to the table.
+     * Create a rearranger that replaces the selected columns with there string
+     * counterpart.
      * 
      * 
      * @param inSpec Specification of the input table
-     * @param exec Context of this execution
-     * @return Rearranger that will add a binary object column
+     * @return Rearranger that will replace the selected columns
      * @throws InvalidSettingsException If the settings are incorrect
      */
-    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final ExecutionContext exec) throws InvalidSettingsException {
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec)
+            throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
-        // Create binary object factory -- only assign during execution
-        final BinaryObjectCellFactory bocellfactory =
-                exec == null ? null : new BinaryObjectCellFactory(exec);
-        String uricolumn = m_uricolumn.getStringValue();
-        String bocolumnname = m_bocolumnname.getStringValue();
-        String replacepolicy = m_replacepolicy.getStringValue();
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
-        // Create column of the binary objects
-        DataColumnSpec colSpec =
-                new DataColumnSpecCreator(bocolumnname,
-                        BinaryObjectDataCell.TYPE).createSpec();
-        // Factory that creates the binary objects
-        CellFactory factory = new SingleCellFactory(colSpec) {
+        // Get selected columns and create arrays for there indexes and
+        // replacements specs
+        List<String> columns = m_columnselection.getIncludeList();
+        DataColumnSpec[] colSpecs = new DataColumnSpec[columns.size()];
+        int[] colIndexes = new int[columns.size()];
+        // Create new specification for each column
+        for (int i = 0; i < columns.size(); i++) {
+            colIndexes[i] = inSpec.findColumnIndex(columns.get(i));
+            colSpecs[i] =
+                    new DataColumnSpecCreator(columns.get(i), StringCell.TYPE)
+                            .createSpec();
+        }
+        // Factory that will generate the replacements
+        CellFactory factory = new AbstractCellFactory(colSpecs) {
             @Override
-            public DataCell getCell(final DataRow row) {
-                return createBinaryObjectCell(row, inSpec, bocellfactory);
+            public DataCell[] getCells(final DataRow row) {
+                return createStringCells(row, inSpec);
             }
         };
-        if (replacepolicy.equals(ReplacePolicy.APPEND.getName())) {
-            // Append the binary object column
-            rearranger.append(factory);
-        }
-        if (replacepolicy.equals(ReplacePolicy.REPLACE.getName())) {
-            // Replace URI column with the binary object column
-            int index = inSpec.findColumnIndex(uricolumn);
-            rearranger.replace(factory, index);
-        }
+        // Replace old columns with new ones
+        rearranger.replace(factory, colIndexes);
         return rearranger;
+    }
+
+    /**
+     * Create the correspondent string cells to the selected URI cells.
+     * 
+     * 
+     * @param row The row with the URI cells
+     * @param spec Specification of the input table
+     * @return Replacement cells
+     */
+    private DataCell[] createStringCells(final DataRow row,
+            final DataTableSpec spec) {
+        List<String> columns = m_columnselection.getIncludeList();
+        DataCell[] cells = new DataCell[columns.size()];
+        // Create new cell for each selected cell
+        for (int i = 0; i < columns.size(); i++) {
+            DataCell oldCell =
+                    row.getCell(spec.findColumnIndex(columns.get(i)));
+            // Is the cell missing?
+            if (oldCell.isMissing()) {
+                cells[i] = DataType.getMissingCell();
+            } else {
+                // URI to string
+                String value =
+                        ((URIDataValue)oldCell).getURIContent().getURI()
+                                .toString();
+                cells[i] = new StringCell(value);
+            }
+        }
+        return cells;
     }
 
     /**
@@ -166,63 +183,25 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
-        // Is the URI column set?
-        if (m_uricolumn.getStringValue().equals("")) {
-            throw new InvalidSettingsException("URI column not set");
+        List<String> columns = m_columnselection.getIncludeList();
+        // Is at least one column selected?
+        if (columns.size() < 1) {
+            throw new InvalidSettingsException("No column selected");
         }
-        // Does the URI column setting reference to an existing column?
-        int columnIndex = inSpec.findColumnIndex(m_uricolumn.getStringValue());
-        if (columnIndex < 0) {
-            throw new InvalidSettingsException("URI column not set");
-        }
-        // Is the URI column setting referencing to a column of the type
-        // string value?
-        DataType type = inSpec.getColumnSpec(columnIndex).getType();
-        if (!type.isCompatible(URIDataValue.class)) {
-            throw new InvalidSettingsException("URI column not set");
-        }
-        // Is the binary object column name empty?
-        if (m_bocolumnname.getStringValue().equals("")) {
-            throw new InvalidSettingsException(
-                    "Binary object column name can not be empty");
-        }
-        if (inSpec.findColumnIndex(m_bocolumnname.getStringValue()) != -1) {
-            throw new InvalidSettingsException(
-                    "Binary object column name already taken");
-        }
-    }
-
-    /**
-     * Create a cell containing the binary object.
-     * 
-     * 
-     * Create a cell containing the binary object to the file referenced by the
-     * URI cell of the row.
-     * 
-     * @param row
-     * @param inSpec
-     * @param bocellfactory
-     * @return Cell containing the binary object
-     */
-    private DataCell createBinaryObjectCell(final DataRow row,
-            final DataTableSpec inSpec,
-            final BinaryObjectCellFactory bocellfactory) {
-        // Assume missing cell
-        DataCell result = DataType.getMissingCell();
-        int uriIndex = inSpec.findColumnIndex(m_uricolumn.getStringValue());
-        if (!row.getCell(uriIndex).isMissing()) {
-            // Get location
-            URIDataValue value = (URIDataValue)row.getCell(uriIndex);
-            String location = value.getURIContent().getURI().getPath();
-            try {
-                // Create input stream and give it to the factory
-                InputStream input = new FileInputStream(location);
-                result = bocellfactory.create(input);
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage());
+        // Are all the selected columns of the right type
+        for (int i = 0; i < columns.size(); i++) {
+            String column = columns.get(i);
+            int index = inSpec.findColumnIndex(column);
+            // Does the column exist?
+            if (index < 0) {
+                throw new InvalidSettingsException("Columns not set");
+            }
+            DataType type = inSpec.getColumnSpec(index).getType();
+            if (!type.isCompatible(URIDataValue.class)) {
+                throw new InvalidSettingsException("Column \"" + column
+                        + "\" is not of the type URI");
             }
         }
-        return result;
     }
 
     /**
@@ -240,8 +219,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
         // createColumnRearranger will check the settings
-        DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0], null).createSpec();
+        DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 
@@ -250,9 +228,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_uricolumn.saveSettingsTo(settings);
-        m_bocolumnname.saveSettingsTo(settings);
-        m_replacepolicy.saveSettingsTo(settings);
+        m_columnselection.saveSettingsTo(settings);
     }
 
     /**
@@ -261,9 +237,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_uricolumn.loadSettingsFrom(settings);
-        m_bocolumnname.loadSettingsFrom(settings);
-        m_replacepolicy.loadSettingsFrom(settings);
+        m_columnselection.loadSettingsFrom(settings);
     }
 
     /**
@@ -272,9 +246,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_uricolumn.validateSettings(settings);
-        m_bocolumnname.validateSettings(settings);
-        m_replacepolicy.validateSettings(settings);
+        m_columnselection.validateSettings(settings);
     }
 
     /**

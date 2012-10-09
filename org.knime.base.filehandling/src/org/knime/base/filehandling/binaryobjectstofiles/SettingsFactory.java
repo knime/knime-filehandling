@@ -79,10 +79,19 @@ final class SettingsFactory {
      * Factory method for the output directory setting.
      * 
      * 
+     * @param filenamehandling <code>SettingsModel</code> for the filename
+     *            handling setting
+     * 
      * @return Output directory <code>SettingsModel</code>
      */
-    static SettingsModelString createOutputDirectorySettings() {
-        return new SettingsModelString("outputdirectory", "");
+    static SettingsModelString createOutputDirectorySettings(
+            final SettingsModelString filenamehandling) {
+        SettingsModelString directory =
+                new SettingsModelString("outputdirectory", "");
+        String handling = filenamehandling.getStringValue();
+        directory.setEnabled(handling.equals(FilenameHandling.GENERATE
+                .getName()));
+        return directory;
     }
 
     /**
@@ -156,13 +165,13 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the append location columns setting.
+     * Factory method for the append URI column setting.
      * 
      * 
-     * @return Append location columns <code>SettingsModel</code>
+     * @return Append URI column <code>SettingsModel</code>
      */
-    static SettingsModelBoolean createAppendLocationColumnsSettings() {
-        return new SettingsModelBoolean("appendlocationcolumn", true);
+    static SettingsModelBoolean createAppendURIColumnSettings() {
+        return new SettingsModelBoolean("appenduricolumn", true);
     }
 
 }

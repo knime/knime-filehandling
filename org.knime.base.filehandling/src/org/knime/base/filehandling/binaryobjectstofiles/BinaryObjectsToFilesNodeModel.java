@@ -55,9 +55,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.io.FilenameUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -65,12 +67,13 @@ import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
 import org.knime.core.data.RowKey;
-import org.knime.core.data.StringValue;
 import org.knime.core.data.blob.BinaryObjectDataValue;
-import org.knime.core.data.container.AbstractCellFactory;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
-import org.knime.core.data.def.StringCell;
+import org.knime.core.data.container.SingleCellFactory;
+import org.knime.core.data.uri.URIContent;
+import org.knime.core.data.uri.URIDataCell;
+import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -104,7 +107,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     private SettingsModelBoolean m_removebocolumn;
 
-    private SettingsModelBoolean m_appendlocationcolumns;
+    private SettingsModelBoolean m_appenduricolumn;
 
     /**
      * Constructor for the node model.
@@ -112,7 +115,9 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     protected BinaryObjectsToFilesNodeModel() {
         super(1, 1);
         m_bocolumn = SettingsFactory.createBinaryObjectColumnSettings();
-        m_outputdirectory = SettingsFactory.createOutputDirectorySettings();
+        m_outputdirectory =
+                SettingsFactory
+                        .createOutputDirectorySettings(m_filenamehandling);
         m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
         m_namecolumn =
                 SettingsFactory.createNameColumnSettings(m_filenamehandling);
@@ -121,8 +126,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_ifexists = SettingsFactory.createIfExistsSettings();
         m_removebocolumn =
                 SettingsFactory.createRemoveBinaryObjectColumnSettings();
-        m_appendlocationcolumns =
-                SettingsFactory.createAppendLocationColumnsSettings();
+        m_appenduricolumn = SettingsFactory.createAppendURIColumnSettings();
     }
 
     /**
@@ -137,7 +141,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         try {
             // If the columns do not get appended the create file method will
             // not be called so it has to happen manually
-            if (!m_appendlocationcolumns.getBooleanValue()) {
+            if (!m_appenduricolumn.getBooleanValue()) {
                 int rows = inData[0].getRowCount();
                 int i = 0;
                 // Create the file for each row
@@ -182,7 +186,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     }
 
     /**
-     * Create a rearranger that adds the location and URL columns.
+     * Create a rearranger that adds the URI column.
      * 
      * 
      * @param inSpec Specification of the input table
@@ -198,31 +202,22 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         // Check settings for correctness
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
-        DataColumnSpec[] colSpecs = new DataColumnSpec[0];
-        // Append location and URL column if selected. This will also call the
+        DataColumnSpec colSpec;
+        // Append URI column if selected. This will also call the
         // create file method
-        if (m_appendlocationcolumns.getBooleanValue()) {
-            colSpecs = new DataColumnSpec[2];
-            // Create column for the location of the files
-            String locationColName =
-                    DataTableSpec.getUniqueColumnName(inSpec, "Location");
-            colSpecs[0] =
-                    new DataColumnSpecCreator(locationColName, StringCell.TYPE)
+        if (m_appenduricolumn.getBooleanValue()) {
+            // Create column for the URI of the files
+            String uriColName =
+                    DataTableSpec.getUniqueColumnName(inSpec, "URI");
+            colSpec =
+                    new DataColumnSpecCreator(uriColName, URIDataCell.TYPE)
                             .createSpec();
-            // Create column for the URL of the files
-            String urlColName =
-                    DataTableSpec.getUniqueColumnName(inSpec, "URL");
-            colSpecs[1] =
-                    new DataColumnSpecCreator(urlColName, StringCell.TYPE)
-                            .createSpec();
-            // Factory that creates the files and the corresponding location and
-            // URL
-            // cells
-            CellFactory factory = new AbstractCellFactory(colSpecs) {
+            // Factory that creates the files and the corresponding URI cell
+            CellFactory factory = new SingleCellFactory(colSpec) {
                 private int m_rownr = 0;
 
                 @Override
-                public DataCell[] getCells(final DataRow row) {
+                public DataCell getCell(final DataRow row) {
                     return createFile(row, m_rownr, filenames, inSpec, exec);
                 }
 
@@ -232,7 +227,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 @Override
                 public void setProgress(final int curRowNr, final int rowCount,
                         final RowKey lastKey, final ExecutionMonitor exec2) {
-                    // super.setProgress(curRowNr, rowCount, lastKey, exec2);
+                    super.setProgress(curRowNr, rowCount, lastKey, exec2);
                     // Save the row for pattern creation
                     m_rownr = curRowNr;
                 }
@@ -271,12 +266,6 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         if (!type.isCompatible(BinaryObjectDataValue.class)) {
             throw new InvalidSettingsException("Binary object column not set");
         }
-        // Does the output directory exist?
-        File outputdirectory = new File(m_outputdirectory.getStringValue());
-        if (!outputdirectory.isDirectory()) {
-            throw new InvalidSettingsException("Output directory \""
-                    + outputdirectory.getAbsoluteFile() + "\" does not exist");
-        }
         // Check settings only if filename handling is from column
         if (m_filenamehandling.getStringValue().equals(
                 FilenameHandling.FROMCOLUMN.getName())) {
@@ -290,9 +279,9 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 throw new InvalidSettingsException("Name column not set");
             }
             // Is the name column setting referencing to a column of the type
-            // string data value?
+            // URI data value?
             type = inSpec.getColumnSpec(columnIndex).getType();
-            if (!type.isCompatible(StringValue.class)) {
+            if (!type.isCompatible(URIDataValue.class)) {
                 throw new InvalidSettingsException(
                         "Binary object column not set");
             }
@@ -300,6 +289,13 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         // Check settings only if filename handling is generate
         if (m_filenamehandling.getStringValue().equals(
                 FilenameHandling.GENERATE.getName())) {
+            // Does the output directory exist?
+            File outputdirectory = new File(m_outputdirectory.getStringValue());
+            if (!outputdirectory.isDirectory()) {
+                throw new InvalidSettingsException("Output directory \""
+                        + outputdirectory.getAbsoluteFile()
+                        + "\" does not exist");
+            }
             // Does the name pattern at least contain a '?'?
             String pattern = m_namepattern.getStringValue();
             if (!pattern.contains("?")) {
@@ -322,9 +318,9 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * @param filenames Set of files that have already been created
      * @param inSpec Specification of the input table
      * @param exec Context of this execution
-     * @return Cells containing the location and URL to the created file
+     * @return Cell containing the URI to the created file
      */
-    private DataCell[] createFile(final DataRow row, final int rowNr,
+    private DataCell createFile(final DataRow row, final int rowNr,
             final Set<String> filenames, final DataTableSpec inSpec,
             final ExecutionContext exec) {
         String boColumn = m_bocolumn.getStringValue();
@@ -336,8 +332,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         String ifExists = m_ifexists.getStringValue();
         String filename = "";
         // Assume missing binary object
-        DataCell location = DataType.getMissingCell();
-        DataCell url = DataType.getMissingCell();
+        DataCell uriCell = DataType.getMissingCell();
         if (!row.getCell(boIndex).isMissing()) {
             if (filenameHandling.equals(fromColumn)) {
                 // Get filename from table
@@ -348,7 +343,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                             + row.getKey() + "\" is missing");
                 }
                 filename =
-                        ((StringCell)(row.getCell(nameIndex))).getStringValue();
+                        ((URIDataCell)(row.getCell(nameIndex))).getURIContent()
+                                .getURI().toString();
             }
             if (filenameHandling.equals(generate)) {
                 // Generate filename using pattern, by replacing the ? with the
@@ -397,16 +393,15 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 }
                 input.close();
                 output.close();
-                // Create cells with the location and URL information
-                location = new StringCell(file.getAbsolutePath());
-                url =
-                        new StringCell(file.getAbsoluteFile().toURI().toURL()
-                                .toString());
+                // Create cell with the URI information
+                URI uri = file.getAbsoluteFile().toURI();
+                String extension = FilenameUtils.getExtension(uri.getPath());
+                uriCell = new URIDataCell(new URIContent(uri, extension));
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
             }
         }
-        return new DataCell[]{location, url};
+        return uriCell;
     }
 
     /**
@@ -441,7 +436,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_namepattern.saveSettingsTo(settings);
         m_ifexists.saveSettingsTo(settings);
         m_removebocolumn.saveSettingsTo(settings);
-        m_appendlocationcolumns.saveSettingsTo(settings);
+        m_appenduricolumn.saveSettingsTo(settings);
     }
 
     /**
@@ -457,7 +452,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_namepattern.loadSettingsFrom(settings);
         m_ifexists.loadSettingsFrom(settings);
         m_removebocolumn.loadSettingsFrom(settings);
-        m_appendlocationcolumns.loadSettingsFrom(settings);
+        m_appenduricolumn.loadSettingsFrom(settings);
     }
 
     /**
@@ -473,7 +468,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_namepattern.validateSettings(settings);
         m_ifexists.validateSettings(settings);
         m_removebocolumn.validateSettings(settings);
-        m_appendlocationcolumns.validateSettings(settings);
+        m_appenduricolumn.validateSettings(settings);
     }
 
     /**

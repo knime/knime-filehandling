@@ -70,6 +70,8 @@ class UnzipNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_targetdirectory;
 
+    private SettingsModelString m_output;
+
     private SettingsModelString m_ifexists;
 
     private FlowVariableModel m_sourceFvm;
@@ -83,6 +85,7 @@ class UnzipNodeDialog extends DefaultNodeSettingsPane {
         super();
         m_source = SettingsFactory.createSourceSettings();
         m_targetdirectory = SettingsFactory.createTargetDirectorySettings();
+        m_output = SettingsFactory.createOutputSettings();
         m_ifexists = SettingsFactory.createIfExistsSettings();
         m_sourceFvm = super.createFlowVariableModel(m_source);
         m_targetdirectoryFvm = super.createFlowVariableModel(m_targetdirectory);
@@ -93,6 +96,9 @@ class UnzipNodeDialog extends DefaultNodeSettingsPane {
         addDialogComponent(new DialogComponentFileChooser(m_targetdirectory,
                 "targetdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
                 m_targetdirectoryFvm));
+        // Output selection
+        addDialogComponent(new DialogComponentButtonGroup(m_output, false,
+                "Output...", OutputSelection.getAllSettings()));
         // Overwrite policy
         addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
                 "If a file exists...", OverwritePolicy.getAllSettings()));

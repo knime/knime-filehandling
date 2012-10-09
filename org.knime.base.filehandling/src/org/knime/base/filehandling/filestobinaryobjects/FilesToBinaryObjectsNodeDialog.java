@@ -50,7 +50,7 @@
  */
 package org.knime.base.filehandling.filestobinaryobjects;
 
-import org.knime.core.data.StringValue;
+import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
@@ -65,7 +65,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsModelString m_locationcolumn;
+    private SettingsModelString m_uricolumn;
 
     private SettingsModelString m_bocolumnname;
 
@@ -77,18 +77,18 @@ class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
     @SuppressWarnings("unchecked")
     protected FilesToBinaryObjectsNodeDialog() {
         super();
-        m_locationcolumn = SettingsFactory.createLocationColumnSettings();
+        m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
         m_replacepolicy = SettingsFactory.createReplacePolicySettings();
         // Location column
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_locationcolumn, "Location column", 0, StringValue.class));
+        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
+                "URI column", 0, URIDataValue.class));
         // Binary object column name
         addDialogComponent(new DialogComponentString(m_bocolumnname,
                 "Binary object column name"));
         // Replace policy
         addDialogComponent(new DialogComponentButtonGroup(m_replacepolicy,
-                false, "Append column or replace location?",
+                false, "Append column or replace URI?",
                 ReplacePolicy.getAllSettings()));
     }
 }

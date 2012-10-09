@@ -95,4 +95,14 @@ final class SettingsFactory {
                 OverwritePolicy.ABORT.getName());
     }
 
+    /**
+     * Factory method for the output setting.
+     * 
+     * 
+     * @return Output <code>SettingsModel</code>
+     */
+    static SettingsModelString createOutputSettings() {
+        return new SettingsModelString("output", OutputSelection.URI.getName());
+    }
+
 }
