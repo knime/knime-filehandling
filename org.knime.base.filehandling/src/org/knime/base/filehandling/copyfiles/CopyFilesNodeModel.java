@@ -74,12 +74,27 @@ class CopyFilesNodeModel extends NodeModel {
 
     private SettingsModelString m_sourcecolumn;
 
+    private SettingsModelString m_filenamehandling;
+
+    private SettingsModelString m_outputdirectory;
+
+    private SettingsModelString m_pattern;
+
+    private SettingsModelString m_targetcolumn;
+
     /**
      * Constructor for the node model.
      */
     protected CopyFilesNodeModel() {
         super(1, 0);
         m_sourcecolumn = SettingsFactory.createSourceColumnSettings();
+        m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
+        m_outputdirectory =
+                SettingsFactory
+                        .createOutputDirectorySettings(m_filenamehandling);
+        m_pattern = SettingsFactory.createPatternSettings(m_filenamehandling);
+        m_targetcolumn =
+                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
     }
 
     /**
@@ -126,6 +141,10 @@ class CopyFilesNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_sourcecolumn.saveSettingsTo(settings);
+        m_filenamehandling.saveSettingsTo(settings);
+        m_outputdirectory.saveSettingsTo(settings);
+        m_pattern.saveSettingsTo(settings);
+        m_targetcolumn.saveSettingsTo(settings);
     }
 
     /**
@@ -135,6 +154,10 @@ class CopyFilesNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_sourcecolumn.loadSettingsFrom(settings);
+        m_filenamehandling.loadSettingsFrom(settings);
+        m_outputdirectory.loadSettingsFrom(settings);
+        m_pattern.loadSettingsFrom(settings);
+        m_targetcolumn.loadSettingsFrom(settings);
     }
 
     /**
@@ -144,6 +167,10 @@ class CopyFilesNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_sourcecolumn.validateSettings(settings);
+        m_filenamehandling.validateSettings(settings);
+        m_outputdirectory.validateSettings(settings);
+        m_pattern.validateSettings(settings);
+        m_targetcolumn.validateSettings(settings);
     }
 
     /**

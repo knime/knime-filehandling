@@ -50,13 +50,16 @@
  */
 package org.knime.base.filehandling.copyfiles;
 
+import javax.swing.JFileChooser;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.uri.URIDataValue;
+import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
@@ -72,9 +75,13 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_filenamehandling;
 
+    private SettingsModelString m_outputdirectory;
+
     private SettingsModelString m_pattern;
 
     private SettingsModelString m_targetcolumn;
+
+    private FlowVariableModel m_outputdirectoryFvm;
 
     /**
      * New pane for configuring the copy files node dialog.
@@ -84,15 +91,20 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
         super();
         m_sourcecolumn = SettingsFactory.createSourceColumnSettings();
         m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
+        m_outputdirectory =
+                SettingsFactory
+                        .createOutputDirectorySettings(m_filenamehandling);
         m_pattern = SettingsFactory.createPatternSettings(m_filenamehandling);
         m_targetcolumn =
                 SettingsFactory.createTargetColumnSettings(m_filenamehandling);
+        m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
         m_filenamehandling.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
                 String handling = m_filenamehandling.getStringValue();
                 m_targetcolumn.setEnabled(handling
                         .equals(FilenameHandling.FROMCOLUMN.getName()));
+                m_outputdirectory.setEnabled(isOutputDirectoryEnabled());
                 m_pattern.setEnabled(handling.equals(FilenameHandling.GENERATE
                         .getName()));
             }
@@ -104,7 +116,24 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
                 false, "", FilenameHandling.getAllSettings()));
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_targetcolumn, "Target column", 0, URIDataValue.class));
+        // Output directory
+        addDialogComponent(new DialogComponentFileChooser(m_outputdirectory,
+                "outputdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
+                m_outputdirectoryFvm));
         addDialogComponent(new DialogComponentString(m_pattern, "Pattern"));
         closeCurrentGroup();
     }
+
+    /**
+     * Checks if the output directory component should be enabled.
+     * 
+     * 
+     * @return true if the output directory component should be enabled
+     */
+    private boolean isOutputDirectoryEnabled() {
+        return m_filenamehandling.getStringValue().equals(
+                FilenameHandling.GENERATE.getName())
+                && !m_outputdirectoryFvm.isVariableReplacementEnabled();
+    }
+
 }

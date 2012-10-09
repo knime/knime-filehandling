@@ -85,6 +85,22 @@ final class SettingsFactory {
     }
 
     /**
+     * Factory method for the output directory setting.
+     * 
+     * 
+     * @param filenameHandling Filename handling setting
+     * @return Output directory <code>SettingsModel</code>
+     */
+    static SettingsModelString createOutputDirectorySettings(
+            final SettingsModelString filenameHandling) {
+        SettingsModelString directory =
+                new SettingsModelString("outputdirectory", "");
+        directory.setEnabled(filenameHandling.getStringValue().equals(
+                FilenameHandling.GENERATE.getName()));
+        return directory;
+    }
+
+    /**
      * Factory method for the pattern setting.
      * 
      * 
@@ -93,7 +109,8 @@ final class SettingsFactory {
      */
     static SettingsModelString createPatternSettings(
             final SettingsModelString filenameHandling) {
-        SettingsModelString pattern = new SettingsModelString("pattern", "");
+        SettingsModelString pattern =
+                new SettingsModelString("pattern", "file_?.dat");
         pattern.setEnabled(filenameHandling.getStringValue().equals(
                 FilenameHandling.GENERATE.getName()));
         return pattern;
