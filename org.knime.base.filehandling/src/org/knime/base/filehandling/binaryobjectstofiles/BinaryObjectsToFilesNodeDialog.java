@@ -88,8 +88,6 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelBoolean m_removebocolumn;
 
-    private SettingsModelBoolean m_appenduricolumn;
-
     private FlowVariableModel m_outputdirectoryFvm;
 
     /**
@@ -99,18 +97,17 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
     protected BinaryObjectsToFilesNodeDialog() {
         super();
         m_bocolumn = SettingsFactory.createBinaryObjectColumnSettings();
-        m_outputdirectory =
-                SettingsFactory
-                        .createOutputDirectorySettings(m_filenamehandling);
         m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
         m_namecolumn =
                 SettingsFactory.createNameColumnSettings(m_filenamehandling);
+        m_outputdirectory =
+                SettingsFactory
+                        .createOutputDirectorySettings(m_filenamehandling);
         m_namepattern =
                 SettingsFactory.createNamePatternSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
         m_removebocolumn =
                 SettingsFactory.createRemoveBinaryObjectColumnSettings();
-        m_appenduricolumn = SettingsFactory.createAppendURIColumnSettings();
         m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
         // Enable/disable settings according to filename handling
         m_filenamehandling.addChangeListener(new ChangeListener() {
@@ -145,9 +142,6 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
         // Remove binary object column
         addDialogComponent(new DialogComponentBoolean(m_removebocolumn,
                 "Remove binary object column"));
-        // Append URI column
-        addDialogComponent(new DialogComponentBoolean(m_appenduricolumn,
-                "Append URI column"));
         // Overwrite policy
         addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
                 "If a file exists...", OverwritePolicy.getAllSettings()));

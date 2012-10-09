@@ -107,26 +107,23 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     private SettingsModelBoolean m_removebocolumn;
 
-    private SettingsModelBoolean m_appenduricolumn;
-
     /**
      * Constructor for the node model.
      */
     protected BinaryObjectsToFilesNodeModel() {
         super(1, 1);
         m_bocolumn = SettingsFactory.createBinaryObjectColumnSettings();
-        m_outputdirectory =
-                SettingsFactory
-                        .createOutputDirectorySettings(m_filenamehandling);
         m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
         m_namecolumn =
                 SettingsFactory.createNameColumnSettings(m_filenamehandling);
+        m_outputdirectory =
+                SettingsFactory
+                        .createOutputDirectorySettings(m_filenamehandling);
         m_namepattern =
                 SettingsFactory.createNamePatternSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
         m_removebocolumn =
                 SettingsFactory.createRemoveBinaryObjectColumnSettings();
-        m_appenduricolumn = SettingsFactory.createAppendURIColumnSettings();
     }
 
     /**
@@ -138,10 +135,13 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         BufferedDataTable out = null;
         // HashSet for duplicate checking and cleanup
         Set<String> filenames = new HashSet<String>();
+        boolean appenduricolumn =
+                m_filenamehandling.getStringValue().equals(
+                        FilenameHandling.GENERATE.getName());
         try {
             // If the columns do not get appended the create file method will
             // not be called so it has to happen manually
-            if (!m_appenduricolumn.getBooleanValue()) {
+            if (!appenduricolumn) {
                 int rows = inData[0].getRowCount();
                 int i = 0;
                 // Create the file for each row
@@ -203,9 +203,12 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec colSpec;
+        boolean appenduricolumn =
+                m_filenamehandling.getStringValue().equals(
+                        FilenameHandling.GENERATE.getName());
         // Append URI column if selected. This will also call the
         // create file method
-        if (m_appenduricolumn.getBooleanValue()) {
+        if (appenduricolumn) {
             // Create column for the URI of the files
             String uriColName =
                     DataTableSpec.getUniqueColumnName(inSpec, "URI");
@@ -436,7 +439,6 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_namepattern.saveSettingsTo(settings);
         m_ifexists.saveSettingsTo(settings);
         m_removebocolumn.saveSettingsTo(settings);
-        m_appenduricolumn.saveSettingsTo(settings);
     }
 
     /**
@@ -452,7 +454,6 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_namepattern.loadSettingsFrom(settings);
         m_ifexists.loadSettingsFrom(settings);
         m_removebocolumn.loadSettingsFrom(settings);
-        m_appenduricolumn.loadSettingsFrom(settings);
     }
 
     /**
@@ -468,7 +469,6 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         m_namepattern.validateSettings(settings);
         m_ifexists.validateSettings(settings);
         m_removebocolumn.validateSettings(settings);
-        m_appenduricolumn.validateSettings(settings);
     }
 
     /**

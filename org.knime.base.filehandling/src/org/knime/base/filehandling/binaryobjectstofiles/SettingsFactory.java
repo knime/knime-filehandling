@@ -164,14 +164,4 @@ final class SettingsFactory {
         return new SettingsModelBoolean("removebinaryobjectcolumn", true);
     }
 
-    /**
-     * Factory method for the append URI column setting.
-     * 
-     * 
-     * @return Append URI column <code>SettingsModel</code>
-     */
-    static SettingsModelBoolean createAppendURIColumnSettings() {
-        return new SettingsModelBoolean("appenduricolumn", true);
-    }
-
 }
