@@ -348,6 +348,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 filename =
                         ((URIDataCell)(row.getCell(nameIndex))).getURIContent()
                                 .getURI().toString();
+                outputDirectory = "";
             }
             if (filenameHandling.equals(generate)) {
                 // Generate filename using pattern, by replacing the ? with the

@@ -1,25 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
 <knimeNode icon="./copyfiles.png" type="Manipulator">
-    <name>Copy/Move Files</name>
-    <shortDescription>
-        Convert URI columns into string columns.
-    </shortDescription>
-    <fullDescription>
-        <intro>
-            This node converts the selected URI columns into columns of
-            the type string.
-        </intro>
-        <option name="Column selection">Columns that will be converted.</option>
-    </fullDescription>
-    <ports>
-        <inPort name="Input table" index="0">
-            Table that contains one or
-            more URI columns.
-        </inPort>
-        <outPort name="Output table" index="0">
-            Input table with the
-            selected columns replaced by there corresponding string column.
-        </outPort>
-    </ports>
+	<name>Copy/Move Files</name>
+	<shortDescription>
+		Copy or move files.
+	</shortDescription>
+	<fullDescription>
+		<intro>
+			This node copies or moves the files indicated by the select URI
+			column of
+			the input table.
+		</intro>
+		<option name="Copy or move">
+			<b>Copy</b>
+			<br />
+			Copy the files to a new location.
+			<br />
+			<b>Move</b>
+			<br />
+			Move/rename the files.
+		</option>
+		<option name="Source column">Column with the URI to the files.</option>
+		<option name="Target filenames">
+			<b>From column</b>
+			<br />
+			The target filenames are present in an URI column.
+			<br />
+			<b>Generate</b>
+			<br />
+			Generate the filenames using a pattern.
+		</option>
+		<option name="Target column">Column with the URI where the files should be put.
+		</option>
+		<option name="Output directory">The directory where the files will be put, if
+			generate option is selected.
+		</option>
+		<option name="Pattern">The pattern that gets used to generate the
+			filenames. The pattern has to contain a ? that will be replaced by
+			the current row number.
+		</option>
+		<option name="If a file exists">
+		<b>Overwrite</b>
+		<br/>
+		Overwrite existing files.
+		<br/>
+		<b>Abort</b>
+		<br/>
+		Abort the execution if a file already exists.
+		</option>
+	</fullDescription>
+	<ports>
+		<inPort name="Input table" index="0">
+			Table that contains one or
+			more URI columns.
+		</inPort>
+		<outPort name="Output table" index="0">
+			Input table with the URI of
+			the new files appended. It will only be appended if the table does
+			not already contain this information.
+		</outPort>
+	</ports>
 </knimeNode>
