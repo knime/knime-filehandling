@@ -50,10 +50,16 @@
  */
 package org.knime.base.filehandling.uritostring;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnFilter;
-import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
+import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.DialogComponentString;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * <code>NodeDialog</code> for the "URI To String" Node.
@@ -63,7 +69,11 @@ import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
  */
 class URIToStringNodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsModelFilterString m_columnselection;
+    private SettingsModelString m_columnselection;
+
+    private SettingsModelBoolean m_appendcolumn;
+
+    private SettingsModelString m_columnname;
 
     /**
      * New pane for configuring the URI to string node dialog.
@@ -72,7 +82,22 @@ class URIToStringNodeDialog extends DefaultNodeSettingsPane {
     protected URIToStringNodeDialog() {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        addDialogComponent(new DialogComponentColumnFilter(m_columnselection,
-                0, true, URIDataValue.class));
+        m_appendcolumn = SettingsFactory.createAppendColumnSettings();
+        m_columnname = SettingsFactory.createColumnNameSettings(m_appendcolumn);
+        m_appendcolumn.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                m_columnname.setEnabled(m_appendcolumn.getBooleanValue());
+            }
+        });
+        // Column selection
+        addDialogComponent(new DialogComponentColumnNameSelection(
+                m_columnselection, "Column selection", 0, URIDataValue.class));
+        // Append column
+        addDialogComponent(new DialogComponentBoolean(m_appendcolumn,
+                "Append column"));
+        // Column name
+        addDialogComponent(new DialogComponentString(m_columnname,
+                "Appended column name", true, 20));
     }
 }

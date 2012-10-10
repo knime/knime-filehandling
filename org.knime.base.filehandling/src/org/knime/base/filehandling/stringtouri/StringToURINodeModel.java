@@ -166,12 +166,12 @@ class StringToURINodeModel extends NodeModel {
     }
 
     /**
-     * Create the correspondent URI cells to the selected string cells.
+     * Create the correspondent URI cell to the selected string cell.
      * 
      * 
-     * @param row The row with the string cells
+     * @param row The row with the string cell
      * @param spec Specification of the input table
-     * @return Replacement cells
+     * @return URI cell
      */
     private DataCell createURICell(final DataRow row, final DataTableSpec spec) {
         String selectedColumn = m_columnselection.getStringValue();

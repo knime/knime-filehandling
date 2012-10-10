@@ -52,7 +52,6 @@ package org.knime.base.filehandling.uritostring;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -60,9 +59,9 @@ import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
-import org.knime.core.data.container.AbstractCellFactory;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
+import org.knime.core.data.container.SingleCellFactory;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.BufferedDataTable;
@@ -73,7 +72,8 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation of URI to string.
@@ -83,7 +83,11 @@ import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
  */
 class URIToStringNodeModel extends NodeModel {
 
-    private SettingsModelFilterString m_columnselection;
+    private SettingsModelString m_columnselection;
+
+    private SettingsModelBoolean m_appendcolumn;
+
+    private SettingsModelString m_columnname;
 
     /**
      * Constructor for the node model.
@@ -91,6 +95,8 @@ class URIToStringNodeModel extends NodeModel {
     protected URIToStringNodeModel() {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
+        m_appendcolumn = SettingsFactory.createAppendColumnSettings();
+        m_columnname = SettingsFactory.createColumnNameSettings(m_appendcolumn);
     }
 
     /**
@@ -107,8 +113,8 @@ class URIToStringNodeModel extends NodeModel {
     }
 
     /**
-     * Create a rearranger that replaces the selected columns with there string
-     * counterpart.
+     * Create a rearranger that either replaces the selected column with its
+     * string counterpart, or appends a new column.
      * 
      * 
      * @param inSpec Specification of the input table
@@ -119,59 +125,58 @@ class URIToStringNodeModel extends NodeModel {
             throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
-        ColumnRearranger rearranger = new ColumnRearranger(inSpec);
-        // Get selected columns and create arrays for there indexes and
-        // replacements specs
-        List<String> columns = m_columnselection.getIncludeList();
-        DataColumnSpec[] colSpecs = new DataColumnSpec[columns.size()];
-        int[] colIndexes = new int[columns.size()];
-        // Create new specification for each column
-        for (int i = 0; i < columns.size(); i++) {
-            colIndexes[i] = inSpec.findColumnIndex(columns.get(i));
-            colSpecs[i] =
-                    new DataColumnSpecCreator(columns.get(i), StringCell.TYPE)
-                            .createSpec();
+        boolean append = m_appendcolumn.getBooleanValue();
+        String columnName = "";
+        // Set column name
+        if (append) {
+            columnName =
+                    DataTableSpec.getUniqueColumnName(inSpec,
+                            m_columnname.getStringValue());
+        } else {
+            columnName = m_columnselection.getStringValue();
         }
-        // Factory that will generate the replacements
-        CellFactory factory = new AbstractCellFactory(colSpecs) {
+        ColumnRearranger rearranger = new ColumnRearranger(inSpec);
+        DataColumnSpec colSpec =
+                new DataColumnSpecCreator(columnName, StringCell.TYPE)
+                        .createSpec();
+        // Factory that creates a column with strings
+        CellFactory factory = new SingleCellFactory(colSpec) {
             @Override
-            public DataCell[] getCells(final DataRow row) {
-                return createStringCells(row, inSpec);
+            public DataCell getCell(final DataRow row) {
+                return createStringCell(row, inSpec);
             }
         };
-        // Replace old columns with new ones
-        rearranger.replace(factory, colIndexes);
+        if (append) {
+            // Append strings from the factory
+            rearranger.append(factory);
+        } else {
+            // Replace selected column with the strings from the factory
+            rearranger.replace(factory, columnName);
+        }
         return rearranger;
     }
 
     /**
-     * Create the correspondent string cells to the selected URI cells.
+     * Create the correspondent string cell to the selected URI cell.
      * 
      * 
-     * @param row The row with the URI cells
+     * @param row The row with the URI cell
      * @param spec Specification of the input table
-     * @return Replacement cells
+     * @return String cell
      */
-    private DataCell[] createStringCells(final DataRow row,
+    private DataCell createStringCell(final DataRow row,
             final DataTableSpec spec) {
-        List<String> columns = m_columnselection.getIncludeList();
-        DataCell[] cells = new DataCell[columns.size()];
-        // Create new cell for each selected cell
-        for (int i = 0; i < columns.size(); i++) {
-            DataCell oldCell =
-                    row.getCell(spec.findColumnIndex(columns.get(i)));
-            // Is the cell missing?
-            if (oldCell.isMissing()) {
-                cells[i] = DataType.getMissingCell();
-            } else {
-                // URI to string
-                String value =
-                        ((URIDataValue)oldCell).getURIContent().getURI()
-                                .toString();
-                cells[i] = new StringCell(value);
-            }
+        String column = m_columnselection.getStringValue();
+        DataCell cell = DataType.getMissingCell();
+        DataCell oldCell = row.getCell(spec.findColumnIndex(column));
+        // Is the cell missing?
+        if (!oldCell.isMissing()) {
+            // URI to string
+            String value =
+                    ((URIDataValue)oldCell).getURIContent().getURI().toString();
+            cell = new StringCell(value);
         }
-        return cells;
+        return cell;
     }
 
     /**
@@ -183,24 +188,17 @@ class URIToStringNodeModel extends NodeModel {
      */
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
-        List<String> columns = m_columnselection.getIncludeList();
-        // Is at least one column selected?
-        if (columns.size() < 1) {
-            throw new InvalidSettingsException("No column selected");
+        String selectedColumn = m_columnselection.getStringValue();
+        int selectedColumnIndex = inSpec.findColumnIndex(selectedColumn);
+        // Does the column exist?
+        if (selectedColumnIndex < 0) {
+            throw new InvalidSettingsException("Column not set");
         }
-        // Are all the selected columns of the right type
-        for (int i = 0; i < columns.size(); i++) {
-            String column = columns.get(i);
-            int index = inSpec.findColumnIndex(column);
-            // Does the column exist?
-            if (index < 0) {
-                throw new InvalidSettingsException("Columns not set");
-            }
-            DataType type = inSpec.getColumnSpec(index).getType();
-            if (!type.isCompatible(URIDataValue.class)) {
-                throw new InvalidSettingsException("Column \"" + column
-                        + "\" is not of the type URI");
-            }
+        // Is the type of the column correct?
+        DataType type = inSpec.getColumnSpec(selectedColumnIndex).getType();
+        if (!type.isCompatible(URIDataValue.class)) {
+            throw new InvalidSettingsException("Column \"" + selectedColumn
+                    + "\" is not of the type URI");
         }
     }
 
@@ -229,6 +227,8 @@ class URIToStringNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_columnselection.saveSettingsTo(settings);
+        m_appendcolumn.saveSettingsTo(settings);
+        m_columnname.saveSettingsTo(settings);
     }
 
     /**
@@ -238,6 +238,8 @@ class URIToStringNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.loadSettingsFrom(settings);
+        m_appendcolumn.loadSettingsFrom(settings);
+        m_columnname.loadSettingsFrom(settings);
     }
 
     /**
@@ -247,6 +249,8 @@ class URIToStringNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.validateSettings(settings);
+        m_appendcolumn.validateSettings(settings);
+        m_columnname.validateSettings(settings);
     }
 
     /**

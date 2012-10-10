@@ -4,28 +4,34 @@
 	<name>URI To String</name>
 
 	<shortDescription>
-		Convert URI columns into string columns.
+		Convert an URI column into a string column.
 	</shortDescription>
 
 	<fullDescription>
 		<intro>
-			This node converts the selected URI columns into columns of
+			This node converts the selected URI column into a column of
 			the
 			type string.
 		</intro>
 
 
-		<option name="Column selection">Columns that will be converted.</option>
+		<option name="Column selection">Column that will be converted.</option>
+		<option name="Append column">Does append the string column to the table instead
+			of
+			replacing the selected column.
+		</option>
+		<option name="Appended column name">Name of the appended column</option>
 	</fullDescription>
 
 	<ports>
 		<inPort name="Input table" index="0">
-			Table that contains one or
-			more URI columns.
+			Table that contains an URI
+			column.
 		</inPort>
 		<outPort name="Output table" index="0">
 			Input table with the
-			selected columns replaced by there corresponding string column.
+			corresponding string column to the selected column. It will either be
+			appended or replacing the old column, depending on the configuration.
 		</outPort>
 	</ports>
 </knimeNode>

@@ -50,7 +50,8 @@
  */
 package org.knime.base.filehandling.uritostring;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * Factory for SettingsModels.
@@ -70,8 +71,34 @@ final class SettingsFactory {
      * 
      * @return Column selection <code>SettingsModel</code>
      */
-    static SettingsModelFilterString createColumnSelectionSettings() {
-        return new SettingsModelFilterString("columnselection");
+    static SettingsModelString createColumnSelectionSettings() {
+        return new SettingsModelString("columnselection", "");
+    }
+
+    /**
+     * Factory method for the append column setting.
+     * 
+     * 
+     * @return Append column <code>SettingsModel</code>
+     */
+    static SettingsModelBoolean createAppendColumnSettings() {
+        return new SettingsModelBoolean("appendcolumn", false);
+    }
+
+    /**
+     * Factory method for the column name setting.
+     * 
+     * 
+     * @param appendColumn <code>SettingsModel</code> for the append column
+     *            setting
+     * @return Column name <code>SettingsModel</code>
+     */
+    static SettingsModelString createColumnNameSettings(
+            final SettingsModelBoolean appendColumn) {
+        SettingsModelString columnName =
+                new SettingsModelString("columnname", "String");
+        columnName.setEnabled(appendColumn.getBooleanValue());
+        return columnName;
     }
 
 }
