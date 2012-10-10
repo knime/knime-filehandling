@@ -14,12 +14,16 @@
 		</intro>
 
 		<option name="URI column">Column with the path to the files.</option>
+		<option name="Fail execution if URI does not point to local file">Does abort the execution if one of the URIs does
+			not point to a local file. A corret URI to a local file has the
+			scheme "file" in front of it.</option>
 	</fullDescription>
 
 	<ports>
 		<inPort name="Input table" index="0">
 			Table that contains the
-			URI of the files in a column.
+			URI of
+			the files in a column.
 		</inPort>
 		<outPort name="Output table" index="0">
 			Input table with the meta information appended. Contained

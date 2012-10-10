@@ -52,6 +52,7 @@ package org.knime.base.filehandling.filemetainfo;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Calendar;
 
 import org.apache.commons.io.FileUtils;
@@ -77,6 +78,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -89,12 +91,15 @@ class FileMetaInfoNodeModel extends NodeModel {
 
     private SettingsModelString m_uricolumn;
 
+    private SettingsModelBoolean m_abortifnotlocal;
+
     /**
      * Constructor for the node model.
      */
     protected FileMetaInfoNodeModel() {
         super(1, 1);
         m_uricolumn = SettingsFactory.createURIColumnSettings();
+        m_abortifnotlocal = SettingsFactory.createAbortIfNotLocalSettings();
     }
 
     /**
@@ -163,6 +168,7 @@ class FileMetaInfoNodeModel extends NodeModel {
      * @return Data cells with the attributes of the file
      */
     private DataCell[] inspectFile(final DataRow row, final int uriIndex) {
+        boolean abort = m_abortifnotlocal.getBooleanValue();
         DataCell[] cells = new DataCell[Attributes.getAllAttributes().length];
         // Assume missing cells
         for (int i = 0; i < cells.length; i++) {
@@ -171,8 +177,14 @@ class FileMetaInfoNodeModel extends NodeModel {
         if (!row.getCell(uriIndex).isMissing()) {
             // Get location
             URIDataValue value = (URIDataValue)row.getCell(uriIndex);
-            String location = value.getURIContent().getURI().getPath();
-            File file = new File(location);
+            URI uri = value.getURIContent().getURI();
+            String scheme = uri.getScheme();
+            if (abort && (scheme == null || !scheme.equals("file"))) {
+                throw new RuntimeException("The URI \"" + uri.toString()
+                        + "\" does have the scheme \"" + scheme
+                        + "\", expected \"file\"");
+            }
+            File file = new File(uri.getPath());
             if (file.exists()) {
                 try {
                     // Directory
@@ -290,6 +302,7 @@ class FileMetaInfoNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_uricolumn.saveSettingsTo(settings);
+        m_abortifnotlocal.saveSettingsTo(settings);
     }
 
     /**
@@ -299,6 +312,7 @@ class FileMetaInfoNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_uricolumn.loadSettingsFrom(settings);
+        m_abortifnotlocal.loadSettingsFrom(settings);
     }
 
     /**
@@ -308,6 +322,7 @@ class FileMetaInfoNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_uricolumn.validateSettings(settings);
+        m_abortifnotlocal.validateSettings(settings);
     }
 
     /**

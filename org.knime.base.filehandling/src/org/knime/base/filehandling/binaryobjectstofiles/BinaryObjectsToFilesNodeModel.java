@@ -347,7 +347,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 }
                 filename =
                         ((URIDataCell)(row.getCell(nameIndex))).getURIContent()
-                                .getURI().toString();
+                                .getURI().getPath();
                 outputDirectory = "";
             }
             if (filenameHandling.equals(generate)) {

@@ -50,6 +50,7 @@
  */
 package org.knime.base.filehandling.filemetainfo;
 
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 
@@ -73,6 +74,16 @@ final class SettingsFactory {
      */
     static SettingsModelString createURIColumnSettings() {
         return new SettingsModelString("uricolumn", "");
+    }
+
+    /**
+     * Factory method for the abort if not local setting.
+     * 
+     * 
+     * @return Abort if not local <code>SettingsModel</code>
+     */
+    static SettingsModelBoolean createAbortIfNotLocalSettings() {
+        return new SettingsModelBoolean("abortifnotlocal", false);
     }
 
 }

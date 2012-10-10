@@ -52,7 +52,9 @@ package org.knime.base.filehandling.filemetainfo;
 
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -65,6 +67,8 @@ class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_uricolumn;
 
+    private SettingsModelBoolean m_abortifnotlocal;
+
     /**
      * New pane for configuring the Binary Objects to Files node dialog.
      */
@@ -72,8 +76,11 @@ class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
     protected FileMetaInfoNodeDialog() {
         super();
         m_uricolumn = SettingsFactory.createURIColumnSettings();
+        m_abortifnotlocal = SettingsFactory.createAbortIfNotLocalSettings();
         // URI column
         addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
                 "URI column", 0, URIDataValue.class));
+        addDialogComponent(new DialogComponentBoolean(m_abortifnotlocal,
+                "Fail execution if URI does not point to local file"));
     }
 }
