@@ -50,6 +50,7 @@
  */
 package org.knime.base.filehandling.stringtouri;
 
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
 
 /**
@@ -72,6 +73,26 @@ final class SettingsFactory {
      */
     static SettingsModelFilterString createColumnSelectionSettings() {
         return new SettingsModelFilterString("columnsellection");
+    }
+
+    /**
+     * Factory method for the path to URI setting.
+     * 
+     * 
+     * @return Path to URI <code>SettingsModel</code>
+     */
+    static SettingsModelBoolean createPathToURISettings() {
+        return new SettingsModelBoolean("pathtouri", false);
+    }
+
+    /**
+     * Factory method for the missing file abort setting.
+     * 
+     * 
+     * @return Missing file abort <code>SettingsModel</code>
+     */
+    static SettingsModelBoolean createMissingFileAbortSettings() {
+        return new SettingsModelBoolean("missingfileabort", false);
     }
 
 }

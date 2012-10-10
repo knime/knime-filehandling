@@ -52,7 +52,9 @@ package org.knime.base.filehandling.stringtouri;
 
 import org.knime.core.data.StringValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnFilter;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
 
 /**
@@ -65,6 +67,10 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelFilterString m_columnselection;
 
+    private SettingsModelBoolean m_pathtouri;
+
+    private SettingsModelBoolean m_missingfileabort;
+
     /**
      * New pane for configuring the string to URI node dialog.
      */
@@ -72,7 +78,13 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
     protected StringToURINodeDialog() {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
+        m_pathtouri = SettingsFactory.createPathToURISettings();
+        m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
         addDialogComponent(new DialogComponentColumnFilter(m_columnselection,
                 0, true, StringValue.class));
+        addDialogComponent(new DialogComponentBoolean(m_pathtouri,
+                "Convert pathes to URIs"));
+        addDialogComponent(new DialogComponentBoolean(m_missingfileabort,
+                "Check if files exist"));
     }
 }

@@ -76,6 +76,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
 
 /**
@@ -88,12 +89,18 @@ class StringToURINodeModel extends NodeModel {
 
     private SettingsModelFilterString m_columnselection;
 
+    private SettingsModelBoolean m_pathtouri;
+
+    private SettingsModelBoolean m_missingfileabort;
+
     /**
      * Constructor for the node model.
      */
     protected StringToURINodeModel() {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
+        m_pathtouri = SettingsFactory.createPathToURISettings();
+        m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
     }
 
     /**
@@ -159,26 +166,40 @@ class StringToURINodeModel extends NodeModel {
             final DataTableSpec spec) {
         List<String> columns = m_columnselection.getIncludeList();
         DataCell[] cells = new DataCell[columns.size()];
-        // Create new cell for each selected cell
-        for (int i = 0; i < columns.size(); i++) {
-            DataCell oldCell =
-                    row.getCell(spec.findColumnIndex(columns.get(i)));
-            // Is the cell missing?
-            if (oldCell.isMissing()) {
-                cells[i] = DataType.getMissingCell();
-            } else {
-                // Get URI and extension
-                String uri = ((StringValue)oldCell).getStringValue();
-                String extension = FilenameUtils.getExtension(uri);
-                try {
+        try {
+            // Create new cell for each selected cell
+            for (int i = 0; i < columns.size(); i++) {
+                DataCell oldCell =
+                        row.getCell(spec.findColumnIndex(columns.get(i)));
+                // Is the cell missing?
+                if (oldCell.isMissing()) {
+                    cells[i] = DataType.getMissingCell();
+                } else {
+                    // Get URI and extension
+                    String value = ((StringValue)oldCell).getStringValue();
+                    if (m_pathtouri.getBooleanValue()) {
+                        // Check if value has no scheme
+                        if (new URI(value).getScheme() == null) {
+                            // Convert path to URI
+                            value = new File(value).toURI().toURL().toString();
+                        }
+                    }
+                    URI uri = new URI(value);
+                    if (m_missingfileabort.getBooleanValue()) {
+                        // Check for existing file
+                        if (!new File(uri.getPath()).exists()) {
+                            throw new RuntimeException("The file to the URI \""
+                                    + uri.toString() + "\" does not exist");
+                        }
+                    }
+                    String extension = FilenameUtils.getExtension(value);
                     cells[i] =
-                            new URIDataCell(new URIContent(new URI(uri),
+                            new URIDataCell(new URIContent(new URI(value),
                                     extension));
-                } catch (Exception e) {
-                    // If the string could not be converted to an URI
-                    throw new RuntimeException(e);
                 }
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return cells;
     }
@@ -238,6 +259,8 @@ class StringToURINodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_columnselection.saveSettingsTo(settings);
+        m_pathtouri.saveSettingsTo(settings);
+        m_missingfileabort.saveSettingsTo(settings);
     }
 
     /**
@@ -247,6 +270,8 @@ class StringToURINodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.loadSettingsFrom(settings);
+        m_pathtouri.loadSettingsFrom(settings);
+        m_missingfileabort.loadSettingsFrom(settings);
     }
 
     /**
@@ -256,6 +281,8 @@ class StringToURINodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.validateSettings(settings);
+        m_pathtouri.validateSettings(settings);
+        m_missingfileabort.validateSettings(settings);
     }
 
     /**
