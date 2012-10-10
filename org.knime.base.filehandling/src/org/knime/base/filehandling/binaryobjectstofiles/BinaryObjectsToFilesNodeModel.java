@@ -177,7 +177,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     private void cleanUp(final String[] filenames) {
         for (int i = 0; i < filenames.length; i++) {
             try {
-                File file = new File(filenames[0]);
+                File file = new File(filenames[i]);
                 file.delete();
             } catch (Exception e) {
                 // If one file fails, the others should still be deleted

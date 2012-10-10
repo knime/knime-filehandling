@@ -57,8 +57,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 import org.knime.core.data.DataCell;
@@ -85,7 +83,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * This is the model implementation of URI to string.
+ * This is the model implementation of Copy Files.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -130,8 +128,8 @@ class CopyFilesNodeModel extends NodeModel {
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
         BufferedDataTable out = null;
-        // HashSet for duplicate checking and cleanup
-        Set<String> filenames = new HashSet<String>();
+        // Monitor for duplicate checking and rollback
+        Monitor monitor = new Monitor(m_copyormove.getStringValue());
         boolean appenduricolumn =
                 m_filenamehandling.getStringValue().equals(
                         FilenameHandling.GENERATE.getName());
@@ -145,41 +143,21 @@ class CopyFilesNodeModel extends NodeModel {
                 for (DataRow row : inData[0]) {
                     exec.checkCanceled();
                     exec.setProgress((double)i / rows);
-                    createFile(row, i, filenames, inData[0].getDataTableSpec(),
+                    doAction(row, i, monitor, inData[0].getDataTableSpec(),
                             exec);
                     i++;
                 }
             }
             ColumnRearranger rearranger =
                     createColumnRearranger(inData[0].getDataTableSpec(),
-                            filenames, exec);
+                            monitor, exec);
             out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         } catch (Exception e) {
-            // In case of exception, delete all created files
-            cleanUp(filenames.toArray(new String[filenames.size()]));
+            // In case of exception, do a rollback
+            monitor.rollback();
             throw e;
         }
         return new BufferedDataTable[]{out};
-    }
-
-    /**
-     * Delete all the given files.
-     * 
-     * 
-     * This method should be called, in case the execution got aborted. It will
-     * delete all files referenced by the array.
-     * 
-     * @param filenames Files that should be deleted.
-     */
-    private void cleanUp(final String[] filenames) {
-        for (int i = 0; i < filenames.length; i++) {
-            try {
-                File file = new File(filenames[0]);
-                file.delete();
-            } catch (Exception e) {
-                // If one file fails, the others should still be deleted
-            }
-        }
     }
 
     /**
@@ -187,14 +165,14 @@ class CopyFilesNodeModel extends NodeModel {
      * 
      * 
      * @param inSpec Specification of the input table
-     * @param filenames Set of files that have already been created
+     * @param monitor Monitors which files have been copied/moved
      * @param exec Context of this execution
      * @return Rearranger that will add columns for the location and URL of the
      *         created files.
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final Set<String> filenames, final ExecutionContext exec)
+            final Monitor monitor, final ExecutionContext exec)
             throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
@@ -218,7 +196,7 @@ class CopyFilesNodeModel extends NodeModel {
 
                 @Override
                 public DataCell getCell(final DataRow row) {
-                    return createFile(row, m_rownr, filenames, inSpec, exec);
+                    return doAction(row, m_rownr, monitor, inSpec, exec);
                 }
 
                 /**
@@ -303,16 +281,18 @@ class CopyFilesNodeModel extends NodeModel {
     }
 
     /**
+     * Executes the configured action (copy or move).
+     * 
      * 
      * @param row Row with the needet data
      * @param rowNr Number of the row in the table
-     * @param filenames Set of files that have already been created
+     * @param monitor Monitors which files have been copied/moved
      * @param inSpec Specification of the input table
      * @param exec Context of this execution
      * @return Cell containing the URI to the created file
      */
-    private DataCell createFile(final DataRow row, final int rowNr,
-            final Set<String> filenames, final DataTableSpec inSpec,
+    private DataCell doAction(final DataRow row, final int rowNr,
+            final Monitor monitor, final DataTableSpec inSpec,
             final ExecutionContext exec) {
         String sourceColumn = m_sourcecolumn.getStringValue();
         int sourceIndex = inSpec.findColumnIndex(sourceColumn);
@@ -322,20 +302,20 @@ class CopyFilesNodeModel extends NodeModel {
         String generate = FilenameHandling.GENERATE.getName();
         String ifExists = m_ifexists.getStringValue();
         String filename = "";
-        // Assume missing binary object
+        // Assume missing source URI
         DataCell uriCell = DataType.getMissingCell();
         if (!row.getCell(sourceIndex).isMissing()) {
             if (filenameHandling.equals(fromColumn)) {
-                // Get filename from table
-                int nameIndex =
+                // Get target URI from table
+                int targetIndex =
                         inSpec.findColumnIndex(m_targetcolumn.getStringValue());
-                if (row.getCell(nameIndex).isMissing()) {
-                    throw new RuntimeException("Filename in row \""
+                if (row.getCell(targetIndex).isMissing()) {
+                    throw new RuntimeException("Target URI in row \""
                             + row.getKey() + "\" is missing");
                 }
                 filename =
-                        ((URIDataCell)(row.getCell(nameIndex))).getURIContent()
-                                .getURI().toString();
+                        ((URIDataCell)(row.getCell(targetIndex)))
+                                .getURIContent().getURI().getPath();
                 outputDirectory = "";
             }
             if (filenameHandling.equals(generate)) {
@@ -344,12 +324,26 @@ class CopyFilesNodeModel extends NodeModel {
                 filename = m_pattern.getStringValue().replace("?", "" + rowNr);
             }
             try {
+                String sourcePath =
+                        ((URIDataValue)row.getCell(sourceIndex))
+                                .getURIContent().getURI().getPath();
+                File sourceFile = new File(sourcePath);
+                // Check if the same file has already been touched
+                if (!monitor.isNewFile(sourcePath)) {
+                    throw new RuntimeException("Duplicate entry \""
+                            + sourcePath + "\" in the target column");
+                }
+                // Abort if the source file does not exist
+                if (!sourceFile.exists()) {
+                    throw new RuntimeException("The file \""
+                            + sourceFile.getAbsolutePath() + "\" is missing");
+                }
                 File targetFile = new File(outputDirectory, filename);
-                // Check if a file with the same name has already been created
-                if (filenames.contains(targetFile.getAbsolutePath())) {
+                // Check if the same file has already been touched
+                if (!monitor.isNewFile(targetFile.getAbsolutePath())) {
                     throw new RuntimeException("Duplicate entry \""
                             + targetFile.getAbsolutePath()
-                            + "\" in the filenames column");
+                            + "\" in the target column");
                 }
                 // Check if a file with the same name already exists (but was
                 // not created by this execution)
@@ -366,18 +360,17 @@ class CopyFilesNodeModel extends NodeModel {
                         targetFile.delete();
                     }
                 }
-                byte[] buffer = new byte[1024];
                 targetFile.getParentFile().mkdirs();
-                // Add file to created files
-                filenames.add(targetFile.getAbsolutePath());
-                String location =
-                        ((URIDataValue)row.getCell(sourceIndex))
-                                .getURIContent().getURI().getPath();
                 if (m_copyormove.getStringValue().equals(
                         CopyOrMove.COPY.getName())) {
+                    byte[] buffer = new byte[1024];
                     targetFile.createNewFile();
+                    // Register files as processed to enable rollback (in this
+                    // case removal of the target file)
+                    monitor.registerFiles(sourcePath,
+                            targetFile.getAbsolutePath());
                     // Get input stream from the source file
-                    InputStream input = new FileInputStream(location);
+                    InputStream input = new FileInputStream(sourcePath);
                     OutputStream output = new FileOutputStream(targetFile);
                     int length;
                     // Copy data from source file to target file
@@ -390,8 +383,11 @@ class CopyFilesNodeModel extends NodeModel {
                 }
                 if (m_copyormove.getStringValue().equals(
                         CopyOrMove.MOVE.getName())) {
-                    File source = new File(location);
-                    source.renameTo(targetFile);
+                    sourceFile.renameTo(targetFile);
+                    // Register files as processed to enable rollback (in this
+                    // case renaming the target back to the source)
+                    monitor.registerFiles(sourcePath,
+                            targetFile.getAbsolutePath());
                 }
                 // Create cell with the URI information
                 URI uri = targetFile.getAbsoluteFile().toURI();

@@ -104,6 +104,7 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
                 SettingsFactory.createTargetColumnSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
         m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
+        // Enable/disable components based on the filename handling
         m_filenamehandling.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
@@ -115,19 +116,24 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
                         .getName()));
             }
         });
+        // Copy or move
         addDialogComponent(new DialogComponentButtonGroup(m_copyormove, false,
                 "Copy or move?", CopyOrMove.getAllSettings()));
+        // Source column
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_sourcecolumn, "Source column", 0, URIDataValue.class));
         createNewGroup("Target filenames...");
+        // Filename handling
         addDialogComponent(new DialogComponentButtonGroup(m_filenamehandling,
                 false, "", FilenameHandling.getAllSettings()));
+        // Target column
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_targetcolumn, "Target column", 0, URIDataValue.class));
         // Output directory
         addDialogComponent(new DialogComponentFileChooser(m_outputdirectory,
                 "outputdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
                 m_outputdirectoryFvm));
+        // Pattern
         addDialogComponent(new DialogComponentString(m_pattern, "Pattern"));
         closeCurrentGroup();
         // Overwrite policy
