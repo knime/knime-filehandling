@@ -4,26 +4,41 @@
 	<name>String To URI</name>
 
 	<shortDescription>
-		Convert string columns into URI columns.
+		Convert string column into URI column.
 	</shortDescription>
 
 	<fullDescription>
 		<intro>
-			This node converts the selected string columns into columns of
+			This node converts the selected string column into a column of
 			the type URI.
 		</intro>
 
 
-		<option name="Column selection">Columns that will be converted. They have to
-			contain a string with the correct URI syntax.</option>
+		<option name="Column selection">Column that will be converted. It has to
+			contain a
+			string with the correct URI syntax.
+		</option>
+		<option name="Convert pathes to URIs">If enabled file pathes will be converted to a
+			correct URI (with the scheme "file" appended to the front).
+		</option>
+		<option name="Check if files exist">Checks if the files referenced by the created URIs
+			are existing and will abort if one is not.
+		</option>
+		<option name="Append column">Does append the URI column to the table instead of
+			replacing the selected column.
+		</option>
+		<option name="Appended column name">Name of the appended column</option>
 	</fullDescription>
 
 	<ports>
 		<inPort name="Input table" index="0">
-			Table that contains one or more string columns with URI information.
+			Table that contains a string
+			column with URI information.
 		</inPort>
 		<outPort name="Output table" index="0">
-			Input table with the selected columns replaced by there corresponding URI column.
+			Input table with the
+			corresponding URI column to the selected column. It will either be
+			appended or replacing the old column, depending on the configuration.
 		</outPort>
 	</ports>
 </knimeNode>

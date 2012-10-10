@@ -50,12 +50,16 @@
  */
 package org.knime.base.filehandling.stringtouri;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import org.knime.core.data.StringValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnFilter;
+import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
-import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * <code>NodeDialog</code> for the "String To URI" Node.
@@ -65,11 +69,15 @@ import org.knime.core.node.defaultnodesettings.SettingsModelFilterString;
  */
 class StringToURINodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsModelFilterString m_columnselection;
+    private SettingsModelString m_columnselection;
 
     private SettingsModelBoolean m_pathtouri;
 
     private SettingsModelBoolean m_missingfileabort;
+
+    private SettingsModelBoolean m_appendcolumn;
+
+    private SettingsModelString m_columnname;
 
     /**
      * New pane for configuring the string to URI node dialog.
@@ -80,11 +88,28 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
         m_pathtouri = SettingsFactory.createPathToURISettings();
         m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
-        addDialogComponent(new DialogComponentColumnFilter(m_columnselection,
-                0, true, StringValue.class));
+        m_appendcolumn = SettingsFactory.createAppendColumnSettings();
+        m_columnname = SettingsFactory.createColumnNameSettings(m_appendcolumn);
+        m_appendcolumn.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                m_columnname.setEnabled(m_appendcolumn.getBooleanValue());
+            }
+        });
+        // Column selection
+        addDialogComponent(new DialogComponentColumnNameSelection(
+                m_columnselection, "Column selection", 0, StringValue.class));
+        // Path to URI
         addDialogComponent(new DialogComponentBoolean(m_pathtouri,
                 "Convert pathes to URIs"));
+        // Missing file abort
         addDialogComponent(new DialogComponentBoolean(m_missingfileabort,
                 "Check if files exist"));
+        // Append column
+        addDialogComponent(new DialogComponentBoolean(m_appendcolumn,
+                "Append column"));
+        // Column name
+        addDialogComponent(new DialogComponentString(m_columnname,
+                "Appended column name", true, 20));
     }
 }
