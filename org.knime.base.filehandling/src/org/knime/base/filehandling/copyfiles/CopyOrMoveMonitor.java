@@ -62,7 +62,7 @@ import java.util.Set;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class Monitor {
+class CopyOrMoveMonitor {
 
     private String m_action;
 
@@ -75,7 +75,7 @@ class Monitor {
     /**
      * @param action Copy or move setting
      */
-    Monitor(final String action) {
+    CopyOrMoveMonitor(final String action) {
         m_action = action;
     }
 

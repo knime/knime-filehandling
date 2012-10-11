@@ -129,7 +129,7 @@ class CopyFilesNodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
         BufferedDataTable out = null;
         // Monitor for duplicate checking and rollback
-        Monitor monitor = new Monitor(m_copyormove.getStringValue());
+        CopyOrMoveMonitor monitor = new CopyOrMoveMonitor(m_copyormove.getStringValue());
         boolean appenduricolumn =
                 m_filenamehandling.getStringValue().equals(
                         FilenameHandling.GENERATE.getName());
@@ -172,7 +172,7 @@ class CopyFilesNodeModel extends NodeModel {
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final Monitor monitor, final ExecutionContext exec)
+            final CopyOrMoveMonitor monitor, final ExecutionContext exec)
             throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
@@ -292,7 +292,7 @@ class CopyFilesNodeModel extends NodeModel {
      * @return Cell containing the URI to the created file
      */
     private DataCell doAction(final DataRow row, final int rowNr,
-            final Monitor monitor, final DataTableSpec inSpec,
+            final CopyOrMoveMonitor monitor, final DataTableSpec inSpec,
             final ExecutionContext exec) {
         String sourceColumn = m_sourcecolumn.getStringValue();
         int sourceIndex = inSpec.findColumnIndex(sourceColumn);

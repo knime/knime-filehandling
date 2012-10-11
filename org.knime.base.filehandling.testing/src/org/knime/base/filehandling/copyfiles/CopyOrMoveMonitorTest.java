@@ -63,13 +63,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * JUnit test for the monitor class. Checks if the <code>isNewFile()</code> and
- * <code>rollback()</code> methods work correctly.
+ * JUnit test for the copy or move monitor class. Checks if the
+ * <code>isNewFile()</code> and <code>rollback()</code> methods work correctly.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class MonitorTest {
+public class CopyOrMoveMonitorTest {
 
     private Path m_tempDir;
 
@@ -115,7 +115,7 @@ public class MonitorTest {
         String action = CopyOrMove.COPY.getName();
         SimpleDirectoryComparer comparer =
                 new SimpleDirectoryComparer(m_tempDir);
-        Monitor monitor = new Monitor(action);
+        CopyOrMoveMonitor monitor = new CopyOrMoveMonitor(action);
         doToFiles(action, monitor);
         monitor.rollback();
         if (comparer.different(m_tempDir)) {
@@ -135,7 +135,7 @@ public class MonitorTest {
         String action = CopyOrMove.MOVE.getName();
         SimpleDirectoryComparer comparer =
                 new SimpleDirectoryComparer(m_tempDir);
-        Monitor monitor = new Monitor(action);
+        CopyOrMoveMonitor monitor = new CopyOrMoveMonitor(action);
         doToFiles(action, monitor);
         monitor.rollback();
         if (comparer.different(m_tempDir)) {
@@ -152,7 +152,8 @@ public class MonitorTest {
      */
     @Test
     public void touchedOrNot() throws Exception {
-        Monitor monitor = new Monitor(CopyOrMove.COPY.getName());
+        CopyOrMoveMonitor monitor =
+                new CopyOrMoveMonitor(CopyOrMove.COPY.getName());
         if (!monitor.isNewFile("file")) {
             throw new Exception("Untouched file has been identified as touched");
         }
@@ -176,7 +177,7 @@ public class MonitorTest {
      * @param monitor Where the files will be registered
      * @throws IOException If the file operation fails
      */
-    private void doToFiles(final String action, final Monitor monitor)
+    private void doToFiles(final String action, final CopyOrMoveMonitor monitor)
             throws IOException {
         for (File file : m_files) {
             String source = file.getAbsolutePath();
