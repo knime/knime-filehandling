@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./findmimetype.png" type="Manipulator">
+	<name>Find MIME-Type</name>
+
+	<shortDescription>
+		Add MIME-Type information to a table with URIs.
+	</shortDescription>
+
+	<fullDescription>
+		<intro>
+			This node adds columns with MIME-Type and extension information
+			to a table that contains URIs.
+		</intro>
+
+
+        <option name="Column selection">Column that contains the URIs.</option>
+	</fullDescription>
+
+	<ports>
+		<inPort name="Input table" index="0">
+			Table that contains an URI
+			column.
+		</inPort>
+		<outPort name="Output table" index="0">
+			Input table with the
+			corresponding extension and MIME-Type columns added.
+		</outPort>
+	</ports>
+</knimeNode>
