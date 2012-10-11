@@ -154,8 +154,7 @@ class FindMIMETypeNodeModel extends NodeModel {
      * @return Extension and MIME-Type cells
      */
     private DataCell[] createCells(final DataRow row, final DataTableSpec spec) {
-        // TODO change MIME-Type map to singleton
-        MimetypesFileTypeMap mimeMap = new MimetypesFileTypeMap();
+        MimetypesFileTypeMap mimeMap = MIMEMap.getMap();
         String column = m_columnselection.getStringValue();
         DataCell extCell = DataType.getMissingCell();
         DataCell mimeCell = DataType.getMissingCell();
@@ -165,7 +164,7 @@ class FindMIMETypeNodeModel extends NodeModel {
             String extension =
                     ((URIDataValue)uriCell).getURIContent().getExtension();
             extCell = new StringCell(extension);
-            mimeCell = new StringCell(mimeMap.getContentType(extension));
+            mimeCell = new StringCell(mimeMap.getContentType("." + extension));
         }
         return new DataCell[]{extCell, mimeCell};
     }
