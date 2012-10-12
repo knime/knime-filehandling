@@ -6,7 +6,7 @@
          <meta.schema plugin="org.knime.base.filehandling" id="MIMEType" name="mimetype"/>
       </appInfo>
       <documentation>
-         [Enter description of this extension point.]
+         Defines a MIME-Type and the file extensions that are mapped to it.
       </documentation>
    </annotation>
 
@@ -50,14 +50,19 @@
    </element>
 
    <element name="mimetype">
+      <annotation>
+         <documentation>
+            Defines a MIME-Type with its corresponding file extensions.
+         </documentation>
+      </annotation>
       <complexType>
          <sequence minOccurs="1" maxOccurs="unbounded">
             <element ref="fileextension"/>
          </sequence>
-         <attribute name="name" type="string">
+         <attribute name="name" type="string" use="required">
             <annotation>
                <documentation>
-                  
+                  The name of the MIME-Type. (Example: &quot;test/plain&quot;).
                </documentation>
             </annotation>
          </attribute>
@@ -65,11 +70,16 @@
    </element>
 
    <element name="fileextension">
+      <annotation>
+         <documentation>
+            Defines a file extension that belongs to the MIME-Type.
+         </documentation>
+      </annotation>
       <complexType>
-         <attribute name="name" type="string">
+         <attribute name="name" type="string" use="required">
             <annotation>
                <documentation>
-                  
+                  The name of the file extension. (Example: &quot;txt&quot;).
                </documentation>
             </annotation>
          </attribute>
