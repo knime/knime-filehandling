@@ -53,8 +53,7 @@ package org.knime.base.filehandling.findmimetype;
 import java.io.File;
 import java.io.IOException;
 
-import javax.activation.MimetypesFileTypeMap;
-
+import org.knime.base.filehandling.mime.MIMEMap;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -156,8 +155,6 @@ class FindMIMETypeNodeModel extends NodeModel {
      * @return Extension and MIME-Type cells
      */
     private DataCell[] createCells(final DataRow row, final DataTableSpec spec) {
-        // Get singleton map
-        MimetypesFileTypeMap mimeMap = MIMEMap.getMap();
         String column = m_columnselection.getStringValue();
         // Assume missing cell
         DataCell extCell = DataType.getMissingCell();
@@ -170,7 +167,7 @@ class FindMIMETypeNodeModel extends NodeModel {
                     ((URIDataValue)uriCell).getURIContent().getExtension();
             extCell = new StringCell(extension);
             // Find correspondent MIME-Type
-            mimeCell = new StringCell(mimeMap.getContentType("." + extension));
+            mimeCell = new StringCell(MIMEMap.getMIMEType(extension));
         }
         return new DataCell[]{extCell, mimeCell};
     }

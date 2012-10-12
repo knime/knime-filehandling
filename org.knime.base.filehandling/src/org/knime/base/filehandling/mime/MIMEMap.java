@@ -48,14 +48,21 @@
  * History
  *   Oct 11, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.findmimetype;
+package org.knime.base.filehandling.mime;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.activation.MimetypesFileTypeMap;
 
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtension;
+import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.IExtensionRegistry;
+import org.eclipse.core.runtime.Platform;
 import org.knime.base.filehandling.FilehandlingPlugin;
 
 /**
@@ -75,6 +82,9 @@ public final class MIMEMap {
             + "resources"
             + File.separator;
 
+    private static final String EXTENSIONPOINT_ID =
+            "org.knime.base.filehandling.mimetypes";
+
     private static MimetypesFileTypeMap mimeMap = null;
 
     private MIMEMap() {
@@ -82,21 +92,61 @@ public final class MIMEMap {
     }
 
     /**
-     * @return Singleton <code>MimetypesFileTypeMap</code>
+     * @param fileextension The file extension to search for
+     * @return MIME-Type for the given file extension
      */
-    static MimetypesFileTypeMap getMap() {
-        // Init mime map if its still uninitialized
+    public static String getMIMEType(final String fileextension) {
+        init();
+        return mimeMap.getContentType("." + fileextension);
+    }
+
+    /**
+     * Initializes the mime map if it has not been initialized before. Should be
+     * could before every operation on <code>mimeMap</code>.
+     */
+    private static void init() {
         if (mimeMap == null) {
             try {
                 mimeMap =
                         new MimetypesFileTypeMap(new FileInputStream(new File(
                                 RESOURCEPATH, "mime.types")));
             } catch (FileNotFoundException e) {
-                // If file is not readable use default MIME-Types
+                // If the file is not readable use default MIME-Types
                 mimeMap = new MimetypesFileTypeMap();
             }
         }
-        return mimeMap;
+        // Add MIME-Types defined by other plugins
+        addFromExtensions();
+    }
+
+    /**
+     * Adds MIME-Types added through the extension point into the mime map.
+     */
+    private static void addFromExtensions() {
+        // Get extensions
+        IExtensionRegistry registry = Platform.getExtensionRegistry();
+        IExtensionPoint point = registry.getExtensionPoint(EXTENSIONPOINT_ID);
+        IExtension[] extensions = point.getExtensions();
+        // Add all configuration elements to one list
+        ArrayList<IConfigurationElement> allElements =
+                new ArrayList<IConfigurationElement>();
+        for (IExtension ext : extensions) {
+            IConfigurationElement[] elements = ext.getConfigurationElements();
+            allElements.addAll(Arrays.asList(elements));
+        }
+        // Add each element
+        for (IConfigurationElement e : allElements) {
+            // Get MIME-Type
+            String type = e.getAttribute("name");
+            String fileextensions = "";
+            IConfigurationElement[] children = e.getChildren();
+            // Get file extensions
+            for (int i = 0; i < children.length; i++) {
+                fileextensions += " " + children[i].getAttribute("name");
+            }
+            // Register MIME-Type
+            mimeMap.addMimeTypes(type + fileextensions);
+        }
     }
 
 }
