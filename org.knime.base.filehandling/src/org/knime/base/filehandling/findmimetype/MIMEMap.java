@@ -66,6 +66,9 @@ import org.knime.base.filehandling.FilehandlingPlugin;
  */
 public final class MIMEMap {
 
+    /**
+     * Path to the resource folder of the project.
+     */
     private static final String RESOURCEPATH = FilehandlingPlugin.getDefault()
             .getPluginRootPath()
             + File.separator
@@ -82,13 +85,15 @@ public final class MIMEMap {
      * @return Singleton <code>MimetypesFileTypeMap</code>
      */
     static MimetypesFileTypeMap getMap() {
+        // Init mime map if its still uninitialized
         if (mimeMap == null) {
             try {
                 mimeMap =
                         new MimetypesFileTypeMap(new FileInputStream(new File(
                                 RESOURCEPATH, "mime.types")));
             } catch (FileNotFoundException e) {
-                // Default MIME-Types will be used
+                // If file is not readable use default MIME-Types
+                mimeMap = new MimetypesFileTypeMap();
             }
         }
         return mimeMap;

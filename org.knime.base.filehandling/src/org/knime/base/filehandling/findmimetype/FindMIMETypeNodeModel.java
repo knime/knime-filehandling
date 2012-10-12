@@ -113,7 +113,7 @@ class FindMIMETypeNodeModel extends NodeModel {
      * 
      * 
      * @param inSpec Specification of the input table
-     * @return Rearranger that will append the selected columns
+     * @return Rearranger that will append the columns
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec)
@@ -122,11 +122,13 @@ class FindMIMETypeNodeModel extends NodeModel {
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec[] colSpecs = new DataColumnSpec[2];
+        // Extension column
         String columnName0 =
                 DataTableSpec.getUniqueColumnName(inSpec, "Extension");
         colSpecs[0] =
                 new DataColumnSpecCreator(columnName0, StringCell.TYPE)
                         .createSpec();
+        // MIME-Type column
         String columnName1 =
                 DataTableSpec.getUniqueColumnName(inSpec, "MIME-Type");
         colSpecs[1] =
@@ -154,16 +156,20 @@ class FindMIMETypeNodeModel extends NodeModel {
      * @return Extension and MIME-Type cells
      */
     private DataCell[] createCells(final DataRow row, final DataTableSpec spec) {
+        // Get singleton map
         MimetypesFileTypeMap mimeMap = MIMEMap.getMap();
         String column = m_columnselection.getStringValue();
+        // Assume missing cell
         DataCell extCell = DataType.getMissingCell();
         DataCell mimeCell = DataType.getMissingCell();
         DataCell uriCell = row.getCell(spec.findColumnIndex(column));
         // Is the cell missing?
         if (!uriCell.isMissing()) {
+            // Get extension from URI cell
             String extension =
                     ((URIDataValue)uriCell).getURIContent().getExtension();
             extCell = new StringCell(extension);
+            // Find correspondent MIME-Type
             mimeCell = new StringCell(mimeMap.getContentType("." + extension));
         }
         return new DataCell[]{extCell, mimeCell};
