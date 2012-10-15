@@ -64,6 +64,7 @@ import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 import org.knime.base.filehandling.FilehandlingPlugin;
+import org.knime.core.node.NodeLogger;
 
 /**
  * Utility class for a singleton <code>MimetypesFileTypeMap</code>.
@@ -72,6 +73,9 @@ import org.knime.base.filehandling.FilehandlingPlugin;
  * @author Patrick Winter, University of Konstanz
  */
 public final class MIMEMap {
+
+    private static final NodeLogger LOGGER = NodeLogger
+            .getLogger(MIMEMap.class);
 
     /**
      * Path to the resource folder of the project.
@@ -97,7 +101,53 @@ public final class MIMEMap {
      */
     public static String getMIMEType(final String fileextension) {
         init();
-        return mimeMap.getContentType("." + fileextension);
+        return mimeMap.getContentType("." + fileextension.toLowerCase());
+    }
+
+    /**
+     * Searches for all MIME-Types registered through the extension point.
+     * 
+     * 
+     * @return MIME-Types in mime.types format
+     */
+    public static String[] getTypesFromExtensions() {
+        // Get extensions
+        IExtensionRegistry registry = Platform.getExtensionRegistry();
+        IExtensionPoint point = registry.getExtensionPoint(EXTENSIONPOINT_ID);
+        IExtension[] extensions = point.getExtensions();
+        // Add all configuration elements to one list
+        ArrayList<IConfigurationElement> allElements =
+                new ArrayList<IConfigurationElement>();
+        for (IExtension ext : extensions) {
+            IConfigurationElement[] elements = ext.getConfigurationElements();
+            allElements.addAll(Arrays.asList(elements));
+        }
+        String[] types = new String[allElements.size()];
+        // Add each element
+        for (int i = 0; i < allElements.size(); i++) {
+            // Get MIME-Type
+            String type = allElements.get(i).getAttribute("name");
+            String fileextensions = "";
+            IConfigurationElement[] children = allElements.get(i).getChildren();
+            // Get file extensions
+            for (int j = 0; j < children.length; j++) {
+                fileextensions +=
+                        " " + children[j].getAttribute("name").toLowerCase();
+            }
+            types[i] = type + fileextensions;
+            LOGGER.debug("Found MIME-Type \"" + type
+                    + "\" for file extensions \""
+                    + fileextensions.replaceFirst(" ", "") + "\"");
+        }
+        return types;
+    }
+    
+    /**
+     * @return The used <code>MimetypesFileTypeMap</code>
+     */
+    public static MimetypesFileTypeMap getMimeMap() {
+        init();
+        return mimeMap;
     }
 
     /**
@@ -123,29 +173,9 @@ public final class MIMEMap {
      * Adds MIME-Types added through the extension point into the mime map.
      */
     private static void addFromExtensions() {
-        // Get extensions
-        IExtensionRegistry registry = Platform.getExtensionRegistry();
-        IExtensionPoint point = registry.getExtensionPoint(EXTENSIONPOINT_ID);
-        IExtension[] extensions = point.getExtensions();
-        // Add all configuration elements to one list
-        ArrayList<IConfigurationElement> allElements =
-                new ArrayList<IConfigurationElement>();
-        for (IExtension ext : extensions) {
-            IConfigurationElement[] elements = ext.getConfigurationElements();
-            allElements.addAll(Arrays.asList(elements));
-        }
-        // Add each element
-        for (IConfigurationElement e : allElements) {
-            // Get MIME-Type
-            String type = e.getAttribute("name");
-            String fileextensions = "";
-            IConfigurationElement[] children = e.getChildren();
-            // Get file extensions
-            for (int i = 0; i < children.length; i++) {
-                fileextensions += " " + children[i].getAttribute("name");
-            }
-            // Register MIME-Type
-            mimeMap.addMimeTypes(type + fileextensions);
+        String[] types = getTypesFromExtensions();
+        for (int i = 0; i < types.length; i++) {
+            mimeMap.addMimeTypes(types[i]);
         }
     }
 

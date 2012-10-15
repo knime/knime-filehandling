@@ -6,6 +6,7 @@
    <extension point="org.knime.workbench.repository.nodes">
    <node category-path="/misc/filehandling" factory-class="org.knime.base.filehandling.filemetainfo.FileMetaInfoNodeFactory" id="org.knime.base.filehandling.filemetainfo.FileMetaInfoNodeFactory"/>
    <node category-path="/misc/filehandling" factory-class="org.knime.base.filehandling.findmimetype.FindMIMETypeNodeFactory" id="org.knime.base.filehandling.findmimetype.FindMIMETypeNodeFactory"/>
+   <node category-path="/misc/filehandling" factory-class="org.knime.base.filehandling.listmimetypes.ListMIMETypesNodeFactory" id="org.knime.base.filehandling.listmimetypes.ListMIMETypesNodeFactory"/>
    <node category-path="/misc/filehandling/zip" factory-class="org.knime.base.filehandling.zip.ZipNodeFactory" id="org.knime.base.filehandling.zip.ZipNodeFactory"/>
    <node category-path="/misc/filehandling/zip" factory-class="org.knime.base.filehandling.unzip.UnzipNodeFactory" id="org.knime.base.filehandling.unzip.UnzipNodeFactory"/>
    <node category-path="/misc/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory" id="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory"/>
