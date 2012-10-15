@@ -51,9 +51,9 @@
 package org.knime.base.filehandling.filestobinaryobjects;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -212,10 +212,10 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         if (!row.getCell(uriIndex).isMissing()) {
             // Get location
             URIDataValue value = (URIDataValue)row.getCell(uriIndex);
-            String location = value.getURIContent().getURI().getPath();
+            URI uri = value.getURIContent().getURI();
             try {
                 // Create input stream and give it to the factory
-                InputStream input = new FileInputStream(location);
+                InputStream input = uri.toURL().openStream();
                 result = bocellfactory.create(input);
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());

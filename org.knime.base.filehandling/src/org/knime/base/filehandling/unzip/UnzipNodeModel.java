@@ -51,10 +51,11 @@
 package org.knime.base.filehandling.unzip;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
@@ -145,56 +146,66 @@ class UnzipNodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
         int rowID = 0;
         List<String> filenames = new LinkedList<String>();
-        File source = new File(m_source.getStringValue());
+        String source = m_source.getStringValue();
         File directory = new File(m_targetdirectory.getStringValue());
-        FileInputStream in = null;
+        InputStream in = null;
         ZipInputStream zin = null;
         FileOutputStream out = null;
         try {
             byte[] buffer = new byte[1024];
             // Check for abort condition and get total size of files
             Progress progress = new Progress(checkFiles(exec));
-            in = new FileInputStream(source);
+            if (new URI(source).getScheme() == null) {
+                // Convert path to URI
+                source = new File(source).toURI().toURL().toString();
+            }
+            in = new URL(source).openStream();
             zin = new ZipInputStream(in);
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
-                // Generate full path to file
-                File file = new File(directory, entry.getName());
-                filenames.add(file.getAbsolutePath());
-                // Remove old file if it exists
-                if (file.exists()) {
-                    file.delete();
-                    LOGGER.info("Replacing existing file \""
-                            + file.getAbsolutePath() + "\"");
+                if (!entry.isDirectory()) {
+                    // Generate full path to file
+                    File file = new File(directory, entry.getName());
+                    filenames.add(file.getAbsolutePath());
+                    // Remove old file if it exists
+                    if (file.exists()) {
+                        file.delete();
+                        LOGGER.info("Replacing existing file \""
+                                + file.getAbsolutePath() + "\"");
+                    }
+                    // Create directories if necessary
+                    file.getParentFile().mkdirs();
+                    file.createNewFile();
+                    out = new FileOutputStream(file);
+                    int length;
+                    // Copy content into new file
+                    while ((length = zin.read(buffer)) > 0) {
+                        exec.checkCanceled();
+                        exec.setProgress(progress.getProgressInPercent());
+                        out.write(buffer, 0, length);
+                        progress.advance(length);
+                    }
+                    out.close();
+                    // Create row with path and URL
+                    DataCell cell = null;
+                    String outputSelection = m_output.getStringValue();
+                    if (outputSelection.equals(OutputSelection.LOCATION
+                            .getName())) {
+                        cell = new StringCell(file.getAbsolutePath());
+                    }
+                    if (outputSelection.equals(OutputSelection.URI.getName())) {
+                        URI uri = file.getAbsoluteFile().toURI();
+                        String extension =
+                                FilenameUtils.getExtension(uri.getPath());
+                        URIContent content = new URIContent(uri, extension);
+                        cell = new URIDataCell(content);
+                    }
+                    outContainer.addRowToTable(new DefaultRow("Row" + rowID,
+                            cell));
+                    rowID++;
+                } else {
+                    new File(entry.getName()).mkdir();
                 }
-                // Create directories if necessary
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-                out = new FileOutputStream(file);
-                int length;
-                // Copy content into new file
-                while ((length = zin.read(buffer)) > 0) {
-                    exec.checkCanceled();
-                    exec.setProgress(progress.getProgressInPercent());
-                    out.write(buffer, 0, length);
-                    progress.advance(length);
-                }
-                out.close();
-                // Create row with path and URL
-                DataCell cell = null;
-                String outputSelection = m_output.getStringValue();
-                if (outputSelection.equals(OutputSelection.LOCATION.getName())) {
-                    cell = new StringCell(file.getAbsolutePath());
-                }
-                if (outputSelection.equals(OutputSelection.URI.getName())) {
-                    URI uri = file.getAbsoluteFile().toURI();
-                    String extension =
-                            FilenameUtils.getExtension(uri.getPath());
-                    URIContent content = new URIContent(uri, extension);
-                    cell = new URIDataCell(content);
-                }
-                outContainer.addRowToTable(new DefaultRow("Row" + rowID, cell));
-                rowID++;
                 entry = zin.getNextEntry();
             }
         } catch (Exception e) {
