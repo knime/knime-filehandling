@@ -76,13 +76,13 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the path to URI setting.
+     * Factory method for the path or URI setting.
      * 
      * 
-     * @return Path to URI <code>SettingsModel</code>
+     * @return Path or URI <code>SettingsModel</code>
      */
-    static SettingsModelBoolean createPathToURISettings() {
-        return new SettingsModelBoolean("pathtouri", false);
+    static SettingsModelString createPathOrURISettings() {
+        return new SettingsModelString("pathoruri", PathOrURI.PATH.getName());
     }
 
     /**
@@ -96,29 +96,23 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the append column setting.
-     * 
-     * 
-     * @return Append column <code>SettingsModel</code>
-     */
-    static SettingsModelBoolean createAppendColumnSettings() {
-        return new SettingsModelBoolean("appendcolumn", false);
-    }
-
-    /**
      * Factory method for the column name setting.
      * 
      * 
-     * @param appendColumn <code>SettingsModel</code> for the append column
-     *            setting
      * @return Column name <code>SettingsModel</code>
      */
-    static SettingsModelString createColumnNameSettings(
-            final SettingsModelBoolean appendColumn) {
-        SettingsModelString columnName =
-                new SettingsModelString("columnname", "URI");
-        columnName.setEnabled(appendColumn.getBooleanValue());
-        return columnName;
+    static SettingsModelString createColumnNameSettings() {
+        return new SettingsModelString("columnname", "URI");
+    }
+
+    /**
+     * Factory method for the replace setting.
+     * 
+     * 
+     * @return Replace <code>SettingsModel</code>
+     */
+    static SettingsModelBoolean createReplaceSettings() {
+        return new SettingsModelBoolean("replace", false);
     }
 
 }

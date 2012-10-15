@@ -61,12 +61,12 @@ enum FilenameHandling {
     /**
      * Use name column.
      */
-    FROMCOLUMN("From column"),
+    FROMCOLUMN("From seperate column"),
 
     /**
-     * Generate from name pattern.
+     * Use the source filename and the output directory.
      */
-    GENERATE("Generate");
+    SOURCENAME("From source name");
 
     private final String m_name;
 
@@ -88,7 +88,7 @@ enum FilenameHandling {
      * @return Array of all filename handling settings
      */
     static String[] getAllSettings() {
-        return new String[]{FROMCOLUMN.getName(), GENERATE.getName()};
+        return new String[]{FROMCOLUMN.getName(), SOURCENAME.getName()};
     }
 
 }

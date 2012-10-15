@@ -18,10 +18,16 @@
 			contain a
 			string with the correct URI syntax.
 		</option>
-		<option name="Convert pathes to URIs">If enabled file pathes will be converted to a
-			correct URI (with the scheme "file" appended to the front).
+		<option name="String represents...">
+			<b>File path</b>
+			<br />
+			Input string represents a file path (e.g. "c:\temp\file.dat").
+			<br />
+			<b>URI</b>
+			<br />
+			Input string represents an URI (e.g. "file:/c:/temp/file.dat").
 		</option>
-		<option name="Check if files exist">Checks if the files referenced by the created URIs
+		<option name="Fail if file does not exist (only applies to local files)">Checks if the files referenced by the created URIs
 			are existing and will abort if one is not.
 		</option>
 		<option name="Append column">Does append the URI column to the table instead of

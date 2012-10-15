@@ -85,7 +85,7 @@ class URIToStringNodeModel extends NodeModel {
 
     private SettingsModelString m_columnselection;
 
-    private SettingsModelBoolean m_appendcolumn;
+    private SettingsModelBoolean m_replace;
 
     private SettingsModelString m_columnname;
 
@@ -95,8 +95,8 @@ class URIToStringNodeModel extends NodeModel {
     protected URIToStringNodeModel() {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_appendcolumn = SettingsFactory.createAppendColumnSettings();
-        m_columnname = SettingsFactory.createColumnNameSettings(m_appendcolumn);
+        m_replace = SettingsFactory.createReplaceSettings();
+        m_columnname = SettingsFactory.createColumnNameSettings();
     }
 
     /**
@@ -125,16 +125,10 @@ class URIToStringNodeModel extends NodeModel {
             throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
-        boolean append = m_appendcolumn.getBooleanValue();
-        String columnName = "";
         // Set column name
-        if (append) {
-            columnName =
-                    DataTableSpec.getUniqueColumnName(inSpec,
-                            m_columnname.getStringValue());
-        } else {
-            columnName = m_columnselection.getStringValue();
-        }
+        String columnName =
+                DataTableSpec.getUniqueColumnName(inSpec,
+                        m_columnname.getStringValue());
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec colSpec =
                 new DataColumnSpecCreator(columnName, StringCell.TYPE)
@@ -146,12 +140,12 @@ class URIToStringNodeModel extends NodeModel {
                 return createStringCell(row, inSpec);
             }
         };
-        if (append) {
+        if (m_replace.getBooleanValue()) {
+            // Replace selected column with the strings from the factory
+            rearranger.replace(factory, m_columnselection.getStringValue());
+        } else {
             // Append strings from the factory
             rearranger.append(factory);
-        } else {
-            // Replace selected column with the strings from the factory
-            rearranger.replace(factory, columnName);
         }
         return rearranger;
     }
@@ -227,7 +221,7 @@ class URIToStringNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_columnselection.saveSettingsTo(settings);
-        m_appendcolumn.saveSettingsTo(settings);
+        m_replace.saveSettingsTo(settings);
         m_columnname.saveSettingsTo(settings);
     }
 
@@ -238,7 +232,7 @@ class URIToStringNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.loadSettingsFrom(settings);
-        m_appendcolumn.loadSettingsFrom(settings);
+        m_replace.loadSettingsFrom(settings);
         m_columnname.loadSettingsFrom(settings);
     }
 
@@ -249,7 +243,7 @@ class URIToStringNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.validateSettings(settings);
-        m_appendcolumn.validateSettings(settings);
+        m_replace.validateSettings(settings);
         m_columnname.validateSettings(settings);
     }
 

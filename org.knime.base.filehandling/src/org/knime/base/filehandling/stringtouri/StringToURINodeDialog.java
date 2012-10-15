@@ -50,12 +50,10 @@
  */
 package org.knime.base.filehandling.stringtouri;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import org.knime.core.data.StringValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
+import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
@@ -71,11 +69,11 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_columnselection;
 
-    private SettingsModelBoolean m_pathtouri;
+    private SettingsModelString m_pathoruri;
 
     private SettingsModelBoolean m_missingfileabort;
 
-    private SettingsModelBoolean m_appendcolumn;
+    private SettingsModelBoolean m_replace;
 
     private SettingsModelString m_columnname;
 
@@ -86,30 +84,26 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
     protected StringToURINodeDialog() {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_pathtouri = SettingsFactory.createPathToURISettings();
+        m_pathoruri = SettingsFactory.createPathOrURISettings();
         m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
-        m_appendcolumn = SettingsFactory.createAppendColumnSettings();
-        m_columnname = SettingsFactory.createColumnNameSettings(m_appendcolumn);
-        m_appendcolumn.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                m_columnname.setEnabled(m_appendcolumn.getBooleanValue());
-            }
-        });
+        m_replace = SettingsFactory.createReplaceSettings();
+        m_columnname = SettingsFactory.createColumnNameSettings();
         // Column selection
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_columnselection, "Column selection", 0, StringValue.class));
-        // Path to URI
-        addDialogComponent(new DialogComponentBoolean(m_pathtouri,
-                "Convert pathes to URIs"));
+        // Path or URI
+        addDialogComponent(new DialogComponentButtonGroup(m_pathoruri, false,
+                "String represents...", PathOrURI.getAllSettings()));
         // Missing file abort
         addDialogComponent(new DialogComponentBoolean(m_missingfileabort,
-                "Check if files exist"));
-        // Append column
-        addDialogComponent(new DialogComponentBoolean(m_appendcolumn,
-                "Append column"));
+                "Fail if file does not exist (only applies to local files)"));
+        createNewGroup("New column...");
         // Column name
         addDialogComponent(new DialogComponentString(m_columnname,
-                "Appended column name", true, 20));
+                "Name", true, 20));
+        // Replace
+        addDialogComponent(new DialogComponentBoolean(m_replace,
+                "Replaces source column"));
+        closeCurrentGroup();
     }
 }

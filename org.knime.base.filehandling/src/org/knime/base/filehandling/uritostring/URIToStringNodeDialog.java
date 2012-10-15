@@ -50,9 +50,6 @@
  */
 package org.knime.base.filehandling.uritostring;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
@@ -71,7 +68,7 @@ class URIToStringNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_columnselection;
 
-    private SettingsModelBoolean m_appendcolumn;
+    private SettingsModelBoolean m_replace;
 
     private SettingsModelString m_columnname;
 
@@ -82,22 +79,18 @@ class URIToStringNodeDialog extends DefaultNodeSettingsPane {
     protected URIToStringNodeDialog() {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_appendcolumn = SettingsFactory.createAppendColumnSettings();
-        m_columnname = SettingsFactory.createColumnNameSettings(m_appendcolumn);
-        m_appendcolumn.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                m_columnname.setEnabled(m_appendcolumn.getBooleanValue());
-            }
-        });
+        m_replace = SettingsFactory.createReplaceSettings();
+        m_columnname = SettingsFactory.createColumnNameSettings();
         // Column selection
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_columnselection, "Column selection", 0, URIDataValue.class));
-        // Append column
-        addDialogComponent(new DialogComponentBoolean(m_appendcolumn,
-                "Append column"));
+        createNewGroup("New column...");
         // Column name
         addDialogComponent(new DialogComponentString(m_columnname,
-                "Appended column name", true, 20));
+                "Name", true, 20));
+        // Replace
+        addDialogComponent(new DialogComponentBoolean(m_replace,
+                "Replaces URI column"));
+        closeCurrentGroup();
     }
 }

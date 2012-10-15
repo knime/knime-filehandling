@@ -88,11 +88,11 @@ class StringToURINodeModel extends NodeModel {
 
     private SettingsModelString m_columnselection;
 
-    private SettingsModelBoolean m_pathtouri;
+    private SettingsModelString m_pathoruri;
 
     private SettingsModelBoolean m_missingfileabort;
 
-    private SettingsModelBoolean m_appendcolumn;
+    private SettingsModelBoolean m_replace;
 
     private SettingsModelString m_columnname;
 
@@ -102,10 +102,10 @@ class StringToURINodeModel extends NodeModel {
     protected StringToURINodeModel() {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_pathtouri = SettingsFactory.createPathToURISettings();
+        m_pathoruri = SettingsFactory.createPathOrURISettings();
         m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
-        m_appendcolumn = SettingsFactory.createAppendColumnSettings();
-        m_columnname = SettingsFactory.createColumnNameSettings(m_appendcolumn);
+        m_replace = SettingsFactory.createReplaceSettings();
+        m_columnname = SettingsFactory.createColumnNameSettings();
     }
 
     /**
@@ -134,16 +134,12 @@ class StringToURINodeModel extends NodeModel {
             throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
-        boolean append = m_appendcolumn.getBooleanValue();
+        boolean replace = m_replace.getBooleanValue();
         String columnName = "";
         // Set column name
-        if (append) {
-            columnName =
-                    DataTableSpec.getUniqueColumnName(inSpec,
-                            m_columnname.getStringValue());
-        } else {
-            columnName = m_columnselection.getStringValue();
-        }
+        columnName =
+                DataTableSpec.getUniqueColumnName(inSpec,
+                        m_columnname.getStringValue());
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec colSpec =
                 new DataColumnSpecCreator(columnName, URIDataCell.TYPE)
@@ -155,12 +151,12 @@ class StringToURINodeModel extends NodeModel {
                 return createURICell(row, inSpec);
             }
         };
-        if (append) {
+        if (replace) {
+            // Replace selected column with the URIs from the factory
+            rearranger.replace(factory, m_columnselection.getStringValue());
+        } else {
             // Append URIs from the factory
             rearranger.append(factory);
-        } else {
-            // Replace selected column with the URIs from the factory
-            rearranger.replace(factory, columnName);
         }
         return rearranger;
     }
@@ -183,7 +179,8 @@ class StringToURINodeModel extends NodeModel {
             if (!oldCell.isMissing()) {
                 // Get URI and extension
                 String value = ((StringValue)oldCell).getStringValue();
-                if (m_pathtouri.getBooleanValue()) {
+                if (m_pathoruri.getStringValue().equals(
+                        PathOrURI.PATH.getName())) {
                     // Check if value has no scheme
                     if (new URI(value).getScheme() == null) {
                         // Convert path to URI
@@ -191,7 +188,8 @@ class StringToURINodeModel extends NodeModel {
                     }
                 }
                 URI uri = new URI(value);
-                if (m_missingfileabort.getBooleanValue()) {
+                if (uri.getScheme() != null && uri.getScheme().equals("file")
+                        && m_missingfileabort.getBooleanValue()) {
                     // Check for existing file
                     if (!new File(uri.getPath()).exists()) {
                         throw new RuntimeException("The file to the URI \""
@@ -258,9 +256,9 @@ class StringToURINodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_columnselection.saveSettingsTo(settings);
-        m_pathtouri.saveSettingsTo(settings);
+        m_pathoruri.saveSettingsTo(settings);
         m_missingfileabort.saveSettingsTo(settings);
-        m_appendcolumn.saveSettingsTo(settings);
+        m_replace.saveSettingsTo(settings);
         m_columnname.saveSettingsTo(settings);
     }
 
@@ -271,9 +269,9 @@ class StringToURINodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.loadSettingsFrom(settings);
-        m_pathtouri.loadSettingsFrom(settings);
+        m_pathoruri.loadSettingsFrom(settings);
         m_missingfileabort.loadSettingsFrom(settings);
-        m_appendcolumn.loadSettingsFrom(settings);
+        m_replace.loadSettingsFrom(settings);
         m_columnname.loadSettingsFrom(settings);
     }
 
@@ -284,9 +282,9 @@ class StringToURINodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.validateSettings(settings);
-        m_pathtouri.validateSettings(settings);
+        m_pathoruri.validateSettings(settings);
         m_missingfileabort.validateSettings(settings);
-        m_appendcolumn.validateSettings(settings);
+        m_replace.validateSettings(settings);
         m_columnname.validateSettings(settings);
     }
 

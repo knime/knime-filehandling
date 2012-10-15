@@ -42,6 +42,10 @@
 			Size of the file. If the file is a directory, the sizes of the
 			contained files will be summarized.
 			<br />
+			<b>Size (human readable)</b>
+			<br/>
+			Size of the file in human readable form.
+			<br/>
 			<b>Last modified</b>
 			<br />
 			The last time the file was modified.

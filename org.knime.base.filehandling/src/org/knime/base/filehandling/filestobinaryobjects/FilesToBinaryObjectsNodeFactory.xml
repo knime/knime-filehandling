@@ -17,17 +17,8 @@
 		<option name="URI column">Column with the path to the files.</option>
 		<option name="Binary object column name">Name for the new column with the binary objects.
 		</option>
-		<option name="Append column or replace URI">
-			<b>Append</b>
-			<br />
-			A new column will be appended.
-			<br />
-			<b>Replace</b>
-			<br />
-			The existing URI column will be replaced by the new binary
-			object
-			column.
-		</option>
+		<option name="Replace URI column">The URI column will be replaced by the new binary
+			object column.</option>
 	</fullDescription>
 
 	<ports>

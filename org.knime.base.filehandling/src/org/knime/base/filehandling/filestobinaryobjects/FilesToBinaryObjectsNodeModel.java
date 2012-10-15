@@ -75,6 +75,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -89,7 +90,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     private SettingsModelString m_bocolumnname;
 
-    private SettingsModelString m_replacepolicy;
+    private SettingsModelBoolean m_replace;
 
     /**
      * Constructor for the node model.
@@ -98,7 +99,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         super(1, 1);
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
-        m_replacepolicy = SettingsFactory.createReplacePolicySettings();
+        m_replace = SettingsFactory.createReplaceSettings();
     }
 
     /**
@@ -132,7 +133,6 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
                 exec == null ? null : new BinaryObjectCellFactory(exec);
         String uricolumn = m_uricolumn.getStringValue();
         String bocolumnname = m_bocolumnname.getStringValue();
-        String replacepolicy = m_replacepolicy.getStringValue();
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         // Create column of the binary objects
         DataColumnSpec colSpec =
@@ -145,14 +145,13 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
                 return createBinaryObjectCell(row, inSpec, bocellfactory);
             }
         };
-        if (replacepolicy.equals(ReplacePolicy.APPEND.getName())) {
-            // Append the binary object column
-            rearranger.append(factory);
-        }
-        if (replacepolicy.equals(ReplacePolicy.REPLACE.getName())) {
+        if (m_replace.getBooleanValue()) {
             // Replace URI column with the binary object column
             int index = inSpec.findColumnIndex(uricolumn);
             rearranger.replace(factory, index);
+        } else {
+            // Append the binary object column
+            rearranger.append(factory);
         }
         return rearranger;
     }
@@ -252,7 +251,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_uricolumn.saveSettingsTo(settings);
         m_bocolumnname.saveSettingsTo(settings);
-        m_replacepolicy.saveSettingsTo(settings);
+        m_replace.saveSettingsTo(settings);
     }
 
     /**
@@ -263,7 +262,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
             throws InvalidSettingsException {
         m_uricolumn.loadSettingsFrom(settings);
         m_bocolumnname.loadSettingsFrom(settings);
-        m_replacepolicy.loadSettingsFrom(settings);
+        m_replace.loadSettingsFrom(settings);
     }
 
     /**
@@ -274,7 +273,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
             throws InvalidSettingsException {
         m_uricolumn.validateSettings(settings);
         m_bocolumnname.validateSettings(settings);
-        m_replacepolicy.validateSettings(settings);
+        m_replace.validateSettings(settings);
     }
 
     /**

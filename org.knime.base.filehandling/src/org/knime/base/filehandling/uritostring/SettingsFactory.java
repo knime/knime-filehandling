@@ -76,29 +76,23 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the append column setting.
-     * 
-     * 
-     * @return Append column <code>SettingsModel</code>
-     */
-    static SettingsModelBoolean createAppendColumnSettings() {
-        return new SettingsModelBoolean("appendcolumn", false);
-    }
-
-    /**
      * Factory method for the column name setting.
      * 
      * 
-     * @param appendColumn <code>SettingsModel</code> for the append column
-     *            setting
      * @return Column name <code>SettingsModel</code>
      */
-    static SettingsModelString createColumnNameSettings(
-            final SettingsModelBoolean appendColumn) {
-        SettingsModelString columnName =
-                new SettingsModelString("columnname", "String");
-        columnName.setEnabled(appendColumn.getBooleanValue());
-        return columnName;
+    static SettingsModelString createColumnNameSettings() {
+        return new SettingsModelString("columnname", "String");
+    }
+
+    /**
+     * Factory method for the replace setting.
+     * 
+     * 
+     * @return Replace <code>SettingsModel</code>
+     */
+    static SettingsModelBoolean createReplaceSettings() {
+        return new SettingsModelBoolean("replace", false);
     }
 
 }

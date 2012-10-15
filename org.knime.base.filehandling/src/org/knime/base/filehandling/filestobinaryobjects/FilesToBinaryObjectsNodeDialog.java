@@ -52,9 +52,10 @@ package org.knime.base.filehandling.filestobinaryobjects;
 
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -69,7 +70,7 @@ class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_bocolumnname;
 
-    private SettingsModelString m_replacepolicy;
+    private SettingsModelBoolean m_replace;
 
     /**
      * New pane for configuring the Files to Binary Objects node dialog.
@@ -79,16 +80,17 @@ class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
         super();
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
-        m_replacepolicy = SettingsFactory.createReplacePolicySettings();
+        m_replace = SettingsFactory.createReplaceSettings();
         // Location column
         addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
                 "URI column", 0, URIDataValue.class));
+        createNewGroup("New column...");
         // Binary object column name
-        addDialogComponent(new DialogComponentString(m_bocolumnname,
-                "Binary object column name"));
-        // Replace policy
-        addDialogComponent(new DialogComponentButtonGroup(m_replacepolicy,
-                false, "Append column or replace URI?",
-                ReplacePolicy.getAllSettings()));
+        addDialogComponent(new DialogComponentString(m_bocolumnname, "Name",
+                true, 20));
+        // Replace setting
+        addDialogComponent(new DialogComponentBoolean(m_replace,
+                "Replaces URI column"));
+        closeCurrentGroup();
     }
 }

@@ -50,6 +50,7 @@
  */
 package org.knime.base.filehandling.filestobinaryobjects;
 
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -85,14 +86,13 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the replace policy setting.
+     * Factory method for the replace setting.
      * 
      * 
-     * @return Replace policy <code>SettingsModel</code>
+     * @return Replace <code>SettingsModel</code>
      */
-    static SettingsModelString createReplacePolicySettings() {
-        return new SettingsModelString("replacepolicy",
-                ReplacePolicy.APPEND.getName());
+    static SettingsModelBoolean createReplaceSettings() {
+        return new SettingsModelBoolean("replace", false);
     }
 
 }

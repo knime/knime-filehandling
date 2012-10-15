@@ -60,7 +60,6 @@ import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
-import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -78,8 +77,6 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
     private SettingsModelString m_filenamehandling;
 
     private SettingsModelString m_outputdirectory;
-
-    private SettingsModelString m_pattern;
 
     private SettingsModelString m_targetcolumn;
     
@@ -99,7 +96,6 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
         m_outputdirectory =
                 SettingsFactory
                         .createOutputDirectorySettings(m_filenamehandling);
-        m_pattern = SettingsFactory.createPatternSettings(m_filenamehandling);
         m_targetcolumn =
                 SettingsFactory.createTargetColumnSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
@@ -112,8 +108,6 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
                 m_targetcolumn.setEnabled(handling
                         .equals(FilenameHandling.FROMCOLUMN.getName()));
                 m_outputdirectory.setEnabled(isOutputDirectoryEnabled());
-                m_pattern.setEnabled(handling.equals(FilenameHandling.GENERATE
-                        .getName()));
             }
         });
         // Copy or move
@@ -133,8 +127,6 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
         addDialogComponent(new DialogComponentFileChooser(m_outputdirectory,
                 "outputdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
                 m_outputdirectoryFvm));
-        // Pattern
-        addDialogComponent(new DialogComponentString(m_pattern, "Pattern"));
         closeCurrentGroup();
         // Overwrite policy
         addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
@@ -149,7 +141,7 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
      */
     private boolean isOutputDirectoryEnabled() {
         return m_filenamehandling.getStringValue().equals(
-                FilenameHandling.GENERATE.getName())
+                FilenameHandling.SOURCENAME.getName())
                 && !m_outputdirectoryFvm.isVariableReplacementEnabled();
     }
 

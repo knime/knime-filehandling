@@ -98,8 +98,6 @@ class CopyFilesNodeModel extends NodeModel {
 
     private SettingsModelString m_outputdirectory;
 
-    private SettingsModelString m_pattern;
-
     private SettingsModelString m_targetcolumn;
 
     private SettingsModelString m_ifexists;
@@ -115,7 +113,6 @@ class CopyFilesNodeModel extends NodeModel {
         m_outputdirectory =
                 SettingsFactory
                         .createOutputDirectorySettings(m_filenamehandling);
-        m_pattern = SettingsFactory.createPatternSettings(m_filenamehandling);
         m_targetcolumn =
                 SettingsFactory.createTargetColumnSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
@@ -129,10 +126,11 @@ class CopyFilesNodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
         BufferedDataTable out = null;
         // Monitor for duplicate checking and rollback
-        CopyOrMoveMonitor monitor = new CopyOrMoveMonitor(m_copyormove.getStringValue());
+        CopyOrMoveMonitor monitor =
+                new CopyOrMoveMonitor(m_copyormove.getStringValue());
         boolean appenduricolumn =
                 m_filenamehandling.getStringValue().equals(
-                        FilenameHandling.GENERATE.getName());
+                        FilenameHandling.SOURCENAME.getName());
         try {
             // If the columns do not get appended the create file method will
             // not be called so it has to happen manually
@@ -180,7 +178,7 @@ class CopyFilesNodeModel extends NodeModel {
         DataColumnSpec colSpec;
         boolean appenduricolumn =
                 m_filenamehandling.getStringValue().equals(
-                        FilenameHandling.GENERATE.getName());
+                        FilenameHandling.SOURCENAME.getName());
         // Append URI column if selected. This will also call the
         // create file method
         if (appenduricolumn) {
@@ -263,19 +261,13 @@ class CopyFilesNodeModel extends NodeModel {
         }
         // Check settings only if filename handling is generate
         if (m_filenamehandling.getStringValue().equals(
-                FilenameHandling.GENERATE.getName())) {
+                FilenameHandling.SOURCENAME.getName())) {
             // Does the output directory exist?
             File outputdirectory = new File(m_outputdirectory.getStringValue());
             if (!outputdirectory.isDirectory()) {
                 throw new InvalidSettingsException("Output directory \""
                         + outputdirectory.getAbsoluteFile()
                         + "\" does not exist");
-            }
-            // Does the name pattern at least contain a '?'?
-            String pattern = m_pattern.getStringValue();
-            if (!pattern.contains("?")) {
-                throw new InvalidSettingsException("Pattern has to contain"
-                        + " a ?");
             }
         }
     }
@@ -299,12 +291,15 @@ class CopyFilesNodeModel extends NodeModel {
         String filenameHandling = m_filenamehandling.getStringValue();
         String outputDirectory = m_outputdirectory.getStringValue();
         String fromColumn = FilenameHandling.FROMCOLUMN.getName();
-        String generate = FilenameHandling.GENERATE.getName();
+        String generate = FilenameHandling.SOURCENAME.getName();
         String ifExists = m_ifexists.getStringValue();
         String filename = "";
         // Assume missing source URI
         DataCell uriCell = DataType.getMissingCell();
         if (!row.getCell(sourceIndex).isMissing()) {
+            URI sourceUri =
+                    ((URIDataValue)row.getCell(sourceIndex)).getURIContent()
+                            .getURI();
             if (filenameHandling.equals(fromColumn)) {
                 // Get target URI from table
                 int targetIndex =
@@ -319,14 +314,10 @@ class CopyFilesNodeModel extends NodeModel {
                 outputDirectory = "";
             }
             if (filenameHandling.equals(generate)) {
-                // Generate filename using pattern, by replacing the ? with the
-                // row number
-                filename = m_pattern.getStringValue().replace("?", "" + rowNr);
+                filename = FilenameUtils.getName(sourceUri.getPath());
             }
             try {
-                String sourcePath =
-                        ((URIDataValue)row.getCell(sourceIndex))
-                                .getURIContent().getURI().getPath();
+                String sourcePath = sourceUri.getPath();
                 File sourceFile = new File(sourcePath);
                 // Check if the same file has already been touched
                 if (!monitor.isNewFile(sourcePath)) {
@@ -345,8 +336,7 @@ class CopyFilesNodeModel extends NodeModel {
                             + targetFile.getAbsolutePath()
                             + "\" in the target column");
                 }
-                // Check if a file with the same name already exists (but was
-                // not created by this execution)
+                // Check if a file with the same name already exists
                 if (targetFile.exists()) {
                     // Abort if policy is abort
                     if (ifExists.equals(OverwritePolicy.ABORT.getName())) {
@@ -429,7 +419,6 @@ class CopyFilesNodeModel extends NodeModel {
         m_sourcecolumn.saveSettingsTo(settings);
         m_filenamehandling.saveSettingsTo(settings);
         m_outputdirectory.saveSettingsTo(settings);
-        m_pattern.saveSettingsTo(settings);
         m_targetcolumn.saveSettingsTo(settings);
         m_ifexists.saveSettingsTo(settings);
     }
@@ -444,7 +433,6 @@ class CopyFilesNodeModel extends NodeModel {
         m_sourcecolumn.loadSettingsFrom(settings);
         m_filenamehandling.loadSettingsFrom(settings);
         m_outputdirectory.loadSettingsFrom(settings);
-        m_pattern.loadSettingsFrom(settings);
         m_targetcolumn.loadSettingsFrom(settings);
         m_ifexists.loadSettingsFrom(settings);
     }
@@ -459,7 +447,6 @@ class CopyFilesNodeModel extends NodeModel {
         m_sourcecolumn.validateSettings(settings);
         m_filenamehandling.validateSettings(settings);
         m_outputdirectory.validateSettings(settings);
-        m_pattern.validateSettings(settings);
         m_targetcolumn.validateSettings(settings);
         m_ifexists.validateSettings(settings);
     }

@@ -48,32 +48,32 @@
  * History
  *   Sep 3, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.filestobinaryobjects;
+package org.knime.base.filehandling.stringtouri;
 
 /**
- * Enums for replace policies.
+ * Enums for path or URI setting.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-enum ReplacePolicy {
+enum PathOrURI {
 
     /**
-     * Append new column.
+     * Input string represents a file path.
      */
-    APPEND("Append"),
+    PATH("File path"),
 
     /**
-     * Replace URI column.
+     * Input string represents an URI.
      */
-    REPLACE("Replace");
+    URI("URI");
 
     private final String m_name;
 
     /**
      * @param name Name of this policy
      */
-    ReplacePolicy(final String name) {
+    PathOrURI(final String name) {
         m_name = name;
     }
 
@@ -85,10 +85,10 @@ enum ReplacePolicy {
     }
 
     /**
-     * @return Array of all replace policy settings
+     * @return Array of all settings
      */
     static String[] getAllSettings() {
-        return new String[]{APPEND.getName(), REPLACE.getName()};
+        return new String[]{PATH.getName(), URI.getName()};
     }
 
 }

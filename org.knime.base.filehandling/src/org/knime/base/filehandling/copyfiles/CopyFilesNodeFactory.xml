@@ -26,18 +26,14 @@
 			<br />
 			The target filenames are present in an URI column.
 			<br />
-			<b>Generate</b>
+			<b>From source name</b>
 			<br />
-			Generate the filenames using a pattern.
+			Use the sources filename and put them into the output directory.
 		</option>
 		<option name="Target column">Column with the URI where the files should be put.
 		</option>
 		<option name="Output directory">The directory where the files will be put, if
 			generate option is selected.
-		</option>
-		<option name="Pattern">The pattern that gets used to generate the
-			filenames. The pattern has to contain a ? that will be replaced by
-			the current row number.
 		</option>
 		<option name="If a file exists">
 		<b>Overwrite</b>
