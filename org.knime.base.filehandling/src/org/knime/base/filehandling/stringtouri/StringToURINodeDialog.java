@@ -53,6 +53,7 @@ package org.knime.base.filehandling.stringtouri;
 import org.knime.core.data.StringValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
+import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
@@ -70,7 +71,7 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelBoolean m_missingfileabort;
 
-    private SettingsModelBoolean m_replace;
+    private SettingsModelString m_replace;
 
     private SettingsModelString m_columnname;
 
@@ -82,7 +83,7 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
         m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
-        m_replace = SettingsFactory.createReplaceSettings();
+        m_replace = SettingsFactory.createReplacePolicySettings();
         m_columnname = SettingsFactory.createColumnNameSettings();
         // Column selection
         addDialogComponent(new DialogComponentColumnNameSelection(
@@ -92,11 +93,11 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
                 "Fail if file does not exist (only applies to local files)"));
         createNewGroup("New column...");
         // Column name
-        addDialogComponent(new DialogComponentString(m_columnname,
-                "Name", true, 20));
+        addDialogComponent(new DialogComponentString(m_columnname, "Name",
+                true, 20));
         // Replace
-        addDialogComponent(new DialogComponentBoolean(m_replace,
-                "Replaces source column"));
+        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "",
+                ReplacePolicy.getAllSettings()));
         closeCurrentGroup();
     }
 }

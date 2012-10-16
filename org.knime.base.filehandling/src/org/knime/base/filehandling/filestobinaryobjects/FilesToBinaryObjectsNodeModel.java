@@ -75,7 +75,6 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -90,7 +89,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     private SettingsModelString m_bocolumnname;
 
-    private SettingsModelBoolean m_replace;
+    private SettingsModelString m_replace;
 
     /**
      * Constructor for the node model.
@@ -99,7 +98,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         super(1, 1);
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
-        m_replace = SettingsFactory.createReplaceSettings();
+        m_replace = SettingsFactory.createReplacePolicySettings();
     }
 
     /**
@@ -126,6 +125,9 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
             final ExecutionContext exec) throws InvalidSettingsException {
+        boolean replace =
+                m_replace.getStringValue().equals(
+                        ReplacePolicy.REPLACE.getName());
         // Check settings for correctness
         checkSettings(inSpec);
         // Create binary object factory -- only assign during execution
@@ -145,7 +147,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
                 return createBinaryObjectCell(row, inSpec, bocellfactory);
             }
         };
-        if (m_replace.getBooleanValue()) {
+        if (replace) {
             // Replace URI column with the binary object column
             int index = inSpec.findColumnIndex(uricolumn);
             rearranger.replace(factory, index);

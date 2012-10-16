@@ -90,7 +90,7 @@ class StringToURINodeModel extends NodeModel {
 
     private SettingsModelBoolean m_missingfileabort;
 
-    private SettingsModelBoolean m_replace;
+    private SettingsModelString m_replace;
 
     private SettingsModelString m_columnname;
 
@@ -101,7 +101,7 @@ class StringToURINodeModel extends NodeModel {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
         m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
-        m_replace = SettingsFactory.createReplaceSettings();
+        m_replace = SettingsFactory.createReplacePolicySettings();
         m_columnname = SettingsFactory.createColumnNameSettings();
     }
 
@@ -131,7 +131,9 @@ class StringToURINodeModel extends NodeModel {
             throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
-        boolean replace = m_replace.getBooleanValue();
+        boolean replace =
+                m_replace.getStringValue().equals(
+                        ReplacePolicy.REPLACE.getName());
         String columnName = "";
         // Set column name
         columnName =

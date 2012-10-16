@@ -101,8 +101,9 @@ final class SettingsFactory {
      * 
      * @return Replace <code>SettingsModel</code>
      */
-    static SettingsModelBoolean createReplaceSettings() {
-        return new SettingsModelBoolean("replace", false);
+    static SettingsModelString createReplacePolicySettings() {
+        return new SettingsModelString("replace",
+                ReplacePolicy.APPEND.getName());
     }
 
 }
