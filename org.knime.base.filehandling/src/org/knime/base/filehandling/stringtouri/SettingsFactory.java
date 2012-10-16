@@ -76,16 +76,6 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the path or URI setting.
-     * 
-     * 
-     * @return Path or URI <code>SettingsModel</code>
-     */
-    static SettingsModelString createPathOrURISettings() {
-        return new SettingsModelString("pathoruri", PathOrURI.PATH.getName());
-    }
-
-    /**
      * Factory method for the missing file abort setting.
      * 
      * 

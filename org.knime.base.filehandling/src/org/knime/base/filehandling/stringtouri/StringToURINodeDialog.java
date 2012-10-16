@@ -53,7 +53,6 @@ package org.knime.base.filehandling.stringtouri;
 import org.knime.core.data.StringValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
-import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
@@ -69,8 +68,6 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_columnselection;
 
-    private SettingsModelString m_pathoruri;
-
     private SettingsModelBoolean m_missingfileabort;
 
     private SettingsModelBoolean m_replace;
@@ -84,16 +81,12 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
     protected StringToURINodeDialog() {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_pathoruri = SettingsFactory.createPathOrURISettings();
         m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
         m_replace = SettingsFactory.createReplaceSettings();
         m_columnname = SettingsFactory.createColumnNameSettings();
         // Column selection
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_columnselection, "Column selection", 0, StringValue.class));
-        // Path or URI
-        addDialogComponent(new DialogComponentButtonGroup(m_pathoruri, false,
-                "String represents...", PathOrURI.getAllSettings()));
         // Missing file abort
         addDialogComponent(new DialogComponentBoolean(m_missingfileabort,
                 "Fail if file does not exist (only applies to local files)"));
