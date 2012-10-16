@@ -75,24 +75,34 @@ enum Attributes {
     HIDDEN(1, "Hidden", BooleanCell.TYPE),
 
     /**
-     * Size of the file in bytes.
+     * Is the file a symbolic link?
      */
-    SIZE(2, "Size", LongCell.TYPE),
+    SYMLINK(2, "Symbolic link", BooleanCell.TYPE),
 
     /**
      * Size of the file in bytes.
      */
-    HUMANSIZE(3, "Size (human readable)", StringCell.TYPE),
+    SIZE(3, "Size", LongCell.TYPE),
+
+    /**
+     * Size of the file in bytes.
+     */
+    HUMANSIZE(4, "Size (human readable)", StringCell.TYPE),
 
     /**
      * Last time the file was modified.
      */
-    MODIFIED(4, "Last modified", DateAndTimeCell.TYPE),
+    MODIFIED(5, "Last modified", DateAndTimeCell.TYPE),
 
     /**
      * Read, write and execute permissions for the file.
      */
-    PERMISSIONS(5, "Permissions", StringCell.TYPE);
+    PERMISSIONS(6, "Permissions", StringCell.TYPE),
+
+    /**
+     * Name of the owner of this file.
+     */
+    OWNER(7, "Owner", StringCell.TYPE);
 
     private final int m_position;
 
@@ -136,7 +146,8 @@ enum Attributes {
      * @return Array of all attributes
      */
     static Attributes[] getAllAttributes() {
-        return new Attributes[]{DIRECTORY, HIDDEN, SIZE, HUMANSIZE, MODIFIED, PERMISSIONS};
+        return new Attributes[]{DIRECTORY, HIDDEN, SYMLINK, SIZE, HUMANSIZE,
+                MODIFIED, PERMISSIONS, OWNER};
     }
 
 }
