@@ -53,6 +53,7 @@ package org.knime.base.filehandling.listmimetypes;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.LinkedList;
@@ -109,8 +110,8 @@ class ListMIMETypesNodeModel extends NodeModel {
         // Add entries into container
         for (int i = 0; i < entries.size(); i++) {
             DataCell[] cells = new DataCell[2];
-            cells[0] = new StringCell(entries.get(i).getFileExtension());
-            cells[1] = new StringCell(entries.get(i).getMIMEType());
+            cells[0] = new StringCell(getFileExtension(entries.get(i)));
+            cells[1] = new StringCell(getMIMEType(entries.get(i)));
             outContainer.addRowToTable(new DefaultRow("Row" + i, cells));
         }
         outContainer.close();
@@ -153,6 +154,22 @@ class ListMIMETypesNodeModel extends NodeModel {
             }
         }
         return entries;
+    }
+
+    private String getFileExtension(final MimeTypeEntry entry) throws Exception {
+        Method getFileExtensionMethod =
+                MimeTypeEntry.class.getDeclaredMethod("getFileExtension", new Class[0]);
+        getFileExtensionMethod.setAccessible(true);
+        String result = (String)getFileExtensionMethod.invoke(entry, new Object[0]);
+        return result;
+    }
+
+    private String getMIMEType(final MimeTypeEntry entry) throws Exception {
+        Method getMIMETypeMethod =
+                MimeTypeEntry.class.getDeclaredMethod("getMIMEType", new Class[0]);
+        getMIMETypeMethod.setAccessible(true);
+        String result = (String)getMIMETypeMethod.invoke(entry, new Object[0]);
+        return result;
     }
 
     /**
