@@ -50,11 +50,15 @@
  */
 package org.knime.base.filehandling.mime;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -110,7 +114,7 @@ public final class MIMEMap {
      * 
      * @return MIME-Types in mime.types format
      */
-    public static String[] getTypesFromExtensions() {
+    public static MIMETypeEntry[] getTypesFromExtensions() {
         // Get extensions
         IExtensionRegistry registry = Platform.getExtensionRegistry();
         IExtensionPoint point = registry.getExtensionPoint(EXTENSIONPOINT_ID);
@@ -122,32 +126,70 @@ public final class MIMEMap {
             IConfigurationElement[] elements = ext.getConfigurationElements();
             allElements.addAll(Arrays.asList(elements));
         }
-        String[] types = new String[allElements.size()];
+        MIMETypeEntry[] entries = new MIMETypeEntry[allElements.size()];
         // Add each element
-        for (int i = 0; i < allElements.size(); i++) {
+        for (int i = 0; i < entries.length; i++) {
             // Get MIME-Type
             String type = allElements.get(i).getAttribute("name");
-            String fileextensions = "";
+            entries[i] = new MIMETypeEntry(type);
             IConfigurationElement[] children = allElements.get(i).getChildren();
             // Get file extensions
             for (int j = 0; j < children.length; j++) {
-                fileextensions +=
+                String fileextension =
                         " " + children[j].getAttribute("name").toLowerCase();
+                entries[i].addExtension(fileextension);
+                LOGGER.debug("Found MIME-Type \"" + type
+                        + "\" for file extension \"" + fileextension + "\"");
             }
-            types[i] = type + fileextensions;
-            LOGGER.debug("Found MIME-Type \"" + type
-                    + "\" for file extensions \""
-                    + fileextensions.replaceFirst(" ", "") + "\"");
         }
-        return types;
+        return entries;
     }
-    
+
     /**
-     * @return The used <code>MimetypesFileTypeMap</code>
+     * @return The MIME-Types contained in the <code>mime.types</code> file
      */
-    public static MimetypesFileTypeMap getMimeMap() {
-        init();
-        return mimeMap;
+    public static MIMETypeEntry[] getTypesFromFile() {
+        List<MIMETypeEntry> entries = new LinkedList<MIMETypeEntry>();
+        try {
+            BufferedReader reader =
+                    new BufferedReader(new FileReader(new File(RESOURCEPATH,
+                            "mime.types")));
+            String line;
+            // Every line is a new MIME-Type
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (!line.startsWith("#")) {
+                    // Split on space or tab
+                    String[] tokens = line.split("[ \t]+");
+                    if (tokens.length > 0) {
+                        // Create MIME-Entry (first token is always the name)
+                        MIMETypeEntry entry = new MIMETypeEntry(tokens[0]);
+                        // All other tokens are extensions to this MIME-Type
+                        for (int i = 1; i < tokens.length; i++) {
+                            entry.addExtension(tokens[i]);
+                        }
+                        entries.add(entry);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // If file is not readable return nothing
+        }
+        return entries.toArray(new MIMETypeEntry[entries.size()]);
+    }
+
+    /**
+     * @return All the registered MIME-Types
+     */
+    public static MIMETypeEntry[] getAllTypes() {
+        MIMETypeEntry[] fromFile = getTypesFromFile();
+        MIMETypeEntry[] fromExtension = getTypesFromExtensions();
+        // Append fromExtension to fromFile
+        MIMETypeEntry[] result =
+                Arrays.copyOf(fromFile, fromFile.length + fromExtension.length);
+        System.arraycopy(fromExtension, 0, result, fromFile.length,
+                fromExtension.length);
+        return result;
     }
 
     /**
@@ -173,9 +215,9 @@ public final class MIMEMap {
      * Adds MIME-Types added through the extension point into the mime map.
      */
     private static void addFromExtensions() {
-        String[] types = getTypesFromExtensions();
+        MIMETypeEntry[] types = getTypesFromExtensions();
         for (int i = 0; i < types.length; i++) {
-            mimeMap.addMimeTypes(types[i]);
+            mimeMap.addMimeTypes(types[i].toString());
         }
     }
 

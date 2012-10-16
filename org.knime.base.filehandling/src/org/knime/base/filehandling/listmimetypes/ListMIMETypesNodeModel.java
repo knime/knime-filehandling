@@ -52,16 +52,10 @@ package org.knime.base.filehandling.listmimetypes;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.LinkedList;
 import java.util.List;
 
-import javax.activation.MimetypesFileTypeMap;
-
 import org.knime.base.filehandling.mime.MIMEMap;
+import org.knime.base.filehandling.mime.MIMETypeEntry;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -77,9 +71,6 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-
-import com.sun.activation.registries.MimeTypeEntry;
-import com.sun.activation.registries.MimeTypeFile;
 
 /**
  * This is the model implementation of Unzip.
@@ -102,74 +93,27 @@ class ListMIMETypesNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
+        int rowNr = 0;
         // Create output spec and container
         DataTableSpec outSpec = createOutSpec();
         BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
         // Retrieve mime type entries
-        List<MimeTypeEntry> entries = getMimeTypeEntries();
+        MIMETypeEntry[] entries = MIMEMap.getAllTypes();
         // Add entries into container
-        for (int i = 0; i < entries.size(); i++) {
-            DataCell[] cells = new DataCell[2];
-            cells[0] = new StringCell(getFileExtension(entries.get(i)));
-            cells[1] = new StringCell(getMIMEType(entries.get(i)));
-            outContainer.addRowToTable(new DefaultRow("Row" + i, cells));
+        for (int i = 0; i < entries.length; i++) {
+            String type = entries[i].getType();
+            List<String> extensions = entries[i].getExtensions();
+            // Add a new row for each extension
+            for (int j = 0; j < extensions.size(); j++) {
+                DataCell[] cells = new DataCell[2];
+                cells[0] = new StringCell(extensions.get(j));
+                cells[1] = new StringCell(type);
+                outContainer.addRowToTable(new DefaultRow("Row" + rowNr++,
+                        cells));
+            }
         }
         outContainer.close();
         return new BufferedDataTable[]{outContainer.getTable()};
-    }
-
-    /**
-     * Will build a list of all MIME-Types registered in the
-     * <code>MIMEMap</code> (using reflection).
-     * 
-     * 
-     * @return List of all known MIME-Types
-     * @throws Exception If reflection has not worked
-     */
-    @SuppressWarnings("unchecked")
-    private List<MimeTypeEntry> getMimeTypeEntries() throws Exception {
-        // List of results
-        List<MimeTypeEntry> entries = new LinkedList<MimeTypeEntry>();
-        // Get map used by MIMEMap
-        MimetypesFileTypeMap mimeMap = MIMEMap.getMimeMap();
-        // Get the mime type files used by the map
-        Field mimeMapField = MimetypesFileTypeMap.class.getDeclaredField("DB");
-        mimeMapField.setAccessible(true);
-        MimeTypeFile[] db = (MimeTypeFile[])mimeMapField.get(mimeMap);
-        // Go through each mime type file
-        for (int i = 0; i < db.length; i++) {
-            // Get hashtable of the file
-            Field typeHashField =
-                    MimeTypeFile.class.getDeclaredField("type_hash");
-            typeHashField.setAccessible(true);
-            Hashtable<Object, Object> typeHash =
-                    (Hashtable<Object, Object>)typeHashField.get(db[i]);
-            // Go through each hashtable entry
-            Enumeration<Object> keys = typeHash.keys();
-            while (keys.hasMoreElements()) {
-                Object key = keys.nextElement();
-                MimeTypeEntry entry = (MimeTypeEntry)typeHash.get(key);
-                // Add mime type entry
-                entries.add(entry);
-            }
-        }
-        return entries;
-    }
-
-    private String getFileExtension(final MimeTypeEntry entry) throws Exception {
-        Method getFileExtensionMethod =
-                MimeTypeEntry.class.getDeclaredMethod("getFileExtension", new Class[0]);
-        getFileExtensionMethod.setAccessible(true);
-        String result = (String)getFileExtensionMethod.invoke(entry, new Object[0]);
-        return result;
-    }
-
-    private String getMIMEType(final MimeTypeEntry entry) throws Exception {
-        Method getMIMETypeMethod =
-                MimeTypeEntry.class.getDeclaredMethod("getMIMEType", new Class[0]);
-        getMIMETypeMethod.setAccessible(true);
-        String result = (String)getMIMETypeMethod.invoke(entry, new Object[0]);
-        return result;
     }
 
     /**
