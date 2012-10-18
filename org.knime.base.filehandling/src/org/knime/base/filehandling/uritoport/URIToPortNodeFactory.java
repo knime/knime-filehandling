@@ -60,8 +60,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class URIToPortNodeFactory extends
-        NodeFactory<URIToPortNodeModel> {
+public class URIToPortNodeFactory extends NodeFactory<URIToPortNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -83,8 +82,7 @@ public class URIToPortNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<URIToPortNodeModel> createNodeView(
-            final int viewIndex,
+    public NodeView<URIToPortNodeModel> createNodeView(final int viewIndex,
             final URIToPortNodeModel nodeModel) {
         return null;
     }

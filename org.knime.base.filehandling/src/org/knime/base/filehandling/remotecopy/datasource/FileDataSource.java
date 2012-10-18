@@ -69,6 +69,7 @@ public class FileDataSource implements DataSource {
     /**
      * Creates a data source that uses <code>java.io.FileInputStream</code>.
      * 
+     * 
      * @param uri URI that determines the resource used
      * @throws Exception If the resource is not reachable
      */
@@ -80,7 +81,7 @@ public class FileDataSource implements DataSource {
      * {@inheritDoc}
      */
     @Override
-    public int read(final byte[] buffer) throws Exception {
+    public int read(final byte[] buffer) throws IOException {
         return m_stream.read(buffer);
     }
 
@@ -88,12 +89,8 @@ public class FileDataSource implements DataSource {
      * {@inheritDoc}
      */
     @Override
-    public void close() {
-        try {
-            m_stream.close();
-        } catch (IOException e) {
-            // ignore close exception
-        }
+    public void close() throws IOException {
+        m_stream.close();
     }
 
 }

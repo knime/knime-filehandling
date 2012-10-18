@@ -96,6 +96,8 @@ class RemoteCopyNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
+        int number = 0;
+        // Get indexes for source and target
         int sourceIndex =
                 inData[0].getDataTableSpec().findColumnIndex(
                         m_sourcecolumn.getStringValue());
@@ -103,17 +105,21 @@ class RemoteCopyNodeModel extends NodeModel {
                 inData[0].getDataTableSpec().findColumnIndex(
                         m_targetcolumn.getStringValue());
         for (DataRow row : inData[0]) {
+            exec.setProgress(number++ / (double)inData[0].getRowCount());
+            // Get cells
             DataCell sourceCell = row.getCell(sourceIndex);
             DataCell targetCell = row.getCell(targetIndex);
+            // Ignore rows with one or more missing cells
             if (!sourceCell.isMissing() && !targetCell.isMissing()) {
+                // Get URIs
                 URI sourceURI =
                         ((URIDataValue)row.getCell(sourceIndex))
                                 .getURIContent().getURI();
                 URI targetURI =
                         ((URIDataValue)row.getCell(targetIndex))
                                 .getURIContent().getURI();
+                // Copy from sourceURI to targetURI
                 Copier.copy(sourceURI, targetURI, exec);
-                // TODO update progress
             }
         }
         return new BufferedDataTable[]{};
@@ -131,10 +137,13 @@ class RemoteCopyNodeModel extends NodeModel {
             throws InvalidSettingsException {
         String source = m_sourcecolumn.getStringValue();
         String target = m_targetcolumn.getStringValue();
+        // Is the source setting correct?
         NodeUtils.checkColumnSelection(inSpec, "Source", source,
                 URIDataValue.class);
+        // Is the target setting correct?
         NodeUtils.checkColumnSelection(inSpec, "Target", target,
                 URIDataValue.class);
+        // Do source and target differ?
         if (source.equals(target)) {
             throw new InvalidSettingsException(
                     "Source and target do not differ");

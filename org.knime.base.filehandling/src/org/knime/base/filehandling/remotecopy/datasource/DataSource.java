@@ -50,7 +50,11 @@
  */
 package org.knime.base.filehandling.remotecopy.datasource;
 
+import java.io.IOException;
+
 /**
+ * Interface for readable data sources.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
@@ -61,13 +65,15 @@ public interface DataSource {
      * 
      * @param buffer The buffer where the read bytes will be stored.
      * @return The number of bytes read.
-     * @throws Exception If reading failed
+     * @throws IOException If reading failed
      */
-    public int read(byte[] buffer) throws Exception;
+    public int read(byte[] buffer) throws IOException;
 
     /**
      * Closes the stream.
+     * 
+     * @throws IOException If closing failed
      */
-    public void close();
+    public void close() throws IOException;
 
 }

@@ -80,7 +80,7 @@ public class DefaultDataSource implements DataSource {
      * {@inheritDoc}
      */
     @Override
-    public int read(final byte[] buffer) throws Exception {
+    public int read(final byte[] buffer) throws IOException {
         return m_stream.read(buffer);
     }
 
@@ -88,12 +88,8 @@ public class DefaultDataSource implements DataSource {
      * {@inheritDoc}
      */
     @Override
-    public void close() {
-        try {
-            m_stream.close();
-        } catch (IOException e) {
-            // ignore close exception
-        }
+    public void close() throws IOException {
+        m_stream.close();
     }
 
 }

@@ -59,7 +59,7 @@ import java.net.URI;
  * @author Patrick Winter, University of Konstanz
  */
 public final class DataSinkFactory {
-    
+
     private DataSinkFactory() {
         // Disable the default constructor
     }
@@ -76,14 +76,17 @@ public final class DataSinkFactory {
      */
     public static DataSink getSink(final URI uri) throws Exception {
         String scheme = uri.getScheme();
-        DataSink source = null;
+        DataSink sink = null;
         if (scheme.equals("file")) {
-            source = new FileDataSink(uri);
+            sink = new FileDataSink(uri);
         }
-        if (source == null) {
-            source = new DefaultDataSink(uri);
+        if (scheme.equals("ftp")) {
+            sink = new FTPDataSink(uri);
         }
-        return source;
+        if (sink == null) {
+            sink = new DefaultDataSink(uri);
+        }
+        return sink;
     }
 
 }

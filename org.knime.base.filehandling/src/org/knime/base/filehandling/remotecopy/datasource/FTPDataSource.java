@@ -46,62 +46,80 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Oct 18, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.binaryobjectstofiles;
+package org.knime.base.filehandling.remotecopy.datasource;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+
+import org.apache.commons.net.ftp.FTPClient;
 
 /**
- * <code>NodeFactory</code> for the "Binary Objects to Files" Node.
+ * Data source for URIs that have the scheme "ftp".
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class BinaryObjectsToFilesNodeFactory extends
-        NodeFactory<BinaryObjectsToFilesNodeModel> {
+public class FTPDataSource implements DataSource {
+
+    private FTPClient m_client;
+
+    private InputStream m_stream;
 
     /**
-     * {@inheritDoc}
+     * Creates a data source that uses the stream from
+     * <code>org.apache.commons.net.ftp.FTPClient</code>.
+     * 
+     * 
+     * @param uri URI that determines the resource used
+     * @throws Exception If the resource is not reachable
      */
-    @Override
-    public BinaryObjectsToFilesNodeModel createNodeModel() {
-        return new BinaryObjectsToFilesNodeModel();
+    public FTPDataSource(final URI uri) throws Exception {
+        // Create client
+        m_client = new FTPClient();
+        // Read attributes
+        String host = uri.getHost();
+        int port = uri.getPort() != -1 ? uri.getPort() : 21;
+        String path = uri.getPath().replaceFirst("/", "");
+        String user = uri.getUserInfo();
+        String password = "password";
+        // Open connection
+        m_client.connect(host, port);
+        // Login
+        boolean loggedIn = m_client.login(user, password);
+        if (!loggedIn) {
+            throw new IOException("Login failed");
+        }
+        // Open stream (null if stream could not be opened)
+        m_stream = m_client.retrieveFileStream(path);
+        if (m_stream == null) {
+            throw new Exception("Path not reachable");
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int getNrNodeViews() {
-        return 0;
+    public int read(final byte[] buffer) throws IOException {
+        return m_stream.read(buffer);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public NodeView<BinaryObjectsToFilesNodeModel> createNodeView(
-            final int viewIndex, final BinaryObjectsToFilesNodeModel nodeModel) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new BinaryObjectsToFilesNodeDialog();
+    public void close() throws IOException {
+        m_stream.close();
+        // Complete all operations
+        boolean success = m_client.completePendingCommand();
+        m_client.logout();
+        m_client.disconnect();
+        if (!success) {
+            throw new IOException("Could not finalize the operation");
+        }
     }
 
 }

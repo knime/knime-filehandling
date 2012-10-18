@@ -50,7 +50,11 @@
  */
 package org.knime.base.filehandling.remotecopy.datasink;
 
+import java.io.IOException;
+
 /**
+ * Interface for writable data sinks.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
@@ -62,13 +66,15 @@ public interface DataSink {
      * 
      * @param buffer The bytes that will be written
      * @param length Amount of bytes that will be written
-     * @throws Exception If writing failed
+     * @throws IOException If writing failed
      */
-    public void write(byte[] buffer, int length) throws Exception;
+    public void write(byte[] buffer, int length) throws IOException;
 
     /**
      * Closes the stream.
+     * 
+     * @throws IOException If closing failed
      */
-    public void close();
+    public void close() throws IOException;
 
 }

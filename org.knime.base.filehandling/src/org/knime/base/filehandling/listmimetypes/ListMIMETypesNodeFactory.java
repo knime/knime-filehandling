@@ -60,7 +60,8 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class ListMIMETypesNodeFactory extends NodeFactory<ListMIMETypesNodeModel> {
+public class ListMIMETypesNodeFactory extends
+        NodeFactory<ListMIMETypesNodeModel> {
 
     /**
      * {@inheritDoc}

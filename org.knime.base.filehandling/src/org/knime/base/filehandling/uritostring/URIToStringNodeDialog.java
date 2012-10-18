@@ -86,8 +86,8 @@ class URIToStringNodeDialog extends DefaultNodeSettingsPane {
                 m_columnselection, "Column selection", 0, URIDataValue.class));
         createNewGroup("New column...");
         // Column name
-        addDialogComponent(new DialogComponentString(m_columnname,
-                "Name", true, 20));
+        addDialogComponent(new DialogComponentString(m_columnname, "Name",
+                true, 20));
         // Replace
         addDialogComponent(new DialogComponentBoolean(m_replace,
                 "Replaces URI column"));

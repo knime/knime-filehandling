@@ -82,7 +82,7 @@ public class DefaultDataSink implements DataSink {
      * {@inheritDoc}
      */
     @Override
-    public void write(final byte[] buffer, final int length) throws Exception {
+    public void write(final byte[] buffer, final int length) throws IOException {
         m_stream.write(buffer, 0, length);
     }
 
@@ -90,12 +90,8 @@ public class DefaultDataSink implements DataSink {
      * {@inheritDoc}
      */
     @Override
-    public void close() {
-        try {
-            m_stream.close();
-        } catch (IOException e) {
-            // ignore close exception
-        }
+    public void close() throws IOException {
+        m_stream.close();
     }
 
 }

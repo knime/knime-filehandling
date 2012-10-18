@@ -79,7 +79,7 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
     private SettingsModelString m_outputdirectory;
 
     private SettingsModelString m_targetcolumn;
-    
+
     private SettingsModelString m_ifexists;
 
     private FlowVariableModel m_outputdirectoryFvm;

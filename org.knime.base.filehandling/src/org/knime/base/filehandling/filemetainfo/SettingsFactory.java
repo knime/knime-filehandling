@@ -53,7 +53,6 @@ package org.knime.base.filehandling.filemetainfo;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
-
 /**
  * Factory for SettingsModels.
  * 

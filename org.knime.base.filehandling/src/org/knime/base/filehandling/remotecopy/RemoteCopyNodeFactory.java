@@ -60,8 +60,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCopyNodeFactory extends
-        NodeFactory<RemoteCopyNodeModel> {
+public class RemoteCopyNodeFactory extends NodeFactory<RemoteCopyNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -83,8 +82,7 @@ public class RemoteCopyNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<RemoteCopyNodeModel> createNodeView(
-            final int viewIndex,
+    public NodeView<RemoteCopyNodeModel> createNodeView(final int viewIndex,
             final RemoteCopyNodeModel nodeModel) {
         return null;
     }

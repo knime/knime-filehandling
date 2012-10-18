@@ -60,8 +60,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class FileMetaInfoNodeFactory extends
-        NodeFactory<FileMetaInfoNodeModel> {
+public class FileMetaInfoNodeFactory extends NodeFactory<FileMetaInfoNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -83,8 +82,7 @@ public class FileMetaInfoNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<FileMetaInfoNodeModel> createNodeView(
-            final int viewIndex,
+    public NodeView<FileMetaInfoNodeModel> createNodeView(final int viewIndex,
             final FileMetaInfoNodeModel nodeModel) {
         return null;
     }

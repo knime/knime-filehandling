@@ -60,8 +60,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class FindMIMETypeNodeFactory extends
-        NodeFactory<FindMIMETypeNodeModel> {
+public class FindMIMETypeNodeFactory extends NodeFactory<FindMIMETypeNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -83,8 +82,7 @@ public class FindMIMETypeNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<FindMIMETypeNodeModel> createNodeView(
-            final int viewIndex,
+    public NodeView<FindMIMETypeNodeModel> createNodeView(final int viewIndex,
             final FindMIMETypeNodeModel nodeModel) {
         return null;
     }

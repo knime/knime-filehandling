@@ -60,8 +60,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class StringToURINodeFactory extends
-        NodeFactory<StringToURINodeModel> {
+public class StringToURINodeFactory extends NodeFactory<StringToURINodeModel> {
 
     /**
      * {@inheritDoc}
@@ -83,8 +82,7 @@ public class StringToURINodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<StringToURINodeModel> createNodeView(
-            final int viewIndex,
+    public NodeView<StringToURINodeModel> createNodeView(final int viewIndex,
             final StringToURINodeModel nodeModel) {
         return null;
     }

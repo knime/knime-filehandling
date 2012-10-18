@@ -84,8 +84,7 @@ public class ExtractURIInfoNodeFactory extends
      */
     @Override
     public NodeView<ExtractURIInfoNodeModel> createNodeView(
-            final int viewIndex,
-            final ExtractURIInfoNodeModel nodeModel) {
+            final int viewIndex, final ExtractURIInfoNodeModel nodeModel) {
         return null;
     }
 

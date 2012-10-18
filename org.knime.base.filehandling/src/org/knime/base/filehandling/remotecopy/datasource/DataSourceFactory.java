@@ -59,7 +59,7 @@ import java.net.URI;
  * @author Patrick Winter, University of Konstanz
  */
 public final class DataSourceFactory {
-    
+
     private DataSourceFactory() {
         // Disable the default constructor
     }
@@ -79,6 +79,9 @@ public final class DataSourceFactory {
         DataSource source = null;
         if (scheme.equals("file")) {
             source = new FileDataSource(uri);
+        }
+        if (scheme.equals("ftp")) {
+            source = new FTPDataSource(uri);
         }
         if (source == null) {
             source = new DefaultDataSource(uri);

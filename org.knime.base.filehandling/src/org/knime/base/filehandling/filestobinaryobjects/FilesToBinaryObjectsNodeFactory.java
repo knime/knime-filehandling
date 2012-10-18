@@ -84,8 +84,7 @@ public class FilesToBinaryObjectsNodeFactory extends
      */
     @Override
     public NodeView<FilesToBinaryObjectsNodeModel> createNodeView(
-            final int viewIndex,
-            final FilesToBinaryObjectsNodeModel nodeModel) {
+            final int viewIndex, final FilesToBinaryObjectsNodeModel nodeModel) {
         return null;
     }
 

@@ -83,17 +83,21 @@ public final class Copier {
     public static void copy(final URI sourceURI, final URI targetURI,
             final ExecutionContext exec) throws Exception {
         try {
+            // Create fitting data source and data sink
             DataSource source = DataSourceFactory.getSource(sourceURI);
             DataSink target = DataSinkFactory.getSink(targetURI);
             byte[] buffer = new byte[1024];
             int length;
+            // Copy bytes
             while ((length = source.read(buffer)) > 0) {
                 exec.checkCanceled();
                 target.write(buffer, length);
             }
+            // Close
             source.close();
             target.close();
         } catch (Exception e) {
+            // Print debug information
             e.printStackTrace();
             throw e;
         }

@@ -73,7 +73,6 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 class ZipNodeDialog extends DefaultNodeSettingsPane {
 
-
     private SettingsModelString m_locationcolumn;
 
     private SettingsModelString m_target;
