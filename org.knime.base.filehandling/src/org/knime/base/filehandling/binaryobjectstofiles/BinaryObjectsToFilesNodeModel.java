@@ -345,9 +345,14 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                     throw new RuntimeException("Filename in row \""
                             + row.getKey() + "\" is missing");
                 }
-                filename =
+                URI targetUri =
                         ((URIDataCell)(row.getCell(nameIndex))).getURIContent()
-                                .getURI().getPath();
+                                .getURI();
+                if (!targetUri.getScheme().equals("file")) {
+                    throw new RuntimeException(
+                            "This node only supports the protocol \"file\"");
+                }
+                filename = targetUri.getPath();
                 outputDirectory = "";
             }
             if (filenameHandling.equals(generate)) {

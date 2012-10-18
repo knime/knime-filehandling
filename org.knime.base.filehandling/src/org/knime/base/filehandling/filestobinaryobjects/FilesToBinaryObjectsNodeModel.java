@@ -214,6 +214,10 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         if (!row.getCell(uriIndex).isMissing()) {
             // Get location
             URIDataValue value = (URIDataValue)row.getCell(uriIndex);
+            if (!value.getURIContent().getURI().getScheme().equals("file")) {
+                throw new RuntimeException(
+                        "This node only supports the protocol \"file\"");
+            }
             String location = value.getURIContent().getURI().getPath();
             try {
                 // Create input stream and give it to the factory

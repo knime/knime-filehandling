@@ -258,6 +258,12 @@ class CopyFilesNodeModel extends NodeModel {
             if (!type.isCompatible(URIDataValue.class)) {
                 throw new InvalidSettingsException("Target column not set");
             }
+            // Do the target and the source column differ
+            if (m_sourcecolumn.getStringValue().equals(
+                    m_targetcolumn.getStringValue())) {
+                throw new InvalidSettingsException(
+                        "Source and target do not differ");
+            }
         }
         // Check settings only if filename handling is generate
         if (m_filenamehandling.getStringValue().equals(
@@ -300,6 +306,10 @@ class CopyFilesNodeModel extends NodeModel {
             URI sourceUri =
                     ((URIDataValue)row.getCell(sourceIndex)).getURIContent()
                             .getURI();
+            if (!sourceUri.getScheme().equals("file")) {
+                throw new RuntimeException(
+                        "This node only supports the protocol \"file\"");
+            }
             if (filenameHandling.equals(fromColumn)) {
                 // Get target URI from table
                 int targetIndex =
@@ -308,9 +318,13 @@ class CopyFilesNodeModel extends NodeModel {
                     throw new RuntimeException("Target URI in row \""
                             + row.getKey() + "\" is missing");
                 }
-                filename =
-                        ((URIDataCell)(row.getCell(targetIndex)))
-                                .getURIContent().getURI().getPath();
+                URI targetUri = ((URIDataCell)(row.getCell(targetIndex)))
+                        .getURIContent().getURI();
+                if (!targetUri.getScheme().equals("file")) {
+                    throw new RuntimeException(
+                            "This node only supports the protocol \"file\"");
+                }
+                filename = targetUri.getPath();
                 outputDirectory = "";
             }
             if (filenameHandling.equals(generate)) {

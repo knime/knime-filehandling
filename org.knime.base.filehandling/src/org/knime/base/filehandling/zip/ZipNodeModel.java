@@ -161,6 +161,11 @@ class ZipNodeModel extends NodeModel {
             for (DataRow row : inData[0]) {
                 if (!row.getCell(index).isMissing()) {
                     URIDataValue value = (URIDataValue)row.getCell(index);
+                    if (!value.getURIContent().getURI().getScheme()
+                            .equals("file")) {
+                        throw new RuntimeException(
+                                "This node only supports the protocol \"file\"");
+                    }
                     entries.add(value.getURIContent().getURI().getPath());
                 }
             }
