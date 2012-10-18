@@ -46,50 +46,49 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.uritostring;
 
-import org.knime.core.data.uri.URIDataValue;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
-import org.knime.core.node.defaultnodesettings.DialogComponentString;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
-
 /**
- * <code>NodeDialog</code> for the "URI To String" Node.
+ * Enums for replace policies.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class URIToStringNodeDialog extends DefaultNodeSettingsPane {
-
-    private SettingsModelString m_columnselection;
-
-    private SettingsModelString m_replace;
-
-    private SettingsModelString m_columnname;
+enum ReplacePolicy {
 
     /**
-     * New pane for configuring the URI to string node dialog.
+     * Append new column.
      */
-    @SuppressWarnings("unchecked")
-    protected URIToStringNodeDialog() {
-        super();
-        m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_replace = SettingsFactory.createReplacePolicySettings();
-        m_columnname = SettingsFactory.createColumnNameSettings();
-        // Column selection
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_columnselection, "Column selection", 0, URIDataValue.class));
-        createNewGroup("New column...");
-        // Column name
-        addDialogComponent(new DialogComponentString(m_columnname, "Name",
-                true, 20));
-        // Replace
-        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "",
-                ReplacePolicy.getAllSettings()));
-        closeCurrentGroup();
+    APPEND("Append"),
+
+    /**
+     * Replace source column.
+     */
+    REPLACE("Replace");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this policy
+     */
+    ReplacePolicy(final String name) {
+        m_name = name;
     }
+
+    /**
+     * @return Name of this policy
+     */
+    String getName() {
+        return m_name;
+    }
+
+    /**
+     * @return Array of all replace policy settings
+     */
+    static String[] getAllSettings() {
+        return new String[]{APPEND.getName(), REPLACE.getName()};
+    }
+
 }

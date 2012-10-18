@@ -72,7 +72,6 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -85,7 +84,7 @@ class URIToStringNodeModel extends NodeModel {
 
     private SettingsModelString m_columnselection;
 
-    private SettingsModelBoolean m_replace;
+    private SettingsModelString m_replace;
 
     private SettingsModelString m_columnname;
 
@@ -95,7 +94,7 @@ class URIToStringNodeModel extends NodeModel {
     protected URIToStringNodeModel() {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_replace = SettingsFactory.createReplaceSettings();
+        m_replace = SettingsFactory.createReplacePolicySettings();
         m_columnname = SettingsFactory.createColumnNameSettings();
     }
 
@@ -123,6 +122,9 @@ class URIToStringNodeModel extends NodeModel {
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec)
             throws InvalidSettingsException {
+        boolean replace =
+                m_replace.getStringValue().equals(
+                        ReplacePolicy.REPLACE.getName());
         // Check settings for correctness
         checkSettings(inSpec);
         // Set column name
@@ -140,7 +142,7 @@ class URIToStringNodeModel extends NodeModel {
                 return createStringCell(row, inSpec);
             }
         };
-        if (m_replace.getBooleanValue()) {
+        if (replace) {
             // Replace selected column with the strings from the factory
             rearranger.replace(factory, m_columnselection.getStringValue());
         } else {
