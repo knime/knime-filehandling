@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./remotecopy.png" type="Sink">
+	<name>Remote copy</name>
+	<shortDescription>
+		Copy files from one (remote) location to another.
+	</shortDescription>
+	<fullDescription>
+		<intro>
+			This node copies files from one location to another. The
+			locations may be remote locations. The location have to be contained
+			in the input table.
+		</intro>
+		<option name="Source column">URI to the location of the file that should be
+			copied.</option>
+		<option name="Target column">URI to the location where the file should be
+			copied to.</option>
+	</fullDescription>
+	<ports>
+		<inPort name="Input table" index="0">
+			Table that contains the source
+			and target URI columns.
+		</inPort>
+	</ports>
+</knimeNode>
