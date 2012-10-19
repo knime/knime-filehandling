@@ -52,6 +52,7 @@ package org.knime.base.filehandling.remotecopy;
 
 import java.net.URI;
 
+import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
 import org.knime.base.filehandling.remotecopy.datasink.DataSink;
 import org.knime.base.filehandling.remotecopy.datasink.DataSinkFactory;
 import org.knime.base.filehandling.remotecopy.datasource.DataSource;
@@ -76,16 +77,17 @@ public final class Copier {
      * 
      * @param sourceURI URI that points to the source resource
      * @param targetURI URI that points to the target resource
+     * @param monitor Monitor for connection reuse
      * @param exec Execution context to check for cancellation
      * @throws Exception If one of the resources is not reachable or the target
      *             is not writable
      */
-    public static void copy(final URI sourceURI, final URI targetURI,
+    public static void copy(final URI sourceURI, final URI targetURI, final ConnectionMonitor monitor,
             final ExecutionContext exec) throws Exception {
         try {
             // Create fitting data source and data sink
-            DataSource source = DataSourceFactory.getSource(sourceURI);
-            DataSink target = DataSinkFactory.getSink(targetURI);
+            DataSource source = DataSourceFactory.getSource(sourceURI, monitor);
+            DataSink target = DataSinkFactory.getSink(targetURI, monitor);
             byte[] buffer = new byte[1024];
             int length;
             // Copy bytes

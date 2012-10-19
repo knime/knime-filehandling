@@ -52,6 +52,8 @@ package org.knime.base.filehandling.remotecopy.datasink;
 
 import java.net.URI;
 
+import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
+
 /**
  * Factory class for data sink construction.
  * 
@@ -71,17 +73,18 @@ public final class DataSinkFactory {
      * Will determine what sink is used by the scheme of the URI.
      * 
      * @param uri The URI that will be used by the data sink
+     * @param monitor Monitor for connection reuse
      * @return Data sink for the URI
      * @throws Exception If construction was not possible
      */
-    public static DataSink getSink(final URI uri) throws Exception {
+    public static DataSink getSink(final URI uri, final ConnectionMonitor monitor) throws Exception {
         String scheme = uri.getScheme();
         DataSink sink = null;
         if (scheme.equals("file")) {
             sink = new FileDataSink(uri);
         }
         if (scheme.equals("ftp")) {
-            sink = new FTPDataSink(uri);
+            sink = new FTPDataSink(uri, monitor);
         }
         if (sink == null) {
             sink = new DefaultDataSink(uri);

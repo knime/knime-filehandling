@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.knime.base.filehandling.NodeUtils;
+import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
@@ -97,30 +98,35 @@ class RemoteCopyNodeModel extends NodeModel {
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
         int number = 0;
-        // Get indexes for source and target
-        int sourceIndex =
-                inData[0].getDataTableSpec().findColumnIndex(
-                        m_sourcecolumn.getStringValue());
-        int targetIndex =
-                inData[0].getDataTableSpec().findColumnIndex(
-                        m_targetcolumn.getStringValue());
-        for (DataRow row : inData[0]) {
-            exec.setProgress(number++ / (double)inData[0].getRowCount());
-            // Get cells
-            DataCell sourceCell = row.getCell(sourceIndex);
-            DataCell targetCell = row.getCell(targetIndex);
-            // Ignore rows with one or more missing cells
-            if (!sourceCell.isMissing() && !targetCell.isMissing()) {
-                // Get URIs
-                URI sourceURI =
-                        ((URIDataValue)row.getCell(sourceIndex))
-                                .getURIContent().getURI();
-                URI targetURI =
-                        ((URIDataValue)row.getCell(targetIndex))
-                                .getURIContent().getURI();
-                // Copy from sourceURI to targetURI
-                Copier.copy(sourceURI, targetURI, exec);
+        ConnectionMonitor monitor = new ConnectionMonitor();
+        try {
+            // Get indexes for source and target
+            int sourceIndex =
+                    inData[0].getDataTableSpec().findColumnIndex(
+                            m_sourcecolumn.getStringValue());
+            int targetIndex =
+                    inData[0].getDataTableSpec().findColumnIndex(
+                            m_targetcolumn.getStringValue());
+            for (DataRow row : inData[0]) {
+                exec.setProgress(number++ / (double)inData[0].getRowCount());
+                // Get cells
+                DataCell sourceCell = row.getCell(sourceIndex);
+                DataCell targetCell = row.getCell(targetIndex);
+                // Ignore rows with one or more missing cells
+                if (!sourceCell.isMissing() && !targetCell.isMissing()) {
+                    // Get URIs
+                    URI sourceURI =
+                            ((URIDataValue)row.getCell(sourceIndex))
+                                    .getURIContent().getURI();
+                    URI targetURI =
+                            ((URIDataValue)row.getCell(targetIndex))
+                                    .getURIContent().getURI();
+                    // Copy from sourceURI to targetURI
+                    Copier.copy(sourceURI, targetURI, monitor, exec);
+                }
             }
+        } finally {
+            monitor.closeConnections();
         }
         return new BufferedDataTable[]{};
     }

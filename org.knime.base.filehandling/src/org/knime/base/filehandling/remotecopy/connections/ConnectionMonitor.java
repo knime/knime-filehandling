@@ -46,50 +46,92 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 17, 2012 (Patrick Winter): created
+ *   Oct 18, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.datasource;
+package org.knime.base.filehandling.remotecopy.connections;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
+import org.apache.commons.net.ftp.FTPClient;
+import org.knime.core.node.NodeLogger;
 
 /**
- * Factory class for data source construction.
+ * Monitors the opened connections.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class DataSourceFactory {
+public class ConnectionMonitor {
 
-    private DataSourceFactory() {
-        // Disable the default constructor
+    private static final NodeLogger LOGGER = NodeLogger
+            .getLogger(ConnectionMonitor.class);
+
+    private Map<String, Object> m_connections;
+
+    /**
+     * Create a new monitor.
+     */
+    public ConnectionMonitor() {
+        m_connections = new HashMap<String, Object>();
     }
 
     /**
-     * Factory method for data source construction.
+     * Get a connection for the given URI.
      * 
      * 
-     * Will determine what source is used by the scheme of the URI.
-     * 
-     * @param uri The URI that will be used by the data source
-     * @param monitor Monitor for connection reuse
-     * @return Data source for the URI
-     * @throws Exception If construction was not possible
+     * @param uri URI with host information
+     * @return Corresponding connection if it exists or null if not.
      */
-    public static DataSource getSource(final URI uri, final ConnectionMonitor monitor) throws Exception {
-        String scheme = uri.getScheme();
-        DataSource source = null;
-        if (scheme.equals("file")) {
-            source = new FileDataSource(uri);
+    public Object getConnection(final URI uri) {
+        LOGGER.info("Used connection: " + hostFromURI(uri));
+        return m_connections.get(hostFromURI(uri));
+    }
+
+    /**
+     * Registeres the given connection (overwriting an old one).
+     * 
+     * 
+     * @param uri URI with host information
+     * @param connection Open connection
+     */
+    public void registerConnection(final URI uri, final Object connection) {
+        m_connections.put(hostFromURI(uri), connection);
+        LOGGER.info("Opened connection: " + hostFromURI(uri));
+    }
+
+    /**
+     * Closes all known connections.
+     */
+    public void closeConnections() {
+        Set<String> keys = m_connections.keySet();
+        for (String key : keys) {
+            Object connection = m_connections.get(key);
+            if (connection instanceof FTPClient) {
+                FTPClient client = (FTPClient)connection;
+                try {
+                    client.logout();
+                    client.disconnect();
+                    LOGGER.info("Closed connection: " + key);
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
         }
-        if (scheme.equals("ftp")) {
-            source = new FTPDataSource(uri, monitor);
-        }
-        if (source == null) {
-            source = new DefaultDataSource(uri);
-        }
-        return source;
+    }
+
+    /**
+     * Creates an identifier for the host using the URI.
+     * 
+     * 
+     * @param uri URI with host information
+     * @return Identifier for the connection to the host.
+     */
+    private String hostFromURI(final URI uri) {
+        return uri.getScheme() + "://" + uri.getAuthority();
     }
 
 }

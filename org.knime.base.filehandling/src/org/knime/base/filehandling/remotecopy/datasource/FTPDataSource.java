@@ -55,6 +55,7 @@ import java.io.InputStream;
 import java.net.URI;
 
 import org.apache.commons.net.ftp.FTPClient;
+import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
 
 /**
  * Data source for URIs that have the scheme "ftp".
@@ -74,24 +75,17 @@ public class FTPDataSource implements DataSource {
      * 
      * 
      * @param uri URI that determines the resource used
+     * @param monitor Monitor for connection reuse
      * @throws Exception If the resource is not reachable
      */
-    public FTPDataSource(final URI uri) throws Exception {
-        // Create client
-        m_client = new FTPClient();
-        // Read attributes
-        String host = uri.getHost();
-        int port = uri.getPort() != -1 ? uri.getPort() : 21;
-        String path = uri.getPath().replaceFirst("/", "");
-        String user = uri.getUserInfo();
-        String password = "password";
-        // Open connection
-        m_client.connect(host, port);
-        // Login
-        boolean loggedIn = m_client.login(user, password);
-        if (!loggedIn) {
-            throw new IOException("Login failed");
+    public FTPDataSource(final URI uri, final ConnectionMonitor monitor)
+            throws Exception {
+        m_client = (FTPClient)monitor.getConnection(uri);
+        if (m_client == null || !m_client.isConnected()) {
+            openConnection(uri);
+            monitor.registerConnection(uri, m_client);
         }
+        String path = uri.getPath().replaceFirst("/", "");
         // Open stream (null if stream could not be opened)
         m_stream = m_client.retrieveFileStream(path);
         if (m_stream == null) {
@@ -115,10 +109,32 @@ public class FTPDataSource implements DataSource {
         m_stream.close();
         // Complete all operations
         boolean success = m_client.completePendingCommand();
-        m_client.logout();
-        m_client.disconnect();
         if (!success) {
             throw new IOException("Could not finalize the operation");
+        }
+    }
+
+    /**
+     * Opens a new connection for the given URI.
+     * 
+     * 
+     * @param uri Contains the connection information
+     * @throws Exception If connection was not possible
+     */
+    private void openConnection(final URI uri) throws Exception {
+        // Create client
+        m_client = new FTPClient();
+        // Read attributes
+        String host = uri.getHost();
+        int port = uri.getPort() != -1 ? uri.getPort() : 21;
+        String user = uri.getUserInfo();
+        String password = "password";
+        // Open connection
+        m_client.connect(host, port);
+        // Login
+        boolean loggedIn = m_client.login(user, password);
+        if (!loggedIn) {
+            throw new IOException("Login failed");
         }
     }
 
