@@ -85,7 +85,7 @@ public class FTPDataSink implements DataSink {
             openConnection(uri);
             monitor.registerConnection(uri, m_client);
         }
-        String path = uri.getPath().replaceFirst("/", "");
+        String path = uri.getPath();
         // Open stream (null if stream could not be opened)
         m_stream = m_client.storeFileStream(path);
         if (m_stream == null) {

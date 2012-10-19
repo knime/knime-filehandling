@@ -77,7 +77,8 @@ public final class DataSourceFactory {
      * @return Data source for the URI
      * @throws Exception If construction was not possible
      */
-    public static DataSource getSource(final URI uri, final ConnectionMonitor monitor) throws Exception {
+    public static DataSource getSource(final URI uri,
+            final ConnectionMonitor monitor) throws Exception {
         String scheme = uri.getScheme();
         DataSource source = null;
         if (scheme.equals("file")) {
@@ -85,6 +86,9 @@ public final class DataSourceFactory {
         }
         if (scheme.equals("ftp")) {
             source = new FTPDataSource(uri, monitor);
+        }
+        if (scheme.equals("sftp")) {
+            source = new SFTPDataSource(uri, monitor);
         }
         if (source == null) {
             source = new DefaultDataSource(uri);

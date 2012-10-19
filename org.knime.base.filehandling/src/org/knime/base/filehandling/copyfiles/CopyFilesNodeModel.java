@@ -318,8 +318,9 @@ class CopyFilesNodeModel extends NodeModel {
                     throw new RuntimeException("Target URI in row \""
                             + row.getKey() + "\" is missing");
                 }
-                URI targetUri = ((URIDataCell)(row.getCell(targetIndex)))
-                        .getURIContent().getURI();
+                URI targetUri =
+                        ((URIDataCell)(row.getCell(targetIndex)))
+                                .getURIContent().getURI();
                 if (!targetUri.getScheme().equals("file")) {
                     throw new RuntimeException(
                             "This node only supports the protocol \"file\"");

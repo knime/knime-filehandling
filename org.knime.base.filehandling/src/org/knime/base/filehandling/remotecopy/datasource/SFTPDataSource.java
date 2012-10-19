@@ -46,7 +46,7 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 18, 2012 (Patrick Winter): created
+ *   Oct 19, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remotecopy.datasource;
 
@@ -54,40 +54,42 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
-import org.apache.commons.net.ftp.FTPClient;
 import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
 
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
+
 /**
- * Data source for URIs that have the scheme "ftp".
+ * Data source for URIs that have the scheme "sftp".
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class FTPDataSource implements DataSource {
+public class SFTPDataSource implements DataSource {
 
-    private FTPClient m_client;
+    private ChannelSftp m_channel;
 
     private InputStream m_stream;
 
     /**
      * Creates a data source that uses the stream from
-     * <code>org.apache.commons.net.ftp.FTPClient</code>.
+     * <code>com.jcraft.jsch.ChannelSftp</code>.
      * 
      * 
      * @param uri URI that determines the resource used
      * @param monitor Monitor for connection reuse
      * @throws Exception If the resource is not reachable
      */
-    public FTPDataSource(final URI uri, final ConnectionMonitor monitor)
+    public SFTPDataSource(final URI uri, final ConnectionMonitor monitor)
             throws Exception {
-        m_client = (FTPClient)monitor.getConnection(uri);
-        if (m_client == null || !m_client.isConnected()) {
+        m_channel = (ChannelSftp)monitor.getConnection(uri);
+        if (m_channel == null || !m_channel.isConnected()) {
             openConnection(uri);
-            monitor.registerConnection(uri, m_client);
+            monitor.registerConnection(uri, m_channel);
         }
         String path = uri.getPath();
-        // Open stream (null if stream could not be opened)
-        m_stream = m_client.retrieveFileStream(path);
+        m_stream = m_channel.get(path);
         if (m_stream == null) {
             throw new Exception("Path not reachable");
         }
@@ -107,11 +109,6 @@ public class FTPDataSource implements DataSource {
     @Override
     public void close() throws IOException {
         m_stream.close();
-        // Complete all operations
-        boolean success = m_client.completePendingCommand();
-        if (!success) {
-            throw new IOException("Could not finalize the operation");
-        }
     }
 
     /**
@@ -122,20 +119,18 @@ public class FTPDataSource implements DataSource {
      * @throws Exception If connection was not possible
      */
     private void openConnection(final URI uri) throws Exception {
-        // Create client
-        m_client = new FTPClient();
         // Read attributes
         String host = uri.getHost();
-        int port = uri.getPort() != -1 ? uri.getPort() : 21;
+        int port = uri.getPort() != -1 ? uri.getPort() : 22;
         String user = uri.getUserInfo();
         String password = "password";
-        // Open connection
-        m_client.connect(host, port);
-        // Login
-        boolean loggedIn = m_client.login(user, password);
-        if (!loggedIn) {
-            throw new IOException("Login failed");
-        }
+        JSch jsch = new JSch();
+        Session session = jsch.getSession(user, host, port);
+        session.setPassword(password);
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.connect();
+        m_channel = (ChannelSftp)session.openChannel("sftp");
+        m_channel.connect();
     }
 
 }

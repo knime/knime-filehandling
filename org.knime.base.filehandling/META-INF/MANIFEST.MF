@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: KNIME File Handling Nodes
 Bundle-SymbolicName: org.knime.base.filehandling;singleton:=true
 Bundle-Version: 2.7.0.qualifier
-Bundle-ClassPath: ., lib/commons-net-3.1.jar
+Bundle-ClassPath: ., lib/commons-net-3.1.jar, lib/jsch-0.1.49.jar
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Require-Bundle: org.knime.base;bundle-version="2.5.0",
  org.apache.commons.io;bundle-version="1.4.0",

@@ -77,7 +77,8 @@ public final class DataSinkFactory {
      * @return Data sink for the URI
      * @throws Exception If construction was not possible
      */
-    public static DataSink getSink(final URI uri, final ConnectionMonitor monitor) throws Exception {
+    public static DataSink getSink(final URI uri,
+            final ConnectionMonitor monitor) throws Exception {
         String scheme = uri.getScheme();
         DataSink sink = null;
         if (scheme.equals("file")) {
@@ -85,6 +86,9 @@ public final class DataSinkFactory {
         }
         if (scheme.equals("ftp")) {
             sink = new FTPDataSink(uri, monitor);
+        }
+        if (scheme.equals("sftp")) {
+            sink = new SFTPDataSink(uri, monitor);
         }
         if (sink == null) {
             sink = new DefaultDataSink(uri);

@@ -59,6 +59,10 @@ import java.util.Set;
 import org.apache.commons.net.ftp.FTPClient;
 import org.knime.core.node.NodeLogger;
 
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+
 /**
  * Monitors the opened connections.
  * 
@@ -92,7 +96,7 @@ public class ConnectionMonitor {
     }
 
     /**
-     * Registeres the given connection (overwriting an old one).
+     * Registers the given connection (overwriting an old one).
      * 
      * 
      * @param uri URI with host information
@@ -117,6 +121,17 @@ public class ConnectionMonitor {
                     client.disconnect();
                     LOGGER.info("Closed connection: " + key);
                 } catch (IOException e) {
+                    // ignore
+                }
+            }
+            if (connection instanceof ChannelSftp) {
+                ChannelSftp channel = (ChannelSftp)connection;
+                Session session;
+                try {
+                    session = channel.getSession();
+                    channel.disconnect();
+                    session.disconnect();
+                } catch (JSchException e) {
                     // ignore
                 }
             }

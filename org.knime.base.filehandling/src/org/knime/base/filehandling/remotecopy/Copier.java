@@ -82,8 +82,9 @@ public final class Copier {
      * @throws Exception If one of the resources is not reachable or the target
      *             is not writable
      */
-    public static void copy(final URI sourceURI, final URI targetURI, final ConnectionMonitor monitor,
-            final ExecutionContext exec) throws Exception {
+    public static void copy(final URI sourceURI, final URI targetURI,
+            final ConnectionMonitor monitor, final ExecutionContext exec)
+            throws Exception {
         try {
             // Create fitting data source and data sink
             DataSource source = DataSourceFactory.getSource(sourceURI, monitor);
