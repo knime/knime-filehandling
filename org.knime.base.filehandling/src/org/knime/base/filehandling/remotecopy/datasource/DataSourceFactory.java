@@ -90,6 +90,9 @@ public final class DataSourceFactory {
         if (scheme.equals("sftp")) {
             source = new SFTPDataSource(uri, monitor);
         }
+        if (scheme.equals("scp")) {
+            source = new SCPDataSource(uri, monitor);
+        }
         if (source == null) {
             source = new DefaultDataSource(uri);
         }

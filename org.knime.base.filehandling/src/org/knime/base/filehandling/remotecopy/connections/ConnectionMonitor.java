@@ -59,8 +59,6 @@ import java.util.Set;
 import org.apache.commons.net.ftp.FTPClient;
 import org.knime.core.node.NodeLogger;
 
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
 /**
@@ -124,16 +122,9 @@ public class ConnectionMonitor {
                     // ignore
                 }
             }
-            if (connection instanceof ChannelSftp) {
-                ChannelSftp channel = (ChannelSftp)connection;
-                Session session;
-                try {
-                    session = channel.getSession();
-                    channel.disconnect();
-                    session.disconnect();
-                } catch (JSchException e) {
-                    // ignore
-                }
+            if (connection instanceof Session) {
+                Session session = (Session)connection;
+                session.disconnect();
             }
         }
     }

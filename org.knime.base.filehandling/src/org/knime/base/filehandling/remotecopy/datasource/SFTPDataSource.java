@@ -68,6 +68,8 @@ import com.jcraft.jsch.Session;
  */
 public class SFTPDataSource implements DataSource {
 
+    private Session m_session;
+
     private ChannelSftp m_channel;
 
     private InputStream m_stream;
@@ -83,11 +85,13 @@ public class SFTPDataSource implements DataSource {
      */
     public SFTPDataSource(final URI uri, final ConnectionMonitor monitor)
             throws Exception {
-        m_channel = (ChannelSftp)monitor.getConnection(uri);
-        if (m_channel == null || !m_channel.isConnected()) {
+        m_session = (Session)monitor.getConnection(uri);
+        if (m_session == null || !m_session.isConnected()) {
             openConnection(uri);
-            monitor.registerConnection(uri, m_channel);
+            monitor.registerConnection(uri, m_session);
         }
+        m_channel = (ChannelSftp)m_session.openChannel("sftp");
+        m_channel.connect();
         String path = uri.getPath();
         m_stream = m_channel.get(path);
         if (m_stream == null) {
@@ -109,6 +113,7 @@ public class SFTPDataSource implements DataSource {
     @Override
     public void close() throws IOException {
         m_stream.close();
+        m_channel.disconnect();
     }
 
     /**
@@ -129,8 +134,7 @@ public class SFTPDataSource implements DataSource {
         session.setPassword(password);
         session.setConfig("StrictHostKeyChecking", "no");
         session.connect();
-        m_channel = (ChannelSftp)session.openChannel("sftp");
-        m_channel.connect();
+        m_session = session;
     }
 
 }

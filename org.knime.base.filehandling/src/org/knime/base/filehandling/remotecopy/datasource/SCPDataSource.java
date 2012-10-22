@@ -48,62 +48,108 @@
  * History
  *   Oct 19, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.datasink;
+package org.knime.base.filehandling.remotecopy.datasource;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
 import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
 
-import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
 /**
- * Data sink for URIs that have the scheme "sftp".
+ * Data source for URIs that have the scheme "sftp".
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class SFTPDataSink implements DataSink {
+public class SCPDataSource implements DataSource {
 
     private Session m_session;
 
-    private ChannelSftp m_channel;
+    private ChannelExec m_channel;
 
-    private OutputStream m_stream;
+    private InputStream m_streamIn;
+
+    private OutputStream m_streamOut;
+
+    private long m_filesize;
 
     /**
      * Creates a data source that uses the stream from
-     * <code>com.jcraft.jsch.ChannelSftp</code>.
+     * <code>com.jcraft.jsch.ChannelExec</code>.
      * 
      * 
      * @param uri URI that determines the resource used
      * @param monitor Monitor for connection reuse
      * @throws Exception If the resource is not reachable
      */
-    public SFTPDataSink(final URI uri, final ConnectionMonitor monitor)
+    public SCPDataSource(final URI uri, final ConnectionMonitor monitor)
             throws Exception {
+        String skipped;
+        byte[] buffer = new byte[1];
+        String path = uri.getPath();
         m_session = (Session)monitor.getConnection(uri);
         if (m_session == null || !m_session.isConnected()) {
             openConnection(uri);
             monitor.registerConnection(uri, m_session);
         }
-        m_channel = (ChannelSftp)m_session.openChannel("sftp");
+        m_channel = (ChannelExec)m_session.openChannel("exec");
+        m_channel.setCommand("scp -f " + path);
+        m_streamIn = m_channel.getInputStream();
+        m_streamOut = m_channel.getOutputStream();
         m_channel.connect();
-        String path = uri.getPath();
-        m_stream = m_channel.put(path);
-        if (m_stream == null) {
-            throw new Exception("Path not reachable");
+        // write '0'
+        buffer[0] = 0;
+        m_streamOut.write(buffer, 0, 1);
+        m_streamOut.flush();
+        // skip 'C0644'
+        skipped = skipTo(' ');
+        // look for error message
+        if (skipped.contains("scp:")) {
+            throw new IOException("File not found");
         }
+        m_filesize = 0L;
+        // read filesize in single digits
+        while (true) {
+            int length = m_streamIn.read(buffer, 0, 1);
+            if (length < 0) {
+                break;
+            }
+            if (buffer[0] == ' ') {
+                break;
+            }
+            m_filesize = m_filesize * 10L + (buffer[0] - '0');
+        }
+        // skip filename
+        skipTo('\n');
+        // write '0'
+        buffer[0] = 0;
+        m_streamOut.write(buffer, 0, 1);
+        m_streamOut.flush();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void write(final byte[] buffer, final int length) throws IOException {
-        m_stream.write(buffer, 0, length);
+    public int read(final byte[] buffer) throws IOException {
+        int result = -1;
+        if (m_filesize > 0L) {
+            int length;
+            if (buffer.length < m_filesize) {
+                length = buffer.length;
+            } else {
+                length = (int)m_filesize;
+            }
+            result = m_streamIn.read(buffer, 0, length);
+            m_filesize -= length;
+        }
+        return result;
     }
 
     /**
@@ -111,7 +157,9 @@ public class SFTPDataSink implements DataSink {
      */
     @Override
     public void close() throws IOException {
-        m_stream.close();
+        m_streamOut.flush();
+        m_streamIn.close();
+        m_streamOut.close();
         m_channel.disconnect();
     }
 
@@ -123,7 +171,6 @@ public class SFTPDataSink implements DataSink {
      * @throws Exception If connection was not possible
      */
     private void openConnection(final URI uri) throws Exception {
-        // Read attributes
         String host = uri.getHost();
         int port = uri.getPort() != -1 ? uri.getPort() : 22;
         String user = uri.getUserInfo();
@@ -134,6 +181,31 @@ public class SFTPDataSink implements DataSink {
         session.setConfig("StrictHostKeyChecking", "no");
         session.connect();
         m_session = session;
+    }
+
+    /**
+     * Consumes all bytes from the input stream up to and including the given
+     * character.
+     * 
+     * 
+     * @param character The character that will be searched for
+     * @return All consumed characters (excluding the given character)
+     * @throws IOException If the input stream does not contain the given
+     *             character
+     */
+    private String skipTo(final char character) throws IOException {
+        StringBuffer result = new StringBuffer();
+        byte[] buffer = new byte[1];
+        do {
+            int length = m_streamIn.read(buffer, 0, 1);
+            if (length < 0) {
+                throw new IOException("Reached end of stream and found no '"
+                        + character + "'");
+            }
+            result.append(new String(buffer));
+        } while (buffer[0] != character);
+        result.deleteCharAt(result.length() - 1);
+        return result.toString();
     }
 
 }

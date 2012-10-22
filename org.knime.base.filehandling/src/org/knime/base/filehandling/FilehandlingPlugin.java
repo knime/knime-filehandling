@@ -64,7 +64,7 @@ import org.osgi.framework.BundleContext;
 public final class FilehandlingPlugin extends Plugin {
 
     /** The plug-in ID. */
-    public static final String PLUGIN_ID = "org.knime.ext.itemset";
+    public static final String PLUGIN_ID = "org.knime.base.filehandling";
 
     // The shared instance
     private static FilehandlingPlugin plugin;
