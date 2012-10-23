@@ -88,7 +88,9 @@ public final class Copier {
         try {
             // Create fitting data source and data sink
             DataSource source = DataSourceFactory.getSource(sourceURI, monitor);
-            DataSink target = DataSinkFactory.getSink(targetURI, monitor);
+            DataSink target =
+                    DataSinkFactory.getSink(targetURI, source.getSize(),
+                            monitor);
             byte[] buffer = new byte[1024];
             int length;
             // Copy bytes

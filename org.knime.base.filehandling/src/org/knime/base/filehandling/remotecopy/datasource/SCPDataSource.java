@@ -62,7 +62,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
 /**
- * Data source for URIs that have the scheme "sftp".
+ * Data source for URIs that have the scheme "scp".
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -77,7 +77,9 @@ public class SCPDataSource implements DataSource {
 
     private OutputStream m_streamOut;
 
-    private long m_filesize;
+    private long m_bytesLeft;
+
+    private long m_size;
 
     /**
      * Creates a data source that uses the stream from
@@ -105,31 +107,36 @@ public class SCPDataSource implements DataSource {
         m_channel.connect();
         // write '0'
         buffer[0] = 0;
-        m_streamOut.write(buffer, 0, 1);
+        m_streamOut.write(buffer);
         m_streamOut.flush();
-        // skip 'C0644'
+        m_streamIn.read(buffer);
+        if (buffer[0] != 0) {
+            throw new IOException("SCP error");
+        }
+        // skip first token
         skipped = skipTo(' ');
         // look for error message
         if (skipped.contains("scp:")) {
             throw new IOException("File not found");
         }
-        m_filesize = 0L;
+        m_bytesLeft = 0L;
         // read filesize in single digits
         while (true) {
-            int length = m_streamIn.read(buffer, 0, 1);
+            int length = m_streamIn.read(buffer);
             if (length < 0) {
                 break;
             }
             if (buffer[0] == ' ') {
                 break;
             }
-            m_filesize = m_filesize * 10L + (buffer[0] - '0');
+            m_bytesLeft = m_bytesLeft * 10L + (buffer[0] - '0');
         }
+        m_size = m_bytesLeft;
         // skip filename
         skipTo('\n');
         // write '0'
         buffer[0] = 0;
-        m_streamOut.write(buffer, 0, 1);
+        m_streamOut.write(buffer);
         m_streamOut.flush();
     }
 
@@ -139,15 +146,15 @@ public class SCPDataSource implements DataSource {
     @Override
     public int read(final byte[] buffer) throws IOException {
         int result = -1;
-        if (m_filesize > 0L) {
+        if (m_bytesLeft > 0L) {
             int length;
-            if (buffer.length < m_filesize) {
+            if (buffer.length < m_bytesLeft) {
                 length = buffer.length;
             } else {
-                length = (int)m_filesize;
+                length = (int)m_bytesLeft;
             }
             result = m_streamIn.read(buffer, 0, length);
-            m_filesize -= length;
+            m_bytesLeft -= length;
         }
         return result;
     }
@@ -157,6 +164,13 @@ public class SCPDataSource implements DataSource {
      */
     @Override
     public void close() throws IOException {
+        byte[] buffer = new byte[1];
+        m_streamIn.read(buffer);
+        if (buffer[0] != 0) {
+            throw new IOException("SCP error");
+        }
+        buffer[0] = 0;
+        m_streamOut.write(buffer);
         m_streamOut.flush();
         m_streamIn.close();
         m_streamOut.close();
@@ -206,6 +220,14 @@ public class SCPDataSource implements DataSource {
         } while (buffer[0] != character);
         result.deleteCharAt(result.length() - 1);
         return result.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getSize() {
+        return m_size;
     }
 
 }

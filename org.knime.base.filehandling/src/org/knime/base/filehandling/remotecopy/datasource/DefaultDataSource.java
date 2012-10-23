@@ -53,6 +53,7 @@ package org.knime.base.filehandling.remotecopy.datasource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 
 /**
  * Data source for URIs that have no specific data source defined.
@@ -64,6 +65,8 @@ public class DefaultDataSource implements DataSource {
 
     private InputStream m_stream;
 
+    private long m_size;
+
     /**
      * Creates a data source that uses the stream from <code>java.net.URL</code>
      * .
@@ -73,7 +76,9 @@ public class DefaultDataSource implements DataSource {
      * @throws Exception If the resource is not reachable
      */
     public DefaultDataSource(final URI uri) throws Exception {
-        m_stream = uri.toURL().openStream();
+        URL url = uri.toURL();
+        m_stream = url.openStream();
+        m_size = url.openConnection().getContentLengthLong();
     }
 
     /**
@@ -90,6 +95,14 @@ public class DefaultDataSource implements DataSource {
     @Override
     public void close() throws IOException {
         m_stream.close();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getSize() {
+        return m_size;
     }
 
 }

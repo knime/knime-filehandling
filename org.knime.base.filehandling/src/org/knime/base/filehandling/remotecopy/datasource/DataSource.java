@@ -59,6 +59,14 @@ import java.io.IOException;
  * @author Patrick Winter, University of Konstanz
  */
 public interface DataSource {
+    
+    /**
+     * Read the size of the file, pointed to by this data source.
+     * 
+     * 
+     * @return The size of the file of this data source
+     */
+    public long getSize();
 
     /**
      * Reads the next <code>buffer.length</code> bytes from the input stream.

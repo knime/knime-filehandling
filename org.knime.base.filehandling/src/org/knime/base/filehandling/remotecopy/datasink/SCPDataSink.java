@@ -46,64 +46,82 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 18, 2012 (Patrick Winter): created
+ *   Oct 23, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.datasource;
+package org.knime.base.filehandling.remotecopy.datasink;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
 
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
+
 /**
- * Data source for URIs that have the scheme "ftp".
+ * Data source for URIs that have the scheme "scp".
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class FTPDataSource implements DataSource {
+public class SCPDataSink implements DataSink {
 
-    private FTPClient m_client;
+    private Session m_session;
 
-    private InputStream m_stream;
+    private ChannelExec m_channel;
 
-    private long m_size;
+    private InputStream m_streamIn;
+
+    private OutputStream m_streamOut;
 
     /**
-     * Creates a data source that uses the stream from
-     * <code>org.apache.commons.net.ftp.FTPClient</code>.
+     * Creates a data sink that uses the stream from
+     * <code>com.jcraft.jsch.ChannelExec</code>.
      * 
      * 
-     * @param uri URI that determines the resource used
+     * @param uri uri URI that determines the resource used
+     * @param filesize Size of the input file
      * @param monitor Monitor for connection reuse
      * @throws Exception If the resource is not reachable
      */
-    public FTPDataSource(final URI uri, final ConnectionMonitor monitor)
-            throws Exception {
-        m_client = (FTPClient)monitor.getConnection(uri);
-        if (m_client == null || !m_client.isConnected()) {
-            openConnection(uri);
-            monitor.registerConnection(uri, m_client);
-        }
+    public SCPDataSink(final URI uri, final long filesize,
+            final ConnectionMonitor monitor) throws Exception {
+        byte[] buffer = new byte[1];
         String path = uri.getPath();
-        // Open stream (null if stream could not be opened)
-        m_stream = m_client.retrieveFileStream(path);
-        if (m_stream == null) {
-            throw new Exception("Path not reachable");
+        m_session = (Session)monitor.getConnection(uri);
+        if (m_session == null || !m_session.isConnected()) {
+            openConnection(uri);
+            monitor.registerConnection(uri, m_session);
         }
-        FTPFile ftpFile = m_client.listFiles(path)[0];
-        m_size = ftpFile.getSize();
+        m_channel = (ChannelExec)m_session.openChannel("exec");
+        m_channel.setCommand("scp -t " + path);
+        m_streamIn = m_channel.getInputStream();
+        m_streamOut = m_channel.getOutputStream();
+        m_channel.connect();
+        m_streamIn.read(buffer);
+        if (buffer[0] != 0) {
+            throw new IOException("SCP error");
+        }
+        String command =
+                "C0644 " + filesize + " " + FilenameUtils.getName(path) + "\n";
+        m_streamOut.write(command.getBytes());
+        m_streamOut.flush();
+        m_streamIn.read(buffer);
+        if (buffer[0] != 0) {
+            throw new IOException("SCP error");
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int read(final byte[] buffer) throws IOException {
-        return m_stream.read(buffer);
+    public void write(final byte[] buffer, final int length) throws IOException {
+        m_streamOut.write(buffer, 0, length);
     }
 
     /**
@@ -111,12 +129,18 @@ public class FTPDataSource implements DataSource {
      */
     @Override
     public void close() throws IOException {
-        m_stream.close();
-        // Complete all operations
-        boolean success = m_client.completePendingCommand();
-        if (!success) {
-            throw new IOException("Could not finalize the operation");
+        byte[] buffer = new byte[1];
+        // write '0'
+        buffer[0] = 0;
+        m_streamOut.write(buffer);
+        m_streamOut.flush();
+        m_streamIn.read(buffer);
+        if (buffer[0] != 0) {
+            throw new IOException("SCP error");
         }
+        m_streamIn.close();
+        m_streamOut.close();
+        m_channel.disconnect();
     }
 
     /**
@@ -127,28 +151,16 @@ public class FTPDataSource implements DataSource {
      * @throws Exception If connection was not possible
      */
     private void openConnection(final URI uri) throws Exception {
-        // Create client
-        m_client = new FTPClient();
-        // Read attributes
         String host = uri.getHost();
-        int port = uri.getPort() != -1 ? uri.getPort() : 21;
+        int port = uri.getPort() != -1 ? uri.getPort() : 22;
         String user = uri.getUserInfo();
         String password = "password";
-        // Open connection
-        m_client.connect(host, port);
-        // Login
-        boolean loggedIn = m_client.login(user, password);
-        if (!loggedIn) {
-            throw new IOException("Login failed");
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long getSize() {
-        return m_size;
+        JSch jsch = new JSch();
+        Session session = jsch.getSession(user, host, port);
+        session.setPassword(password);
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.connect();
+        m_session = session;
     }
 
 }

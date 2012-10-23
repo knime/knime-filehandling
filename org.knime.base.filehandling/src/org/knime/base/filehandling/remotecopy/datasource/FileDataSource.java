@@ -65,6 +65,8 @@ import java.net.URI;
 public class FileDataSource implements DataSource {
 
     private InputStream m_stream;
+    
+    private long m_size;
 
     /**
      * Creates a data source that uses <code>java.io.FileInputStream</code>.
@@ -74,7 +76,9 @@ public class FileDataSource implements DataSource {
      * @throws Exception If the resource is not reachable
      */
     public FileDataSource(final URI uri) throws Exception {
-        m_stream = new FileInputStream(new File(uri));
+        File file = new File(uri);
+        m_size = file.length();
+        m_stream = new FileInputStream(file);
     }
 
     /**
@@ -91,6 +95,14 @@ public class FileDataSource implements DataSource {
     @Override
     public void close() throws IOException {
         m_stream.close();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getSize() {
+        return m_size;
     }
 
 }

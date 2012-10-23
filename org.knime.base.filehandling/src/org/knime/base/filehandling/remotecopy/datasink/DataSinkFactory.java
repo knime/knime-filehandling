@@ -73,11 +73,12 @@ public final class DataSinkFactory {
      * Will determine what sink is used by the scheme of the URI.
      * 
      * @param uri The URI that will be used by the data sink
+     * @param filesize Size of the input file
      * @param monitor Monitor for connection reuse
      * @return Data sink for the URI
      * @throws Exception If construction was not possible
      */
-    public static DataSink getSink(final URI uri,
+    public static DataSink getSink(final URI uri, final long filesize,
             final ConnectionMonitor monitor) throws Exception {
         String scheme = uri.getScheme();
         DataSink sink = null;
@@ -89,6 +90,9 @@ public final class DataSinkFactory {
         }
         if (scheme.equals("sftp")) {
             sink = new SFTPDataSink(uri, monitor);
+        }
+        if (scheme.equals("scp")) {
+            sink = new SCPDataSink(uri, filesize, monitor);
         }
         if (sink == null) {
             sink = new DefaultDataSink(uri);

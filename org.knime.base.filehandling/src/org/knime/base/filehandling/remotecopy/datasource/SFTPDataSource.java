@@ -53,12 +53,15 @@ package org.knime.base.filehandling.remotecopy.datasource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Vector;
 
 import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
 
 import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpATTRS;
 
 /**
  * Data source for URIs that have the scheme "sftp".
@@ -73,6 +76,8 @@ public class SFTPDataSource implements DataSource {
     private ChannelSftp m_channel;
 
     private InputStream m_stream;
+    
+    private long m_size;
 
     /**
      * Creates a data source that uses the stream from
@@ -97,6 +102,10 @@ public class SFTPDataSource implements DataSource {
         if (m_stream == null) {
             throw new Exception("Path not reachable");
         }
+        @SuppressWarnings("unchecked")
+        Vector<LsEntry> vector = m_channel.ls(path);
+        SftpATTRS attributes = vector.get(0).getAttrs();
+        m_size = attributes.getSize();
     }
 
     /**
@@ -135,6 +144,14 @@ public class SFTPDataSource implements DataSource {
         session.setConfig("StrictHostKeyChecking", "no");
         session.connect();
         m_session = session;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getSize() {
+        return m_size;
     }
 
 }
