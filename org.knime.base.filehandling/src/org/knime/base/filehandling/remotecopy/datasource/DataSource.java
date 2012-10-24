@@ -59,7 +59,7 @@ import java.io.IOException;
  * @author Patrick Winter, University of Konstanz
  */
 public interface DataSource {
-    
+
     /**
      * Read the size of the file, pointed to by this data source.
      * 

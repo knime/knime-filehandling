@@ -46,39 +46,53 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 17, 2012 (Patrick Winter): created
+ *   Oct 24, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remotecopy.datasource;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+
 /**
- * Data source for URIs that have the scheme "file".
+ * Data source for URIs that have no specific data source defined.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class FileDataSource implements DataSource {
+public class HTTPDataSource implements DataSource {
 
     private InputStream m_stream;
 
     private long m_size;
 
     /**
-     * Creates a data source that uses <code>java.io.FileInputStream</code>.
+     * Creates a data source that uses the stream from
+     * <code>org.apache.http.client.HttpClient</code>.
      * 
      * 
      * @param uri URI that determines the resource used
      * @throws Exception If the resource is not reachable
      */
-    public FileDataSource(final URI uri) throws Exception {
-        File file = new File(uri);
-        m_size = file.length();
-        m_stream = new FileInputStream(file);
+    public HTTPDataSource(final URI uri) throws Exception {
+        HttpClient client = new DefaultHttpClient();
+        HttpGet request = new HttpGet(uri);
+        HttpResponse response = client.execute(request);
+        m_stream = response.getEntity().getContent();
+        m_size = response.getEntity().getContentLength();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getSize() {
+        return m_size;
     }
 
     /**
@@ -95,14 +109,6 @@ public class FileDataSource implements DataSource {
     @Override
     public void close() throws IOException {
         m_stream.close();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long getSize() {
-        return m_size;
     }
 
 }

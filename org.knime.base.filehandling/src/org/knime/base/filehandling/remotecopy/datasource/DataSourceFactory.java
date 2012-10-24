@@ -93,6 +93,9 @@ public final class DataSourceFactory {
         if (scheme.equals("scp")) {
             source = new SCPDataSource(uri, monitor);
         }
+        if (scheme.equals("http") || scheme.equals("https")) {
+            source = new HTTPDataSource(uri);
+        }
         if (source == null) {
             source = new DefaultDataSource(uri);
         }

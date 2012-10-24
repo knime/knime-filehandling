@@ -76,7 +76,7 @@ public class SFTPDataSource implements DataSource {
     private ChannelSftp m_channel;
 
     private InputStream m_stream;
-    
+
     private long m_size;
 
     /**
