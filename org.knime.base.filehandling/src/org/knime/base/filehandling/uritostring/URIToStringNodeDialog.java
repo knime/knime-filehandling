@@ -58,7 +58,7 @@ import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "URI To String" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -67,19 +67,19 @@ class URIToStringNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_columnselection;
 
-    private SettingsModelString m_replace;
-
     private SettingsModelString m_columnname;
 
+    private SettingsModelString m_replace;
+
     /**
-     * New pane for configuring the URI to string node dialog.
+     * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
     protected URIToStringNodeDialog() {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_replace = SettingsFactory.createReplacePolicySettings();
         m_columnname = SettingsFactory.createColumnNameSettings();
+        m_replace = SettingsFactory.createReplacePolicySettings();
         // Column selection
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_columnselection, "Column selection", 0, URIDataValue.class));

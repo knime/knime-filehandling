@@ -85,7 +85,7 @@ enum Attributes {
     SIZE(3, "Size", LongCell.TYPE),
 
     /**
-     * Size of the file in bytes.
+     * Size of the file in bytes, in human readable form.
      */
     HUMANSIZE(4, "Size (human readable)", StringCell.TYPE),
 

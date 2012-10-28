@@ -55,6 +55,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -78,7 +79,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * This is the model implementation of Files to Binary Objects.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -120,7 +121,8 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      * 
      * @param inSpec Specification of the input table
      * @param exec Context of this execution
-     * @return Rearranger that will add a binary object column
+     * @return Rearranger that will add a binary object column or replace the
+     *         URI column
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
@@ -165,23 +167,12 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
+    @SuppressWarnings("unchecked")
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
-        // Is the URI column set?
-        if (m_uricolumn.getStringValue().equals("")) {
-            throw new InvalidSettingsException("URI column not set");
-        }
-        // Does the URI column setting reference to an existing column?
-        int columnIndex = inSpec.findColumnIndex(m_uricolumn.getStringValue());
-        if (columnIndex < 0) {
-            throw new InvalidSettingsException("URI column not set");
-        }
-        // Is the URI column setting referencing to a column of the type
-        // string value?
-        DataType type = inSpec.getColumnSpec(columnIndex).getType();
-        if (!type.isCompatible(URIDataValue.class)) {
-            throw new InvalidSettingsException("URI column not set");
-        }
+        String uricolumn = m_uricolumn.getStringValue();
+        NodeUtils.checkColumnSelection(inSpec, "URI", uricolumn,
+                URIDataValue.class);
         // Is the binary object column name empty?
         if (m_bocolumnname.getStringValue().equals("")) {
             throw new InvalidSettingsException(
@@ -200,9 +191,9 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      * Create a cell containing the binary object to the file referenced by the
      * URI cell of the row.
      * 
-     * @param row
-     * @param inSpec
-     * @param bocellfactory
+     * @param row The current row
+     * @param inSpec Specification of the input table
+     * @param bocellfactory Factory for the creation of the binary objects
      * @return Cell containing the binary object
      */
     private DataCell createBinaryObjectCell(final DataRow row,
@@ -212,7 +203,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         DataCell result = DataType.getMissingCell();
         int uriIndex = inSpec.findColumnIndex(m_uricolumn.getStringValue());
         if (!row.getCell(uriIndex).isMissing()) {
-            // Get location
+            // Get URI
             URIDataValue value = (URIDataValue)row.getCell(uriIndex);
             if (!value.getURIContent().getURI().getScheme().equals("file")) {
                 throw new RuntimeException(

@@ -56,7 +56,7 @@ import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelectio
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "Find MIME-Type" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -66,7 +66,7 @@ class FindMIMETypeNodeDialog extends DefaultNodeSettingsPane {
     private SettingsModelString m_columnselection;
 
     /**
-     * New pane for configuring the find MIME-Type node dialog.
+     * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
     protected FindMIMETypeNodeDialog() {

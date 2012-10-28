@@ -59,7 +59,7 @@ package org.knime.base.filehandling.copyfiles;
 enum FilenameHandling {
 
     /**
-     * Use name column.
+     * Use target column.
      */
     FROMCOLUMN("From seperate column"),
 

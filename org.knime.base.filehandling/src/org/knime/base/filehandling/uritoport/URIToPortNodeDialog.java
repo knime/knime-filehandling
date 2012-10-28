@@ -56,7 +56,7 @@ import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelectio
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "URI To Port" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -66,7 +66,7 @@ class URIToPortNodeDialog extends DefaultNodeSettingsPane {
     private SettingsModelString m_uricolumn;
 
     /**
-     * New pane for configuring the URI to port node dialog.
+     * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
     protected URIToPortNodeDialog() {

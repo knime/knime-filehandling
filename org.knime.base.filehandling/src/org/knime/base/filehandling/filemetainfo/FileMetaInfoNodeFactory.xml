@@ -4,19 +4,26 @@
 	<name>File Meta Info</name>
 
 	<shortDescription>
-		Add meta information about a file into the table.
+		Add meta information about a file to the table.
 	</shortDescription>
 
 	<fullDescription>
 		<intro>
-			This node finds out meta information about the files given in
-			the URI column and appends them to the table.
+			This node finds out meta information about the files referenced
+			by
+			the URI column and appends it to the table.
 		</intro>
 
-		<option name="URI column">Column with the path to the files.</option>
-		<option name="Fail execution if URI does not point to local file">Does abort the execution if one of the URIs does
-			not point to a local file. A corret URI to a local file has the
-			scheme "file" in front of it.</option>
+		<option name="URI column">
+			Column with the path to the files.
+		</option>
+		<option name="Fail execution if URI does not point to local file">
+			Does abort the execution if one of the URIs does
+			not point to a local
+			file. A correct URI to a local file has the
+			scheme "file" in front of
+			it.
+		</option>
 	</fullDescription>
 
 	<ports>
@@ -37,15 +44,19 @@
 			<br />
 			Is the file hidden.
 			<br />
+			<b>Symbolic link</b>
+			<br />
+			If the file is a symbolic link
+			<br />
 			<b>Size</b>
 			<br />
 			Size of the file. If the file is a directory, the sizes of the
 			contained files will be summarized.
 			<br />
 			<b>Size (human readable)</b>
-			<br/>
+			<br />
 			Size of the file in human readable form.
-			<br/>
+			<br />
 			<b>Last modified</b>
 			<br />
 			The last time the file was modified.
@@ -53,6 +64,10 @@
 			<b>Permissions</b>
 			<br />
 			Read (r), write (w) and execute (x) permissions of the file.
+			<br />
+			<b>Owner</b>
+			<br />
+			The owner of the file.
 		</outPort>
 	</ports>
 </knimeNode>

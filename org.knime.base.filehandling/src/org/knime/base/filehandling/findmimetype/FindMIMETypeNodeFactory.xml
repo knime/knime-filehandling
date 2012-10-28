@@ -14,7 +14,9 @@
 		</intro>
 
 
-        <option name="Column selection">Column that contains the URIs.</option>
+		<option name="Column selection">
+			Column that contains the URIs.
+		</option>
 	</fullDescription>
 
 	<ports>

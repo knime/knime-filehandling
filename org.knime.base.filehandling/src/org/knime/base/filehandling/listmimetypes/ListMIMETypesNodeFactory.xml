@@ -4,20 +4,20 @@
 	<name>List MIME-Types</name>
 
 	<shortDescription>
-		List all registered MIME-Types
+		List all registered MIME-Types.
 	</shortDescription>
 
 	<fullDescription>
 		<intro>This node lists all MIME-Types that are registered in the
 			MIME-Type map. Further types can be added through the extension point
-			"org.knime.base.filehandling.mimetypes"</intro>
+			"org.knime.base.filehandling.mimetypes".</intro>
 
 
 	</fullDescription>
 
 	<ports>
 		<outPort index="0" name="Output table">
-			All registered MIME-Types
+			All registered MIME-Types.
 		</outPort>
 	</ports>
 </knimeNode>

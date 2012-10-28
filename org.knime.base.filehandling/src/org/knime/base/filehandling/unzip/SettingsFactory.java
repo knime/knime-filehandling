@@ -85,6 +85,16 @@ final class SettingsFactory {
     }
 
     /**
+     * Factory method for the output setting.
+     * 
+     * 
+     * @return Output <code>SettingsModel</code>
+     */
+    static SettingsModelString createOutputSettings() {
+        return new SettingsModelString("output", OutputSelection.URI.getName());
+    }
+
+    /**
      * Factory method for the if exists setting.
      * 
      * 
@@ -93,16 +103,6 @@ final class SettingsFactory {
     static SettingsModelString createIfExistsSettings() {
         return new SettingsModelString("ifexists",
                 OverwritePolicy.ABORT.getName());
-    }
-
-    /**
-     * Factory method for the output setting.
-     * 
-     * 
-     * @return Output <code>SettingsModel</code>
-     */
-    static SettingsModelString createOutputSettings() {
-        return new SettingsModelString("output", OutputSelection.URI.getName());
     }
 
 }

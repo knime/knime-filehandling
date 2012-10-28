@@ -58,7 +58,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "Files to Binary Objects" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -70,7 +70,7 @@ class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
     private SettingsModelBoolean m_abortifnotlocal;
 
     /**
-     * New pane for configuring the Binary Objects to Files node dialog.
+     * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
     protected FileMetaInfoNodeDialog() {
@@ -80,6 +80,7 @@ class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
         // URI column
         addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
                 "URI column", 0, URIDataValue.class));
+        // Abort if not local
         addDialogComponent(new DialogComponentBoolean(m_abortifnotlocal,
                 "Fail execution if URI does not point to local file"));
     }

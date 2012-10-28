@@ -86,6 +86,16 @@ final class SettingsFactory {
     }
 
     /**
+     * Factory method for the compression level setting.
+     * 
+     * 
+     * @return Compression level <code>SettingsModel</code>
+     */
+    static SettingsModelIntegerBounded createCompressionLevelSettings() {
+        return new SettingsModelIntegerBounded("compressionlevel", 0, 0, 9);
+    }
+
+    /**
      * Factory method for the path handling setting.
      * 
      * 
@@ -122,16 +132,6 @@ final class SettingsFactory {
     static SettingsModelString createIfExistsSettings() {
         return new SettingsModelString("ifexists",
                 OverwritePolicy.ABORT.getName());
-    }
-
-    /**
-     * Factory method for the compression level setting.
-     * 
-     * 
-     * @return Compression level <code>SettingsModel</code>
-     */
-    static SettingsModelIntegerBounded createCompressionLevelSettings() {
-        return new SettingsModelIntegerBounded("compressionlevel", 0, 0, 9);
     }
 
 }

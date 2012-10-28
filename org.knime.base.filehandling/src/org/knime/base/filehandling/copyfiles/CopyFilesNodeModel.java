@@ -59,6 +59,7 @@ import java.io.OutputStream;
 import java.net.URI;
 
 import org.apache.commons.io.FilenameUtils;
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -83,7 +84,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * This is the model implementation of Copy Files.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -96,9 +97,9 @@ class CopyFilesNodeModel extends NodeModel {
 
     private SettingsModelString m_filenamehandling;
 
-    private SettingsModelString m_outputdirectory;
-
     private SettingsModelString m_targetcolumn;
+
+    private SettingsModelString m_outputdirectory;
 
     private SettingsModelString m_ifexists;
 
@@ -110,11 +111,11 @@ class CopyFilesNodeModel extends NodeModel {
         m_copyormove = SettingsFactory.createCopyOrMoveSettings();
         m_sourcecolumn = SettingsFactory.createSourceColumnSettings();
         m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
+        m_targetcolumn =
+                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
         m_outputdirectory =
                 SettingsFactory
                         .createOutputDirectorySettings(m_filenamehandling);
-        m_targetcolumn =
-                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
     }
 
@@ -128,16 +129,17 @@ class CopyFilesNodeModel extends NodeModel {
         // Monitor for duplicate checking and rollback
         CopyOrMoveMonitor monitor =
                 new CopyOrMoveMonitor(m_copyormove.getStringValue());
+        // Append only if target column is not used
         boolean appenduricolumn =
-                m_filenamehandling.getStringValue().equals(
-                        FilenameHandling.SOURCENAME.getName());
+                !m_filenamehandling.getStringValue().equals(
+                        FilenameHandling.FROMCOLUMN.getName());
         try {
             // If the columns do not get appended the create file method will
             // not be called so it has to happen manually
             if (!appenduricolumn) {
                 int rows = inData[0].getRowCount();
                 int i = 0;
-                // Create the file for each row
+                // Do the action for each row
                 for (DataRow row : inData[0]) {
                     exec.checkCanceled();
                     exec.setProgress((double)i / rows);
@@ -165,8 +167,8 @@ class CopyFilesNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @param monitor Monitors which files have been copied/moved
      * @param exec Context of this execution
-     * @return Rearranger that will add columns for the location and URL of the
-     *         created files.
+     * @return Rearranger that will add a column for the URIs to the created
+     *         files (if necessary).
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
@@ -176,9 +178,10 @@ class CopyFilesNodeModel extends NodeModel {
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec colSpec;
+        // Append only if target column is not used
         boolean appenduricolumn =
-                m_filenamehandling.getStringValue().equals(
-                        FilenameHandling.SOURCENAME.getName());
+                !m_filenamehandling.getStringValue().equals(
+                        FilenameHandling.FROMCOLUMN.getName());
         // Append URI column if selected. This will also call the
         // create file method
         if (appenduricolumn) {
@@ -220,47 +223,20 @@ class CopyFilesNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
+    @SuppressWarnings("unchecked")
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
-        // Is the source column set?
-        if (m_sourcecolumn.getStringValue().equals("")) {
-            throw new InvalidSettingsException("Source column not set");
-        }
-        // Does the source column setting reference to an existing
-        // column?
-        int columnIndex =
-                inSpec.findColumnIndex(m_sourcecolumn.getStringValue());
-        if (columnIndex < 0) {
-            throw new InvalidSettingsException("Source column not set");
-        }
-        // Is the source column setting referencing to a column of the
-        // type URI data value?
-        DataType type = inSpec.getColumnSpec(columnIndex).getType();
-        if (!type.isCompatible(URIDataValue.class)) {
-            throw new InvalidSettingsException("Source column not set");
-        }
+        String sourcecolumn = m_sourcecolumn.getStringValue();
+        NodeUtils.checkColumnSelection(inSpec, "Source", sourcecolumn,
+                URIDataValue.class);
         // Check settings only if filename handling is from column
         if (m_filenamehandling.getStringValue().equals(
                 FilenameHandling.FROMCOLUMN.getName())) {
-            // Is the target column set?
-            if (m_targetcolumn.getStringValue().equals("")) {
-                throw new InvalidSettingsException("Target column not set");
-            }
-            // Does the target column setting reference to an existing column?
-            columnIndex =
-                    inSpec.findColumnIndex(m_targetcolumn.getStringValue());
-            if (columnIndex < 0) {
-                throw new InvalidSettingsException("Target column not set");
-            }
-            // Is the target column setting referencing to a column of the type
-            // URI data value?
-            type = inSpec.getColumnSpec(columnIndex).getType();
-            if (!type.isCompatible(URIDataValue.class)) {
-                throw new InvalidSettingsException("Target column not set");
-            }
+            String targetcolumn = m_targetcolumn.getStringValue();
+            NodeUtils.checkColumnSelection(inSpec, "Target", targetcolumn,
+                    URIDataValue.class);
             // Do the target and the source column differ
-            if (m_sourcecolumn.getStringValue().equals(
-                    m_targetcolumn.getStringValue())) {
+            if (sourcecolumn.equals(targetcolumn)) {
                 throw new InvalidSettingsException(
                         "Source and target do not differ");
             }
@@ -282,7 +258,7 @@ class CopyFilesNodeModel extends NodeModel {
      * Executes the configured action (copy or move).
      * 
      * 
-     * @param row Row with the needet data
+     * @param row Row with the needed data
      * @param rowNr Number of the row in the table
      * @param monitor Monitors which files have been copied/moved
      * @param inSpec Specification of the input table
@@ -325,6 +301,7 @@ class CopyFilesNodeModel extends NodeModel {
                     throw new RuntimeException(
                             "This node only supports the protocol \"file\"");
                 }
+                // Absolute path in filename, no preceding directory
                 filename = targetUri.getPath();
                 outputDirectory = "";
             }
@@ -337,7 +314,7 @@ class CopyFilesNodeModel extends NodeModel {
                 // Check if the same file has already been touched
                 if (!monitor.isNewFile(sourcePath)) {
                     throw new RuntimeException("Duplicate entry \""
-                            + sourcePath + "\" in the target column");
+                            + sourcePath + "\"");
                 }
                 // Abort if the source file does not exist
                 if (!sourceFile.exists()) {
@@ -348,8 +325,7 @@ class CopyFilesNodeModel extends NodeModel {
                 // Check if the same file has already been touched
                 if (!monitor.isNewFile(targetFile.getAbsolutePath())) {
                     throw new RuntimeException("Duplicate entry \""
-                            + targetFile.getAbsolutePath()
-                            + "\" in the target column");
+                            + targetFile.getAbsolutePath() + "\"");
                 }
                 // Check if a file with the same name already exists
                 if (targetFile.exists()) {
@@ -433,8 +409,8 @@ class CopyFilesNodeModel extends NodeModel {
         m_copyormove.saveSettingsTo(settings);
         m_sourcecolumn.saveSettingsTo(settings);
         m_filenamehandling.saveSettingsTo(settings);
-        m_outputdirectory.saveSettingsTo(settings);
         m_targetcolumn.saveSettingsTo(settings);
+        m_outputdirectory.saveSettingsTo(settings);
         m_ifexists.saveSettingsTo(settings);
     }
 
@@ -447,8 +423,8 @@ class CopyFilesNodeModel extends NodeModel {
         m_copyormove.loadSettingsFrom(settings);
         m_sourcecolumn.loadSettingsFrom(settings);
         m_filenamehandling.loadSettingsFrom(settings);
-        m_outputdirectory.loadSettingsFrom(settings);
         m_targetcolumn.loadSettingsFrom(settings);
+        m_outputdirectory.loadSettingsFrom(settings);
         m_ifexists.loadSettingsFrom(settings);
     }
 
@@ -461,8 +437,8 @@ class CopyFilesNodeModel extends NodeModel {
         m_copyormove.validateSettings(settings);
         m_sourcecolumn.validateSettings(settings);
         m_filenamehandling.validateSettings(settings);
-        m_outputdirectory.validateSettings(settings);
         m_targetcolumn.validateSettings(settings);
+        m_outputdirectory.validateSettings(settings);
         m_ifexists.validateSettings(settings);
     }
 

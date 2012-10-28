@@ -76,6 +76,36 @@ final class SettingsFactory {
     }
 
     /**
+     * Factory method for the filename handling setting.
+     * 
+     * 
+     * @return Filename handling <code>SettingsModel</code>
+     */
+    static SettingsModelString createFilenameHandlingSettings() {
+        return new SettingsModelString("filenamehandling",
+                FilenameHandling.GENERATE.getName());
+    }
+
+    /**
+     * Factory method for the target column setting.
+     * 
+     * 
+     * @param filenamehandling <code>SettingsModel</code> for the filename
+     *            handling setting
+     * 
+     * @return Target column <code>SettingsModel</code>
+     */
+    static SettingsModelString createTargetColumnSettings(
+            final SettingsModelString filenamehandling) {
+        SettingsModelString namecolumn =
+                new SettingsModelString("targetcolumn", "");
+        String handling = filenamehandling.getStringValue();
+        namecolumn.setEnabled(handling.equals(FilenameHandling.FROMCOLUMN
+                .getName()));
+        return namecolumn;
+    }
+
+    /**
      * Factory method for the output directory setting.
      * 
      * 
@@ -92,36 +122,6 @@ final class SettingsFactory {
         directory.setEnabled(handling.equals(FilenameHandling.GENERATE
                 .getName()));
         return directory;
-    }
-
-    /**
-     * Factory method for the filename handling setting.
-     * 
-     * 
-     * @return Filename handling <code>SettingsModel</code>
-     */
-    static SettingsModelString createFilenameHandlingSettings() {
-        return new SettingsModelString("filenamehandling",
-                FilenameHandling.GENERATE.getName());
-    }
-
-    /**
-     * Factory method for the name column setting.
-     * 
-     * 
-     * @param filenamehandling <code>SettingsModel</code> for the filename
-     *            handling setting
-     * 
-     * @return Name column <code>SettingsModel</code>
-     */
-    static SettingsModelString createNameColumnSettings(
-            final SettingsModelString filenamehandling) {
-        SettingsModelString namecolumn =
-                new SettingsModelString("namecolumn", "");
-        String handling = filenamehandling.getStringValue();
-        namecolumn.setEnabled(handling.equals(FilenameHandling.FROMCOLUMN
-                .getName()));
-        return namecolumn;
     }
 
     /**
@@ -144,6 +144,16 @@ final class SettingsFactory {
     }
 
     /**
+     * Factory method for the remove binary object column setting.
+     * 
+     * 
+     * @return Remove binary object <code>SettingsModel</code>
+     */
+    static SettingsModelBoolean createRemoveBinaryObjectColumnSettings() {
+        return new SettingsModelBoolean("removebinaryobjectcolumn", true);
+    }
+
+    /**
      * Factory method for the if exists setting.
      * 
      * 
@@ -152,16 +162,6 @@ final class SettingsFactory {
     static SettingsModelString createIfExistsSettings() {
         return new SettingsModelString("ifexists",
                 OverwritePolicy.ABORT.getName());
-    }
-
-    /**
-     * Factory method for the remove binary object column setting.
-     * 
-     * 
-     * @return Remove binary object <code>SettingsModel</code>
-     */
-    static SettingsModelBoolean createRemoveBinaryObjectColumnSettings() {
-        return new SettingsModelBoolean("removebinaryobjectcolumn", true);
     }
 
 }

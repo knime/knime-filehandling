@@ -59,7 +59,7 @@ import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "Unzip" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -79,7 +79,7 @@ class UnzipNodeDialog extends DefaultNodeSettingsPane {
     private FlowVariableModel m_targetdirectoryFvm;
 
     /**
-     * New pane for configuring the Unzip node dialog.
+     * New pane for configuring the node dialog.
      */
     protected UnzipNodeDialog() {
         super();

@@ -54,6 +54,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * Represents a MIME-Type and its registered extensions.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */

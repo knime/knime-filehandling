@@ -66,7 +66,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "Zip" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -77,32 +77,40 @@ class ZipNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_target;
 
+    private SettingsModelIntegerBounded m_compressionlevel;
+
     private SettingsModelString m_pathhandling;
 
     private SettingsModelString m_prefix;
 
     private SettingsModelString m_ifexists;
 
-    private SettingsModelIntegerBounded m_compressionlevel;
-
     private FlowVariableModel m_targetFvm;
 
     private FlowVariableModel m_prefixFvm;
 
     /**
-     * New pane for configuring the Zip node dialog.
+     * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
     protected ZipNodeDialog() {
         super();
         m_locationcolumn = SettingsFactory.createLocationColumnSettings();
         m_target = SettingsFactory.createTargetSettings();
+        m_compressionlevel = SettingsFactory.createCompressionLevelSettings();
         m_pathhandling = SettingsFactory.createPathHandlingSettings();
         m_prefix = SettingsFactory.createPrefixSettings(m_pathhandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
-        m_compressionlevel = SettingsFactory.createCompressionLevelSettings();
         m_targetFvm = super.createFlowVariableModel(m_target);
         m_prefixFvm = super.createFlowVariableModel(m_prefix);
+        // Enable/disable prefix setting based on the path handling
+        m_pathhandling.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                m_prefix.setEnabled(isPrefixEnabled());
+            }
+        });
+        // Enable/disable prefix setting based on the flow variable model
         m_prefix.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
@@ -123,13 +131,6 @@ class ZipNodeDialog extends DefaultNodeSettingsPane {
         createNewGroup("Path handling");
         addDialogComponent(new DialogComponentButtonGroup(m_pathhandling,
                 false, "", PathHandling.getAllSettings()));
-        // Enable/disable prefix setting based on the path handling
-        m_pathhandling.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                m_prefix.setEnabled(isPrefixEnabled());
-            }
-        });
         // Prefix
         addDialogComponent(new DialogComponentFileChooser(m_prefix,
                 "prefixHistory", JFileChooser.OPEN_DIALOG, true, m_prefixFvm));

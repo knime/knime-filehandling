@@ -53,9 +53,11 @@ package org.knime.base.filehandling.extracturiinfo;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -80,7 +82,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * This is the model implementation of extract URI info.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -135,12 +137,11 @@ class ExtractURIInfoNodeModel extends NodeModel {
     }
 
     /**
-     * Create a rearranger that either replaces the selected column with its
-     * string counterpart, or appends a new column.
+     * Create a rearranger that appends the selected information.
      * 
      * 
      * @param inSpec Specification of the input table
-     * @return Rearranger that will replace the selected columns
+     * @return Rearranger that will append the selected columns
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec)
@@ -218,7 +219,7 @@ class ExtractURIInfoNodeModel extends NodeModel {
      */
     private DataCell[] createStringCells(final DataRow row,
             final DataTableSpec spec, final int newCols) {
-        List<DataCell> cells = new LinkedList<DataCell>();
+        List<DataCell> cells = new ArrayList<DataCell>(newCols);
         // Get URI cell
         String column = m_columnselection.getStringValue();
         DataCell oldCell = row.getCell(spec.findColumnIndex(column));
@@ -229,7 +230,7 @@ class ExtractURIInfoNodeModel extends NodeModel {
                 cells.add(DataType.getMissingCell());
             }
         } else {
-            // URI to string
+            // Get URI
             URI uri = ((URIDataValue)oldCell).getURIContent().getURI();
             // Extract configured attributes
             if (m_authority.getBooleanValue()) {
@@ -281,20 +282,12 @@ class ExtractURIInfoNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
+    @SuppressWarnings("unchecked")
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
         String selectedColumn = m_columnselection.getStringValue();
-        int selectedColumnIndex = inSpec.findColumnIndex(selectedColumn);
-        // Does the column exist?
-        if (selectedColumnIndex < 0) {
-            throw new InvalidSettingsException("Column not set");
-        }
-        // Is the type of the column correct?
-        DataType type = inSpec.getColumnSpec(selectedColumnIndex).getType();
-        if (!type.isCompatible(URIDataValue.class)) {
-            throw new InvalidSettingsException("Column \"" + selectedColumn
-                    + "\" is not of the type URI");
-        }
+        NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn,
+                URIDataValue.class);
     }
 
     /**

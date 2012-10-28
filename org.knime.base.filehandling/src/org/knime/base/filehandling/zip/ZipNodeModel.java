@@ -82,7 +82,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * This is the model implementation of Zip.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -96,13 +96,13 @@ class ZipNodeModel extends NodeModel {
 
     private SettingsModelString m_target;
 
+    private SettingsModelIntegerBounded m_compressionlevel;
+
     private SettingsModelString m_pathhandling;
 
     private SettingsModelString m_prefix;
 
     private SettingsModelString m_ifexists;
-
-    private SettingsModelIntegerBounded m_compressionlevel;
 
     /**
      * Constructor for the node model.
@@ -111,10 +111,10 @@ class ZipNodeModel extends NodeModel {
         super(1, 0);
         m_locationcolumn = SettingsFactory.createLocationColumnSettings();
         m_target = SettingsFactory.createTargetSettings();
+        m_compressionlevel = SettingsFactory.createCompressionLevelSettings();
         m_pathhandling = SettingsFactory.createPathHandlingSettings();
         m_prefix = SettingsFactory.createPrefixSettings(m_pathhandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
-        m_compressionlevel = SettingsFactory.createCompressionLevelSettings();
     }
 
     /**
@@ -487,10 +487,10 @@ class ZipNodeModel extends NodeModel {
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_locationcolumn.saveSettingsTo(settings);
         m_target.saveSettingsTo(settings);
-        m_ifexists.saveSettingsTo(settings);
-        m_prefix.saveSettingsTo(settings);
-        m_pathhandling.saveSettingsTo(settings);
         m_compressionlevel.saveSettingsTo(settings);
+        m_pathhandling.saveSettingsTo(settings);
+        m_prefix.saveSettingsTo(settings);
+        m_ifexists.saveSettingsTo(settings);
     }
 
     /**
@@ -501,10 +501,10 @@ class ZipNodeModel extends NodeModel {
             throws InvalidSettingsException {
         m_locationcolumn.loadSettingsFrom(settings);
         m_target.loadSettingsFrom(settings);
-        m_ifexists.loadSettingsFrom(settings);
-        m_prefix.loadSettingsFrom(settings);
-        m_pathhandling.loadSettingsFrom(settings);
         m_compressionlevel.loadSettingsFrom(settings);
+        m_pathhandling.loadSettingsFrom(settings);
+        m_prefix.loadSettingsFrom(settings);
+        m_ifexists.loadSettingsFrom(settings);
     }
 
     /**
@@ -515,10 +515,10 @@ class ZipNodeModel extends NodeModel {
             throws InvalidSettingsException {
         m_locationcolumn.validateSettings(settings);
         m_target.validateSettings(settings);
-        m_ifexists.validateSettings(settings);
-        m_prefix.validateSettings(settings);
-        m_pathhandling.validateSettings(settings);
         m_compressionlevel.validateSettings(settings);
+        m_pathhandling.validateSettings(settings);
+        m_prefix.validateSettings(settings);
+        m_ifexists.validateSettings(settings);
     }
 
     /**

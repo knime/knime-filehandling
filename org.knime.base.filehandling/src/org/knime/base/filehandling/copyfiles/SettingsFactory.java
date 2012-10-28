@@ -96,22 +96,6 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the output directory setting.
-     * 
-     * 
-     * @param filenameHandling Filename handling setting
-     * @return Output directory <code>SettingsModel</code>
-     */
-    static SettingsModelString createOutputDirectorySettings(
-            final SettingsModelString filenameHandling) {
-        SettingsModelString directory =
-                new SettingsModelString("outputdirectory", "");
-        directory.setEnabled(filenameHandling.getStringValue().equals(
-                FilenameHandling.SOURCENAME.getName()));
-        return directory;
-    }
-
-    /**
      * Factory method for the target column setting.
      * 
      * 
@@ -125,6 +109,22 @@ final class SettingsFactory {
         targetcolumn.setEnabled(filenameHandling.getStringValue().equals(
                 FilenameHandling.FROMCOLUMN.getName()));
         return targetcolumn;
+    }
+
+    /**
+     * Factory method for the output directory setting.
+     * 
+     * 
+     * @param filenameHandling Filename handling setting
+     * @return Output directory <code>SettingsModel</code>
+     */
+    static SettingsModelString createOutputDirectorySettings(
+            final SettingsModelString filenameHandling) {
+        SettingsModelString directory =
+                new SettingsModelString("outputdirectory", "");
+        directory.setEnabled(filenameHandling.getStringValue().equals(
+                FilenameHandling.SOURCENAME.getName()));
+        return directory;
     }
 
     /**

@@ -57,6 +57,7 @@ import java.nio.file.Files;
 import java.util.Calendar;
 
 import org.apache.commons.io.FileUtils;
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -83,7 +84,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * This is the model implementation of Files to Binary Objects.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -117,12 +118,12 @@ class FileMetaInfoNodeModel extends NodeModel {
     }
 
     /**
-     * Create a rearranger that adds the binary objects to the table.
+     * Create a rearranger that adds the meta information to the table.
      * 
      * 
      * @param inSpec Specification of the input table
      * @param exec Context of this execution
-     * @return Rearranger that will add a binary object column
+     * @return Rearranger that will add the meta information columns
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
@@ -164,22 +165,23 @@ class FileMetaInfoNodeModel extends NodeModel {
      * one of the rows cells. Will return missing cells if the file does not
      * exist.
      * 
-     * @param row Row with the location cell in it
+     * @param row Row with the URI cell in it
      * @param uriIndex Index of the URI cell
      * @return Data cells with the attributes of the file
      */
     private DataCell[] inspectFile(final DataRow row, final int uriIndex) {
         boolean abort = m_abortifnotlocal.getBooleanValue();
         DataCell[] cells = new DataCell[Attributes.getAllAttributes().length];
-        // Assume missing cells
+        // Assume missing cell or unreachable file
         for (int i = 0; i < cells.length; i++) {
             cells[i] = DataType.getMissingCell();
         }
         if (!row.getCell(uriIndex).isMissing()) {
-            // Get location
+            // Get URI
             URIDataValue value = (URIDataValue)row.getCell(uriIndex);
             URI uri = value.getURIContent().getURI();
             String scheme = uri.getScheme();
+            // Check scheme if selected
             if (abort && (scheme == null || !scheme.equals("file"))) {
                 throw new RuntimeException("The URI \"" + uri.toString()
                         + "\" does have the scheme \"" + scheme
@@ -266,23 +268,12 @@ class FileMetaInfoNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
+    @SuppressWarnings("unchecked")
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
-        // Is the uri column set?
-        if (m_uricolumn.getStringValue().equals("")) {
-            throw new InvalidSettingsException("URI column not set");
-        }
-        // Does the URI column setting reference to an existing column?
-        int columnIndex = inSpec.findColumnIndex(m_uricolumn.getStringValue());
-        if (columnIndex < 0) {
-            throw new InvalidSettingsException("URI column not set");
-        }
-        // Is the URI column setting referencing to a column of the type
-        // string value?
-        DataType type = inSpec.getColumnSpec(columnIndex).getType();
-        if (!type.isCompatible(URIDataValue.class)) {
-            throw new InvalidSettingsException("URI column not set");
-        }
+        String uricolumn = m_uricolumn.getStringValue();
+        NodeUtils.checkColumnSelection(inSpec, "URI", uricolumn,
+                URIDataValue.class);
     }
 
     /**

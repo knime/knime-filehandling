@@ -9,12 +9,14 @@
 
 	<fullDescription>
 		<intro>
-			This node writes the files of a table with binary objects. It
+			This node writes files from a table with binary objects. It
 			will append the URIs to the files to the output table.
 		</intro>
 
 
-		<option name="Binary object column">Column with binary objects.</option>
+		<option name="Binary object column">
+			Column with binary objects.
+		</option>
 		<option name="Filenames...">
 			<b>From column</b>
 			<br />
@@ -24,12 +26,17 @@
 			<br />
 			The names will be generated using a pattern.
 		</option>
-		<option name="Name column">The column where the filenames can be found
+		<option name="Target column">
+			URI column with the target path.
 		</option>
-		<option name="Output directory">The directory where the files will be put</option>
-		<option name="Name pattern">The pattern that will be used to generate the
-			filenames. The ? will be replaced by the index of the corresponding
-			row.
+		<option name="Output directory">
+			The directory where the files will be put.
+		</option>
+		<option name="Name pattern">
+			The pattern that will be used to generate the
+			filenames. The ? will be
+			replaced by the index of the corresponding
+			row. (Starting with 0)
 		</option>
 		<option name="Remove binary object column">
 			Removes the column with the binary objects from
@@ -40,7 +47,7 @@
 			<br />
 			<b>Overwrite</b>
 			<br />
-			Overwrite the existing column.
+			Overwrite the existing file.
 			<br />
 			<b>Abort</b>
 			<br />
@@ -51,14 +58,14 @@
 	<ports>
 		<inPort name="Input table" index="0">
 			Table that contains the binary
-			objects that will be written. Filenames for the output files can also
+			objects that will be written. Target paths for the output files can
+			also
 			be used, if they are available in the table.
 		</inPort>
 		<outPort name="Output table" index="0">
-			Input table with the
-			URI to
-			each file. The URI will only be appended if it is not already in the
-			table.
+			Input table with the URI to
+			each file. The URI will only be appended if it is not already present
+			in the table.
 		</outPort>
 	</ports>
 </knimeNode>

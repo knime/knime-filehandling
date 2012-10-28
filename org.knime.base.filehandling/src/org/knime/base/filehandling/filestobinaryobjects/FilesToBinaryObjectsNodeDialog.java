@@ -58,7 +58,7 @@ import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "Files to Binary Objects" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -72,7 +72,7 @@ class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
     private SettingsModelString m_replace;
 
     /**
-     * New pane for configuring the Files to Binary Objects node dialog.
+     * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
     protected FilesToBinaryObjectsNodeDialog() {
@@ -80,7 +80,7 @@ class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
-        // Location column
+        // URI column
         addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
                 "URI column", 0, URIDataValue.class));
         createNewGroup("New column...");

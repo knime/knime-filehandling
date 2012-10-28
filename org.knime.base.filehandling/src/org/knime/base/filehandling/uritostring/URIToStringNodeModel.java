@@ -53,6 +53,7 @@ package org.knime.base.filehandling.uritostring;
 import java.io.File;
 import java.io.IOException;
 
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -75,7 +76,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * This is the model implementation of URI to string.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -84,9 +85,9 @@ class URIToStringNodeModel extends NodeModel {
 
     private SettingsModelString m_columnselection;
 
-    private SettingsModelString m_replace;
-
     private SettingsModelString m_columnname;
+
+    private SettingsModelString m_replace;
 
     /**
      * Constructor for the node model.
@@ -94,8 +95,8 @@ class URIToStringNodeModel extends NodeModel {
     protected URIToStringNodeModel() {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_replace = SettingsFactory.createReplacePolicySettings();
         m_columnname = SettingsFactory.createColumnNameSettings();
+        m_replace = SettingsFactory.createReplacePolicySettings();
     }
 
     /**
@@ -117,16 +118,18 @@ class URIToStringNodeModel extends NodeModel {
      * 
      * 
      * @param inSpec Specification of the input table
-     * @return Rearranger that will replace the selected columns
+     * @return Rearranger that will append a new column or replace the selected
+     *         column
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec)
             throws InvalidSettingsException {
+        // Check settings for correctness
+        checkSettings(inSpec);
+        // Get replace setting
         boolean replace =
                 m_replace.getStringValue().equals(
                         ReplacePolicy.REPLACE.getName());
-        // Check settings for correctness
-        checkSettings(inSpec);
         // Set column name
         String columnName =
                 DataTableSpec.getUniqueColumnName(inSpec,
@@ -163,6 +166,7 @@ class URIToStringNodeModel extends NodeModel {
     private DataCell createStringCell(final DataRow row,
             final DataTableSpec spec) {
         String column = m_columnselection.getStringValue();
+        // Assume missing cell
         DataCell cell = DataType.getMissingCell();
         DataCell oldCell = row.getCell(spec.findColumnIndex(column));
         // Is the cell missing?
@@ -182,20 +186,12 @@ class URIToStringNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
+    @SuppressWarnings("unchecked")
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
         String selectedColumn = m_columnselection.getStringValue();
-        int selectedColumnIndex = inSpec.findColumnIndex(selectedColumn);
-        // Does the column exist?
-        if (selectedColumnIndex < 0) {
-            throw new InvalidSettingsException("Column not set");
-        }
-        // Is the type of the column correct?
-        DataType type = inSpec.getColumnSpec(selectedColumnIndex).getType();
-        if (!type.isCompatible(URIDataValue.class)) {
-            throw new InvalidSettingsException("Column \"" + selectedColumn
-                    + "\" is not of the type URI");
-        }
+        NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn,
+                URIDataValue.class);
     }
 
     /**
@@ -223,8 +219,8 @@ class URIToStringNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_columnselection.saveSettingsTo(settings);
-        m_replace.saveSettingsTo(settings);
         m_columnname.saveSettingsTo(settings);
+        m_replace.saveSettingsTo(settings);
     }
 
     /**
@@ -234,8 +230,8 @@ class URIToStringNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.loadSettingsFrom(settings);
-        m_replace.loadSettingsFrom(settings);
         m_columnname.loadSettingsFrom(settings);
+        m_replace.loadSettingsFrom(settings);
     }
 
     /**
@@ -245,8 +241,8 @@ class URIToStringNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.validateSettings(settings);
-        m_replace.validateSettings(settings);
         m_columnname.validateSettings(settings);
+        m_replace.validateSettings(settings);
     }
 
     /**

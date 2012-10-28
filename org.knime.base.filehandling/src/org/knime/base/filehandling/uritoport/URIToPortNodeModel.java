@@ -55,10 +55,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.DataType;
 import org.knime.core.data.uri.URIContent;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.data.uri.URIPortObject;
@@ -77,7 +77,7 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
 /**
- * This is the model implementation of URI to port.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -106,7 +106,7 @@ class URIToPortNodeModel extends NodeModel {
         int index =
                 data.getSpec().findColumnIndex(m_uricolumn.getStringValue());
         // Create list of uris
-        List<URIContent> uris = new ArrayList<URIContent>();
+        List<URIContent> uris = new ArrayList<URIContent>(data.getRowCount());
         for (DataRow row : data) {
             DataCell cell = row.getCell(index);
             if (!cell.isMissing()) {
@@ -125,20 +125,12 @@ class URIToPortNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
+    @SuppressWarnings("unchecked")
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
-        String column = m_uricolumn.getStringValue();
-        int index = inSpec.findColumnIndex(column);
-        // Does the column exist?
-        if (index < 0) {
-            throw new InvalidSettingsException("URI column not set");
-        }
-        // Is the column of type URI?
-        DataType type = inSpec.getColumnSpec(index).getType();
-        if (!type.isCompatible(URIDataValue.class)) {
-            throw new InvalidSettingsException("Column \"" + column
-                    + "\" is not of the type URI");
-        }
+        String selectedColumn = m_uricolumn.getStringValue();
+        NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn,
+                URIDataValue.class);
     }
 
     /**

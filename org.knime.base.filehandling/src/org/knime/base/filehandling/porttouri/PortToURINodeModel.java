@@ -76,7 +76,7 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
 /**
- * This is the model implementation of URI to port.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -87,7 +87,7 @@ class PortToURINodeModel extends NodeModel {
      * Constructor for the node model.
      */
     protected PortToURINodeModel() {
-        // Table input, URI port output
+        // URI port input, table output
         super(new PortType[]{URIPortObject.TYPE},
                 new PortType[]{BufferedDataTable.TYPE});
     }
@@ -100,7 +100,9 @@ class PortToURINodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
         BufferedDataContainer container =
                 exec.createDataContainer(createOutSpec());
+        // Get list of URIs
         List<URIContent> contents = ((URIPortObject)inData[0]).getURIContents();
+        // Add URIs from list into table
         for (int i = 0; i < contents.size(); i++) {
             DataCell cell = new URIDataCell(contents.get(i));
             container.addRowToTable(new DefaultRow("Row" + i, cell));

@@ -60,7 +60,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "String To URI" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -71,20 +71,20 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelBoolean m_missingfileabort;
 
-    private SettingsModelString m_replace;
-
     private SettingsModelString m_columnname;
 
+    private SettingsModelString m_replace;
+
     /**
-     * New pane for configuring the string to URI node dialog.
+     * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
     protected StringToURINodeDialog() {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
         m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
-        m_replace = SettingsFactory.createReplacePolicySettings();
         m_columnname = SettingsFactory.createColumnNameSettings();
+        m_replace = SettingsFactory.createReplacePolicySettings();
         // Column selection
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_columnselection, "Column selection", 0, StringValue.class));

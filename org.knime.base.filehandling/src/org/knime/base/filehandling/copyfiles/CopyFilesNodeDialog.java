@@ -63,7 +63,7 @@ import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "Copy Files" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -76,16 +76,16 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_filenamehandling;
 
-    private SettingsModelString m_outputdirectory;
-
     private SettingsModelString m_targetcolumn;
+
+    private SettingsModelString m_outputdirectory;
 
     private SettingsModelString m_ifexists;
 
     private FlowVariableModel m_outputdirectoryFvm;
 
     /**
-     * New pane for configuring the copy files node dialog.
+     * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
     protected CopyFilesNodeDialog() {
@@ -93,11 +93,11 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
         m_copyormove = SettingsFactory.createCopyOrMoveSettings();
         m_sourcecolumn = SettingsFactory.createSourceColumnSettings();
         m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
+        m_targetcolumn =
+                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
         m_outputdirectory =
                 SettingsFactory
                         .createOutputDirectorySettings(m_filenamehandling);
-        m_targetcolumn =
-                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
         m_ifexists = SettingsFactory.createIfExistsSettings();
         m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
         // Enable/disable components based on the filename handling

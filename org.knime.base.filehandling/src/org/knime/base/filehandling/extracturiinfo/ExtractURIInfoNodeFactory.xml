@@ -4,7 +4,7 @@
 	<name>Extract URI Info</name>
 
 	<shortDescription>
-		Extract information contained in an URI column.
+		Extract information contained in an URI.
 	</shortDescription>
 
 	<fullDescription>
@@ -13,22 +13,33 @@
 		</intro>
 
 
-		<option name="Authority">Append column with authority information of the
-			URI.</option>
-		<option name="Fragment">Append column with fragment information of the
-			URI.</option>
-		<option name="Host">Append column with host information of the URI.
+		<option name="Authority">
+			Append column with authority information of the
+			URI.
 		</option>
-		<option name="Path">Append column with path information of the URI.
+		<option name="Fragment">
+			Append column with fragment information of the
+			URI.
 		</option>
-		<option name="Port">Append column with port information of the URI.
+		<option name="Host">
+			Append column with host information of the URI.
 		</option>
-		<option name="Query">Append column with query information of the URI.
+		<option name="Path">
+			Append column with path information of the URI.
 		</option>
-		<option name="Scheme">Append column with scheme information of the URI.
+		<option name="Port">
+			Append column with port information of the URI.
 		</option>
-		<option name="User info">Append column with user info information of the
-			URI.</option>
+		<option name="Query">
+			Append column with query information of the URI.
+		</option>
+		<option name="Scheme">
+			Append column with scheme information of the URI.
+		</option>
+		<option name="User">
+			Append column with user information of the
+			URI.
+		</option>
 	</fullDescription>
 
 	<ports>

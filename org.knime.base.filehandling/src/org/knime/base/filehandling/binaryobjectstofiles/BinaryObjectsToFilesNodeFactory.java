@@ -55,7 +55,7 @@ import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
 
 /**
- * <code>NodeFactory</code> for the "Binary Objects to Files" Node.
+ * <code>NodeFactory</code> for node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz

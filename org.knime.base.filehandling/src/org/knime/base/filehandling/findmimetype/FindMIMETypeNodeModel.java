@@ -53,6 +53,7 @@ package org.knime.base.filehandling.findmimetype;
 import java.io.File;
 import java.io.IOException;
 
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.mime.MIMEMap;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -76,7 +77,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * This is the model implementation of find MIME-Type.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -179,20 +180,12 @@ class FindMIMETypeNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
+    @SuppressWarnings("unchecked")
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
         String selectedColumn = m_columnselection.getStringValue();
-        int selectedColumnIndex = inSpec.findColumnIndex(selectedColumn);
-        // Does the column exist?
-        if (selectedColumnIndex < 0) {
-            throw new InvalidSettingsException("Column not set");
-        }
-        // Is the type of the column correct?
-        DataType type = inSpec.getColumnSpec(selectedColumnIndex).getType();
-        if (!type.isCompatible(URIDataValue.class)) {
-            throw new InvalidSettingsException("Column \"" + selectedColumn
-                    + "\" is not of the type URI");
-        }
+        NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn,
+                URIDataValue.class);
     }
 
     /**

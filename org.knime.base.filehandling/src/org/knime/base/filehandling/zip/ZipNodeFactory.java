@@ -55,7 +55,7 @@ import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
 
 /**
- * <code>NodeFactory</code> for the "Zip" Node.
+ * <code>NodeFactory</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz

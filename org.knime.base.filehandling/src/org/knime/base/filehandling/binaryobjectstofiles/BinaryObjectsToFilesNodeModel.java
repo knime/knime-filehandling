@@ -60,6 +60,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -86,7 +87,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * This is the model implementation of Files to Binary Objects.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -95,17 +96,17 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     private SettingsModelString m_bocolumn;
 
-    private SettingsModelString m_outputdirectory;
-
     private SettingsModelString m_filenamehandling;
 
-    private SettingsModelString m_namecolumn;
+    private SettingsModelString m_targetcolumn;
+
+    private SettingsModelString m_outputdirectory;
 
     private SettingsModelString m_namepattern;
 
-    private SettingsModelString m_ifexists;
-
     private SettingsModelBoolean m_removebocolumn;
+
+    private SettingsModelString m_ifexists;
 
     /**
      * Constructor for the node model.
@@ -114,16 +115,16 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         super(1, 1);
         m_bocolumn = SettingsFactory.createBinaryObjectColumnSettings();
         m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
-        m_namecolumn =
-                SettingsFactory.createNameColumnSettings(m_filenamehandling);
+        m_targetcolumn =
+                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
         m_outputdirectory =
                 SettingsFactory
                         .createOutputDirectorySettings(m_filenamehandling);
         m_namepattern =
                 SettingsFactory.createNamePatternSettings(m_filenamehandling);
-        m_ifexists = SettingsFactory.createIfExistsSettings();
         m_removebocolumn =
                 SettingsFactory.createRemoveBinaryObjectColumnSettings();
+        m_ifexists = SettingsFactory.createIfExistsSettings();
     }
 
     /**
@@ -135,12 +136,14 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         BufferedDataTable out = null;
         // HashSet for duplicate checking and cleanup
         Set<String> filenames = new HashSet<String>();
+        // Only append if no target column is used (target column would be
+        // identical)
         boolean appenduricolumn =
-                m_filenamehandling.getStringValue().equals(
-                        FilenameHandling.GENERATE.getName());
+                !m_filenamehandling.getStringValue().equals(
+                        FilenameHandling.FROMCOLUMN.getName());
         try {
             // If the columns do not get appended the create file method will
-            // not be called so it has to happen manually
+            // not be called by the rearranger so it has to happen manually
             if (!appenduricolumn) {
                 int rows = inData[0].getRowCount();
                 int i = 0;
@@ -192,8 +195,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @param filenames Set of files that have already been created
      * @param exec Context of this execution
-     * @return Rearranger that will add columns for the location and URL of the
-     *         created files.
+     * @return Rearranger that will add a column for the URIs to the created
+     *         files (if necessary).
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
@@ -203,11 +206,13 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec colSpec;
+        // Only append if no target column is used (target column would be
+        // identical)
         boolean appenduricolumn =
-                m_filenamehandling.getStringValue().equals(
-                        FilenameHandling.GENERATE.getName());
-        // Append URI column if selected. This will also call the
-        // create file method
+                !m_filenamehandling.getStringValue().equals(
+                        FilenameHandling.FROMCOLUMN.getName());
+        // Append URI column if filehandling is not from column. This will also
+        // call the create file method
         if (appenduricolumn) {
             // Create column for the URI of the files
             String uriColName =
@@ -231,7 +236,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 public void setProgress(final int curRowNr, final int rowCount,
                         final RowKey lastKey, final ExecutionMonitor exec2) {
                     super.setProgress(curRowNr, rowCount, lastKey, exec2);
-                    // Save the row for pattern creation
+                    // Save the row number for pattern creation
                     m_rownr = curRowNr;
                 }
             };
@@ -251,43 +256,18 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
+    @SuppressWarnings("unchecked")
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
-        // Is the binary object column set?
-        if (m_bocolumn.getStringValue().equals("")) {
-            throw new InvalidSettingsException("Binary object column not set");
-        }
-        // Does the binary object column setting reference to an existing
-        // column?
-        int columnIndex = inSpec.findColumnIndex(m_bocolumn.getStringValue());
-        if (columnIndex < 0) {
-            throw new InvalidSettingsException("Binary object column not set");
-        }
-        // Is the binary object column setting referencing to a column of the
-        // type binary object data value?
-        DataType type = inSpec.getColumnSpec(columnIndex).getType();
-        if (!type.isCompatible(BinaryObjectDataValue.class)) {
-            throw new InvalidSettingsException("Binary object column not set");
-        }
+        String bocolumn = m_bocolumn.getStringValue();
+        NodeUtils.checkColumnSelection(inSpec, "Binary object", bocolumn,
+                BinaryObjectDataValue.class);
         // Check settings only if filename handling is from column
         if (m_filenamehandling.getStringValue().equals(
                 FilenameHandling.FROMCOLUMN.getName())) {
-            // Is the name column set?
-            if (m_namecolumn.getStringValue().equals("")) {
-                throw new InvalidSettingsException("Name column not set");
-            }
-            // Does the name column setting reference to an existing column?
-            columnIndex = inSpec.findColumnIndex(m_namecolumn.getStringValue());
-            if (columnIndex < 0) {
-                throw new InvalidSettingsException("Name column not set");
-            }
-            // Is the name column setting referencing to a column of the type
-            // URI data value?
-            type = inSpec.getColumnSpec(columnIndex).getType();
-            if (!type.isCompatible(URIDataValue.class)) {
-                throw new InvalidSettingsException(
-                        "Binary object column not set");
-            }
+            String targetcolumn = m_targetcolumn.getStringValue();
+            NodeUtils.checkColumnSelection(inSpec, "Target", targetcolumn,
+                    URIDataValue.class);
         }
         // Check settings only if filename handling is generate
         if (m_filenamehandling.getStringValue().equals(
@@ -316,7 +296,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * the row. The filename is either also extracted from the row or generated
      * by using the set pattern and the rows number.
      * 
-     * @param row Row with the needet data
+     * @param row Row with the needed data
      * @param rowNr Number of the row in the table
      * @param filenames Set of files that have already been created
      * @param inSpec Specification of the input table
@@ -339,19 +319,20 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         if (!row.getCell(boIndex).isMissing()) {
             if (filenameHandling.equals(fromColumn)) {
                 // Get filename from table
-                int nameIndex =
-                        inSpec.findColumnIndex(m_namecolumn.getStringValue());
-                if (row.getCell(nameIndex).isMissing()) {
+                int targetIndex =
+                        inSpec.findColumnIndex(m_targetcolumn.getStringValue());
+                if (row.getCell(targetIndex).isMissing()) {
                     throw new RuntimeException("Filename in row \""
                             + row.getKey() + "\" is missing");
                 }
                 URI targetUri =
-                        ((URIDataCell)(row.getCell(nameIndex))).getURIContent()
-                                .getURI();
+                        ((URIDataCell)(row.getCell(targetIndex)))
+                                .getURIContent().getURI();
                 if (!targetUri.getScheme().equals("file")) {
                     throw new RuntimeException(
                             "This node only supports the protocol \"file\"");
                 }
+                // Absolute path in filename, no preceding directory
                 filename = targetUri.getPath();
                 outputDirectory = "";
             }
@@ -364,10 +345,11 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             try {
                 File file = new File(outputDirectory, filename);
                 // Check if a file with the same name has already been created
+                // (only possible with use of the target column)
                 if (filenames.contains(file.getAbsolutePath())) {
                     throw new RuntimeException("Duplicate entry \""
                             + file.getAbsolutePath()
-                            + "\" in the filenames column");
+                            + "\" in the target column");
                 }
                 // Check if a file with the same name already exists (but was
                 // not created by this execution)
@@ -439,12 +421,12 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_bocolumn.saveSettingsTo(settings);
-        m_outputdirectory.saveSettingsTo(settings);
         m_filenamehandling.saveSettingsTo(settings);
-        m_namecolumn.saveSettingsTo(settings);
+        m_targetcolumn.saveSettingsTo(settings);
+        m_outputdirectory.saveSettingsTo(settings);
         m_namepattern.saveSettingsTo(settings);
-        m_ifexists.saveSettingsTo(settings);
         m_removebocolumn.saveSettingsTo(settings);
+        m_ifexists.saveSettingsTo(settings);
     }
 
     /**
@@ -454,12 +436,12 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_bocolumn.loadSettingsFrom(settings);
-        m_outputdirectory.loadSettingsFrom(settings);
         m_filenamehandling.loadSettingsFrom(settings);
-        m_namecolumn.loadSettingsFrom(settings);
+        m_targetcolumn.loadSettingsFrom(settings);
+        m_outputdirectory.loadSettingsFrom(settings);
         m_namepattern.loadSettingsFrom(settings);
-        m_ifexists.loadSettingsFrom(settings);
         m_removebocolumn.loadSettingsFrom(settings);
+        m_ifexists.loadSettingsFrom(settings);
     }
 
     /**
@@ -469,12 +451,12 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_bocolumn.validateSettings(settings);
-        m_outputdirectory.validateSettings(settings);
         m_filenamehandling.validateSettings(settings);
-        m_namecolumn.validateSettings(settings);
+        m_targetcolumn.validateSettings(settings);
+        m_outputdirectory.validateSettings(settings);
         m_namepattern.validateSettings(settings);
-        m_ifexists.validateSettings(settings);
         m_removebocolumn.validateSettings(settings);
+        m_ifexists.validateSettings(settings);
     }
 
     /**

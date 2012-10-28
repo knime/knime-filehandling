@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
 <knimeNode icon="./stringtouri.png" type="Manipulator">
-	<name>String To URI</name>
+	<name>String to URI</name>
 
 	<shortDescription>
 		Convert a string column into an URI column.
@@ -14,26 +14,28 @@
 		</intro>
 
 
-		<option name="Column selection">Column that will be converted. It has to
+		<option name="Column selection">
+			Column that will be converted. It has to
 			contain a
-			string with the correct URI syntax.
+			string with correct URI
+			syntax.
 		</option>
-		<option name="String represents...">
-			<b>File path</b>
-			<br />
-			Input string represents a file path (e.g. "c:\temp\file.dat").
-			<br />
-			<b>URI</b>
-			<br />
-			Input string represents an URI (e.g. "file:/c:/temp/file.dat").
-		</option>
-		<option name="Fail if file does not exist (only applies to local files)">Checks if the files referenced by the created URIs
+		<option name="Fail if file does not exist (only applies to local files)">
+			Checks if the files referenced by the created URIs
 			are existing and will abort if one is not.
 		</option>
-		<option name="Append column">Does append the URI column to the table instead of
-			replacing the selected column.
+		<option name="New column name">
+			Name of the created URI column.
 		</option>
-		<option name="Appended column name">Name of the appended column</option>
+		<option name="Append or replace">
+			<b>Append</b>
+			<br />
+			Does append the new URI column to the table.
+			<br />
+			<b>Replace</b>
+			<br />
+			Does replace the selected column with the new URI column.
+		</option>
 	</fullDescription>
 
 	<ports>

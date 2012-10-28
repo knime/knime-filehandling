@@ -55,7 +55,7 @@ import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
 
 /**
- * <code>NodeFactory</code> for the "Extract URI Info" Node.
+ * <code>NodeFactory</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz

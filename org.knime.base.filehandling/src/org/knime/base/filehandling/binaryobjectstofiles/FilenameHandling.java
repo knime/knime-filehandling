@@ -59,7 +59,7 @@ package org.knime.base.filehandling.binaryobjectstofiles;
 enum FilenameHandling {
 
     /**
-     * Use name column.
+     * Use target column.
      */
     FROMCOLUMN("From column"),
 

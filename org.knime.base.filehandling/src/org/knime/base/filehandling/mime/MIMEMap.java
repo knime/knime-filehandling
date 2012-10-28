@@ -194,7 +194,7 @@ public final class MIMEMap {
 
     /**
      * Initializes the mime map if it has not been initialized before. Should be
-     * could before every operation on <code>mimeMap</code>.
+     * called before every operation on <code>mimeMap</code>.
      */
     private static void init() {
         if (mimeMap == null) {

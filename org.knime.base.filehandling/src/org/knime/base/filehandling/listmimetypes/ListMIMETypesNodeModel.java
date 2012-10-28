@@ -73,7 +73,7 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 
 /**
- * This is the model implementation of Unzip.
+ * This is the model implementation.
  * 
  * 
  * @author Patrick Winter, University of Konstanz

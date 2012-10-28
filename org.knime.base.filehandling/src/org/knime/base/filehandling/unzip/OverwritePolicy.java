@@ -59,12 +59,12 @@ package org.knime.base.filehandling.unzip;
 enum OverwritePolicy {
 
     /**
-     * Overwrite old zip file.
+     * Overwrite old files.
      */
     OVERWRITE("Overwrite"),
 
     /**
-     * Abort if zip file exists.
+     * Abort if a file exists.
      */
     ABORT("Abort");
 

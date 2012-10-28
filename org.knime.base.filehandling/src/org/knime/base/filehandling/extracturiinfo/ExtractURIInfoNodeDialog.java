@@ -58,7 +58,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "Extract URI Info" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -84,7 +84,7 @@ class ExtractURIInfoNodeDialog extends DefaultNodeSettingsPane {
     private SettingsModelBoolean m_userinfo;
 
     /**
-     * New pane for configuring the URI to string node dialog.
+     * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
     protected ExtractURIInfoNodeDialog() {
@@ -117,7 +117,7 @@ class ExtractURIInfoNodeDialog extends DefaultNodeSettingsPane {
         // Scheme
         addDialogComponent(new DialogComponentBoolean(m_scheme, "Scheme"));
         // User info
-        addDialogComponent(new DialogComponentBoolean(m_userinfo, "User info"));
+        addDialogComponent(new DialogComponentBoolean(m_userinfo, "User"));
         closeCurrentGroup();
     }
 }

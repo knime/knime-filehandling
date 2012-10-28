@@ -4,7 +4,7 @@
 	<name>Files to Binary Objects</name>
 
 	<shortDescription>
-		Adds files as binary objects to the table
+		Adds files as binary objects to the table.
 	</shortDescription>
 
 	<fullDescription>
@@ -14,11 +14,21 @@
 		</intro>
 
 
-		<option name="URI column">Column with the path to the files.</option>
-		<option name="Binary object column name">Name for the new column with the binary objects.
+		<option name="URI column">
+			Column with the path to the files.
 		</option>
-		<option name="Replace URI column">The URI column will be replaced by the new binary
-			object column.</option>
+		<option name="New column name">
+			Name for the new column with the binary objects.
+		</option>
+		<option name="Append or replace">
+			<b>Append</b>
+			<br />
+			Does append the new column to the table.
+			<br />
+			<b>Replace</b>
+			<br />
+			Does replace the selected column with the new column.
+		</option>
 	</fullDescription>
 
 	<ports>

@@ -67,7 +67,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeDialog</code> for the "Files to Binary Objects" Node.
+ * <code>NodeDialog</code> for the node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -76,45 +76,45 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_bocolumn;
 
-    private SettingsModelString m_outputdirectory;
-
     private SettingsModelString m_filenamehandling;
 
-    private SettingsModelString m_namecolumn;
+    private SettingsModelString m_targetcolumn;
+
+    private SettingsModelString m_outputdirectory;
 
     private SettingsModelString m_namepattern;
 
-    private SettingsModelString m_ifexists;
-
     private SettingsModelBoolean m_removebocolumn;
+
+    private SettingsModelString m_ifexists;
 
     private FlowVariableModel m_outputdirectoryFvm;
 
     /**
-     * New pane for configuring the Binary Objects to Files node dialog.
+     * New pane for configuring node dialog.
      */
     @SuppressWarnings("unchecked")
     protected BinaryObjectsToFilesNodeDialog() {
         super();
         m_bocolumn = SettingsFactory.createBinaryObjectColumnSettings();
         m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
-        m_namecolumn =
-                SettingsFactory.createNameColumnSettings(m_filenamehandling);
+        m_targetcolumn =
+                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
         m_outputdirectory =
                 SettingsFactory
                         .createOutputDirectorySettings(m_filenamehandling);
         m_namepattern =
                 SettingsFactory.createNamePatternSettings(m_filenamehandling);
-        m_ifexists = SettingsFactory.createIfExistsSettings();
         m_removebocolumn =
                 SettingsFactory.createRemoveBinaryObjectColumnSettings();
+        m_ifexists = SettingsFactory.createIfExistsSettings();
         m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
         // Enable/disable settings according to filename handling
         m_filenamehandling.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
                 String handling = m_filenamehandling.getStringValue();
-                m_namecolumn.setEnabled(handling
+                m_targetcolumn.setEnabled(handling
                         .equals(FilenameHandling.FROMCOLUMN.getName()));
                 m_outputdirectory.setEnabled(isOutputDirectoryEnabled());
                 m_namepattern.setEnabled(handling
@@ -128,9 +128,9 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
         createNewGroup("Filenames...");
         addDialogComponent(new DialogComponentButtonGroup(m_filenamehandling,
                 false, "", FilenameHandling.getAllSettings()));
-        // Name column
-        addDialogComponent(new DialogComponentColumnNameSelection(m_namecolumn,
-                "Name column", 0, false, URIDataValue.class));
+        // Target column
+        addDialogComponent(new DialogComponentColumnNameSelection(
+                m_targetcolumn, "Target column", 0, false, URIDataValue.class));
         // Output directory
         addDialogComponent(new DialogComponentFileChooser(m_outputdirectory,
                 "outputdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
