@@ -51,6 +51,8 @@
 package org.knime.base.filehandling;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 import org.eclipse.core.runtime.FileLocator;
@@ -69,8 +71,6 @@ public final class FilehandlingPlugin extends Plugin {
     // The shared instance
     private static FilehandlingPlugin plugin;
 
-    private String m_pluginRootPath;
-
     /**
      * The constructor.
      */
@@ -87,11 +87,6 @@ public final class FilehandlingPlugin extends Plugin {
     @Override
     public void start(final BundleContext context) throws Exception {
         super.start(context);
-        final URL pluginURL =
-                FileLocator.resolve(FileLocator.find(plugin.getBundle(),
-                        new Path(""), null));
-        final File tmpFile = new File(pluginURL.getPath());
-        m_pluginRootPath = tmpFile.getAbsolutePath();
     }
 
     /**
@@ -116,9 +111,17 @@ public final class FilehandlingPlugin extends Plugin {
     }
 
     /**
-     * @return the absolute root path of this plugin
+     * Opens an input stream to the file, defining the MIME-Types.
+     * 
+     * 
+     * @return Input stream to the MIME-Type file
+     * @throws IOException If the file is unreadable
      */
-    public String getPluginRootPath() {
-        return m_pluginRootPath;
+    public InputStream getMIMETypeStream() throws IOException {
+        final URL pluginURL =
+                FileLocator.resolve(FileLocator.find(plugin.getBundle(),
+                        new Path("resources" + File.separator + "mime.types"),
+                        null));
+        return pluginURL.openStream();
     }
 }

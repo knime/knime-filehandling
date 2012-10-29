@@ -51,10 +51,8 @@
 package org.knime.base.filehandling.mime;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -80,15 +78,6 @@ public final class MIMEMap {
 
     private static final NodeLogger LOGGER = NodeLogger
             .getLogger(MIMEMap.class);
-
-    /**
-     * Path to the resource folder of the project.
-     */
-    private static final String RESOURCEPATH = FilehandlingPlugin.getDefault()
-            .getPluginRootPath()
-            + File.separator
-            + "resources"
-            + File.separator;
 
     private static final String EXTENSIONPOINT_ID =
             "org.knime.base.filehandling.mimetypes";
@@ -152,8 +141,8 @@ public final class MIMEMap {
         List<MIMETypeEntry> entries = new LinkedList<MIMETypeEntry>();
         try {
             BufferedReader reader =
-                    new BufferedReader(new FileReader(new File(RESOURCEPATH,
-                            "mime.types")));
+                    new BufferedReader(new InputStreamReader(FilehandlingPlugin
+                            .getDefault().getMIMETypeStream()));
             String line;
             // Every line is a new MIME-Type
             while ((line = reader.readLine()) != null) {
@@ -200,9 +189,9 @@ public final class MIMEMap {
         if (mimeMap == null) {
             try {
                 mimeMap =
-                        new MimetypesFileTypeMap(new FileInputStream(new File(
-                                RESOURCEPATH, "mime.types")));
-            } catch (FileNotFoundException e) {
+                        new MimetypesFileTypeMap(FilehandlingPlugin
+                                .getDefault().getMIMETypeStream());
+            } catch (IOException e) {
                 // If the file is not readable use default MIME-Types
                 mimeMap = new MimetypesFileTypeMap();
             }
