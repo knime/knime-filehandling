@@ -150,6 +150,7 @@ class ZipNodeModel extends NodeModel {
         boolean isString = type.isCompatible(StringValue.class);
         boolean isURI = type.isCompatible(URIDataValue.class);
         if (isString) {
+            // Add filenames from string column
             for (DataRow row : inData[0]) {
                 if (!row.getCell(index).isMissing()) {
                     StringValue value = (StringValue)row.getCell(index);
@@ -158,6 +159,7 @@ class ZipNodeModel extends NodeModel {
             }
         }
         if (isURI) {
+            // Add filenames from URI column
             for (DataRow row : inData[0]) {
                 if (!row.getCell(index).isMissing()) {
                     URIDataValue value = (URIDataValue)row.getCell(index);
@@ -237,7 +239,7 @@ class ZipNodeModel extends NodeModel {
             // Remove old file
             oldFile.delete();
         } catch (Exception e) {
-            // Close all streams and restore old file if node got aborted
+            // Close streams and restore old file if node got aborted
             if (zout != null) {
                 try {
                     zout.close();

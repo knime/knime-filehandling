@@ -132,10 +132,10 @@ class UnzipNodeModel extends NodeModel {
      * Extracts files from a zip file.
      * 
      * 
-     * Extracts files from a zip file. The path and URL to the files will be put
+     * Extracts files from a zip file. The path or URI to the files will be put
      * into the container.
      * 
-     * @param outContainer Container to put the path and URL to the extracted
+     * @param outContainer Container to put the path or URI to the extracted
      *            files into
      * @param exec Execution context for <code>checkCanceled()</code> and
      *            <code>setProgress()</code>
@@ -180,7 +180,7 @@ class UnzipNodeModel extends NodeModel {
                     progress.advance(length);
                 }
                 out.close();
-                // Create row with path and URL
+                // Create row with path or URI
                 DataCell cell = null;
                 String outputSelection = m_output.getStringValue();
                 if (outputSelection.equals(OutputSelection.LOCATION.getName())) {
