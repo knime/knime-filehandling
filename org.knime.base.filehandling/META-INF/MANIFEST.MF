@@ -3,15 +3,15 @@ Bundle-ManifestVersion: 2
 Bundle-Name: KNIME File Handling Nodes
 Bundle-SymbolicName: org.knime.base.filehandling;singleton:=true
 Bundle-Version: 2.7.0.qualifier
-Bundle-ClassPath: .,
- lib/commons-net-3.1.jar,
- lib/jsch-0.1.49.jar,
- lib/httpclient-4.2.1.jar,
- lib/httpcore-4.2.2.jar,
- lib/commons-logging-1.1.1.jar
+Bundle-ClassPath: .
 Bundle-Vendor: KNIME GmbH
-Require-Bundle: org.knime.base;bundle-version="2.5.0",
+Require-Bundle: org.apache.commons.net;bundle-version="3.1.0",
  org.apache.commons.io;bundle-version="1.4.0",
+ com.jcraft.jsch;bundle-version="0.1.44",
+ org.apache.commons.logging;bundle-version="1.1.1",
+ org.apache.httpcomponents.httpclient;bundle-version="4.1.2",
+ org.apache.httpcomponents.httpcore;bundle-version="4.1.4",
+ org.knime.base;bundle-version="2.5.0",
  org.knime.core.data.uritype;bundle-version="2.7.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
