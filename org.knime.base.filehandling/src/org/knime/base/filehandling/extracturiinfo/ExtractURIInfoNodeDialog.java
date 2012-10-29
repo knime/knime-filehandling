@@ -46,16 +46,28 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Oct 29, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.extracturiinfo;
 
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+
+import javax.swing.JPanel;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+
 import org.knime.core.data.uri.URIDataValue;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.port.PortObjectSpec;
 
 /**
  * <code>NodeDialog</code> for the node.
@@ -63,61 +75,135 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class ExtractURIInfoNodeDialog extends DefaultNodeSettingsPane {
+public class ExtractURIInfoNodeDialog extends NodeDialogPane {
 
-    private SettingsModelString m_columnselection;
+    private DialogComponentColumnNameSelection m_columnselection;
 
-    private SettingsModelBoolean m_authority;
+    private DialogComponentBoolean m_authority;
 
-    private SettingsModelBoolean m_fragment;
+    private DialogComponentBoolean m_fragment;
 
-    private SettingsModelBoolean m_host;
+    private DialogComponentBoolean m_host;
 
-    private SettingsModelBoolean m_path;
+    private DialogComponentBoolean m_path;
 
-    private SettingsModelBoolean m_port;
+    private DialogComponentBoolean m_port;
 
-    private SettingsModelBoolean m_query;
+    private DialogComponentBoolean m_query;
 
-    private SettingsModelBoolean m_scheme;
+    private DialogComponentBoolean m_scheme;
 
-    private SettingsModelBoolean m_userinfo;
+    private DialogComponentBoolean m_user;
 
     /**
      * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
-    protected ExtractURIInfoNodeDialog() {
-        super();
-        m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_authority = SettingsFactory.createAuthoritySettings();
-        m_fragment = SettingsFactory.createFragmentSettings();
-        m_host = SettingsFactory.createHostSettings();
-        m_path = SettingsFactory.createPathSettings();
-        m_port = SettingsFactory.createPortSettings();
-        m_query = SettingsFactory.createQuerySettings();
-        m_scheme = SettingsFactory.createSchemeSettings();
-        m_userinfo = SettingsFactory.createUserInfoSettings();
+    public ExtractURIInfoNodeDialog() {
+        // Get settings models
+        SettingsModelString columnselectionsettings =
+                SettingsFactory.createColumnSelectionSettings();
+        SettingsModelBoolean authoritysettings =
+                SettingsFactory.createAuthoritySettings();
+        SettingsModelBoolean fragmentsettings =
+                SettingsFactory.createFragmentSettings();
+        SettingsModelBoolean hostsettings =
+                SettingsFactory.createHostSettings();
+        SettingsModelBoolean pathsettings =
+                SettingsFactory.createPathSettings();
+        SettingsModelBoolean portsettings =
+                SettingsFactory.createPortSettings();
+        SettingsModelBoolean querysettings =
+                SettingsFactory.createQuerySettings();
+        SettingsModelBoolean schemesettings =
+                SettingsFactory.createSchemeSettings();
+        SettingsModelBoolean userinfosettings =
+                SettingsFactory.createUserInfoSettings();
+        // Outer panel
+        JPanel panel = new JPanel(new GridBagLayout());
+        // Inner panel
+        JPanel innerPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridy = 0;
         // Column selection
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_columnselection, "Column selection", 0, URIDataValue.class));
-        createNewGroup("Extract...");
+        m_columnselection =
+                new DialogComponentColumnNameSelection(columnselectionsettings,
+                        "Column selection", 0, URIDataValue.class);
+        panel.add(m_columnselection.getComponentPanel(), gbc);
         // Authority
-        addDialogComponent(new DialogComponentBoolean(m_authority, "Authority"));
+        m_authority =
+                new DialogComponentBoolean(authoritysettings, "Authority");
+        innerPanel.add(m_authority.getComponentPanel(), gbc);
         // Fragment
-        addDialogComponent(new DialogComponentBoolean(m_fragment, "Fragment"));
+        gbc.gridy += 1;
+        m_fragment = new DialogComponentBoolean(fragmentsettings, "Fragment");
+        innerPanel.add(m_fragment.getComponentPanel(), gbc);
         // Host
-        addDialogComponent(new DialogComponentBoolean(m_host, "Host"));
+        gbc.gridy += 1;
+        m_host = new DialogComponentBoolean(hostsettings, "Host");
+        innerPanel.add(m_host.getComponentPanel(), gbc);
         // Path
-        addDialogComponent(new DialogComponentBoolean(m_path, "Path"));
+        gbc.gridy += 1;
+        m_path = new DialogComponentBoolean(pathsettings, "Path");
+        innerPanel.add(m_path.getComponentPanel(), gbc);
         // Port
-        addDialogComponent(new DialogComponentBoolean(m_port, "Port"));
+        gbc.gridy += 1;
+        m_port = new DialogComponentBoolean(portsettings, "Port");
+        innerPanel.add(m_port.getComponentPanel(), gbc);
         // Query
-        addDialogComponent(new DialogComponentBoolean(m_query, "Query"));
+        gbc.gridy += 1;
+        m_query = new DialogComponentBoolean(querysettings, "Query");
+        innerPanel.add(m_query.getComponentPanel(), gbc);
         // Scheme
-        addDialogComponent(new DialogComponentBoolean(m_scheme, "Scheme"));
+        gbc.gridy += 1;
+        m_scheme = new DialogComponentBoolean(schemesettings, "Scheme");
+        innerPanel.add(m_scheme.getComponentPanel(), gbc);
         // User info
-        addDialogComponent(new DialogComponentBoolean(m_userinfo, "User"));
-        closeCurrentGroup();
+        gbc.gridy += 1;
+        m_user = new DialogComponentBoolean(userinfosettings, "User");
+        innerPanel.add(m_user.getComponentPanel(), gbc);
+        // Inner panel
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridy = 1;
+        innerPanel
+                .setBorder(new TitledBorder(new EtchedBorder(), "Extract..."));
+        panel.add(innerPanel, gbc);
+        addTab("Options", panel);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadSettingsFrom(final NodeSettingsRO settings,
+            final PortObjectSpec[] specs) throws NotConfigurableException {
+        m_columnselection.loadSettingsFrom(settings, specs);
+        m_authority.loadSettingsFrom(settings, specs);
+        m_fragment.loadSettingsFrom(settings, specs);
+        m_host.loadSettingsFrom(settings, specs);
+        m_path.loadSettingsFrom(settings, specs);
+        m_port.loadSettingsFrom(settings, specs);
+        m_query.loadSettingsFrom(settings, specs);
+        m_scheme.loadSettingsFrom(settings, specs);
+        m_user.loadSettingsFrom(settings, specs);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void saveSettingsTo(final NodeSettingsWO settings)
+            throws InvalidSettingsException {
+        m_columnselection.saveSettingsTo(settings);
+        m_authority.saveSettingsTo(settings);
+        m_fragment.saveSettingsTo(settings);
+        m_host.saveSettingsTo(settings);
+        m_path.saveSettingsTo(settings);
+        m_port.saveSettingsTo(settings);
+        m_query.saveSettingsTo(settings);
+        m_scheme.saveSettingsTo(settings);
+        m_user.saveSettingsTo(settings);
+    }
+
 }
