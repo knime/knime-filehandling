@@ -46,21 +46,32 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Oct 29, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.copyfiles;
 
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+
 import javax.swing.JFileChooser;
+import javax.swing.JPanel;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.FlowVariableModel;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.port.PortObjectSpec;
 
 /**
  * <code>NodeDialog</code> for the node.
@@ -68,69 +79,129 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
+public class CopyFilesNodeDialog extends NodeDialogPane {
 
-    private SettingsModelString m_copyormove;
+    private DialogComponentButtonGroup m_copyormove;
 
-    private SettingsModelString m_sourcecolumn;
+    private DialogComponentColumnNameSelection m_sourcecolumn;
 
-    private SettingsModelString m_filenamehandling;
+    private DialogComponentButtonGroup m_filenamehandling;
 
-    private SettingsModelString m_targetcolumn;
+    private DialogComponentColumnNameSelection m_targetcolumn;
 
-    private SettingsModelString m_outputdirectory;
+    private DialogComponentFileChooser m_outputdirectory;
 
-    private SettingsModelString m_ifexists;
-
-    private FlowVariableModel m_outputdirectoryFvm;
+    private DialogComponentButtonGroup m_ifexists;
 
     /**
      * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
-    protected CopyFilesNodeDialog() {
-        super();
-        m_copyormove = SettingsFactory.createCopyOrMoveSettings();
-        m_sourcecolumn = SettingsFactory.createSourceColumnSettings();
-        m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
-        m_targetcolumn =
-                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
-        m_outputdirectory =
+    public CopyFilesNodeDialog() {
+        final SettingsModelString copyormovesettings =
+                SettingsFactory.createCopyOrMoveSettings();
+        final SettingsModelString sourcecolumnsettings =
+                SettingsFactory.createSourceColumnSettings();
+        final SettingsModelString filenamehandlingsettings =
+                SettingsFactory.createFilenameHandlingSettings();
+        final SettingsModelString targetcolumnsettings =
                 SettingsFactory
-                        .createOutputDirectorySettings(m_filenamehandling);
-        m_ifexists = SettingsFactory.createIfExistsSettings();
-        m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
+                        .createTargetColumnSettings(filenamehandlingsettings);
+        final SettingsModelString outputdirectorysettings =
+                SettingsFactory
+                        .createOutputDirectorySettings(filenamehandlingsettings);
+        final SettingsModelString ifexistssettings =
+                SettingsFactory.createIfExistsSettings();
+        final FlowVariableModel outputdirectoryFvm =
+                super.createFlowVariableModel(outputdirectorysettings);
         // Enable/disable components based on the filename handling
-        m_filenamehandling.addChangeListener(new ChangeListener() {
+        filenamehandlingsettings.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                String handling = m_filenamehandling.getStringValue();
-                m_targetcolumn.setEnabled(handling
+                String handling = filenamehandlingsettings.getStringValue();
+                targetcolumnsettings.setEnabled(handling
                         .equals(FilenameHandling.FROMCOLUMN.getName()));
-                m_outputdirectory.setEnabled(isOutputDirectoryEnabled());
+                outputdirectorysettings.setEnabled(isOutputDirectoryEnabled(
+                        filenamehandlingsettings, outputdirectoryFvm));
             }
         });
+        // Outer panel
+        JPanel panel = new JPanel(new GridBagLayout());
+        // Inner panel
+        JPanel innerPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.NONE;
         // Copy or move
-        addDialogComponent(new DialogComponentButtonGroup(m_copyormove, false,
-                "Copy or move?", CopyOrMove.getAllSettings()));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_copyormove =
+                new DialogComponentButtonGroup(copyormovesettings, false,
+                        "Copy or move?", CopyOrMove.getAllSettings());
+        panel.add(m_copyormove.getComponentPanel(), gbc);
         // Source column
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_sourcecolumn, "Source column", 0, URIDataValue.class));
-        createNewGroup("Target filenames...");
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_sourcecolumn =
+                new DialogComponentColumnNameSelection(sourcecolumnsettings,
+                        "Source column", 0, URIDataValue.class);
+        panel.add(m_sourcecolumn.getComponentPanel(), gbc);
         // Filename handling
-        addDialogComponent(new DialogComponentButtonGroup(m_filenamehandling,
-                false, "", FilenameHandling.getAllSettings()));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 2;
+        m_filenamehandling =
+                new DialogComponentButtonGroup(filenamehandlingsettings, true,
+                        "", FilenameHandling.getAllSettings());
+        innerPanel.add(m_filenamehandling.getComponentPanel(), gbc);
         // Target column
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_targetcolumn, "Target column", 0, URIDataValue.class));
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_targetcolumn =
+                new DialogComponentColumnNameSelection(targetcolumnsettings,
+                        "Target column", 0, URIDataValue.class);
+        innerPanel.add(m_targetcolumn.getComponentPanel(), gbc);
         // Output directory
-        addDialogComponent(new DialogComponentFileChooser(m_outputdirectory,
-                "outputdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
-                m_outputdirectoryFvm));
-        closeCurrentGroup();
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_outputdirectory =
+                new DialogComponentFileChooser(outputdirectorysettings,
+                        "outputdirectoryHistory", JFileChooser.SAVE_DIALOG,
+                        true, outputdirectoryFvm);
+        innerPanel.add(m_outputdirectory.getComponentPanel(), gbc);
+        // Inner panel
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        innerPanel.setBorder(new TitledBorder(new EtchedBorder(),
+                "Target filenames..."));
+        panel.add(innerPanel, gbc);
         // Overwrite policy
-        addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
-                "If a file exists...", OverwritePolicy.getAllSettings()));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        m_ifexists =
+                new DialogComponentButtonGroup(ifexistssettings, false,
+                        "If a file exists...", OverwritePolicy.getAllSettings());
+        panel.add(m_ifexists.getComponentPanel(), gbc);
+        addTab("Options", panel);
     }
 
     /**
@@ -139,10 +210,40 @@ class CopyFilesNodeDialog extends DefaultNodeSettingsPane {
      * 
      * @return true if the output directory component should be enabled
      */
-    private boolean isOutputDirectoryEnabled() {
-        return m_filenamehandling.getStringValue().equals(
+    private boolean isOutputDirectoryEnabled(
+            final SettingsModelString filenamehandlingsettings,
+            final FlowVariableModel outputdirectoryFvm) {
+        return filenamehandlingsettings.getStringValue().equals(
                 FilenameHandling.SOURCENAME.getName())
-                && !m_outputdirectoryFvm.isVariableReplacementEnabled();
+                && !outputdirectoryFvm.isVariableReplacementEnabled();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadSettingsFrom(final NodeSettingsRO settings,
+            final PortObjectSpec[] specs) throws NotConfigurableException {
+        m_copyormove.loadSettingsFrom(settings, specs);
+        m_sourcecolumn.loadSettingsFrom(settings, specs);
+        m_filenamehandling.loadSettingsFrom(settings, specs);
+        m_targetcolumn.loadSettingsFrom(settings, specs);
+        m_outputdirectory.loadSettingsFrom(settings, specs);
+        m_ifexists.loadSettingsFrom(settings, specs);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void saveSettingsTo(final NodeSettingsWO settings)
+            throws InvalidSettingsException {
+        m_copyormove.saveSettingsTo(settings);
+        m_sourcecolumn.saveSettingsTo(settings);
+        m_filenamehandling.saveSettingsTo(settings);
+        m_targetcolumn.saveSettingsTo(settings);
+        m_outputdirectory.saveSettingsTo(settings);
+        m_ifexists.saveSettingsTo(settings);
     }
 
 }
