@@ -46,18 +46,28 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Oct 30, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.binaryobjectstofiles;
 
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+
 import javax.swing.JFileChooser;
+import javax.swing.JPanel;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.FlowVariableModel;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
@@ -65,6 +75,7 @@ import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.port.PortObjectSpec;
 
 /**
  * <code>NodeDialog</code> for the node.
@@ -72,79 +83,145 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
+public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
 
-    private SettingsModelString m_bocolumn;
+    private DialogComponentColumnNameSelection m_bocolumn;
 
-    private SettingsModelString m_filenamehandling;
+    private DialogComponentButtonGroup m_filenamehandling;
 
-    private SettingsModelString m_targetcolumn;
+    private DialogComponentColumnNameSelection m_targetcolumn;
 
-    private SettingsModelString m_outputdirectory;
+    private DialogComponentFileChooser m_outputdirectory;
 
-    private SettingsModelString m_namepattern;
+    private DialogComponentString m_namepattern;
 
-    private SettingsModelBoolean m_removebocolumn;
+    private DialogComponentBoolean m_removebocolumn;
 
-    private SettingsModelString m_ifexists;
-
-    private FlowVariableModel m_outputdirectoryFvm;
+    private DialogComponentButtonGroup m_ifexists;
 
     /**
-     * New pane for configuring node dialog.
+     * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
-    protected BinaryObjectsToFilesNodeDialog() {
-        super();
-        m_bocolumn = SettingsFactory.createBinaryObjectColumnSettings();
-        m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
-        m_targetcolumn =
-                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
-        m_outputdirectory =
+    public BinaryObjectsToFilesNodeDialog() {
+        final SettingsModelString bocolumnsettings =
+                SettingsFactory.createBinaryObjectColumnSettings();
+        final SettingsModelString filenamehandlingsettings =
+                SettingsFactory.createFilenameHandlingSettings();
+        final SettingsModelString targetcolumnsettings =
                 SettingsFactory
-                        .createOutputDirectorySettings(m_filenamehandling);
-        m_namepattern =
-                SettingsFactory.createNamePatternSettings(m_filenamehandling);
-        m_removebocolumn =
+                        .createTargetColumnSettings(filenamehandlingsettings);
+        final SettingsModelString outputdirectorysettings =
+                SettingsFactory
+                        .createOutputDirectorySettings(filenamehandlingsettings);
+        final SettingsModelString namepatternsettings =
+                SettingsFactory
+                        .createNamePatternSettings(filenamehandlingsettings);
+        final SettingsModelBoolean removebocolumnsettings =
                 SettingsFactory.createRemoveBinaryObjectColumnSettings();
-        m_ifexists = SettingsFactory.createIfExistsSettings();
-        m_outputdirectoryFvm = super.createFlowVariableModel(m_outputdirectory);
+        final SettingsModelString ifexistssettings =
+                SettingsFactory.createIfExistsSettings();
+        final FlowVariableModel outputdirectoryFvm =
+                super.createFlowVariableModel(outputdirectorysettings);
         // Enable/disable settings according to filename handling
-        m_filenamehandling.addChangeListener(new ChangeListener() {
+        filenamehandlingsettings.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                String handling = m_filenamehandling.getStringValue();
-                m_targetcolumn.setEnabled(handling
+                String handling = filenamehandlingsettings.getStringValue();
+                targetcolumnsettings.setEnabled(handling
                         .equals(FilenameHandling.FROMCOLUMN.getName()));
-                m_outputdirectory.setEnabled(isOutputDirectoryEnabled());
-                m_namepattern.setEnabled(handling
+                outputdirectorysettings.setEnabled(isOutputDirectoryEnabled(
+                        filenamehandlingsettings, outputdirectoryFvm));
+                namepatternsettings.setEnabled(handling
                         .equals(FilenameHandling.GENERATE.getName()));
             }
         });
+        // Outer panel
+        JPanel panel = new JPanel(new GridBagLayout());
+        // Inner panel
+        JPanel innerPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.NONE;
         // Binary object column
-        addDialogComponent(new DialogComponentColumnNameSelection(m_bocolumn,
-                "Binary object column", 0, BinaryObjectDataValue.class));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_bocolumn =
+                new DialogComponentColumnNameSelection(bocolumnsettings,
+                        "Binary object column", 0, BinaryObjectDataValue.class);
+        panel.add(m_bocolumn.getComponentPanel(), gbc);
         // Filename handling
-        createNewGroup("Filenames...");
-        addDialogComponent(new DialogComponentButtonGroup(m_filenamehandling,
-                false, "", FilenameHandling.getAllSettings()));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 2;
+        m_filenamehandling =
+                new DialogComponentButtonGroup(filenamehandlingsettings, true,
+                        "", FilenameHandling.getAllSettings());
+        innerPanel.add(m_filenamehandling.getComponentPanel(), gbc);
         // Target column
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_targetcolumn, "Target column", 0, false, URIDataValue.class));
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_targetcolumn =
+                new DialogComponentColumnNameSelection(targetcolumnsettings,
+                        "Target column", 0, false, URIDataValue.class);
+        innerPanel.add(m_targetcolumn.getComponentPanel(), gbc);
         // Output directory
-        addDialogComponent(new DialogComponentFileChooser(m_outputdirectory,
-                "outputdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
-                m_outputdirectoryFvm));
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_outputdirectory =
+                new DialogComponentFileChooser(outputdirectorysettings,
+                        "outputdirectoryHistory", JFileChooser.SAVE_DIALOG,
+                        true, outputdirectoryFvm);
+        innerPanel.add(m_outputdirectory.getComponentPanel(), gbc);
         // Name pattern
-        addDialogComponent(new DialogComponentString(m_namepattern,
-                "Name pattern"));
-        closeCurrentGroup();
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_namepattern =
+                new DialogComponentString(namepatternsettings, "Name pattern");
+        innerPanel.add(m_namepattern.getComponentPanel(), gbc);
+        // Inner panel
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        innerPanel.setBorder(new TitledBorder(new EtchedBorder(),
+                "Filenames..."));
+        panel.add(innerPanel, gbc);
         // Remove binary object column
-        addDialogComponent(new DialogComponentBoolean(m_removebocolumn,
-                "Remove binary object column"));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_removebocolumn =
+                new DialogComponentBoolean(removebocolumnsettings,
+                        "Remove binary object column");
+        panel.add(m_removebocolumn.getComponentPanel(), gbc);
         // Overwrite policy
-        addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
-                "If a file exists...", OverwritePolicy.getAllSettings()));
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_ifexists =
+                new DialogComponentButtonGroup(ifexistssettings, false,
+                        "If a file exists...", OverwritePolicy.getAllSettings());
+        panel.add(m_ifexists.getComponentPanel(), gbc);
+        addTab("Options", panel);
     }
 
     /**
@@ -153,10 +230,42 @@ class BinaryObjectsToFilesNodeDialog extends DefaultNodeSettingsPane {
      * 
      * @return true if the output directory component should be enabled
      */
-    private boolean isOutputDirectoryEnabled() {
-        return m_filenamehandling.getStringValue().equals(
+    private boolean isOutputDirectoryEnabled(
+            final SettingsModelString filenamehandling,
+            final FlowVariableModel outputdirectoryFvm) {
+        return filenamehandling.getStringValue().equals(
                 FilenameHandling.GENERATE.getName())
-                && !m_outputdirectoryFvm.isVariableReplacementEnabled();
+                && !outputdirectoryFvm.isVariableReplacementEnabled();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadSettingsFrom(final NodeSettingsRO settings,
+            final PortObjectSpec[] specs) throws NotConfigurableException {
+        m_bocolumn.loadSettingsFrom(settings, specs);
+        m_filenamehandling.loadSettingsFrom(settings, specs);
+        m_targetcolumn.loadSettingsFrom(settings, specs);
+        m_outputdirectory.loadSettingsFrom(settings, specs);
+        m_namepattern.loadSettingsFrom(settings, specs);
+        m_removebocolumn.loadSettingsFrom(settings, specs);
+        m_ifexists.loadSettingsFrom(settings, specs);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void saveSettingsTo(final NodeSettingsWO settings)
+            throws InvalidSettingsException {
+        m_bocolumn.saveSettingsTo(settings);
+        m_filenamehandling.saveSettingsTo(settings);
+        m_targetcolumn.saveSettingsTo(settings);
+        m_outputdirectory.saveSettingsTo(settings);
+        m_namepattern.saveSettingsTo(settings);
+        m_removebocolumn.saveSettingsTo(settings);
+        m_ifexists.saveSettingsTo(settings);
     }
 
 }
