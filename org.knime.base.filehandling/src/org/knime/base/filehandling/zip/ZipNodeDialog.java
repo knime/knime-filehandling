@@ -46,24 +46,35 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Oct 30, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.zip;
 
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+
 import javax.swing.JFileChooser;
+import javax.swing.JPanel;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.StringValue;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.FlowVariableModel;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.port.PortObjectSpec;
 
 /**
  * <code>NodeDialog</code> for the node.
@@ -71,73 +82,135 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class ZipNodeDialog extends DefaultNodeSettingsPane {
+public class ZipNodeDialog extends NodeDialogPane {
 
-    private SettingsModelString m_locationcolumn;
+    private DialogComponentColumnNameSelection m_locationcolumn;
 
-    private SettingsModelString m_target;
+    private DialogComponentFileChooser m_target;
 
-    private SettingsModelIntegerBounded m_compressionlevel;
+    private DialogComponentNumber m_compressionlevel;
 
-    private SettingsModelString m_pathhandling;
+    private DialogComponentButtonGroup m_pathhandling;
 
-    private SettingsModelString m_prefix;
+    private DialogComponentFileChooser m_prefix;
 
-    private SettingsModelString m_ifexists;
-
-    private FlowVariableModel m_targetFvm;
-
-    private FlowVariableModel m_prefixFvm;
+    private DialogComponentButtonGroup m_ifexists;
 
     /**
      * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
-    protected ZipNodeDialog() {
-        super();
-        m_locationcolumn = SettingsFactory.createLocationColumnSettings();
-        m_target = SettingsFactory.createTargetSettings();
-        m_compressionlevel = SettingsFactory.createCompressionLevelSettings();
-        m_pathhandling = SettingsFactory.createPathHandlingSettings();
-        m_prefix = SettingsFactory.createPrefixSettings(m_pathhandling);
-        m_ifexists = SettingsFactory.createIfExistsSettings();
-        m_targetFvm = super.createFlowVariableModel(m_target);
-        m_prefixFvm = super.createFlowVariableModel(m_prefix);
+    public ZipNodeDialog() {
+        final SettingsModelString locationcolumnsettings =
+                SettingsFactory.createLocationColumnSettings();
+        final SettingsModelString targetsettings =
+                SettingsFactory.createTargetSettings();
+        final SettingsModelIntegerBounded compressionlevelsettings =
+                SettingsFactory.createCompressionLevelSettings();
+        final SettingsModelString pathhandlingsettings =
+                SettingsFactory.createPathHandlingSettings();
+        final SettingsModelString prefixsettings =
+                SettingsFactory.createPrefixSettings(pathhandlingsettings);
+        final SettingsModelString ifexistssettings =
+                SettingsFactory.createIfExistsSettings();
+        final FlowVariableModel targetFvm =
+                super.createFlowVariableModel(targetsettings);
+        final FlowVariableModel prefixFvm =
+                super.createFlowVariableModel(prefixsettings);
         // Enable/disable prefix setting based on the path handling
-        m_pathhandling.addChangeListener(new ChangeListener() {
+        pathhandlingsettings.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                m_prefix.setEnabled(isPrefixEnabled());
+                prefixsettings.setEnabled(isPrefixEnabled(pathhandlingsettings,
+                        prefixFvm));
             }
         });
         // Enable/disable prefix setting based on the flow variable model
-        m_prefix.addChangeListener(new ChangeListener() {
+        prefixsettings.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                m_prefix.setEnabled(isPrefixEnabled());
+                prefixsettings.setEnabled(isPrefixEnabled(pathhandlingsettings,
+                        prefixFvm));
             }
         });
+        // Outer panel
+        JPanel panel = new JPanel(new GridBagLayout());
+        // Inner panel
+        JPanel innerPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.NONE;
         // Location column
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_locationcolumn, "Location column", 0, false,
-                StringValue.class, URIDataValue.class));
-        // Target zip file
-        addDialogComponent(new DialogComponentFileChooser(m_target,
-                "targetHistory", JFileChooser.SAVE_DIALOG, false, m_targetFvm));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_locationcolumn =
+                new DialogComponentColumnNameSelection(locationcolumnsettings,
+                        "Location column", 0, false, StringValue.class,
+                        URIDataValue.class);
+        panel.add(m_locationcolumn.getComponentPanel(), gbc);
         // Compression level
-        addDialogComponent(new DialogComponentNumber(m_compressionlevel,
-                "Compression level", 1, 1));
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_compressionlevel =
+                new DialogComponentNumber(compressionlevelsettings,
+                        "Compression level", 1, 1);
+        panel.add(m_compressionlevel.getComponentPanel(), gbc);
+        // Target zip file
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        m_target =
+                new DialogComponentFileChooser(targetsettings, "targetHistory",
+                        JFileChooser.SAVE_DIALOG, false, targetFvm);
+        panel.add(m_target.getComponentPanel(), gbc);
         // Path handling
-        createNewGroup("Path handling");
-        addDialogComponent(new DialogComponentButtonGroup(m_pathhandling,
-                false, "", PathHandling.getAllSettings()));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_pathhandling =
+                new DialogComponentButtonGroup(pathhandlingsettings, false, "",
+                        PathHandling.getAllSettings());
+        innerPanel.add(m_pathhandling.getComponentPanel(), gbc);
         // Prefix
-        addDialogComponent(new DialogComponentFileChooser(m_prefix,
-                "prefixHistory", JFileChooser.OPEN_DIALOG, true, m_prefixFvm));
-        closeCurrentGroup();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        m_prefix =
+                new DialogComponentFileChooser(prefixsettings, "prefixHistory",
+                        JFileChooser.OPEN_DIALOG, true, prefixFvm);
+        innerPanel.add(m_prefix.getComponentPanel(), gbc);
+        // Inner panel
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        innerPanel.setBorder(new TitledBorder(new EtchedBorder(),
+                "Path handling"));
+        panel.add(innerPanel, gbc);
         // Overwrite policy
-        addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false,
-                "If zip file exists...", OverwritePolicy.getAllSettings()));
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        m_ifexists =
+                new DialogComponentButtonGroup(ifexistssettings, false,
+                        "If zip file exists...",
+                        OverwritePolicy.getAllSettings());
+        panel.add(m_ifexists.getComponentPanel(), gbc);
+        addTab("Options", panel);
     }
 
     /**
@@ -146,10 +219,39 @@ class ZipNodeDialog extends DefaultNodeSettingsPane {
      * 
      * @return true if the prefix component should be enabled
      */
-    private boolean isPrefixEnabled() {
-        return m_pathhandling.getStringValue().equals(
+    private boolean isPrefixEnabled(final SettingsModelString pathhandling,
+            final FlowVariableModel prefixFvm) {
+        return pathhandling.getStringValue().equals(
                 PathHandling.TRUNCATE_PREFIX.getName())
-                && !m_prefixFvm.isVariableReplacementEnabled();
+                && !prefixFvm.isVariableReplacementEnabled();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadSettingsFrom(final NodeSettingsRO settings,
+            final PortObjectSpec[] specs) throws NotConfigurableException {
+        m_locationcolumn.loadSettingsFrom(settings, specs);
+        m_target.loadSettingsFrom(settings, specs);
+        m_compressionlevel.loadSettingsFrom(settings, specs);
+        m_pathhandling.loadSettingsFrom(settings, specs);
+        m_prefix.loadSettingsFrom(settings, specs);
+        m_ifexists.loadSettingsFrom(settings, specs);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void saveSettingsTo(final NodeSettingsWO settings)
+            throws InvalidSettingsException {
+        m_locationcolumn.saveSettingsTo(settings);
+        m_target.saveSettingsTo(settings);
+        m_compressionlevel.saveSettingsTo(settings);
+        m_pathhandling.saveSettingsTo(settings);
+        m_prefix.saveSettingsTo(settings);
+        m_ifexists.saveSettingsTo(settings);
     }
 
 }
