@@ -14,7 +14,7 @@
 			be contained in the output table.</intro>
 
 
-		<option name="Source directory">Path to the zip file.</option>
+		<option name="Zip input file">Path to the zip file.</option>
 		<option name="Output directory">Path to the output directory, where the files will
 			be extracted to.</option>
 		<option name="Output...">

@@ -169,6 +169,7 @@ public class ZipNodeDialog extends NodeDialogPane {
         m_target =
                 new DialogComponentFileChooser(targetsettings, "targetHistory",
                         JFileChooser.SAVE_DIALOG, false, targetFvm);
+        m_target.setBorderTitle("Zip output file:");
         panel.add(m_target.getComponentPanel(), gbc);
         // Path handling
         gbc.anchor = GridBagConstraints.WEST;
@@ -189,6 +190,7 @@ public class ZipNodeDialog extends NodeDialogPane {
         m_prefix =
                 new DialogComponentFileChooser(prefixsettings, "prefixHistory",
                         JFileChooser.OPEN_DIALOG, true, prefixFvm);
+        m_prefix.setBorderTitle("Prefix directory:");
         innerPanel.add(m_prefix.getComponentPanel(), gbc);
         // Inner panel
         gbc.anchor = GridBagConstraints.CENTER;

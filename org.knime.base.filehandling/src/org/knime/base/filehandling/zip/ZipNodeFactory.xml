@@ -21,11 +21,12 @@
 			It can either be a
 			String or an URI.
 		</option>
-		<option name="Output file">
-			Path of the zip file that will be created.
-		</option>
 		<option name="Compression level">
-			Level of compression for the zip file.
+			Level of compression for the zip file, with 0 being no compression and 9
+			being maximum compression.
+		</option>
+		<option name="Zip output file">
+			Path of the zip file that will be created.
 		</option>
 		<option name="Path handling">
 			Specifies how the file path shall be handled inside the zip file.

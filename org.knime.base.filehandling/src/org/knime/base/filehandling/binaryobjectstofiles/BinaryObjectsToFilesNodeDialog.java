@@ -146,12 +146,22 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 2;
         gbc.gridheight = 1;
         m_bocolumn =
                 new DialogComponentColumnNameSelection(bocolumnsettings,
                         "Binary object column", 0, BinaryObjectDataValue.class);
         panel.add(m_bocolumn.getComponentPanel(), gbc);
+        // Remove binary object column
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        m_removebocolumn =
+                new DialogComponentBoolean(removebocolumnsettings,
+                        "Remove binary object column");
+        panel.add(m_removebocolumn.getComponentPanel(), gbc);
         // Filename handling
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
@@ -172,50 +182,41 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
                 new DialogComponentColumnNameSelection(targetcolumnsettings,
                         "Target column", 0, false, URIDataValue.class);
         innerPanel.add(m_targetcolumn.getComponentPanel(), gbc);
-        // Output directory
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        m_outputdirectory =
-                new DialogComponentFileChooser(outputdirectorysettings,
-                        "outputdirectoryHistory", JFileChooser.SAVE_DIALOG,
-                        true, outputdirectoryFvm);
-        innerPanel.add(m_outputdirectory.getComponentPanel(), gbc);
         // Name pattern
         gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         m_namepattern =
                 new DialogComponentString(namepatternsettings, "Name pattern");
         innerPanel.add(m_namepattern.getComponentPanel(), gbc);
+        // Output directory
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.gridheight = 1;
+        m_outputdirectory =
+                new DialogComponentFileChooser(outputdirectorysettings,
+                        "outputdirectoryHistory", JFileChooser.SAVE_DIALOG,
+                        true, outputdirectoryFvm);
+        m_outputdirectory.setBorderTitle("Output directory:");
+        innerPanel.add(m_outputdirectory.getComponentPanel(), gbc);
         // Inner panel
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         innerPanel.setBorder(new TitledBorder(new EtchedBorder(),
                 "Filenames..."));
         panel.add(innerPanel, gbc);
-        // Remove binary object column
+        // Overwrite policy
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        m_removebocolumn =
-                new DialogComponentBoolean(removebocolumnsettings,
-                        "Remove binary object column");
-        panel.add(m_removebocolumn.getComponentPanel(), gbc);
-        // Overwrite policy
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
         gbc.gridheight = 1;
         m_ifexists =
                 new DialogComponentButtonGroup(ifexistssettings, false,

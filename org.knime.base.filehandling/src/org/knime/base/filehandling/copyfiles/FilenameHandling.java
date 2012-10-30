@@ -61,7 +61,7 @@ enum FilenameHandling {
     /**
      * Use target column.
      */
-    FROMCOLUMN("From seperate column"),
+    FROMCOLUMN("From separate column"),
 
     /**
      * Use the source filename and the output directory.

@@ -90,12 +90,18 @@ class UnzipNodeDialog extends DefaultNodeSettingsPane {
         m_sourceFvm = super.createFlowVariableModel(m_source);
         m_targetdirectoryFvm = super.createFlowVariableModel(m_targetdirectory);
         // Source
-        addDialogComponent(new DialogComponentFileChooser(m_source,
-                "sourceHistory", JFileChooser.OPEN_DIALOG, false, m_sourceFvm));
+        DialogComponentFileChooser source =
+                new DialogComponentFileChooser(m_source, "sourceHistory",
+                        JFileChooser.OPEN_DIALOG, false, m_sourceFvm);
+        source.setBorderTitle("Zip input file:");
+        addDialogComponent(source);
         // Target directory
-        addDialogComponent(new DialogComponentFileChooser(m_targetdirectory,
-                "targetdirectoryHistory", JFileChooser.SAVE_DIALOG, true,
-                m_targetdirectoryFvm));
+        DialogComponentFileChooser target =
+                new DialogComponentFileChooser(m_targetdirectory,
+                        "targetdirectoryHistory", JFileChooser.SAVE_DIALOG,
+                        true, m_targetdirectoryFvm);
+        target.setBorderTitle("Output directory:");
+        addDialogComponent(target);
         // Output selection
         addDialogComponent(new DialogComponentButtonGroup(m_output, false,
                 "Output...", OutputSelection.getAllSettings()));

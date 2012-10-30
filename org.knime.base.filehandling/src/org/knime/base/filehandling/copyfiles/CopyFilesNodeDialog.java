@@ -156,7 +156,7 @@ public class CopyFilesNodeDialog extends NodeDialogPane {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
-        gbc.gridheight = 2;
+        gbc.gridheight = 1;
         m_filenamehandling =
                 new DialogComponentButtonGroup(filenamehandlingsettings, true,
                         "", FilenameHandling.getAllSettings());
@@ -172,15 +172,16 @@ public class CopyFilesNodeDialog extends NodeDialogPane {
                         "Target column", 0, URIDataValue.class);
         innerPanel.add(m_targetcolumn.getComponentPanel(), gbc);
         // Output directory
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 2;
         gbc.gridheight = 1;
         m_outputdirectory =
                 new DialogComponentFileChooser(outputdirectorysettings,
                         "outputdirectoryHistory", JFileChooser.SAVE_DIALOG,
                         true, outputdirectoryFvm);
+        m_outputdirectory.setBorderTitle("Output directory:");
         innerPanel.add(m_outputdirectory.getComponentPanel(), gbc);
         // Inner panel
         gbc.anchor = GridBagConstraints.CENTER;
