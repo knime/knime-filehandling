@@ -46,32 +46,37 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 29, 2012 (Patrick Winter): created
+ *   Oct 30, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.copyfiles;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.uri.URIDataValue;
-import org.knime.core.node.FlowVariableModel;
+import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
-import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
-import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
-import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.util.ColumnSelectionComboxBox;
+import org.knime.core.node.util.FilesHistoryPanel;
+import org.knime.core.node.workflow.FlowVariable;
 
 /**
  * <code>NodeDialog</code> for the node.
@@ -81,142 +86,170 @@ import org.knime.core.node.port.PortObjectSpec;
  */
 public class CopyFilesNodeDialog extends NodeDialogPane {
 
-    private DialogComponentButtonGroup m_copyormove;
+    private ColumnSelectionComboxBox m_sourcecolumn;
 
-    private DialogComponentColumnNameSelection m_sourcecolumn;
+    private ColumnSelectionComboxBox m_targetcolumn;
 
-    private DialogComponentButtonGroup m_filenamehandling;
+    private FilesHistoryPanel m_outputdirectory;
 
-    private DialogComponentColumnNameSelection m_targetcolumn;
+    private FlowVariableModelButton m_outputdirectoryfvm;
 
-    private DialogComponentFileChooser m_outputdirectory;
+    private JRadioButton m_copy;
 
-    private DialogComponentButtonGroup m_ifexists;
+    private JRadioButton m_move;
+
+    private ButtonGroup m_copyormove;
+
+    private JRadioButton m_fromseparatecolumn;
+
+    private JRadioButton m_fromsourcename;
+
+    private ButtonGroup m_filenamehandling;
+
+    private JRadioButton m_overwrite;
+
+    private JRadioButton m_abort;
+
+    private ButtonGroup m_ifexists;
 
     /**
      * New pane for configuring the node dialog.
      */
     @SuppressWarnings("unchecked")
     public CopyFilesNodeDialog() {
-        final SettingsModelString copyormovesettings =
-                SettingsFactory.createCopyOrMoveSettings();
-        final SettingsModelString sourcecolumnsettings =
-                SettingsFactory.createSourceColumnSettings();
-        final SettingsModelString filenamehandlingsettings =
-                SettingsFactory.createFilenameHandlingSettings();
-        final SettingsModelString targetcolumnsettings =
-                SettingsFactory
-                        .createTargetColumnSettings(filenamehandlingsettings);
-        final SettingsModelString outputdirectorysettings =
-                SettingsFactory
-                        .createOutputDirectorySettings(filenamehandlingsettings);
-        final SettingsModelString ifexistssettings =
-                SettingsFactory.createIfExistsSettings();
-        final FlowVariableModel outputdirectoryFvm =
-                super.createFlowVariableModel(outputdirectorysettings);
-        // Enable/disable components based on the filename handling
-        filenamehandlingsettings.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                String handling = filenamehandlingsettings.getStringValue();
-                targetcolumnsettings.setEnabled(handling
-                        .equals(FilenameHandling.FROMCOLUMN.getName()));
-                outputdirectorysettings.setEnabled(isOutputDirectoryEnabled(
-                        filenamehandlingsettings, outputdirectoryFvm));
-            }
-        });
-        // Outer panel
-        JPanel panel = new JPanel(new GridBagLayout());
-        // Inner panel
-        JPanel innerPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.NONE;
         // Copy or move
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        m_copyormove =
-                new DialogComponentButtonGroup(copyormovesettings, false,
-                        "Copy or move?", CopyOrMove.getAllSettings());
-        panel.add(m_copyormove.getComponentPanel(), gbc);
+        m_copy = new JRadioButton(CopyOrMove.COPY.getName());
+        m_copy.setActionCommand(CopyOrMove.COPY.getName());
+        m_move = new JRadioButton(CopyOrMove.MOVE.getName());
+        m_move.setActionCommand(CopyOrMove.MOVE.getName());
+        m_copyormove = new ButtonGroup();
+        m_copyormove.add(m_copy);
+        m_copyormove.add(m_move);
         // Source column
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
         m_sourcecolumn =
-                new DialogComponentColumnNameSelection(sourcecolumnsettings,
-                        "Source column", 0, URIDataValue.class);
-        panel.add(m_sourcecolumn.getComponentPanel(), gbc);
-        // Filename handling
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        m_filenamehandling =
-                new DialogComponentButtonGroup(filenamehandlingsettings, true,
-                        "", FilenameHandling.getAllSettings());
-        innerPanel.add(m_filenamehandling.getComponentPanel(), gbc);
+                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
+        // Target filenames
+        m_fromseparatecolumn = new JRadioButton("Use path from target column");
+        m_fromseparatecolumn.setActionCommand(FilenameHandling.FROMCOLUMN
+                .getName());
+        m_fromseparatecolumn.addActionListener(new FilenamehandlingListener());
+        m_fromsourcename =
+                new JRadioButton("Use source name and output directory");
+        m_fromsourcename
+                .setActionCommand(FilenameHandling.SOURCENAME.getName());
+        m_fromsourcename.addActionListener(new FilenamehandlingListener());
+        m_filenamehandling = new ButtonGroup();
+        m_filenamehandling.add(m_fromseparatecolumn);
+        m_filenamehandling.add(m_fromsourcename);
         // Target column
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
         m_targetcolumn =
-                new DialogComponentColumnNameSelection(targetcolumnsettings,
-                        "Target column", 0, URIDataValue.class);
-        innerPanel.add(m_targetcolumn.getComponentPanel(), gbc);
+                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
         // Output directory
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        gbc.gridheight = 1;
-        m_outputdirectory =
-                new DialogComponentFileChooser(outputdirectorysettings,
-                        "outputdirectoryHistory", JFileChooser.SAVE_DIALOG,
-                        true, outputdirectoryFvm);
-        m_outputdirectory.setBorderTitle("Output directory:");
-        innerPanel.add(m_outputdirectory.getComponentPanel(), gbc);
-        // Inner panel
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        gbc.gridheight = 1;
-        innerPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "Target filenames..."));
-        panel.add(innerPanel, gbc);
-        // Overwrite policy
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        gbc.gridheight = 1;
-        m_ifexists =
-                new DialogComponentButtonGroup(ifexistssettings, false,
-                        "If a file exists...", OverwritePolicy.getAllSettings());
-        panel.add(m_ifexists.getComponentPanel(), gbc);
-        addTab("Options", panel);
+        m_outputdirectory = new FilesHistoryPanel("copymoveFiles", false);
+        m_outputdirectory.setSelectMode(JFileChooser.DIRECTORIES_ONLY);
+        m_outputdirectoryfvm =
+                new FlowVariableModelButton(createFlowVariableModel(
+                        "outputdirectory", FlowVariable.Type.STRING));
+        m_outputdirectoryfvm.getFlowVariableModel().addChangeListener(
+                new ChangeListener() {
+                    @Override
+                    public void stateChanged(final ChangeEvent e) {
+                        enableFilenamehandlingComponents();
+                    }
+                });
+        // If exists
+        m_overwrite = new JRadioButton(OverwritePolicy.OVERWRITE.getName());
+        m_overwrite.setActionCommand(OverwritePolicy.OVERWRITE.getName());
+        m_abort = new JRadioButton(OverwritePolicy.ABORT.getName());
+        m_abort.setActionCommand(OverwritePolicy.ABORT.getName());
+        m_ifexists = new ButtonGroup();
+        m_ifexists.add(m_overwrite);
+        m_ifexists.add(m_abort);
+        // Create layout
+        addTab("Options", initLayout());
     }
 
-    /**
-     * Checks if the output directory component should be enabled.
-     * 
-     * 
-     * @return true if the output directory component should be enabled
-     */
-    private boolean isOutputDirectoryEnabled(
-            final SettingsModelString filenamehandlingsettings,
-            final FlowVariableModel outputdirectoryFvm) {
-        return filenamehandlingsettings.getStringValue().equals(
-                FilenameHandling.SOURCENAME.getName())
-                && !outputdirectoryFvm.isVariableReplacementEnabled();
+    private JPanel initLayout() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        // From separate column
+        resetGBC(gbc);
+        JPanel fromSeparateColumnPanel = new JPanel(new GridBagLayout());
+        fromSeparateColumnPanel.setBorder(new EtchedBorder());
+        fromSeparateColumnPanel.add(m_fromseparatecolumn, gbc);
+        gbc.weightx = 1;
+        gbc.gridy++;
+        fromSeparateColumnPanel.add(m_targetcolumn, gbc);
+        // From source name
+        resetGBC(gbc);
+        JPanel fromSourceNamePanel = new JPanel(new GridBagLayout());
+        fromSourceNamePanel.setBorder(new EtchedBorder());
+        fromSourceNamePanel.add(m_fromsourcename, gbc);
+        gbc.weightx = 1;
+        gbc.gridy++;
+        fromSourceNamePanel.add(m_outputdirectory, gbc);
+        gbc.weightx = 0;
+        gbc.gridx++;
+        gbc.insets = new Insets(5, 0, 5, 5);
+        fromSourceNamePanel.add(m_outputdirectoryfvm, gbc);
+        // If exists
+        resetGBC(gbc);
+        JPanel ifExistsPanel = new JPanel(new GridBagLayout());
+        ifExistsPanel.setBorder(new TitledBorder(new EtchedBorder(),
+                "If a file exists..."));
+        ifExistsPanel.add(m_overwrite, gbc);
+        gbc.gridx++;
+        ifExistsPanel.add(m_abort, gbc);
+        // Outer panel
+        resetGBC(gbc);
+        panel.add(m_copy, gbc);
+        gbc.gridx++;
+        panel.add(m_move, gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1;
+        panel.add(m_sourcecolumn, gbc);
+        gbc.gridy++;
+        panel.add(fromSeparateColumnPanel, gbc);
+        gbc.gridy++;
+        panel.add(fromSourceNamePanel, gbc);
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
+        panel.add(ifExistsPanel, gbc);
+        return panel;
+    }
+
+    private void resetGBC(final GridBagConstraints gbc) {
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+    }
+
+    private void enableFilenamehandlingComponents() {
+        boolean separateColumn = m_fromseparatecolumn.isSelected();
+        boolean replacement =
+                m_outputdirectoryfvm.getFlowVariableModel()
+                        .isVariableReplacementEnabled();
+        m_targetcolumn.setEnabled(separateColumn);
+        m_outputdirectory.setEnabled(!separateColumn && !replacement);
+        m_outputdirectoryfvm.setEnabled(!separateColumn);
+    }
+
+    private class FilenamehandlingListener implements ActionListener {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+            enableFilenamehandlingComponents();
+        }
+
     }
 
     /**
@@ -224,13 +257,33 @@ public class CopyFilesNodeDialog extends NodeDialogPane {
      */
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final PortObjectSpec[] specs) throws NotConfigurableException {
-        m_copyormove.loadSettingsFrom(settings, specs);
-        m_sourcecolumn.loadSettingsFrom(settings, specs);
-        m_filenamehandling.loadSettingsFrom(settings, specs);
-        m_targetcolumn.loadSettingsFrom(settings, specs);
-        m_outputdirectory.loadSettingsFrom(settings, specs);
-        m_ifexists.loadSettingsFrom(settings, specs);
+            final DataTableSpec[] specs) throws NotConfigurableException {
+        CopyFilesConfiguration config = new CopyFilesConfiguration();
+        config.loadInDialog(settings);
+        m_sourcecolumn.update(specs[0], config.getSourcecolumn());
+        m_targetcolumn.update(specs[0], config.getTargetcolumn());
+        m_outputdirectory.updateHistory();
+        m_outputdirectory.setSelectedFile(config.getOutputdirectory());
+        String copyormove = config.getCopyormove();
+        if (copyormove.equals(m_copy.getActionCommand())) {
+            m_copyormove.setSelected(m_copy.getModel(), true);
+        } else if (copyormove.equals(m_move.getActionCommand())) {
+            m_copyormove.setSelected(m_move.getModel(), true);
+        }
+        String filenamehandling = config.getFilenamehandling();
+        if (filenamehandling.equals(m_fromseparatecolumn.getActionCommand())) {
+            m_filenamehandling.setSelected(m_fromseparatecolumn.getModel(),
+                    true);
+        } else if (filenamehandling.equals(m_fromsourcename.getActionCommand())) {
+            m_filenamehandling.setSelected(m_fromsourcename.getModel(), true);
+        }
+        String ifexists = config.getIfexists();
+        if (ifexists.equals(m_overwrite.getActionCommand())) {
+            m_ifexists.setSelected(m_overwrite.getModel(), true);
+        } else if (ifexists.equals(m_abort.getActionCommand())) {
+            m_ifexists.setSelected(m_abort.getModel(), true);
+        }
+        enableFilenamehandlingComponents();
     }
 
     /**
@@ -239,12 +292,14 @@ public class CopyFilesNodeDialog extends NodeDialogPane {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
-        m_copyormove.saveSettingsTo(settings);
-        m_sourcecolumn.saveSettingsTo(settings);
-        m_filenamehandling.saveSettingsTo(settings);
-        m_targetcolumn.saveSettingsTo(settings);
-        m_outputdirectory.saveSettingsTo(settings);
-        m_ifexists.saveSettingsTo(settings);
+        CopyFilesConfiguration config = new CopyFilesConfiguration();
+        config.setCopyormove(m_copyormove.getSelection().getActionCommand());
+        config.setSourcecolumn(m_sourcecolumn.getSelectedColumn());
+        config.setTargetcolumn(m_targetcolumn.getSelectedColumn());
+        config.setOutputdirectory(m_outputdirectory.getSelectedFile());
+        config.setFilenamehandling(m_filenamehandling.getSelection()
+                .getActionCommand());
+        config.setIfexists(m_ifexists.getSelection().getActionCommand());
+        config.save(settings);
     }
-
 }

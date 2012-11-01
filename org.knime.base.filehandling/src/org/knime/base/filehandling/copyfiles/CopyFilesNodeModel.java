@@ -81,7 +81,6 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation.
@@ -91,32 +90,13 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 class CopyFilesNodeModel extends NodeModel {
 
-    private SettingsModelString m_copyormove;
-
-    private SettingsModelString m_sourcecolumn;
-
-    private SettingsModelString m_filenamehandling;
-
-    private SettingsModelString m_targetcolumn;
-
-    private SettingsModelString m_outputdirectory;
-
-    private SettingsModelString m_ifexists;
+    private CopyFilesConfiguration m_configuration;
 
     /**
      * Constructor for the node model.
      */
     protected CopyFilesNodeModel() {
         super(1, 1);
-        m_copyormove = SettingsFactory.createCopyOrMoveSettings();
-        m_sourcecolumn = SettingsFactory.createSourceColumnSettings();
-        m_filenamehandling = SettingsFactory.createFilenameHandlingSettings();
-        m_targetcolumn =
-                SettingsFactory.createTargetColumnSettings(m_filenamehandling);
-        m_outputdirectory =
-                SettingsFactory
-                        .createOutputDirectorySettings(m_filenamehandling);
-        m_ifexists = SettingsFactory.createIfExistsSettings();
     }
 
     /**
@@ -128,10 +108,10 @@ class CopyFilesNodeModel extends NodeModel {
         BufferedDataTable out = null;
         // Monitor for duplicate checking and rollback
         CopyOrMoveMonitor monitor =
-                new CopyOrMoveMonitor(m_copyormove.getStringValue());
+                new CopyOrMoveMonitor(m_configuration.getCopyormove());
         // Append only if target column is not used
         boolean appenduricolumn =
-                !m_filenamehandling.getStringValue().equals(
+                !m_configuration.getFilenamehandling().equals(
                         FilenameHandling.FROMCOLUMN.getName());
         try {
             // If the columns do not get appended the create file method will
@@ -180,7 +160,7 @@ class CopyFilesNodeModel extends NodeModel {
         DataColumnSpec colSpec;
         // Append only if target column is not used
         boolean appenduricolumn =
-                !m_filenamehandling.getStringValue().equals(
+                !m_configuration.getFilenamehandling().equals(
                         FilenameHandling.FROMCOLUMN.getName());
         // Append URI column if selected. This will also call the
         // create file method
@@ -226,13 +206,16 @@ class CopyFilesNodeModel extends NodeModel {
     @SuppressWarnings("unchecked")
     private void checkSettings(final DataTableSpec inSpec)
             throws InvalidSettingsException {
-        String sourcecolumn = m_sourcecolumn.getStringValue();
+        if (m_configuration == null) {
+            throw new InvalidSettingsException("No settings available");
+        }
+        String sourcecolumn = m_configuration.getSourcecolumn();
         NodeUtils.checkColumnSelection(inSpec, "Source", sourcecolumn,
                 URIDataValue.class);
         // Check settings only if filename handling is from column
-        if (m_filenamehandling.getStringValue().equals(
+        if (m_configuration.getFilenamehandling().equals(
                 FilenameHandling.FROMCOLUMN.getName())) {
-            String targetcolumn = m_targetcolumn.getStringValue();
+            String targetcolumn = m_configuration.getTargetcolumn();
             NodeUtils.checkColumnSelection(inSpec, "Target", targetcolumn,
                     URIDataValue.class);
             // Do the target and the source column differ
@@ -242,10 +225,11 @@ class CopyFilesNodeModel extends NodeModel {
             }
         }
         // Check settings only if filename handling is generate
-        if (m_filenamehandling.getStringValue().equals(
+        if (m_configuration.getFilenamehandling().equals(
                 FilenameHandling.SOURCENAME.getName())) {
             // Does the output directory exist?
-            File outputdirectory = new File(m_outputdirectory.getStringValue());
+            File outputdirectory =
+                    new File(m_configuration.getOutputdirectory());
             if (!outputdirectory.isDirectory()) {
                 throw new InvalidSettingsException("Output directory \""
                         + outputdirectory.getAbsoluteFile()
@@ -268,13 +252,13 @@ class CopyFilesNodeModel extends NodeModel {
     private DataCell doAction(final DataRow row, final int rowNr,
             final CopyOrMoveMonitor monitor, final DataTableSpec inSpec,
             final ExecutionContext exec) {
-        String sourceColumn = m_sourcecolumn.getStringValue();
+        String sourceColumn = m_configuration.getSourcecolumn();
         int sourceIndex = inSpec.findColumnIndex(sourceColumn);
-        String filenameHandling = m_filenamehandling.getStringValue();
-        String outputDirectory = m_outputdirectory.getStringValue();
+        String filenameHandling = m_configuration.getFilenamehandling();
+        String outputDirectory = m_configuration.getOutputdirectory();
         String fromColumn = FilenameHandling.FROMCOLUMN.getName();
         String generate = FilenameHandling.SOURCENAME.getName();
-        String ifExists = m_ifexists.getStringValue();
+        String ifExists = m_configuration.getIfexists();
         String filename = "";
         // Assume missing source URI
         DataCell uriCell = DataType.getMissingCell();
@@ -289,7 +273,8 @@ class CopyFilesNodeModel extends NodeModel {
             if (filenameHandling.equals(fromColumn)) {
                 // Get target URI from table
                 int targetIndex =
-                        inSpec.findColumnIndex(m_targetcolumn.getStringValue());
+                        inSpec.findColumnIndex(m_configuration
+                                .getTargetcolumn());
                 if (row.getCell(targetIndex).isMissing()) {
                     throw new RuntimeException("Target URI in row \""
                             + row.getKey() + "\" is missing");
@@ -342,7 +327,7 @@ class CopyFilesNodeModel extends NodeModel {
                     }
                 }
                 targetFile.getParentFile().mkdirs();
-                if (m_copyormove.getStringValue().equals(
+                if (m_configuration.getCopyormove().equals(
                         CopyOrMove.COPY.getName())) {
                     byte[] buffer = new byte[1024];
                     targetFile.createNewFile();
@@ -362,7 +347,7 @@ class CopyFilesNodeModel extends NodeModel {
                     input.close();
                     output.close();
                 }
-                if (m_copyormove.getStringValue().equals(
+                if (m_configuration.getCopyormove().equals(
                         CopyOrMove.MOVE.getName())) {
                     sourceFile.renameTo(targetFile);
                     // Register files as processed to enable rollback (in this
@@ -406,12 +391,9 @@ class CopyFilesNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_copyormove.saveSettingsTo(settings);
-        m_sourcecolumn.saveSettingsTo(settings);
-        m_filenamehandling.saveSettingsTo(settings);
-        m_targetcolumn.saveSettingsTo(settings);
-        m_outputdirectory.saveSettingsTo(settings);
-        m_ifexists.saveSettingsTo(settings);
+        if (m_configuration != null) {
+            m_configuration.save(settings);
+        }
     }
 
     /**
@@ -420,12 +402,9 @@ class CopyFilesNodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_copyormove.loadSettingsFrom(settings);
-        m_sourcecolumn.loadSettingsFrom(settings);
-        m_filenamehandling.loadSettingsFrom(settings);
-        m_targetcolumn.loadSettingsFrom(settings);
-        m_outputdirectory.loadSettingsFrom(settings);
-        m_ifexists.loadSettingsFrom(settings);
+        CopyFilesConfiguration config = new CopyFilesConfiguration();
+        config.loadInModel(settings);
+        m_configuration = config;
     }
 
     /**
@@ -434,12 +413,7 @@ class CopyFilesNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_copyormove.validateSettings(settings);
-        m_sourcecolumn.validateSettings(settings);
-        m_filenamehandling.validateSettings(settings);
-        m_targetcolumn.validateSettings(settings);
-        m_outputdirectory.validateSettings(settings);
-        m_ifexists.validateSettings(settings);
+        new CopyFilesConfiguration().loadInModel(settings);
     }
 
     /**
