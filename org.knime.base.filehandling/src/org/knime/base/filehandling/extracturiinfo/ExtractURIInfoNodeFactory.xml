@@ -1,55 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./extracturiinfo.png" type="Manipulator">
-	<name>Extract URI Info</name>
+<knimeNode icon="./extracturiinfo.gif" type="Manipulator">
+    <name>Extract URI Info</name>
 
-	<shortDescription>
-		Extract information contained in an URI.
-	</shortDescription>
+    <shortDescription>
+        Extract information contained in an URI.
+    </shortDescription>
 
-	<fullDescription>
-		<intro>
-			This node extracts the selected components of an URI.
-		</intro>
+    <fullDescription>
+        <intro>
+            This node extracts the selected components of an URI.
+        </intro>
 
 
-		<option name="Authority">
-			Append column with authority information of the
-			URI.
-		</option>
-		<option name="Fragment">
-			Append column with fragment information of the
-			URI.
-		</option>
-		<option name="Host">
-			Append column with host information of the URI.
-		</option>
-		<option name="Path">
-			Append column with path information of the URI.
-		</option>
-		<option name="Port">
-			Append column with port information of the URI.
-		</option>
-		<option name="Query">
-			Append column with query information of the URI.
-		</option>
-		<option name="Scheme">
-			Append column with scheme information of the URI.
-		</option>
-		<option name="User">
-			Append column with user information of the
-			URI.
-		</option>
-	</fullDescription>
+        <option name="Authority">
+            Append column with authority information of the
+            URI.
+        </option>
+        <option name="Fragment">
+            Append column with fragment information of the
+            URI.
+        </option>
+        <option name="Host">
+            Append column with host information of the URI.
+        </option>
+        <option name="Path">
+            Append column with path information of the URI.
+        </option>
+        <option name="Port">
+            Append column with port information of the URI.
+        </option>
+        <option name="Query">
+            Append column with query information of the URI.
+        </option>
+        <option name="Scheme">
+            Append column with scheme information of the URI.
+        </option>
+        <option name="User">
+            Append column with user information of the
+            URI.
+        </option>
+    </fullDescription>
 
-	<ports>
-		<inPort name="Input table" index="0">
-			Table that contains an URI
-			column.
-		</inPort>
-		<outPort name="Output table" index="0">
-			Input table with the
-			selected URI components appended as columns.
-		</outPort>
-	</ports>
+    <ports>
+        <inPort name="Input table" index="0">
+            Table that contains an URI
+            column.
+        </inPort>
+        <outPort name="Output table" index="0">
+            Input table with the
+            selected URI components appended as columns.
+        </outPort>
+    </ports>
 </knimeNode>

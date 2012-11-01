@@ -1,23 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./listmimetypes.png" type="Source">
-	<name>List MIME-Types</name>
+<knimeNode icon="./listmimetypes.gif" type="Source">
+    <name>List MIME-Types</name>
 
-	<shortDescription>
-		List all registered MIME-Types.
-	</shortDescription>
+    <shortDescription>
+        List all registered MIME-Types.
+    </shortDescription>
 
-	<fullDescription>
-		<intro>This node lists all MIME-Types that are registered in the
-			MIME-Type map. Further types can be added through the extension point
-			"org.knime.base.filehandling.mimetypes".</intro>
+    <fullDescription>
+        <intro>This node lists all MIME-Types that are registered in the
+            MIME-Type map. Further types can be added through the
+            extension point
+            "org.knime.base.filehandling.mimetypes".
+        </intro>
 
 
-	</fullDescription>
+    </fullDescription>
 
-	<ports>
-		<outPort index="0" name="Output table">
-			All registered MIME-Types.
-		</outPort>
-	</ports>
+    <ports>
+        <outPort index="0" name="Output table">
+            All registered MIME-Types.
+        </outPort>
+    </ports>
 </knimeNode>

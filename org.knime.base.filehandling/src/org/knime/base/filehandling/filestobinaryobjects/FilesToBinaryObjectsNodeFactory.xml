@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./filestobinaryobjects.png" type="Manipulator">
-	<name>Files to Binary Objects</name>
+<knimeNode icon="./filestobinaryobjects.gif" type="Manipulator">
+    <name>Files to Binary Objects</name>
 
-	<shortDescription>
-		Adds files as binary objects to the table.
-	</shortDescription>
+    <shortDescription>
+        Adds files as binary objects to the table.
+    </shortDescription>
 
-	<fullDescription>
-		<intro>
-			This node loads the files referenced by the input table into
-			binary objects and will add them to the table.
-		</intro>
+    <fullDescription>
+        <intro>
+            This node loads the files referenced by the input table into
+            binary objects and will add them to the table.
+        </intro>
 
 
-		<option name="URI column">
-			Column with the path to the files.
-		</option>
-		<option name="New column name">
-			Name for the new column with the binary objects.
-		</option>
-		<option name="Append or replace">
-			<b>Append</b>
-			<br />
-			Does append the new column to the table.
-			<br />
-			<b>Replace</b>
-			<br />
-			Does replace the selected column with the new column.
-		</option>
-	</fullDescription>
+        <option name="URI column">
+            Column with the path to the files.
+        </option>
+        <option name="New column name">
+            Name for the new column with the binary objects.
+        </option>
+        <option name="Append or replace">
+            <b>Append</b>
+            <br />
+            Does append the new column to the table.
+            <br />
+            <b>Replace</b>
+            <br />
+            Does replace the selected column with the new column.
+        </option>
+    </fullDescription>
 
-	<ports>
-		<inPort name="Input table" index="0">
-			Table that contains an URI
-			column. The files referenced will be loaded as binary objects.
-		</inPort>
-		<outPort name="Output table" index="0">
-			Input table with the binary
-			objects added. The binary object column will either be appended to
-			the table or will replace the URI column, depending on the set
-			settings.
-		</outPort>
-	</ports>
+    <ports>
+        <inPort name="Input table" index="0">
+            Table that contains an URI
+            column. The files referenced will be loaded as binary objects.
+        </inPort>
+        <outPort name="Output table" index="0">
+            Input table with the binary
+            objects added. The binary object column will either be appended to
+            the table or will replace the URI column, depending on the set
+            settings.
+        </outPort>
+    </ports>
 </knimeNode>

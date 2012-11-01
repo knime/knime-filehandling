@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./uritostring.png" type="Manipulator">
-	<name>URI to String</name>
+<knimeNode icon="./uritostring.gif" type="Manipulator">
+    <name>URI to String</name>
 
-	<shortDescription>
-		Convert an URI column into a string column.
-	</shortDescription>
+    <shortDescription>
+        Convert an URI column into a string column.
+    </shortDescription>
 
-	<fullDescription>
-		<intro>
-			This node converts the selected URI column into a column of
-			the
-			type string.
-		</intro>
+    <fullDescription>
+        <intro>
+            This node converts the selected URI column into a column of
+            the
+            type string.
+        </intro>
 
 
-		<option name="Column selection">
-			Column that will be converted.
-		</option>
-		<option name="New column name">
-			Name of the created string column.
-		</option>
-		<option name="Append or replace">
-			<b>Append</b>
-			<br />
-			Does append the new string column to the table.
-			<br />
-			<b>Replace</b>
-			<br />
-			Does replace the selected column with the new string column.
-		</option>
-	</fullDescription>
+        <option name="Column selection">
+            Column that will be converted.
+        </option>
+        <option name="New column name">
+            Name of the created string column.
+        </option>
+        <option name="Append or replace">
+            <b>Append</b>
+            <br />
+            Does append the new string column to the table.
+            <br />
+            <b>Replace</b>
+            <br />
+            Does replace the selected column with the new string column.
+        </option>
+    </fullDescription>
 
-	<ports>
-		<inPort name="Input table" index="0">
-			Table that contains an URI
-			column.
-		</inPort>
-		<outPort name="Output table" index="0">
-			Input table with the
-			corresponding string column to the selected column. It will either be
-			appended or replacing the old column, depending on the configuration.
-		</outPort>
-	</ports>
+    <ports>
+        <inPort name="Input table" index="0">
+            Table that contains an URI
+            column.
+        </inPort>
+        <outPort name="Output table" index="0">
+            Input table with the
+            corresponding string column to the selected column. It will either be
+            appended or replacing the old column, depending on the configuration.
+        </outPort>
+    </ports>
 </knimeNode>

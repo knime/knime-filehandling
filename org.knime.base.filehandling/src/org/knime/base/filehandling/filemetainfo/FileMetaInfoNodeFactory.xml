@@ -1,73 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./filemetainfo.png" type="Manipulator">
-	<name>File Meta Info</name>
+<knimeNode icon="./filemetainfo.gif" type="Manipulator">
+    <name>File Meta Info</name>
 
-	<shortDescription>
-		Add meta information about a file to the table.
-	</shortDescription>
+    <shortDescription>
+        Add meta information about a file to the table.
+    </shortDescription>
 
-	<fullDescription>
-		<intro>
-			This node finds out meta information about the files referenced
-			by
-			the URI column and appends it to the table.
-		</intro>
+    <fullDescription>
+        <intro>
+            This node finds out meta information about the files referenced
+            by
+            the URI column and appends it to the table.
+        </intro>
 
-		<option name="URI column">
-			Column with the path to the files.
-		</option>
-		<option name="Fail execution if URI does not point to local file">
-			Does abort the execution if one of the URIs does
-			not point to a local
-			file. A correct URI to a local file has the
-			scheme "file" in front of
-			it.
-		</option>
-	</fullDescription>
+        <option name="URI column">
+            Column with the path to the files.
+        </option>
+        <option name="Fail execution if URI does not point to local file">
+            Does abort the execution if one of the URIs does
+            not point to a local
+            file. A correct URI to a local file has the
+            scheme "file" in front of
+            it.
+        </option>
+    </fullDescription>
 
-	<ports>
-		<inPort name="Input table" index="0">
-			Table that contains the
-			URI of
-			the files in a column.
-		</inPort>
-		<outPort name="Output table" index="0">
-			Input table with the meta information appended. Contained
-			information:
-			<br />
-			<b>Directory</b>
-			<br />
-			If the file is a directory or not.
-			<br />
-			<b>Hidden</b>
-			<br />
-			Is the file hidden.
-			<br />
-			<b>Symbolic link</b>
-			<br />
-			If the file is a symbolic link
-			<br />
-			<b>Size</b>
-			<br />
-			Size of the file. If the file is a directory, the sizes of the
-			contained files will be summarized.
-			<br />
-			<b>Size (human readable)</b>
-			<br />
-			Size of the file in human readable form.
-			<br />
-			<b>Last modified</b>
-			<br />
-			The last time the file was modified.
-			<br />
-			<b>Permissions</b>
-			<br />
-			Read (r), write (w) and execute (x) permissions of the file.
-			<br />
-			<b>Owner</b>
-			<br />
-			The owner of the file.
-		</outPort>
-	</ports>
+    <ports>
+        <inPort name="Input table" index="0">
+            Table that contains the
+            URI of
+            the files in a column.
+        </inPort>
+        <outPort name="Output table" index="0">
+            Input table with the meta information appended. Contained
+            information:
+            <br />
+            <b>Directory</b>
+            <br />
+            If the file is a directory or not.
+            <br />
+            <b>Hidden</b>
+            <br />
+            Is the file hidden.
+            <br />
+            <b>Symbolic link</b>
+            <br />
+            If the file is a symbolic link
+            <br />
+            <b>Size</b>
+            <br />
+            Size of the file. If the file is a directory, the sizes of
+            the
+            contained files will be summarized.
+            <br />
+            <b>Size (human readable)</b>
+            <br />
+            Size of the file in human readable form.
+            <br />
+            <b>Last modified</b>
+            <br />
+            The last time the file was modified.
+            <br />
+            <b>Permissions</b>
+            <br />
+            Read (r), write (w) and execute (x) permissions of the file.
+            <br />
+            <b>Owner</b>
+            <br />
+            The owner of the file.
+        </outPort>
+    </ports>
 </knimeNode>
