@@ -131,9 +131,14 @@ class URIToStringNodeModel extends NodeModel {
                 m_replace.getStringValue().equals(
                         ReplacePolicy.REPLACE.getName());
         // Set column name
-        String columnName =
-                DataTableSpec.getUniqueColumnName(inSpec,
-                        m_columnname.getStringValue());
+        String columnName;
+        if (replace) {
+            columnName = m_columnselection.getStringValue();
+        } else {
+            columnName =
+                    DataTableSpec.getUniqueColumnName(inSpec,
+                            m_columnname.getStringValue());
+        }
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec colSpec =
                 new DataColumnSpecCreator(columnName, StringCell.TYPE)
@@ -192,6 +197,19 @@ class URIToStringNodeModel extends NodeModel {
         String selectedColumn = m_columnselection.getStringValue();
         NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn,
                 URIDataValue.class);
+        boolean append =
+                m_replace.getStringValue().equals(
+                        ReplacePolicy.APPEND.getName());
+        if (append) {
+            // Is column name empty?
+            if (m_columnname.getStringValue().equals("")) {
+                throw new InvalidSettingsException(
+                        "Column name can not be empty");
+            }
+            if (inSpec.findColumnIndex(m_columnname.getStringValue()) != -1) {
+                throw new InvalidSettingsException("Column name already taken");
+            }
+        }
     }
 
     /**

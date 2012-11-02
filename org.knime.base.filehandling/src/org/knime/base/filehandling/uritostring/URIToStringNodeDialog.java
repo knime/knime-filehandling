@@ -50,6 +50,9 @@
  */
 package org.knime.base.filehandling.uritostring;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
@@ -80,16 +83,23 @@ class URIToStringNodeDialog extends DefaultNodeSettingsPane {
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
         m_columnname = SettingsFactory.createColumnNameSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
+        m_replace.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
+                m_columnname.setEnabled(append);
+            }
+        });
         // Column selection
         addDialogComponent(new DialogComponentColumnNameSelection(
                 m_columnselection, "Column selection", 0, URIDataValue.class));
         createNewGroup("New column...");
-        // Column name
-        addDialogComponent(new DialogComponentString(m_columnname, "Name",
-                true, 20));
         // Replace
         addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "",
                 ReplacePolicy.getAllSettings()));
+        // Column name
+        addDialogComponent(new DialogComponentString(m_columnname, "Name",
+                true, 20));
         closeCurrentGroup();
     }
 }

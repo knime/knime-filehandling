@@ -136,7 +136,12 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         final BinaryObjectCellFactory bocellfactory =
                 exec == null ? null : new BinaryObjectCellFactory(exec);
         String uricolumn = m_uricolumn.getStringValue();
-        String bocolumnname = m_bocolumnname.getStringValue();
+        String bocolumnname;
+        if (replace) {
+            bocolumnname = m_uricolumn.getStringValue();
+        } else {
+            bocolumnname = m_bocolumnname.getStringValue();
+        }
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         // Create column of the binary objects
         DataColumnSpec colSpec =
@@ -173,14 +178,19 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         String uricolumn = m_uricolumn.getStringValue();
         NodeUtils.checkColumnSelection(inSpec, "URI", uricolumn,
                 URIDataValue.class);
-        // Is the binary object column name empty?
-        if (m_bocolumnname.getStringValue().equals("")) {
-            throw new InvalidSettingsException(
-                    "Binary object column name can not be empty");
-        }
-        if (inSpec.findColumnIndex(m_bocolumnname.getStringValue()) != -1) {
-            throw new InvalidSettingsException(
-                    "Binary object column name already taken");
+        boolean append =
+                m_replace.getStringValue().equals(
+                        ReplacePolicy.APPEND.getName());
+        if (append) {
+            // Is the binary object column name empty?
+            if (m_bocolumnname.getStringValue().equals("")) {
+                throw new InvalidSettingsException(
+                        "Binary object column name can not be empty");
+            }
+            if (inSpec.findColumnIndex(m_bocolumnname.getStringValue()) != -1) {
+                throw new InvalidSettingsException(
+                        "Binary object column name already taken");
+            }
         }
     }
 

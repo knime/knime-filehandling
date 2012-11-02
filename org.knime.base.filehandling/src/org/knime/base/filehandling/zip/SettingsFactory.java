@@ -92,7 +92,7 @@ final class SettingsFactory {
      * @return Compression level <code>SettingsModel</code>
      */
     static SettingsModelIntegerBounded createCompressionLevelSettings() {
-        return new SettingsModelIntegerBounded("compressionlevel", 0, 0, 9);
+        return new SettingsModelIntegerBounded("compressionlevel", 8, 0, 9);
     }
 
     /**

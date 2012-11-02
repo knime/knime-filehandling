@@ -50,6 +50,9 @@
  */
 package org.knime.base.filehandling.filestobinaryobjects;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
@@ -80,16 +83,25 @@ class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
+        m_replace.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                boolean append =
+                        m_replace.getStringValue().equals(
+                                ReplacePolicy.APPEND.getName());
+                m_bocolumnname.setEnabled(append);
+            }
+        });
         // URI column
         addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
                 "URI column", 0, URIDataValue.class));
         createNewGroup("New column...");
-        // Binary object column name
-        addDialogComponent(new DialogComponentString(m_bocolumnname, "Name",
-                true, 20));
         // Replace setting
         addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "",
                 ReplacePolicy.getAllSettings()));
+        // Binary object column name
+        addDialogComponent(new DialogComponentString(m_bocolumnname, "Name",
+                true, 20));
         closeCurrentGroup();
     }
 }
