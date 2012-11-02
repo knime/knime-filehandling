@@ -58,6 +58,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.Border;
@@ -87,6 +88,8 @@ import org.knime.core.node.workflow.FlowVariable;
 public class CopyFilesNodeDialog extends NodeDialogPane {
 
     private ColumnSelectionComboxBox m_sourcecolumn;
+
+    private JLabel m_sourcecolumnlabel;
 
     private ColumnSelectionComboxBox m_targetcolumn;
 
@@ -128,6 +131,7 @@ public class CopyFilesNodeDialog extends NodeDialogPane {
         // Source column
         m_sourcecolumn =
                 new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
+        m_sourcecolumnlabel = new JLabel("Source");
         // Target filenames
         m_fromseparatecolumn = new JRadioButton("Use path from target column");
         m_fromseparatecolumn.setActionCommand(FilenameHandling.FROMCOLUMN
@@ -172,26 +176,44 @@ public class CopyFilesNodeDialog extends NodeDialogPane {
     private JPanel initLayout() {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        // From separate column
+        // Copy or move
         resetGBC(gbc);
-        JPanel fromSeparateColumnPanel = new JPanel(new GridBagLayout());
-        fromSeparateColumnPanel.setBorder(new EtchedBorder());
-        fromSeparateColumnPanel.add(m_fromseparatecolumn, gbc);
-        gbc.weightx = 1;
-        gbc.gridy++;
-        fromSeparateColumnPanel.add(m_targetcolumn, gbc);
-        // From source name
+        JPanel copyOrMovePanel = new JPanel(new GridBagLayout());
+        copyOrMovePanel.add(m_copy, gbc);
+        gbc.gridx++;
+        copyOrMovePanel.add(m_move, gbc);
+        // Source column
         resetGBC(gbc);
-        JPanel fromSourceNamePanel = new JPanel(new GridBagLayout());
-        fromSourceNamePanel.setBorder(new EtchedBorder());
-        fromSourceNamePanel.add(m_fromsourcename, gbc);
+        JPanel sourceColumnPanel = new JPanel(new GridBagLayout());
+        sourceColumnPanel.add(m_sourcecolumnlabel, gbc);
+        gbc.gridx++;
         gbc.weightx = 1;
-        gbc.gridy++;
-        fromSourceNamePanel.add(m_outputdirectory, gbc);
+        sourceColumnPanel.add(m_sourcecolumn, gbc);
+        // Output directory
+        resetGBC(gbc);
+        JPanel outputDirectoryPanel = new JPanel(new GridBagLayout());
+        gbc.weightx = 1;
+        outputDirectoryPanel.add(m_outputdirectory, gbc);
         gbc.weightx = 0;
         gbc.gridx++;
         gbc.insets = new Insets(5, 0, 5, 5);
-        fromSourceNamePanel.add(m_outputdirectoryfvm, gbc);
+        outputDirectoryPanel.add(m_outputdirectoryfvm, gbc);
+        // Filename handling
+        resetGBC(gbc);
+        JPanel filenameHandlingPanel = new JPanel(new GridBagLayout());
+        filenameHandlingPanel.setBorder(new EtchedBorder());
+        filenameHandlingPanel.add(m_fromseparatecolumn, gbc);
+        gbc.gridy++;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(5, 62, 5, 5);
+        filenameHandlingPanel.add(m_targetcolumn, gbc);
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.weightx = 0;
+        gbc.gridy++;
+        filenameHandlingPanel.add(m_fromsourcename, gbc);
+        gbc.weightx = 1;
+        gbc.gridy++;
+        filenameHandlingPanel.add(outputDirectoryPanel, gbc);
         // If exists
         resetGBC(gbc);
         JPanel ifExistsPanel = new JPanel(new GridBagLayout());
@@ -202,18 +224,14 @@ public class CopyFilesNodeDialog extends NodeDialogPane {
         ifExistsPanel.add(m_abort, gbc);
         // Outer panel
         resetGBC(gbc);
-        panel.add(m_copy, gbc);
-        gbc.gridx++;
-        panel.add(m_move, gbc);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.gridwidth = 2;
         gbc.weightx = 1;
-        panel.add(m_sourcecolumn, gbc);
+        gbc.fill = GridBagConstraints.NONE;
+        panel.add(copyOrMovePanel, gbc);
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.gridy++;
-        panel.add(fromSeparateColumnPanel, gbc);
+        panel.add(sourceColumnPanel, gbc);
         gbc.gridy++;
-        panel.add(fromSourceNamePanel, gbc);
+        panel.add(filenameHandlingPanel, gbc);
         gbc.gridy++;
         gbc.fill = GridBagConstraints.NONE;
         panel.add(ifExistsPanel, gbc);
