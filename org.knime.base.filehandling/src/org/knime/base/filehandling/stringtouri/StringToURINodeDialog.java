@@ -91,7 +91,9 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
         m_replace.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
+                boolean append =
+                        m_replace.getStringValue().equals(
+                                ReplacePolicy.APPEND.getName());
                 m_columnname.setEnabled(append);
             }
         });

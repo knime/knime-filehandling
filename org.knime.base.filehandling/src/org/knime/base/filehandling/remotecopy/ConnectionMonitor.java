@@ -48,7 +48,7 @@
  * History
  *   Oct 18, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.connections;
+package org.knime.base.filehandling.remotecopy;
 
 import java.io.IOException;
 import java.net.URI;

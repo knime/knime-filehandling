@@ -55,7 +55,6 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.knime.base.filehandling.NodeUtils;
-import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;

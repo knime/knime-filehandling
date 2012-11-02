@@ -56,7 +56,7 @@ import java.net.URI;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
-import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
+import org.knime.base.filehandling.remotecopy.ConnectionMonitor;
 
 /**
  * Data source for URIs that have the scheme "ftp".

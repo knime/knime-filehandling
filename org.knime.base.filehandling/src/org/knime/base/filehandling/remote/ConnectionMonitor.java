@@ -46,60 +46,75 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 17, 2012 (Patrick Winter): created
+ *   Nov 2, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.datasource;
+package org.knime.base.filehandling.remote;
 
-import java.net.URI;
-
-import org.knime.base.filehandling.remotecopy.ConnectionMonitor;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Factory class for data source construction.
+ * Monitors open connections.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class DataSourceFactory {
+public final class ConnectionMonitor {
 
-    private DataSourceFactory() {
-        // Disable the default constructor
+    private static Map<String, Connection> connections =
+            new HashMap<String, Connection>();
+
+    private ConnectionMonitor() {
+        // Disable default constructor
     }
 
     /**
-     * Factory method for data source construction.
+     * Register a connection.
      * 
      * 
-     * Will determine what source is used by the scheme of the URI.
-     * 
-     * @param uri The URI that will be used by the data source
-     * @param monitor Monitor for connection reuse
-     * @return Data source for the URI
-     * @throws Exception If construction was not possible
+     * @param identifier Identifier for the connection
+     * @param connection Connection to register
      */
-    public static DataSource getSource(final URI uri,
-            final ConnectionMonitor monitor) throws Exception {
-        String scheme = uri.getScheme();
-        DataSource source = null;
-        if (scheme.equals("file")) {
-            source = new FileDataSource(uri);
+    public static synchronized void registerConnection(final String identifier,
+            final Connection connection) {
+        connections.put(identifier, connection);
+    }
+
+    /**
+     * Find an open connection to the identifier.
+     * 
+     * 
+     * @param identifier The identifier
+     * @return Already opened connection to the identifier or null if not
+     *         available
+     */
+    public static synchronized Connection findConnection(final String identifier) {
+        Connection connection = connections.get(identifier);
+        if (connection != null && !connection.isOpen()) {
+            try {
+                connection.open();
+            } catch (Exception e) {
+                connections.remove(identifier);
+                connection = null;
+            }
         }
-        if (scheme.equals("ftp")) {
-            source = new FTPDataSource(uri, monitor);
+        return connection;
+    }
+
+    /**
+     * Close all connections.
+     */
+    public static synchronized void closeAll() {
+        Set<String> identifiers = connections.keySet();
+        for (String identifier : identifiers) {
+            try {
+                connections.get(identifier).close();
+                connections.remove(identifier);
+            } catch (Exception e) {
+                // ignore and close next connection
+            }
         }
-        if (scheme.equals("sftp")) {
-            source = new SFTPDataSource(uri, monitor);
-        }
-        if (scheme.equals("scp")) {
-            source = new SCPDataSource(uri, monitor);
-        }
-        if (scheme.equals("http") || scheme.equals("https")) {
-            source = new HTTPDataSource(uri);
-        }
-        if (source == null) {
-            source = new DefaultDataSource(uri);
-        }
-        return source;
     }
 
 }

@@ -52,7 +52,6 @@ package org.knime.base.filehandling.remotecopy;
 
 import java.net.URI;
 
-import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
 import org.knime.base.filehandling.remotecopy.datasink.DataSink;
 import org.knime.base.filehandling.remotecopy.datasink.DataSinkFactory;
 import org.knime.base.filehandling.remotecopy.datasource.DataSource;

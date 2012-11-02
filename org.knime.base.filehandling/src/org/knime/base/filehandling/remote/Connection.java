@@ -46,60 +46,34 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 17, 2012 (Patrick Winter): created
+ *   Nov 2, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.datasource;
-
-import java.net.URI;
-
-import org.knime.base.filehandling.remotecopy.ConnectionMonitor;
+package org.knime.base.filehandling.remote;
 
 /**
- * Factory class for data source construction.
+ * Connection for a remote protocol.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class DataSourceFactory {
-
-    private DataSourceFactory() {
-        // Disable the default constructor
-    }
+public abstract class Connection {
 
     /**
-     * Factory method for data source construction.
-     * 
-     * 
-     * Will determine what source is used by the scheme of the URI.
-     * 
-     * @param uri The URI that will be used by the data source
-     * @param monitor Monitor for connection reuse
-     * @return Data source for the URI
-     * @throws Exception If construction was not possible
+     * @throws Exception If the opening failed
      */
-    public static DataSource getSource(final URI uri,
-            final ConnectionMonitor monitor) throws Exception {
-        String scheme = uri.getScheme();
-        DataSource source = null;
-        if (scheme.equals("file")) {
-            source = new FileDataSource(uri);
-        }
-        if (scheme.equals("ftp")) {
-            source = new FTPDataSource(uri, monitor);
-        }
-        if (scheme.equals("sftp")) {
-            source = new SFTPDataSource(uri, monitor);
-        }
-        if (scheme.equals("scp")) {
-            source = new SCPDataSource(uri, monitor);
-        }
-        if (scheme.equals("http") || scheme.equals("https")) {
-            source = new HTTPDataSource(uri);
-        }
-        if (source == null) {
-            source = new DefaultDataSource(uri);
-        }
-        return source;
-    }
+    public abstract void open() throws Exception;
+
+    /**
+     * Checks if the connection is open.
+     * 
+     * 
+     * @return true if the connection is open, false otherwise
+     */
+    public abstract boolean isOpen();
+
+    /**
+     * @throws Exception If the closing failed
+     */
+    public abstract void close() throws Exception;
 
 }

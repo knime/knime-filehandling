@@ -46,60 +46,108 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 17, 2012 (Patrick Winter): created
+ *   Nov 2, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.datasource;
+package org.knime.base.filehandling.remote;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 
-import org.knime.base.filehandling.remotecopy.ConnectionMonitor;
-
 /**
- * Factory class for data source construction.
+ * Remote file.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class DataSourceFactory {
+public abstract class RemoteFile {
 
-    private DataSourceFactory() {
-        // Disable the default constructor
+    private Connection m_connection = null;
+
+    /**
+     * Create and open the connection for this remote file.
+     * 
+     * 
+     * @throws Exception If opening failed
+     */
+    public void openConnection() throws Exception {
+        String identifier = getIdentifier();
+        Connection connection = ConnectionMonitor.findConnection(identifier);
+        if (connection == null) {
+            connection = createConnection();
+            connection.open();
+            ConnectionMonitor.registerConnection(identifier, connection);
+        }
+        m_connection = connection;
     }
 
     /**
-     * Factory method for data source construction.
+     * Internal method to create the identifier.
      * 
      * 
-     * Will determine what source is used by the scheme of the URI.
-     * 
-     * @param uri The URI that will be used by the data source
-     * @param monitor Monitor for connection reuse
-     * @return Data source for the URI
-     * @throws Exception If construction was not possible
+     * @return Identifier to this remote files connection
      */
-    public static DataSource getSource(final URI uri,
-            final ConnectionMonitor monitor) throws Exception {
-        String scheme = uri.getScheme();
-        DataSource source = null;
-        if (scheme.equals("file")) {
-            source = new FileDataSource(uri);
+    protected abstract String getIdentifier();
+
+    /**
+     * Internal method to create a new connection.
+     * 
+     * 
+     * @return New connection for this remote file
+     */
+    protected abstract Connection createConnection();
+
+    /**
+     * Return the current connection.
+     * 
+     * 
+     * @return The current connection
+     */
+    public Connection getConnection() {
+        return m_connection;
+    }
+
+    /**
+     * Close this remote file.
+     * 
+     * @throws Exception If closing did not succeed
+     */
+    public abstract void close() throws Exception;
+
+    /**
+     * Opens an input stream.
+     * 
+     * 
+     * @return The input stream
+     * @throws Exception If the input stream could not be opened
+     */
+    public abstract InputStream openInputStream() throws Exception;
+
+    /**
+     * Opens an output stream.
+     * 
+     * 
+     * @return The output stream
+     * @throws Exception If the output stream could not be opened
+     */
+    public abstract OutputStream openOutputStream() throws Exception;
+
+    /**
+     * @return The default port for this remote file type
+     */
+    public abstract int getDefaultPort();
+
+    /**
+     * @param uri The URI
+     * @return Identifier for the given URI
+     */
+    protected String buildIdentifier(final URI uri) {
+        int port = uri.getPort();
+        if (port < 0) {
+            port = getDefaultPort();
         }
-        if (scheme.equals("ftp")) {
-            source = new FTPDataSource(uri, monitor);
-        }
-        if (scheme.equals("sftp")) {
-            source = new SFTPDataSource(uri, monitor);
-        }
-        if (scheme.equals("scp")) {
-            source = new SCPDataSource(uri, monitor);
-        }
-        if (scheme.equals("http") || scheme.equals("https")) {
-            source = new HTTPDataSource(uri);
-        }
-        if (source == null) {
-            source = new DefaultDataSource(uri);
-        }
-        return source;
+        return uri.getScheme() + "://" + uri.getUserInfo() + "@"
+                + uri.getHost() + ":" + port;
     }
 
 }

@@ -46,60 +46,120 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 17, 2012 (Patrick Winter): created
+ *   Nov 2, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.datasource;
+package org.knime.base.filehandling.remote.files;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 
-import org.knime.base.filehandling.remotecopy.ConnectionMonitor;
+import org.knime.base.filehandling.remote.Connection;
+import org.knime.base.filehandling.remote.RemoteFile;
 
 /**
- * Factory class for data source construction.
+ * Implementation of the file remote file.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class DataSourceFactory {
+public class FileRemoteFile extends RemoteFile {
 
-    private DataSourceFactory() {
-        // Disable the default constructor
+    private URI m_uri;
+
+    /**
+     * Creates a file remote file for the given URI.
+     * 
+     * 
+     * @param uri The URI
+     */
+    public FileRemoteFile(final URI uri) {
+        m_uri = uri;
     }
 
     /**
-     * Factory method for data source construction.
-     * 
-     * 
-     * Will determine what source is used by the scheme of the URI.
-     * 
-     * @param uri The URI that will be used by the data source
-     * @param monitor Monitor for connection reuse
-     * @return Data source for the URI
-     * @throws Exception If construction was not possible
+     * {@inheritDoc}
      */
-    public static DataSource getSource(final URI uri,
-            final ConnectionMonitor monitor) throws Exception {
-        String scheme = uri.getScheme();
-        DataSource source = null;
-        if (scheme.equals("file")) {
-            source = new FileDataSource(uri);
+    @Override
+    protected String getIdentifier() {
+        return buildIdentifier(m_uri);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected Connection createConnection() {
+        return new FileConnection();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void close() throws Exception {
+        // Not used
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InputStream openInputStream() throws Exception {
+        return new FileInputStream(new File(m_uri));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public OutputStream openOutputStream() throws Exception {
+        return new FileOutputStream(new File(m_uri));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getDefaultPort() {
+        return -1;
+    }
+
+    /**
+     * Dummy connection, since the file remote file does not need a connection.
+     * 
+     * 
+     * @author Patrick Winter, University of Konstanz
+     */
+    private class FileConnection extends Connection {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void open() throws Exception {
+            // Not used
         }
-        if (scheme.equals("ftp")) {
-            source = new FTPDataSource(uri, monitor);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean isOpen() {
+            return true;
         }
-        if (scheme.equals("sftp")) {
-            source = new SFTPDataSource(uri, monitor);
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void close() throws Exception {
+            // Not used
         }
-        if (scheme.equals("scp")) {
-            source = new SCPDataSource(uri, monitor);
-        }
-        if (scheme.equals("http") || scheme.equals("https")) {
-            source = new HTTPDataSource(uri);
-        }
-        if (source == null) {
-            source = new DefaultDataSource(uri);
-        }
-        return source;
+
     }
 
 }

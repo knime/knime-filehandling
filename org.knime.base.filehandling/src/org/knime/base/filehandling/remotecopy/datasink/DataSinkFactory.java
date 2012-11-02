@@ -52,7 +52,7 @@ package org.knime.base.filehandling.remotecopy.datasink;
 
 import java.net.URI;
 
-import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
+import org.knime.base.filehandling.remotecopy.ConnectionMonitor;
 
 /**
  * Factory class for data sink construction.

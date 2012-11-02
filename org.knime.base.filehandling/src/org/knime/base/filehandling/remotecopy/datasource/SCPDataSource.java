@@ -55,7 +55,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
-import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
+import org.knime.base.filehandling.remotecopy.ConnectionMonitor;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;

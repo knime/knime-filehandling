@@ -55,7 +55,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Vector;
 
-import org.knime.base.filehandling.remotecopy.connections.ConnectionMonitor;
+import org.knime.base.filehandling.remotecopy.ConnectionMonitor;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;

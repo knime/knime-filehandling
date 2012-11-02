@@ -46,60 +46,43 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 17, 2012 (Patrick Winter): created
+ *   Nov 2, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.datasource;
+package org.knime.base.filehandling.remote;
 
 import java.net.URI;
 
-import org.knime.base.filehandling.remotecopy.ConnectionMonitor;
+import org.knime.base.filehandling.remote.files.FTPRemoteFile;
+import org.knime.base.filehandling.remote.files.FileRemoteFile;
 
 /**
- * Factory class for data source construction.
+ * Factory for remote files.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class DataSourceFactory {
+public final class RemoteFileFactory {
 
-    private DataSourceFactory() {
-        // Disable the default constructor
+    private RemoteFileFactory() {
+        // Disable default constructor
     }
 
     /**
-     * Factory method for data source construction.
+     * Creates a remote file for the URI.
      * 
      * 
-     * Will determine what source is used by the scheme of the URI.
-     * 
-     * @param uri The URI that will be used by the data source
-     * @param monitor Monitor for connection reuse
-     * @return Data source for the URI
-     * @throws Exception If construction was not possible
+     * @param uri The URI
+     * @return Remote file for the given URI
      */
-    public static DataSource getSource(final URI uri,
-            final ConnectionMonitor monitor) throws Exception {
+    public static RemoteFile createRemoteFile(final URI uri) {
         String scheme = uri.getScheme();
-        DataSource source = null;
+        RemoteFile remoteFile = null;
         if (scheme.equals("file")) {
-            source = new FileDataSource(uri);
+            remoteFile = new FileRemoteFile(uri);
+        } else if (scheme.equals("ftp")) {
+            remoteFile = new FTPRemoteFile(uri);
         }
-        if (scheme.equals("ftp")) {
-            source = new FTPDataSource(uri, monitor);
-        }
-        if (scheme.equals("sftp")) {
-            source = new SFTPDataSource(uri, monitor);
-        }
-        if (scheme.equals("scp")) {
-            source = new SCPDataSource(uri, monitor);
-        }
-        if (scheme.equals("http") || scheme.equals("https")) {
-            source = new HTTPDataSource(uri);
-        }
-        if (source == null) {
-            source = new DefaultDataSource(uri);
-        }
-        return source;
+        return remoteFile;
     }
 
 }
