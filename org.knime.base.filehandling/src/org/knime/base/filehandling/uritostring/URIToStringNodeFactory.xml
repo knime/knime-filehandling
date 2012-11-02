@@ -9,7 +9,8 @@
 
     <fullDescription>
         <intro>
-            This node converts the selected URI column into a column of
+            This node converts the selected URI column into a column
+            of
             the
             type string.
         </intro>
@@ -17,9 +18,6 @@
 
         <option name="Column selection">
             Column that will be converted.
-        </option>
-        <option name="New column name">
-            Name of the created string column.
         </option>
         <option name="Append or replace">
             <b>Append</b>
@@ -30,17 +28,23 @@
             <br />
             Does replace the selected column with the new string column.
         </option>
+        <option name="New column name">
+            Name of the appended column.
+        </option>
     </fullDescription>
 
     <ports>
         <inPort name="Input table" index="0">
-            Table that contains an URI
+            Table that contains an
+            URI
             column.
         </inPort>
         <outPort name="Output table" index="0">
             Input table with the
-            corresponding string column to the selected column. It will either be
-            appended or replacing the old column, depending on the configuration.
+            corresponding string column to the selected column. It will
+            either be
+            appended or replacing the old column, depending on
+            the configuration.
         </outPort>
     </ports>
 </knimeNode>

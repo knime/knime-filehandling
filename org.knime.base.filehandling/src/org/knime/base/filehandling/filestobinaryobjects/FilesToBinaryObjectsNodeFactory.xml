@@ -17,9 +17,6 @@
         <option name="URI column">
             Column with the path to the files.
         </option>
-        <option name="New column name">
-            Name for the new column with the binary objects.
-        </option>
         <option name="Append or replace">
             <b>Append</b>
             <br />
@@ -28,6 +25,9 @@
             <b>Replace</b>
             <br />
             Does replace the selected column with the new column.
+        </option>
+        <option name="New column name">
+            Name for the appended column.
         </option>
     </fullDescription>
 
