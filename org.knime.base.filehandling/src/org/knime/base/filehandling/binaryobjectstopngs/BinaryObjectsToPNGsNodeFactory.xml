@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./binaryobjectstopngs.gif" type="Manipulator">
+    <name>Binary Objects to PNGs</name>
+
+    <shortDescription>
+        Converts the binary objects of a column to PNGs.
+    </shortDescription>
+
+    <fullDescription>
+        <intro>
+            This node converts the binary object cells to PNG cells.
+        </intro>
+
+
+        <option name="Column selection">
+            Column that will be converted.
+        </option>
+        <option name="Append or replace">
+            <b>Append</b>
+            <br />
+            Does append the new column to the table.
+            <br />
+            <b>Replace</b>
+            <br />
+            Does replace the selected column with the new column.
+        </option>
+        <option name="New column name">
+            Name of the appended column.
+        </option>
+    </fullDescription>
+
+    <ports>
+        <inPort name="Input table" index="0">
+            Table that contains the
+            binary
+            objects that will be converted.
+        </inPort>
+        <outPort name="Output table" index="0">
+            Input table with PNG
+            column either appended or replacing the binary objects.
+        </outPort>
+    </ports>
+</knimeNode>
