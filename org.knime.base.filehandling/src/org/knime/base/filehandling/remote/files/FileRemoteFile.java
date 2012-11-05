@@ -93,7 +93,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     protected Connection createConnection() {
-        return new FileConnection();
+        return null;
     }
 
     /**
@@ -129,37 +129,19 @@ public class FileRemoteFile extends RemoteFile {
     }
 
     /**
-     * Dummy connection, since the file remote file does not need a connection.
-     * 
-     * 
-     * @author Patrick Winter, University of Konstanz
+     * {@inheritDoc}
      */
-    private class FileConnection extends Connection {
+    @Override
+    public long getSize() throws Exception {
+        return new File(m_uri).length();
+    }
 
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void open() throws Exception {
-            // Not used
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public boolean isOpen() {
-            return true;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void close() throws Exception {
-            // Not used
-        }
-
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean usesConnection() {
+        return false;
     }
 
 }

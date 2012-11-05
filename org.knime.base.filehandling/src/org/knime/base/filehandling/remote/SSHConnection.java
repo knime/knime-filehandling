@@ -46,125 +46,72 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 2, 2012 (Patrick Winter): created
+ *   Nov 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remote;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
+
 /**
- * Remote file.
- * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public abstract class RemoteFile {
+public class SSHConnection extends Connection {
 
-    private Connection m_connection = null;
+    private URI m_uri;
 
-    /**
-     * Create and open the connection for this remote file.
-     * 
-     * 
-     * @throws Exception If opening failed
-     */
-    public void openConnection() throws Exception {
-        if (usesConnection()) {
-            String identifier = getIdentifier();
-            Connection connection =
-                    ConnectionMonitor.findConnection(identifier);
-            if (connection == null) {
-                connection = createConnection();
-                connection.open();
-                ConnectionMonitor.registerConnection(identifier, connection);
-            }
-            m_connection = connection;
-        }
-    }
-
-    /**
-     * Internal method to create the identifier.
-     * 
-     * 
-     * @return Identifier to this remote files connection
-     */
-    protected abstract String getIdentifier();
-
-    /**
-     * Internal method to create a new connection.
-     * 
-     * 
-     * @return New connection for this remote file
-     */
-    protected abstract Connection createConnection();
-
-    /**
-     * Return the current connection.
-     * 
-     * 
-     * @return The current connection
-     */
-    public Connection getConnection() {
-        return m_connection;
-    }
-
-    /**
-     * Close this remote file.
-     * 
-     * @throws Exception If closing did not succeed
-     */
-    public abstract void close() throws Exception;
-
-    /**
-     * Opens an input stream.
-     * 
-     * 
-     * @return The input stream
-     * @throws Exception If the input stream could not be opened
-     */
-    public abstract InputStream openInputStream() throws Exception;
-
-    /**
-     * Opens an output stream.
-     * 
-     * 
-     * @return The output stream
-     * @throws Exception If the output stream could not be opened
-     */
-    public abstract OutputStream openOutputStream() throws Exception;
-
-    /**
-     * Get the size of the file.
-     * 
-     * 
-     * @return The size of the file
-     * @throws Exception If the size could not be retrieved
-     */
-    public abstract long getSize() throws Exception;
-
-    /**
-     * @return The default port for this remote file type
-     */
-    public abstract int getDefaultPort();
-
-    /**
-     * @return true if this remote file uses a connection, false otherwise
-     */
-    protected abstract boolean usesConnection();
+    private Session m_session;
 
     /**
      * @param uri The URI
-     * @return Identifier for the given URI
      */
-    protected String buildIdentifier(final URI uri) {
-        int port = uri.getPort();
-        if (port < 0) {
-            port = getDefaultPort();
-        }
-        return uri.getScheme() + "://" + uri.getUserInfo() + "@"
-                + uri.getHost() + ":" + port;
+    public SSHConnection(final URI uri) {
+        m_uri = uri;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void open() throws Exception {
+        // Read attributes
+        String host = m_uri.getHost();
+        int port = m_uri.getPort() != -1 ? m_uri.getPort() : 22;
+        String user = m_uri.getUserInfo();
+        String password = "password";
+        JSch jsch = new JSch();
+        Session session = jsch.getSession(user, host, port);
+        session.setPassword(password);
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.connect();
+        m_session = session;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isOpen() {
+        return m_session.isConnected();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void close() throws Exception {
+        m_session.disconnect();
+    }
+
+    /**
+     * 
+     * @return The session of this connection
+     */
+    public Session getSession() {
+        return m_session;
     }
 
 }

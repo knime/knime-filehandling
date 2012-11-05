@@ -46,125 +46,133 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 2, 2012 (Patrick Winter): created
+ *   Nov 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remote;
+package org.knime.base.filehandling.remote.files;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Vector;
+
+import org.knime.base.filehandling.remote.Connection;
+import org.knime.base.filehandling.remote.RemoteFile;
+import org.knime.base.filehandling.remote.SSHConnection;
+
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpATTRS;
+import com.jcraft.jsch.ChannelSftp.LsEntry;
 
 /**
- * Remote file.
- * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public abstract class RemoteFile {
+public class SFTPRemoteFile extends RemoteFile {
 
-    private Connection m_connection = null;
+    private URI m_uri;
 
-    /**
-     * Create and open the connection for this remote file.
-     * 
-     * 
-     * @throws Exception If opening failed
-     */
-    public void openConnection() throws Exception {
-        if (usesConnection()) {
-            String identifier = getIdentifier();
-            Connection connection =
-                    ConnectionMonitor.findConnection(identifier);
-            if (connection == null) {
-                connection = createConnection();
-                connection.open();
-                ConnectionMonitor.registerConnection(identifier, connection);
-            }
-            m_connection = connection;
-        }
-    }
-
-    /**
-     * Internal method to create the identifier.
-     * 
-     * 
-     * @return Identifier to this remote files connection
-     */
-    protected abstract String getIdentifier();
-
-    /**
-     * Internal method to create a new connection.
-     * 
-     * 
-     * @return New connection for this remote file
-     */
-    protected abstract Connection createConnection();
-
-    /**
-     * Return the current connection.
-     * 
-     * 
-     * @return The current connection
-     */
-    public Connection getConnection() {
-        return m_connection;
-    }
-
-    /**
-     * Close this remote file.
-     * 
-     * @throws Exception If closing did not succeed
-     */
-    public abstract void close() throws Exception;
-
-    /**
-     * Opens an input stream.
-     * 
-     * 
-     * @return The input stream
-     * @throws Exception If the input stream could not be opened
-     */
-    public abstract InputStream openInputStream() throws Exception;
-
-    /**
-     * Opens an output stream.
-     * 
-     * 
-     * @return The output stream
-     * @throws Exception If the output stream could not be opened
-     */
-    public abstract OutputStream openOutputStream() throws Exception;
-
-    /**
-     * Get the size of the file.
-     * 
-     * 
-     * @return The size of the file
-     * @throws Exception If the size could not be retrieved
-     */
-    public abstract long getSize() throws Exception;
-
-    /**
-     * @return The default port for this remote file type
-     */
-    public abstract int getDefaultPort();
-
-    /**
-     * @return true if this remote file uses a connection, false otherwise
-     */
-    protected abstract boolean usesConnection();
+    private ChannelSftp m_channel;
 
     /**
      * @param uri The URI
-     * @return Identifier for the given URI
      */
-    protected String buildIdentifier(final URI uri) {
-        int port = uri.getPort();
-        if (port < 0) {
-            port = getDefaultPort();
+    public SFTPRemoteFile(final URI uri) {
+        try {
+            m_uri = new URI(uri.toString().replaceFirst("sftp", "ssh"));
+        } catch (URISyntaxException e) {
+            // should not happen
         }
-        return uri.getScheme() + "://" + uri.getUserInfo() + "@"
-                + uri.getHost() + ":" + port;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String getIdentifier() {
+        return buildIdentifier(m_uri);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected Connection createConnection() {
+        return new SSHConnection(m_uri);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void close() throws Exception {
+        m_channel.disconnect();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InputStream openInputStream() throws Exception {
+        openChannel();
+        String path = m_uri.getPath();
+        InputStream stream = m_channel.get(path);
+        if (stream == null) {
+            throw new Exception("Path not reachable");
+        }
+        return stream;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public OutputStream openOutputStream() throws Exception {
+        openChannel();
+        String path = m_uri.getPath();
+        OutputStream stream = m_channel.put(path);
+        if (stream == null) {
+            throw new Exception("Path not reachable");
+        }
+        return stream;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getDefaultPort() {
+        return 22;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getSize() throws Exception {
+        openChannel();
+        String path = m_uri.getPath();
+        @SuppressWarnings("unchecked")
+        Vector<LsEntry> vector = m_channel.ls(path);
+        SftpATTRS attributes = vector.get(0).getAttrs();
+        return attributes.getSize();
+    }
+
+    private void openChannel() throws Exception {
+        if (m_channel == null || !m_channel.isConnected()) {
+            Session session = ((SSHConnection)getConnection()).getSession();
+            m_channel = (ChannelSftp)session.openChannel("sftp");
+            m_channel.connect();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean usesConnection() {
+        return true;
     }
 
 }

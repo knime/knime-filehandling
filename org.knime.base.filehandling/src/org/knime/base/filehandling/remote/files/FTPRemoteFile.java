@@ -56,6 +56,7 @@ import java.io.OutputStream;
 import java.net.URI;
 
 import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
 import org.knime.base.filehandling.remote.Connection;
 import org.knime.base.filehandling.remote.RemoteFile;
 
@@ -144,6 +145,25 @@ public class FTPRemoteFile extends RemoteFile {
     @Override
     public int getDefaultPort() {
         return 21;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getSize() throws Exception {
+        FTPClient client = getClient();
+        String path = m_uri.getPath();
+        FTPFile ftpFile = client.listFiles(path)[0];
+        return ftpFile.getSize();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean usesConnection() {
+        return true;
     }
 
     private FTPClient getClient() {

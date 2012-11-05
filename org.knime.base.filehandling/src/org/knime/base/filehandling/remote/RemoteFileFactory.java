@@ -54,6 +54,9 @@ import java.net.URI;
 
 import org.knime.base.filehandling.remote.files.FTPRemoteFile;
 import org.knime.base.filehandling.remote.files.FileRemoteFile;
+import org.knime.base.filehandling.remote.files.HTTPRemoteFile;
+import org.knime.base.filehandling.remote.files.SCPRemoteFile;
+import org.knime.base.filehandling.remote.files.SFTPRemoteFile;
 
 /**
  * Factory for remote files.
@@ -81,6 +84,12 @@ public final class RemoteFileFactory {
             remoteFile = new FileRemoteFile(uri);
         } else if (scheme.equals("ftp")) {
             remoteFile = new FTPRemoteFile(uri);
+        } else if (scheme.equals("sftp")) {
+            remoteFile = new SFTPRemoteFile(uri);
+        } else if (scheme.equals("http") || scheme.equals("https")) {
+            remoteFile = new HTTPRemoteFile(uri);
+        } else if (scheme.equals("scp")) {
+            remoteFile = new SCPRemoteFile(uri);
         }
         return remoteFile;
     }
