@@ -81,8 +81,9 @@ class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
     protected FilesToBinaryObjectsNodeDialog() {
         super();
         m_uricolumn = SettingsFactory.createURIColumnSettings();
-        m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
+        m_bocolumnname =
+                SettingsFactory.createBinaryObjectColumnNameSettings(m_replace);
         m_replace.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {

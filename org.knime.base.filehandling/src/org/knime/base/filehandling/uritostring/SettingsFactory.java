@@ -78,10 +78,17 @@ final class SettingsFactory {
      * Factory method for the column name setting.
      * 
      * 
+     * @param replacePolicy <code>SettingsModel</code> for the replace policy
+     *            setting
      * @return Column name <code>SettingsModel</code>
      */
-    static SettingsModelString createColumnNameSettings() {
-        return new SettingsModelString("columnname", "String");
+    static SettingsModelString createColumnNameSettings(
+            final SettingsModelString replacePolicy) {
+        SettingsModelString columnName =
+                new SettingsModelString("columnname", "String");
+        columnName.setEnabled(replacePolicy.getStringValue().equals(
+                ReplacePolicy.APPEND.getName()));
+        return columnName;
     }
 
     /**

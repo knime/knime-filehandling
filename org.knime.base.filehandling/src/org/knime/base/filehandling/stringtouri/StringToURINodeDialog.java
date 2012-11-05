@@ -86,8 +86,8 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
         m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
-        m_columnname = SettingsFactory.createColumnNameSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
+        m_columnname = SettingsFactory.createColumnNameSettings(m_replace);
         m_replace.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {

@@ -78,10 +78,18 @@ final class SettingsFactory {
      * Factory method for the binary object column name setting.
      * 
      * 
+     * @param replacePolicy <code>SettingsModel</code> for the replace policy
+     *            setting
      * @return Binary object column name <code>SettingsModel</code>
      */
-    static SettingsModelString createBinaryObjectColumnNameSettings() {
-        return new SettingsModelString("binaryobjectcolumnname", "BinaryObject");
+    static SettingsModelString createBinaryObjectColumnNameSettings(
+            final SettingsModelString replacePolicy) {
+        SettingsModelString columnName =
+                new SettingsModelString("binaryobjectcolumnname",
+                        "BinaryObject");
+        columnName.setEnabled(replacePolicy.getStringValue().equals(
+                ReplacePolicy.APPEND.getName()));
+        return columnName;
     }
 
     /**

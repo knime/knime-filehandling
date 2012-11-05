@@ -95,8 +95,8 @@ class URIToStringNodeModel extends NodeModel {
     protected URIToStringNodeModel() {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_columnname = SettingsFactory.createColumnNameSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
+        m_columnname = SettingsFactory.createColumnNameSettings(m_replace);
     }
 
     /**

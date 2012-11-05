@@ -98,8 +98,9 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
     protected FilesToBinaryObjectsNodeModel() {
         super(1, 1);
         m_uricolumn = SettingsFactory.createURIColumnSettings();
-        m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
+        m_bocolumnname =
+                SettingsFactory.createBinaryObjectColumnNameSettings(m_replace);
     }
 
     /**

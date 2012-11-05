@@ -102,8 +102,8 @@ class StringToURINodeModel extends NodeModel {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
         m_missingfileabort = SettingsFactory.createMissingFileAbortSettings();
-        m_columnname = SettingsFactory.createColumnNameSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
+        m_columnname = SettingsFactory.createColumnNameSettings(m_replace);
     }
 
     /**
