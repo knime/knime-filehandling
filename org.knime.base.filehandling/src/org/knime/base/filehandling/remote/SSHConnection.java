@@ -56,6 +56,8 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
 /**
+ * Connection over SSH.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
@@ -66,6 +68,9 @@ public class SSHConnection extends Connection {
     private Session m_session;
 
     /**
+     * Create a SSH connection to the given URI.
+     * 
+     * 
      * @param uri The URI
      */
     public SSHConnection(final URI uri) {
@@ -82,6 +87,7 @@ public class SSHConnection extends Connection {
         int port = m_uri.getPort() != -1 ? m_uri.getPort() : 22;
         String user = m_uri.getUserInfo();
         String password = "password";
+        // Open session
         JSch jsch = new JSch();
         Session session = jsch.getSession(user, host, port);
         session.setPassword(password);
@@ -107,8 +113,10 @@ public class SSHConnection extends Connection {
     }
 
     /**
+     * Returns the Session of this connection.
      * 
-     * @return The session of this connection
+     * 
+     * @return The session
      */
     public Session getSession() {
         return m_session;

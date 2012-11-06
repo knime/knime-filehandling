@@ -121,6 +121,7 @@ class PNGsToBinaryObjectsNodeModel extends NodeModel {
      * 
      * 
      * @param inSpec Specification of the input table
+     * @param exec Context of this execution
      * @return Rearranger that will append a new column or replace the selected
      *         column
      * @throws InvalidSettingsException If the settings are incorrect
@@ -149,7 +150,7 @@ class PNGsToBinaryObjectsNodeModel extends NodeModel {
         DataColumnSpec colSpec =
                 new DataColumnSpecCreator(columnName, BinaryObjectDataCell.TYPE)
                         .createSpec();
-        // Factory that creates a column with strings
+        // Factory that creates a column with binary objects
         CellFactory factory = new SingleCellFactory(colSpec) {
             @Override
             public DataCell getCell(final DataRow row) {
@@ -157,15 +158,24 @@ class PNGsToBinaryObjectsNodeModel extends NodeModel {
             }
         };
         if (replace) {
-            // Replace selected column with the strings from the factory
+            // Replace selected column with the binary objects from the factory
             rearranger.replace(factory, m_columnselection.getStringValue());
         } else {
-            // Append strings from the factory
+            // Append binary objects from the factory
             rearranger.append(factory);
         }
         return rearranger;
     }
 
+    /**
+     * Create a cell containing the binary object.
+     * 
+     * 
+     * @param row Row containing the PNG cell
+     * @param spec Specification of the input table
+     * @param bocellfactory Factory for the creation of the binary objects
+     * @return Cell containing the binary object
+     */
     private DataCell createBOCell(final DataRow row, final DataTableSpec spec,
             final BinaryObjectCellFactory bocellfactory) {
         String column = m_columnselection.getStringValue();
@@ -174,7 +184,7 @@ class PNGsToBinaryObjectsNodeModel extends NodeModel {
         DataCell oldCell = row.getCell(spec.findColumnIndex(column));
         // Is the cell missing?
         if (!oldCell.isMissing()) {
-            // PNG to binary object
+            // PNG to binary object using byte array streams
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             PNGImageValue value = ((PNGImageValue)oldCell);
             try {

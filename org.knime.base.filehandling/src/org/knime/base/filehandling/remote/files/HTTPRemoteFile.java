@@ -54,6 +54,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
+import javax.naming.OperationNotSupportedException;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -62,6 +64,8 @@ import org.knime.base.filehandling.remote.Connection;
 import org.knime.base.filehandling.remote.RemoteFile;
 
 /**
+ * Implementation of the HTTP and HTTPS remote file.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
@@ -70,10 +74,31 @@ public class HTTPRemoteFile extends RemoteFile {
     private URI m_uri;
 
     /**
+     * Creates a HTTP remote file for the given URI.
+     * 
+     * 
      * @param uri The URI
      */
     public HTTPRemoteFile(final URI uri) {
         m_uri = uri;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean usesConnection() {
+        // HTTP, by design, builds a new connection for every request
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected Connection createConnection() {
+        // Does not use a persistent connection
+        return null;
     }
 
     /**
@@ -88,16 +113,9 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    protected Connection createConnection() {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws Exception {
-        // Not used
+    public int getDefaultPort() {
+        // HTTP port:80, HTTPS port:443
+        return m_uri.getScheme().equals("https") ? 443 : 80;
     }
 
     /**
@@ -105,8 +123,10 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public InputStream openInputStream() throws Exception {
+        // Create request
         HttpClient client = new DefaultHttpClient();
         HttpGet request = new HttpGet(m_uri);
+        // Read response
         HttpResponse response = client.execute(request);
         return response.getEntity().getContent();
     }
@@ -116,8 +136,8 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public OutputStream openOutputStream() throws Exception {
-        // TODO Implement output stream
-        return null;
+        throw new OperationNotSupportedException(
+                "Operation not yet implemented");
     }
 
     /**
@@ -125,8 +145,10 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public long getSize() throws Exception {
+        // Create request
         HttpClient client = new DefaultHttpClient();
         HttpGet request = new HttpGet(m_uri);
+        // Read response
         HttpResponse response = client.execute(request);
         return response.getEntity().getContentLength();
     }
@@ -135,16 +157,8 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public int getDefaultPort() {
-        return m_uri.getScheme().equals("https") ? 443 : 80;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected boolean usesConnection() {
-        return false;
+    public void close() throws Exception {
+        // Not used
     }
 
 }

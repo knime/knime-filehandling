@@ -65,16 +65,27 @@ public abstract class RemoteFile {
     private Connection m_connection = null;
 
     /**
+     * If this remote file uses a connection.
+     * 
+     * 
+     * @return true if this remote file uses a connection, false otherwise
+     */
+    protected abstract boolean usesConnection();
+
+    /**
      * Create and open the connection for this remote file.
      * 
      * 
      * @throws Exception If opening failed
      */
-    public void openConnection() throws Exception {
+    public final void openConnection() throws Exception {
+        // Only create a connection if this remote file uses a connection
         if (usesConnection()) {
+            // Look for existing connection
             String identifier = getIdentifier();
             Connection connection =
                     ConnectionMonitor.findConnection(identifier);
+            // If no connection available create a new one
             if (connection == null) {
                 connection = createConnection();
                 connection.open();
@@ -83,14 +94,6 @@ public abstract class RemoteFile {
             m_connection = connection;
         }
     }
-
-    /**
-     * Internal method to create the identifier.
-     * 
-     * 
-     * @return Identifier to this remote files connection
-     */
-    protected abstract String getIdentifier();
 
     /**
      * Internal method to create a new connection.
@@ -106,16 +109,46 @@ public abstract class RemoteFile {
      * 
      * @return The current connection
      */
-    public Connection getConnection() {
+    public final Connection getConnection() {
         return m_connection;
     }
 
     /**
-     * Close this remote file.
+     * Internal method to create the identifier.
      * 
-     * @throws Exception If closing did not succeed
+     * 
+     * @return Identifier to this remote files connection
      */
-    public abstract void close() throws Exception;
+    protected abstract String getIdentifier();
+
+    /**
+     * Build the default identifier to the given URI.
+     * 
+     * 
+     * Consists of the scheme, the user, the host and the port. Uses the default
+     * port if the URI specifies no port.
+     * 
+     * @param uri The URI
+     * @return Identifier for the given URI
+     */
+    protected final String buildIdentifier(final URI uri) {
+        int port = uri.getPort();
+        // If no port is available use the default port
+        if (port < 0) {
+            port = getDefaultPort();
+        }
+        // Format: scheme://user@host:port
+        return uri.getScheme() + "://" + uri.getUserInfo() + "@"
+                + uri.getHost() + ":" + port;
+    }
+
+    /**
+     * Return the default port used by this remote files protocol.
+     * 
+     * 
+     * @return The default port
+     */
+    public abstract int getDefaultPort();
 
     /**
      * Opens an input stream.
@@ -145,26 +178,11 @@ public abstract class RemoteFile {
     public abstract long getSize() throws Exception;
 
     /**
-     * @return The default port for this remote file type
+     * Close this remote file.
+     * 
+     * 
+     * @throws Exception If closing did not succeed
      */
-    public abstract int getDefaultPort();
-
-    /**
-     * @return true if this remote file uses a connection, false otherwise
-     */
-    protected abstract boolean usesConnection();
-
-    /**
-     * @param uri The URI
-     * @return Identifier for the given URI
-     */
-    protected String buildIdentifier(final URI uri) {
-        int port = uri.getPort();
-        if (port < 0) {
-            port = getDefaultPort();
-        }
-        return uri.getScheme() + "://" + uri.getUserInfo() + "@"
-                + uri.getHost() + ":" + port;
-    }
+    public abstract void close() throws Exception;
 
 }

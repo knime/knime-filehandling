@@ -144,7 +144,7 @@ class BinaryObjectsToPNGsNodeModel extends NodeModel {
         DataColumnSpec colSpec =
                 new DataColumnSpecCreator(columnName, PNGImageContent.TYPE)
                         .createSpec();
-        // Factory that creates a column with strings
+        // Factory that creates a column with PNGs
         CellFactory factory = new SingleCellFactory(colSpec) {
             @Override
             public DataCell getCell(final DataRow row) {
@@ -152,15 +152,23 @@ class BinaryObjectsToPNGsNodeModel extends NodeModel {
             }
         };
         if (replace) {
-            // Replace selected column with the strings from the factory
+            // Replace selected column with the PNGs from the factory
             rearranger.replace(factory, m_columnselection.getStringValue());
         } else {
-            // Append strings from the factory
+            // Append PNGs from the factory
             rearranger.append(factory);
         }
         return rearranger;
     }
 
+    /**
+     * Create a cell containing the PNG.
+     * 
+     * 
+     * @param row Row containing the binary object cell
+     * @param spec Specification of the input table
+     * @return Cell containing the PNG
+     */
     private DataCell createPNGCell(final DataRow row, final DataTableSpec spec) {
         String column = m_columnselection.getStringValue();
         // Assume missing cell

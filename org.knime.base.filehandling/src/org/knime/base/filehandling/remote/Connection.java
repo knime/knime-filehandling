@@ -51,7 +51,7 @@
 package org.knime.base.filehandling.remote;
 
 /**
- * Connection for a remote protocol.
+ * Connection for a remote file.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -59,6 +59,9 @@ package org.knime.base.filehandling.remote;
 public abstract class Connection {
 
     /**
+     * Open this connection.
+     * 
+     * 
      * @throws Exception If the opening failed
      */
     public abstract void open() throws Exception;
@@ -72,6 +75,9 @@ public abstract class Connection {
     public abstract boolean isOpen();
 
     /**
+     * Close this connection.
+     * 
+     * 
      * @throws Exception If the closing failed
      */
     public abstract void close() throws Exception;

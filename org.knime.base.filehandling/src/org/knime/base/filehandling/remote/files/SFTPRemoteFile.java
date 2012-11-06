@@ -66,6 +66,8 @@ import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
 
 /**
+ * Implementation of the SFTP remote file.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
@@ -76,14 +78,35 @@ public class SFTPRemoteFile extends RemoteFile {
     private ChannelSftp m_channel;
 
     /**
+     * Creates a SFTP remote file for the given URI.
+     * 
+     * 
      * @param uri The URI
      */
     public SFTPRemoteFile(final URI uri) {
+        // Change protocol to general SSH
         try {
             m_uri = new URI(uri.toString().replaceFirst("sftp", "ssh"));
         } catch (URISyntaxException e) {
             // should not happen
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean usesConnection() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected Connection createConnection() {
+        // Use general SSH connection
+        return new SSHConnection(m_uri);
     }
 
     /**
@@ -98,16 +121,8 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    protected Connection createConnection() {
-        return new SSHConnection(m_uri);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws Exception {
-        m_channel.disconnect();
+    public int getDefaultPort() {
+        return 22;
     }
 
     /**
@@ -142,37 +157,38 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public int getDefaultPort() {
-        return 22;
+    @SuppressWarnings("unchecked")
+    public long getSize() throws Exception {
+        openChannel();
+        String path = m_uri.getPath();
+        // Get attributes for the file
+        Vector<LsEntry> vector = m_channel.ls(path);
+        SftpATTRS attributes = vector.get(0).getAttrs();
+        return attributes.getSize();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public long getSize() throws Exception {
-        openChannel();
-        String path = m_uri.getPath();
-        @SuppressWarnings("unchecked")
-        Vector<LsEntry> vector = m_channel.ls(path);
-        SftpATTRS attributes = vector.get(0).getAttrs();
-        return attributes.getSize();
+    public void close() throws Exception {
+        if (m_channel != null) {
+            m_channel.disconnect();
+        }
     }
 
+    /**
+     * Opens the SFTP channel if it is not already open.
+     * 
+     * 
+     * @throws Exception If the channel could not be opened
+     */
     private void openChannel() throws Exception {
         if (m_channel == null || !m_channel.isConnected()) {
             Session session = ((SSHConnection)getConnection()).getSession();
             m_channel = (ChannelSftp)session.openChannel("sftp");
             m_channel.connect();
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected boolean usesConnection() {
-        return true;
     }
 
 }

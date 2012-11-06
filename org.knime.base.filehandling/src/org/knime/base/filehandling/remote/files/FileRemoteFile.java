@@ -84,6 +84,23 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    protected boolean usesConnection() {
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected Connection createConnection() {
+        // Does not use a connection
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     protected String getIdentifier() {
         return buildIdentifier(m_uri);
     }
@@ -92,16 +109,9 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    protected Connection createConnection() {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws Exception {
-        // Not used
+    public int getDefaultPort() {
+        // Does not use ports
+        return -1;
     }
 
     /**
@@ -124,14 +134,6 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public int getDefaultPort() {
-        return -1;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public long getSize() throws Exception {
         return new File(m_uri).length();
     }
@@ -140,8 +142,8 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    protected boolean usesConnection() {
-        return false;
+    public void close() throws Exception {
+        // Not used
     }
 
 }

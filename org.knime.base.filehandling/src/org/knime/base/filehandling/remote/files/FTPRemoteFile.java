@@ -61,7 +61,7 @@ import org.knime.base.filehandling.remote.Connection;
 import org.knime.base.filehandling.remote.RemoteFile;
 
 /**
- * Implementation of the ftp remote file.
+ * Implementation of the FTP remote file.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
@@ -71,7 +71,7 @@ public class FTPRemoteFile extends RemoteFile {
     private URI m_uri;
 
     /**
-     * Implementation of the FTP remote file.
+     * Creates a FTP remote file for the given URI.
      * 
      * 
      * @param uri The URI
@@ -84,8 +84,8 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    protected String getIdentifier() {
-        return buildIdentifier(m_uri);
+    protected boolean usesConnection() {
+        return true;
     }
 
     /**
@@ -100,13 +100,16 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void close() throws Exception {
-        FTPClient client = getClient();
-        // Complete all operations
-        boolean success = client.completePendingCommand();
-        if (!success) {
-            throw new IOException("Could not finalize the operation");
-        }
+    protected String getIdentifier() {
+        return buildIdentifier(m_uri);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getDefaultPort() {
+        return 21;
     }
 
     /**
@@ -143,17 +146,10 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public int getDefaultPort() {
-        return 21;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public long getSize() throws Exception {
         FTPClient client = getClient();
         String path = m_uri.getPath();
+        // List specific file
         FTPFile ftpFile = client.listFiles(path)[0];
         return ftpFile.getSize();
     }
@@ -162,14 +158,31 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    protected boolean usesConnection() {
-        return true;
+    public void close() throws Exception {
+        FTPClient client = getClient();
+        // Complete all operations
+        boolean success = client.completePendingCommand();
+        if (!success) {
+            throw new IOException("Could not finalize the operation");
+        }
     }
 
+    /**
+     * Convenience method to get the FTP Client from the connection.
+     * 
+     * 
+     * @return The FTP Client
+     */
     private FTPClient getClient() {
         return ((FTPConnection)getConnection()).getClient();
     }
 
+    /**
+     * Connection over FTP.
+     * 
+     * 
+     * @author Patrick Winter, University of Konstanz
+     */
     private class FTPConnection extends Connection {
 
         private FTPClient m_client;
@@ -217,6 +230,12 @@ public class FTPRemoteFile extends RemoteFile {
             m_client.disconnect();
         }
 
+        /**
+         * Return the client of this connection.
+         * 
+         * 
+         * @return The FTP Client
+         */
         public FTPClient getClient() {
             return m_client;
         }
