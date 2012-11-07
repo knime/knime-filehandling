@@ -56,14 +56,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Vector;
 
-import org.knime.base.filehandling.remote.Connection;
-import org.knime.base.filehandling.remote.RemoteFile;
-import org.knime.base.filehandling.remote.SSHConnection;
-
 import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 
 /**
  * Implementation of the SFTP remote file.
@@ -83,7 +79,7 @@ public class SFTPRemoteFile extends RemoteFile {
      * 
      * @param uri The URI
      */
-    public SFTPRemoteFile(final URI uri) {
+    SFTPRemoteFile(final URI uri) {
         // Change protocol to general SSH
         try {
             m_uri = new URI(uri.toString().replaceFirst("sftp", "ssh"));
@@ -129,6 +125,30 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public boolean exists() throws Exception {
+        return getLsEntry() != null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void write(final RemoteFile file) throws Exception {
+        byte[] buffer = new byte[1024];
+        InputStream in = file.openInputStream();
+        OutputStream out = openOutputStream();
+        int length;
+        while (((length = in.read(buffer)) > 0)) {
+            out.write(buffer, 0, length);
+        }
+        in.close();
+        out.close();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public InputStream openInputStream() throws Exception {
         openChannel();
         String path = m_uri.getPath();
@@ -157,14 +177,48 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings("unchecked")
     public long getSize() throws Exception {
+        long size = 0;
+        LsEntry entry = getLsEntry();
+        if (entry != null) {
+            size = entry.getAttrs().getSize();
+        }
+        return size;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long lastModified() throws Exception {
+        // Assume missing
+        long time = 0;
+        LsEntry entry = getLsEntry();
+        if (entry != null) {
+            time = entry.getAttrs().getMTime();
+        }
+        return time;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean delete() throws Exception {
+        boolean result = true;
         openChannel();
         String path = m_uri.getPath();
-        // Get attributes for the file
-        Vector<LsEntry> vector = m_channel.ls(path);
-        SftpATTRS attributes = vector.get(0).getAttrs();
-        return attributes.getSize();
+        try {
+            m_channel.rm(path);
+        } catch (SftpException e) {
+            int code = Integer.parseInt(e.toString().split(":")[0]);
+            if (code == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
+                result = false;
+            } else {
+                throw e;
+            }
+        }
+        return result;
     }
 
     /**
@@ -189,6 +243,28 @@ public class SFTPRemoteFile extends RemoteFile {
             m_channel = (ChannelSftp)session.openChannel("sftp");
             m_channel.connect();
         }
+    }
+
+    /**
+     * Returns the LsEntry to this file.
+     * 
+     * 
+     * @return LsEntry to this file or null if not existing
+     * @throws Exception If the operation could not be executed
+     */
+    @SuppressWarnings("unchecked")
+    private LsEntry getLsEntry() throws Exception {
+        LsEntry entry = null;
+        openChannel();
+        String path = m_uri.getPath();
+        Vector<LsEntry> entries = m_channel.ls(path);
+        for (int i = 0; i < entries.size(); i++) {
+            LsEntry currentEntry = entries.get(i);
+            if (currentEntry.getFilename().equals(path)) {
+                entry = currentEntry;
+            }
+        }
+        return entry;
     }
 
 }

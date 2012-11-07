@@ -57,9 +57,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
-import org.knime.base.filehandling.remote.Connection;
-import org.knime.base.filehandling.remote.RemoteFile;
-
 /**
  * Implementation of the file remote file.
  * 
@@ -76,7 +73,7 @@ public class FileRemoteFile extends RemoteFile {
      * 
      * @param uri The URI
      */
-    public FileRemoteFile(final URI uri) {
+    FileRemoteFile(final URI uri) {
         m_uri = uri;
     }
 
@@ -118,6 +115,30 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public boolean exists() throws Exception {
+        return new File(m_uri).exists();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void write(final RemoteFile file) throws Exception {
+        byte[] buffer = new byte[1024];
+        InputStream in = file.openInputStream();
+        OutputStream out = openOutputStream();
+        int length;
+        while (((length = in.read(buffer)) > 0)) {
+            out.write(buffer, 0, length);
+        }
+        in.close();
+        out.close();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public InputStream openInputStream() throws Exception {
         return new FileInputStream(new File(m_uri));
     }
@@ -136,6 +157,22 @@ public class FileRemoteFile extends RemoteFile {
     @Override
     public long getSize() throws Exception {
         return new File(m_uri).length();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long lastModified() throws Exception {
+        return new File(m_uri).lastModified();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean delete() throws Exception {
+        return new File(m_uri).delete();
     }
 
     /**

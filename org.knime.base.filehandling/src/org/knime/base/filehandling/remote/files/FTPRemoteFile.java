@@ -57,8 +57,6 @@ import java.net.URI;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
-import org.knime.base.filehandling.remote.Connection;
-import org.knime.base.filehandling.remote.RemoteFile;
 
 /**
  * Implementation of the FTP remote file.
@@ -76,7 +74,7 @@ public class FTPRemoteFile extends RemoteFile {
      * 
      * @param uri The URI
      */
-    public FTPRemoteFile(final URI uri) {
+    FTPRemoteFile(final URI uri) {
         m_uri = uri;
     }
 
@@ -116,6 +114,30 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public boolean exists() throws Exception {
+        return getFTPFile() != null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void write(final RemoteFile file) throws Exception {
+        byte[] buffer = new byte[1024];
+        InputStream in = file.openInputStream();
+        OutputStream out = openOutputStream();
+        int length;
+        while (((length = in.read(buffer)) > 0)) {
+            out.write(buffer, 0, length);
+        }
+        in.close();
+        out.close();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public InputStream openInputStream() throws Exception {
         FTPClient client = getClient();
         String path = m_uri.getPath();
@@ -147,11 +169,36 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public long getSize() throws Exception {
+        long size = 0;
+        FTPFile ftpFile = getFTPFile();
+        if (ftpFile != null && ftpFile.getSize() > 0) {
+            size = ftpFile.getSize();
+        }
+        return size;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long lastModified() throws Exception {
+        // Assume missing
+        long time = 0;
+        FTPFile ftpFile = getFTPFile();
+        if (ftpFile != null) {
+            time = ftpFile.getTimestamp().getTimeInMillis();
+        }
+        return time;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean delete() throws Exception {
         FTPClient client = getClient();
         String path = m_uri.getPath();
-        // List specific file
-        FTPFile ftpFile = client.listFiles(path)[0];
-        return ftpFile.getSize();
+        return client.deleteFile(path);
     }
 
     /**
@@ -175,6 +222,27 @@ public class FTPRemoteFile extends RemoteFile {
      */
     private FTPClient getClient() {
         return ((FTPConnection)getConnection()).getClient();
+    }
+
+    /**
+     * Returns the FTPFile to this file.
+     * 
+     * 
+     * @return FTPFile to this file or null if not existing
+     * @throws Exception If the operation could not be executed
+     */
+    private FTPFile getFTPFile() throws Exception {
+        FTPFile file = null;
+        FTPClient client = getClient();
+        String path = m_uri.getPath();
+        FTPFile[] files = client.listFiles(path);
+        for (int i = 0; i < files.length; i++) {
+            FTPFile currentFile = files[i];
+            if (currentFile.getName().equals(path)) {
+                file = currentFile;
+            }
+        }
+        return file;
     }
 
     /**

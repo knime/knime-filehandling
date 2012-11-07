@@ -60,9 +60,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.apache.commons.io.FilenameUtils;
-import org.knime.base.filehandling.remote.Connection;
-import org.knime.base.filehandling.remote.RemoteFile;
-import org.knime.base.filehandling.remote.SSHConnection;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.Session;
@@ -75,6 +72,8 @@ import com.jcraft.jsch.Session;
  */
 public class SCPRemoteFile extends RemoteFile {
 
+    private static final String EXCEPTION_FILE_NOT_FOUND = "File not found";
+
     private URI m_uri;
 
     /**
@@ -83,7 +82,7 @@ public class SCPRemoteFile extends RemoteFile {
      * 
      * @param uri The URI
      */
-    public SCPRemoteFile(final URI uri) {
+    SCPRemoteFile(final URI uri) {
         // Change protocol to general SSH
         try {
             m_uri = new URI(uri.toString().replaceFirst("scp", "ssh"));
@@ -129,6 +128,45 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public boolean exists() throws Exception {
+        // Assume missing file
+        boolean exists = false;
+        SCPChannel scp = new SCPChannel();
+        try {
+            scp.openFileInput(m_uri.getPath());
+            scp.close();
+            exists = true;
+        } catch (Exception e) {
+            // throw the exception if it was not the file not found exception
+            if (!e.getMessage().equals(EXCEPTION_FILE_NOT_FOUND)) {
+                throw e;
+            }
+        }
+        return exists;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void write(final RemoteFile file) throws Exception {
+        byte[] buffer = new byte[1024];
+        SCPChannel scp = new SCPChannel();
+        scp.openFileOutput(m_uri.getPath(), file.getSize());
+        InputStream in = file.openInputStream();
+        OutputStream out = scp.getOutputStream();
+        int length;
+        while ((length = in.read(buffer)) > 0) {
+            out.write(buffer, 0, length);
+        }
+        in.close();
+        scp.closeFileOutput();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public InputStream openInputStream() throws Exception {
         return new SCPInputStream(m_uri.getPath());
     }
@@ -146,10 +184,37 @@ public class SCPRemoteFile extends RemoteFile {
      */
     @Override
     public long getSize() throws Exception {
+        // Assume missing file
+        long size = 0;
         SCPChannel scp = new SCPChannel();
-        long size = scp.openFileInput(m_uri.getPath());
-        scp.close();
+        try {
+            size = scp.openFileInput(m_uri.getPath());
+            scp.close();
+        } catch (Exception e) {
+            // throw the exception if it was not the file not found exception
+            if (!e.getMessage().equals(EXCEPTION_FILE_NOT_FOUND)) {
+                throw e;
+            }
+        }
         return size;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long lastModified() throws Exception {
+        throw new UnsupportedOperationException(
+                "Operation not supported by SCP");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean delete() throws Exception {
+        throw new UnsupportedOperationException(
+                "Operation not supported by SCP");
     }
 
     /**
@@ -218,9 +283,9 @@ public class SCPRemoteFile extends RemoteFile {
             skipped = skipTo(m_in, ' ');
             // look for error message
             if (skipped.contains("scp:")) {
-                throw new IOException("File not found");
+                throw new IOException(EXCEPTION_FILE_NOT_FOUND);
             }
-            // read file size in single digits
+            // read file size
             skipped = skipTo(m_in, ' ');
             size = Long.parseLong(skipped);
             // skip filename

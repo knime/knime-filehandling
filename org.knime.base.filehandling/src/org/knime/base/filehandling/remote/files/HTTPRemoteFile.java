@@ -54,14 +54,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.knime.base.filehandling.remote.Connection;
-import org.knime.base.filehandling.remote.RemoteFile;
 
 /**
  * Implementation of the HTTP and HTTPS remote file.
@@ -79,7 +75,7 @@ public class HTTPRemoteFile extends RemoteFile {
      * 
      * @param uri The URI
      */
-    public HTTPRemoteFile(final URI uri) {
+    HTTPRemoteFile(final URI uri) {
         m_uri = uri;
     }
 
@@ -122,6 +118,31 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public boolean exists() throws Exception {
+        boolean exists;
+        // Create request
+        HttpClient client = new DefaultHttpClient();
+        HttpGet request = new HttpGet(m_uri);
+        // Read response
+        HttpResponse response = client.execute(request);
+        int code = response.getStatusLine().getStatusCode();
+        exists = code < 300;
+        return exists;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void write(final RemoteFile file) throws Exception {
+        throw new UnsupportedOperationException(
+                "Operation not supported by HTTP");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public InputStream openInputStream() throws Exception {
         // Create request
         HttpClient client = new DefaultHttpClient();
@@ -136,8 +157,8 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public OutputStream openOutputStream() throws Exception {
-        throw new OperationNotSupportedException(
-                "Operation not yet implemented");
+        throw new UnsupportedOperationException(
+                "Operation not supported by HTTP");
     }
 
     /**
@@ -145,12 +166,35 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public long getSize() throws Exception {
+        // Assume unknown length
+        long size = 0;
         // Create request
         HttpClient client = new DefaultHttpClient();
         HttpGet request = new HttpGet(m_uri);
         // Read response
         HttpResponse response = client.execute(request);
-        return response.getEntity().getContentLength();
+        long length = response.getEntity().getContentLength();
+        if (length > 0) {
+            size = length;
+        }
+        return size;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long lastModified() throws Exception {
+        return m_uri.toURL().openConnection().getLastModified();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean delete() throws Exception {
+        throw new UnsupportedOperationException(
+                "Operation not supported by HTTP");
     }
 
     /**

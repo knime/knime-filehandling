@@ -46,42 +46,50 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Nov 2, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy;
+package org.knime.base.filehandling.remote.files;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import java.net.URI;
 
 /**
- * Factory for SettingsModels.
+ * Factory for remote files.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-final class SettingsFactory {
+public final class RemoteFileFactory {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    private RemoteFileFactory() {
+        // Disable default constructor
     }
 
     /**
-     * Factory method for the source column setting.
+     * Creates a remote file for the URI.
      * 
      * 
-     * @return Source column <code>SettingsModel</code>
+     * @param uri The URI
+     * @return Remote file for the given URI
+     * @throws Exception If creation of the remote file failed
      */
-    static SettingsModelString createSourceColumnSettings() {
-        return new SettingsModelString("sourcecolumn", "");
-    }
-
-    /**
-     * Factory method for the target column setting.
-     * 
-     * 
-     * @return Target column <code>SettingsModel</code>
-     */
-    static SettingsModelString createTargetColumnSettings() {
-        return new SettingsModelString("targetcolumn", "");
+    public static RemoteFile createRemoteFile(final URI uri) throws Exception {
+        String scheme = uri.getScheme().toLowerCase();
+        RemoteFile remoteFile = null;
+        if (scheme.equals("file")) {
+            remoteFile = new FileRemoteFile(uri);
+        } else if (scheme.equals("ftp")) {
+            remoteFile = new FTPRemoteFile(uri);
+        } else if (scheme.equals("sftp")) {
+            remoteFile = new SFTPRemoteFile(uri);
+        } else if (scheme.equals("http") || scheme.equals("https")) {
+            remoteFile = new HTTPRemoteFile(uri);
+        } else if (scheme.equals("scp")) {
+            remoteFile = new SCPRemoteFile(uri);
+        }
+        if (remoteFile != null) {
+            remoteFile.open();
+        }
+        return remoteFile;
     }
 
 }

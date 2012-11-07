@@ -48,7 +48,7 @@
  * History
  *   Nov 2, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remote;
+package org.knime.base.filehandling.remote.files;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -78,9 +78,9 @@ public abstract class RemoteFile {
      * 
      * @throws Exception If opening failed
      */
-    public final void openConnection() throws Exception {
+    final void open() throws Exception {
         // Only create a connection if this remote file uses a connection
-        if (usesConnection()) {
+        if (usesConnection() && m_connection == null) {
             // Look for existing connection
             String identifier = getIdentifier();
             Connection connection =
@@ -151,6 +151,26 @@ public abstract class RemoteFile {
     public abstract int getDefaultPort();
 
     /**
+     * Check if the file does exist.
+     * 
+     * 
+     * @return true if the file exists, false otherwise
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract boolean exists() throws Exception;
+
+    /**
+     * Write the given remote file into this files location.
+     * 
+     * 
+     * This method will overwrite the old file if it exists.
+     * 
+     * @param file Source remote file
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract void write(final RemoteFile file) throws Exception;
+
+    /**
      * Opens an input stream.
      * 
      * 
@@ -172,10 +192,28 @@ public abstract class RemoteFile {
      * Get the size of the file.
      * 
      * 
-     * @return The size of the file
+     * @return The size of the file or 0 if the file does not exist
      * @throws Exception If the size could not be retrieved
      */
     public abstract long getSize() throws Exception;
+
+    /**
+     * Check for the last time the file was modified.
+     * 
+     * 
+     * @return Time in UNIX-Time or 0 if the file does not exist
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract long lastModified() throws Exception;
+
+    /**
+     * Deletes the file.
+     * 
+     * 
+     * @return true if the file could be deleted, false otherwise
+     * @throws Exception If an error occurs during deletion
+     */
+    public abstract boolean delete() throws Exception;
 
     /**
      * Close this remote file.

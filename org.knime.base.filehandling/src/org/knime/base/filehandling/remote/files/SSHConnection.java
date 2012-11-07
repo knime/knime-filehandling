@@ -46,51 +46,80 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 17, 2012 (Patrick Winter): created
+ *   Nov 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.datasink;
+package org.knime.base.filehandling.remote.files;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
+
 /**
- * Data sink for URIs that have the scheme "file".
+ * Connection over SSH.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class FileDataSink implements DataSink {
+public class SSHConnection extends Connection {
 
-    private OutputStream m_stream;
+    private URI m_uri;
+
+    private Session m_session;
 
     /**
-     * Creates a data source that uses <code>java.io.FileOutputStream</code>.
+     * Create a SSH connection to the given URI.
      * 
      * 
-     * @param uri URI that determines the resource used
-     * @throws Exception If the resource is not reachable
+     * @param uri The URI
      */
-    public FileDataSink(final URI uri) throws Exception {
-        m_stream = new FileOutputStream(new File(uri));
+    public SSHConnection(final URI uri) {
+        m_uri = uri;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void write(final byte[] buffer, final int length) throws IOException {
-        m_stream.write(buffer, 0, length);
+    public void open() throws Exception {
+        // Read attributes
+        String host = m_uri.getHost();
+        int port = m_uri.getPort() != -1 ? m_uri.getPort() : 22;
+        String user = m_uri.getUserInfo();
+        String password = "password";
+        // Open session
+        JSch jsch = new JSch();
+        Session session = jsch.getSession(user, host, port);
+        session.setPassword(password);
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.connect();
+        m_session = session;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void close() throws IOException {
-        m_stream.close();
+    public boolean isOpen() {
+        return m_session.isConnected();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void close() throws Exception {
+        m_session.disconnect();
+    }
+
+    /**
+     * Returns the Session of this connection.
+     * 
+     * 
+     * @return The session
+     */
+    public Session getSession() {
+        return m_session;
     }
 
 }

@@ -46,63 +46,40 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 17, 2012 (Patrick Winter): created
+ *   Nov 2, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecopy.datasource;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
+package org.knime.base.filehandling.remote.files;
 
 /**
- * Data source for URIs that have the scheme "file".
+ * Connection for a remote file.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class FileDataSource implements DataSource {
-
-    private InputStream m_stream;
-
-    private long m_size;
+public abstract class Connection {
 
     /**
-     * Creates a data source that uses <code>java.io.FileInputStream</code>.
+     * Open this connection.
      * 
      * 
-     * @param uri URI that determines the resource used
-     * @throws Exception If the resource is not reachable
+     * @throws Exception If the opening failed
      */
-    public FileDataSource(final URI uri) throws Exception {
-        File file = new File(uri);
-        m_size = file.length();
-        m_stream = new FileInputStream(file);
-    }
+    public abstract void open() throws Exception;
 
     /**
-     * {@inheritDoc}
+     * Checks if the connection is open.
+     * 
+     * 
+     * @return true if the connection is open, false otherwise
      */
-    @Override
-    public int read(final byte[] buffer) throws IOException {
-        return m_stream.read(buffer);
-    }
+    public abstract boolean isOpen();
 
     /**
-     * {@inheritDoc}
+     * Close this connection.
+     * 
+     * 
+     * @throws Exception If the closing failed
      */
-    @Override
-    public void close() throws IOException {
-        m_stream.close();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long getSize() {
-        return m_size;
-    }
+    public abstract void close() throws Exception;
 
 }
