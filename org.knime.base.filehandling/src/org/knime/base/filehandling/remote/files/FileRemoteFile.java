@@ -106,6 +106,14 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public String getType() {
+        return "file";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getDefaultPort() {
         // Does not use ports
         return -1;
@@ -117,6 +125,14 @@ public class FileRemoteFile extends RemoteFile {
     @Override
     public boolean exists() throws Exception {
         return new File(m_uri).exists();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDirectory() throws Exception {
+        return new File(m_uri).isDirectory();
     }
 
     /**
@@ -172,7 +188,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public boolean delete() throws Exception {
-        return new File(m_uri).delete();
+        return deleteRecursively(m_uri.getPath());
     }
 
     /**
@@ -181,6 +197,24 @@ public class FileRemoteFile extends RemoteFile {
     @Override
     public void close() throws Exception {
         // Not used
+    }
+
+    /**
+     * Deletes files and directories recursively.
+     * 
+     * 
+     * @param path Path to the file or directory
+     * @return true if deletion was successful, false otherwise
+     */
+    private boolean deleteRecursively(final String path) {
+        File file = new File(path);
+        if (file.isDirectory()) {
+            String[] files = file.list();
+            for (int i = 0; i < files.length; i++) {
+                deleteRecursively(files[i]);
+            }
+        }
+        return file.delete();
     }
 
 }

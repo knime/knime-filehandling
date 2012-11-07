@@ -120,6 +120,14 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public String getType() {
+        return "scp";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getDefaultPort() {
         return 22;
     }
@@ -143,6 +151,15 @@ public class SCPRemoteFile extends RemoteFile {
             }
         }
         return exists;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDirectory() throws Exception {
+        throw new UnsupportedOperationException(
+                unsupportedMessage("isDirectory"));
     }
 
     /**
@@ -205,7 +222,7 @@ public class SCPRemoteFile extends RemoteFile {
     @Override
     public long lastModified() throws Exception {
         throw new UnsupportedOperationException(
-                "Operation not supported by SCP");
+                unsupportedMessage("lastModified"));
     }
 
     /**
@@ -213,8 +230,7 @@ public class SCPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean delete() throws Exception {
-        throw new UnsupportedOperationException(
-                "Operation not supported by SCP");
+        throw new UnsupportedOperationException(unsupportedMessage("delete"));
     }
 
     /**

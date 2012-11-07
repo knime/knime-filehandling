@@ -117,6 +117,14 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public String getType() {
+        return "sftp";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getDefaultPort() {
         return 22;
     }
@@ -127,6 +135,19 @@ public class SFTPRemoteFile extends RemoteFile {
     @Override
     public boolean exists() throws Exception {
         return getLsEntry() != null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDirectory() throws Exception {
+        boolean isDirectory = false;
+        LsEntry entry = getLsEntry();
+        if (entry != null) {
+            isDirectory = entry.getAttrs().isDir();
+        }
+        return isDirectory;
     }
 
     /**
@@ -209,7 +230,11 @@ public class SFTPRemoteFile extends RemoteFile {
         openChannel();
         String path = m_uri.getPath();
         try {
-            m_channel.rm(path);
+            if (isDirectory()) {
+                m_channel.rmdir(path);
+            } else {
+                m_channel.rm(path);
+            }
         } catch (SftpException e) {
             int code = Integer.parseInt(e.toString().split(":")[0]);
             if (code == ChannelSftp.SSH_FX_NO_SUCH_FILE) {

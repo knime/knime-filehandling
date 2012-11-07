@@ -109,6 +109,14 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public String getType() {
+        return "http";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getDefaultPort() {
         // HTTP port:80, HTTPS port:443
         return m_uri.getScheme().equals("https") ? 443 : 80;
@@ -134,9 +142,17 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void write(final RemoteFile file) throws Exception {
+    public boolean isDirectory() throws Exception {
         throw new UnsupportedOperationException(
-                "Operation not supported by HTTP");
+                unsupportedMessage("isDirectory"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void write(final RemoteFile file) throws Exception {
+        throw new UnsupportedOperationException(unsupportedMessage("write"));
     }
 
     /**
@@ -158,7 +174,7 @@ public class HTTPRemoteFile extends RemoteFile {
     @Override
     public OutputStream openOutputStream() throws Exception {
         throw new UnsupportedOperationException(
-                "Operation not supported by HTTP");
+                unsupportedMessage("openOutputStream"));
     }
 
     /**
@@ -193,8 +209,7 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean delete() throws Exception {
-        throw new UnsupportedOperationException(
-                "Operation not supported by HTTP");
+        throw new UnsupportedOperationException(unsupportedMessage("delete"));
     }
 
     /**

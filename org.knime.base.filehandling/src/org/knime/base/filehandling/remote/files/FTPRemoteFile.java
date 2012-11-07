@@ -106,6 +106,14 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public String getType() {
+        return "ftp";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getDefaultPort() {
         return 21;
     }
@@ -116,6 +124,19 @@ public class FTPRemoteFile extends RemoteFile {
     @Override
     public boolean exists() throws Exception {
         return getFTPFile() != null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isDirectory() throws Exception {
+        boolean isDirectory = false;
+        FTPFile ftpFile = getFTPFile();
+        if (ftpFile != null) {
+            isDirectory = ftpFile.isDirectory();
+        }
+        return isDirectory;
     }
 
     /**
@@ -196,9 +217,7 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean delete() throws Exception {
-        FTPClient client = getClient();
-        String path = m_uri.getPath();
-        return client.deleteFile(path);
+        return deleteRecursively(m_uri.getPath());
     }
 
     /**
@@ -243,6 +262,38 @@ public class FTPRemoteFile extends RemoteFile {
             }
         }
         return file;
+    }
+
+    /**
+     * Deletes files and directories recursively.
+     * 
+     * 
+     * @param path Path to the file or directory
+     * @return true if deletion was successful, false otherwise
+     */
+    private boolean deleteRecursively(final String path) throws Exception {
+        boolean deleted = false;
+        FTPFile file = null;
+        FTPClient client = getClient();
+        FTPFile[] files = client.listFiles(path);
+        for (int i = 0; i < files.length; i++) {
+            FTPFile currentFile = files[i];
+            if (currentFile.getName().equals(path)) {
+                file = currentFile;
+            }
+        }
+        if (file != null) {
+            if (file.isDirectory()) {
+                files = client.listFiles(path);
+                for (int i = 0; i < files.length; i++) {
+                    deleteRecursively(files[i].getName());
+                }
+                deleted = client.removeDirectory(path);
+            } else {
+                deleted = client.deleteFile(path);
+            }
+        }
+        return deleted;
     }
 
     /**

@@ -143,6 +143,26 @@ public abstract class RemoteFile {
     }
 
     /**
+     * Creates the unsupported operation message.
+     * 
+     * 
+     * @param operation The operation that is unsupported
+     * @return Message for the unsupported operation exception
+     */
+    protected final String unsupportedMessage(final String operation) {
+        return "The operation " + operation + " is not supported by "
+                + getType();
+    }
+
+    /**
+     * Returns the type (URI scheme) of the remote file.
+     * 
+     * 
+     * @return The remote files type
+     */
+    public abstract String getType();
+
+    /**
      * Return the default port used by this remote files protocol.
      * 
      * 
@@ -158,6 +178,15 @@ public abstract class RemoteFile {
      * @throws Exception If the operation could not be executed
      */
     public abstract boolean exists() throws Exception;
+
+    /**
+     * Check if the file is a directory.
+     * 
+     * 
+     * @return true if the file is a directory, false otherwise
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract boolean isDirectory() throws Exception;
 
     /**
      * Write the given remote file into this files location.
