@@ -48,11 +48,10 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.binaryobjectstopngs;
+package org.knime.base.filehandling.stringstobinaryobjects;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
@@ -61,11 +60,12 @@ import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
-import org.knime.core.data.blob.BinaryObjectDataValue;
+import org.knime.core.data.StringValue;
+import org.knime.core.data.blob.BinaryObjectCellFactory;
+import org.knime.core.data.blob.BinaryObjectDataCell;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.data.container.SingleCellFactory;
-import org.knime.core.data.image.png.PNGImageContent;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -82,9 +82,11 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class BinaryObjectsToPNGsNodeModel extends NodeModel {
+class StringsToBinaryObjectsNodeModel extends NodeModel {
 
     private SettingsModelString m_columnselection;
+
+    private SettingsModelString m_encoding;
 
     private SettingsModelString m_columnname;
 
@@ -93,9 +95,10 @@ class BinaryObjectsToPNGsNodeModel extends NodeModel {
     /**
      * Constructor for the node model.
      */
-    protected BinaryObjectsToPNGsNodeModel() {
+    protected StringsToBinaryObjectsNodeModel() {
         super(1, 1);
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
+        m_encoding = SettingsFactory.createEncodingSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
         m_columnname = SettingsFactory.createColumnNameSettings(m_replace);
     }
@@ -107,26 +110,30 @@ class BinaryObjectsToPNGsNodeModel extends NodeModel {
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
         ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec());
+                createColumnRearranger(inData[0].getDataTableSpec(), exec);
         BufferedDataTable out =
                 exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
     /**
-     * Create a rearranger that either replaces the selected column with its png
-     * counterpart, or appends a new column.
+     * Create a rearranger that either replaces the selected column with its
+     * binary object counterpart, or appends a new column.
      * 
      * 
      * @param inSpec Specification of the input table
+     * @param exec Context of this execution
      * @return Rearranger that will append a new column or replace the selected
      *         column
      * @throws InvalidSettingsException If the settings are incorrect
      */
-    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
+            final ExecutionContext exec) throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
+        // Create binary object factory -- only assign during execution
+        final BinaryObjectCellFactory bocellfactory =
+                exec == null ? null : new BinaryObjectCellFactory(exec);
         // Get replace setting
         boolean replace =
                 m_replace.getStringValue().equals(
@@ -142,50 +149,53 @@ class BinaryObjectsToPNGsNodeModel extends NodeModel {
         }
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec colSpec =
-                new DataColumnSpecCreator(columnName, PNGImageContent.TYPE)
+                new DataColumnSpecCreator(columnName, BinaryObjectDataCell.TYPE)
                         .createSpec();
-        // Factory that creates a column with PNGs
+        // Factory that creates a column with binary objects
         CellFactory factory = new SingleCellFactory(colSpec) {
             @Override
             public DataCell getCell(final DataRow row) {
-                return createPNGCell(row, inSpec);
+                return createBinaryObjectCell(row, inSpec, bocellfactory);
             }
         };
         if (replace) {
-            // Replace selected column with the PNGs from the factory
+            // Replace selected column with the binary objects from the factory
             rearranger.replace(factory, m_columnselection.getStringValue());
         } else {
-            // Append PNGs from the factory
+            // Append binary objects from the factory
             rearranger.append(factory);
         }
         return rearranger;
     }
 
     /**
-     * Create a cell containing the PNG.
+     * Create a cell containing the binary object.
      * 
      * 
-     * @param row Row containing the binary object cell
+     * @param row Row containing the string cell
      * @param spec Specification of the input table
-     * @return Cell containing the PNG
+     * @param bocellfactory Factory for the creation of the binary objects
+     * @return Cell containing the binary object
      */
-    private DataCell createPNGCell(final DataRow row, final DataTableSpec spec) {
+    private DataCell createBinaryObjectCell(final DataRow row,
+            final DataTableSpec spec,
+            final BinaryObjectCellFactory bocellfactory) {
         String column = m_columnselection.getStringValue();
         // Assume missing cell
         DataCell cell = DataType.getMissingCell();
         DataCell oldCell = row.getCell(spec.findColumnIndex(column));
         // Is the cell missing?
         if (!oldCell.isMissing()) {
-            // Binary object to PNG
-            BinaryObjectDataValue value = ((BinaryObjectDataValue)oldCell);
-            PNGImageContent pngContent;
+            // String to binary object
+            StringValue value = (StringValue)oldCell;
             try {
-                InputStream in = value.openInputStream();
-                pngContent = new PNGImageContent(in);
+                byte[] bytes =
+                        value.getStringValue().getBytes(
+                                m_encoding.getStringValue());
+                cell = bocellfactory.create(bytes);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                // ignore
             }
-            cell = pngContent.toImageCell();
         }
         return cell;
     }
@@ -202,7 +212,7 @@ class BinaryObjectsToPNGsNodeModel extends NodeModel {
             throws InvalidSettingsException {
         String selectedColumn = m_columnselection.getStringValue();
         NodeUtils.checkColumnSelection(inSpec, "Binary object", selectedColumn,
-                BinaryObjectDataValue.class);
+                StringValue.class);
         boolean append =
                 m_replace.getStringValue().equals(
                         ReplacePolicy.APPEND.getName());
@@ -233,7 +243,8 @@ class BinaryObjectsToPNGsNodeModel extends NodeModel {
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
         // createColumnRearranger will check the settings
-        DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
+        DataTableSpec outSpec =
+                createColumnRearranger(inSpecs[0], null).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 
@@ -243,6 +254,7 @@ class BinaryObjectsToPNGsNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_columnselection.saveSettingsTo(settings);
+        m_encoding.saveSettingsTo(settings);
         m_columnname.saveSettingsTo(settings);
         m_replace.saveSettingsTo(settings);
     }
@@ -254,6 +266,7 @@ class BinaryObjectsToPNGsNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.loadSettingsFrom(settings);
+        m_encoding.loadSettingsFrom(settings);
         m_columnname.loadSettingsFrom(settings);
         m_replace.loadSettingsFrom(settings);
     }
@@ -265,6 +278,7 @@ class BinaryObjectsToPNGsNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_columnselection.validateSettings(settings);
+        m_encoding.validateSettings(settings);
         m_columnname.validateSettings(settings);
         m_replace.validateSettings(settings);
     }

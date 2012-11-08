@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./stringstobinaryobjects.gif" type="Manipulator">
+    <name>Strings to Binary Objects</name>
+
+    <shortDescription>
+        Converts the strings of a column to binary
+        objects.
+    </shortDescription>
+
+    <fullDescription>
+        <intro>
+            This node converts the string cells to binary object
+            cells.
+        </intro>
+
+
+        <option name="Column selection">
+            Column that will be converted.
+        </option>
+        <option name="Encoding">
+            Encoding of the string.
+        </option>
+        <option name="Append or replace">
+            <b>Append</b>
+            <br />
+            Does append the new column to the table.
+            <br />
+            <b>Replace</b>
+            <br />
+            Does replace the selected column with the new column.
+        </option>
+        <option name="New column name">
+            Name of the appended column.
+        </option>
+    </fullDescription>
+
+    <ports>
+        <inPort name="Input table" index="0">
+            Table that contains the
+            string that will be converted.
+        </inPort>
+        <outPort name="Output table" index="0">
+            Input table with
+            binary object
+            column either appended or replacing the
+            strings.
+        </outPort>
+    </ports>
+</knimeNode>
