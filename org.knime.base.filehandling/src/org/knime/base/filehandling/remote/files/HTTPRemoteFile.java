@@ -55,7 +55,9 @@ import java.io.OutputStream;
 import java.net.URI;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
@@ -128,11 +130,7 @@ public class HTTPRemoteFile extends RemoteFile {
     @Override
     public boolean exists() throws Exception {
         boolean exists;
-        // Create request
-        HttpClient client = new DefaultHttpClient();
-        HttpGet request = new HttpGet(m_uri);
-        // Read response
-        HttpResponse response = client.execute(request);
+        HttpResponse response = getResponse();
         int code = response.getStatusLine().getStatusCode();
         exists = code < 300;
         return exists;
@@ -168,11 +166,7 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public InputStream openInputStream() throws Exception {
-        // Create request
-        HttpClient client = new DefaultHttpClient();
-        HttpGet request = new HttpGet(m_uri);
-        // Read response
-        HttpResponse response = client.execute(request);
+        HttpResponse response = getResponse();
         return response.getEntity().getContent();
     }
 
@@ -192,11 +186,7 @@ public class HTTPRemoteFile extends RemoteFile {
     public long getSize() throws Exception {
         // Assume unknown length
         long size = 0;
-        // Create request
-        HttpClient client = new DefaultHttpClient();
-        HttpGet request = new HttpGet(m_uri);
-        // Read response
-        HttpResponse response = client.execute(request);
+        HttpResponse response = getResponse();
         long length = response.getEntity().getContentLength();
         if (length > 0) {
             size = length;
@@ -244,4 +234,31 @@ public class HTTPRemoteFile extends RemoteFile {
         // Not used
     }
 
+    /**
+     * Get the response to this files get request.
+     * 
+     * 
+     * @return The response from the server
+     * @throws Exception If communication did not work
+     */
+    private HttpResponse getResponse() throws Exception {
+        // Create request
+        DefaultHttpClient client = new DefaultHttpClient();
+        if (m_uri.getUserInfo().length() > 0) {
+            String password = "password";
+            int port = m_uri.getPort();
+            if (port < 0) {
+                port = getDefaultPort();
+            }
+            Credentials credentials =
+                    new UsernamePasswordCredentials(m_uri.getUserInfo(),
+                            password);
+            AuthScope scope = new AuthScope(m_uri.getHost(), port);
+            client.getCredentialsProvider().setCredentials(scope, credentials);
+        }
+        HttpGet request = new HttpGet(m_uri);
+        // Get response
+        HttpResponse response = client.execute(request);
+        return response;
+    }
 }
