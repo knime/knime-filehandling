@@ -166,6 +166,15 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public boolean move(final RemoteFile file) throws Exception {
+        write(file);
+        return file.delete();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void write(final RemoteFile file) throws Exception {
         byte[] buffer = new byte[1024];
         SCPChannel scp = new SCPChannel();
@@ -231,6 +240,22 @@ public class SCPRemoteFile extends RemoteFile {
     @Override
     public boolean delete() throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("delete"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public RemoteFile[] listFiles() throws Exception {
+        throw new UnsupportedOperationException(unsupportedMessage("listFiles"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean mkDir() throws Exception {
+        throw new UnsupportedOperationException(unsupportedMessage("mkDir"));
     }
 
     /**

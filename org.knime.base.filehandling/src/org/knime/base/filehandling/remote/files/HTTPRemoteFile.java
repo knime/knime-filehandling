@@ -151,6 +151,14 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public boolean move(final RemoteFile file) throws Exception {
+        throw new UnsupportedOperationException(unsupportedMessage("move"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void write(final RemoteFile file) throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("write"));
     }
@@ -210,6 +218,22 @@ public class HTTPRemoteFile extends RemoteFile {
     @Override
     public boolean delete() throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("delete"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public RemoteFile[] listFiles() throws Exception {
+        throw new UnsupportedOperationException(unsupportedMessage("listFiles"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean mkDir() throws Exception {
+        throw new UnsupportedOperationException(unsupportedMessage("mkDir"));
     }
 
     /**

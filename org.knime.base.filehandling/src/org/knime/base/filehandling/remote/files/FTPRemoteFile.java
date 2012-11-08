@@ -143,6 +143,24 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public boolean move(final RemoteFile file) throws Exception {
+        boolean success;
+        if (file instanceof FTPRemoteFile
+                && getIdentifier().equals(file.getIdentifier())) {
+            FTPRemoteFile source = (FTPRemoteFile)file;
+            FTPClient client = getClient();
+            success = client.rename(source.m_uri.getPath(), m_uri.getPath());
+        } else {
+            write(file);
+            success = file.delete();
+        }
+        return success;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void write(final RemoteFile file) throws Exception {
         byte[] buffer = new byte[1024];
         InputStream in = file.openInputStream();
@@ -224,6 +242,37 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public RemoteFile[] listFiles() throws Exception {
+        RemoteFile[] files;
+        if (isDirectory()) {
+            FTPClient client = getClient();
+            FTPFile[] ftpFiles = client.listFiles(m_uri.getPath());
+            files = new RemoteFile[ftpFiles.length];
+            for (int i = 0; i < ftpFiles.length; i++) {
+                URI uri =
+                        new URI(m_uri.getScheme() + "://"
+                                + m_uri.getAuthority() + ftpFiles[i].getName());
+                files[i] = new FTPRemoteFile(uri);
+            }
+        } else {
+            files = new RemoteFile[0];
+        }
+        return files;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean mkDir() throws Exception {
+        FTPClient client = getClient();
+        return client.makeDirectory(m_uri.getPath());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void close() throws Exception {
         FTPClient client = getClient();
         // Complete all operations
@@ -259,6 +308,7 @@ public class FTPRemoteFile extends RemoteFile {
             FTPFile currentFile = files[i];
             if (currentFile.getName().equals(path)) {
                 file = currentFile;
+                break;
             }
         }
         return file;

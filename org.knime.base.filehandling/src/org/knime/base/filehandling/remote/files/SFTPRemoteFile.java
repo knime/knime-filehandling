@@ -154,6 +154,26 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public boolean move(final RemoteFile file) throws Exception {
+        boolean success;
+        if (file instanceof SFTPRemoteFile
+                && getIdentifier().equals(file.getIdentifier())) {
+            SFTPRemoteFile source = (SFTPRemoteFile)file;
+            openChannel();
+            boolean existed = exists();
+            m_channel.rename(source.m_uri.getPath(), m_uri.getPath());
+            success = !existed && exists() && !source.exists();
+        } else {
+            write(file);
+            success = file.delete();
+        }
+        return success;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void write(final RemoteFile file) throws Exception {
         byte[] buffer = new byte[1024];
         InputStream in = file.openInputStream();
@@ -249,6 +269,39 @@ public class SFTPRemoteFile extends RemoteFile {
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("unchecked")
+    @Override
+    public RemoteFile[] listFiles() throws Exception {
+        RemoteFile[] files;
+        if (isDirectory()) {
+            Vector<LsEntry> entries = m_channel.ls(m_uri.getPath());
+            files = new RemoteFile[entries.size()];
+            for (int i = 0; i < entries.size(); i++) {
+                URI uri =
+                        new URI(m_uri.getScheme() + "://"
+                                + m_uri.getAuthority()
+                                + entries.get(i).getFilename());
+                files[i] = new SFTPRemoteFile(uri);
+            }
+        } else {
+            files = new RemoteFile[0];
+        }
+        return files;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean mkDir() throws Exception {
+        boolean existed = exists();
+        m_channel.mkdir(m_uri.getPath());
+        return !existed && exists();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void close() throws Exception {
         if (m_channel != null) {
@@ -287,6 +340,7 @@ public class SFTPRemoteFile extends RemoteFile {
             LsEntry currentEntry = entries.get(i);
             if (currentEntry.getFilename().equals(path)) {
                 entry = currentEntry;
+                break;
             }
         }
         return entry;

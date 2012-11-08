@@ -189,6 +189,16 @@ public abstract class RemoteFile {
     public abstract boolean isDirectory() throws Exception;
 
     /**
+     * Move the given file to this files location.
+     * 
+     * 
+     * @param file The file to be moved
+     * @return true if the file was successfully moved, false otherwise
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract boolean move(final RemoteFile file) throws Exception;
+
+    /**
      * Write the given remote file into this files location.
      * 
      * 
@@ -243,6 +253,25 @@ public abstract class RemoteFile {
      * @throws Exception If an error occurs during deletion
      */
     public abstract boolean delete() throws Exception;
+
+    /**
+     * Get the files in this directory.
+     * 
+     * 
+     * @return Array of files contained in this directory, or empty array if
+     *         this is not a directory
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract RemoteFile[] listFiles() throws Exception;
+
+    /**
+     * Create a directory.
+     * 
+     * 
+     * @return true if the directory has been created, false otherwise
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract boolean mkDir() throws Exception;
 
     /**
      * Close this remote file.

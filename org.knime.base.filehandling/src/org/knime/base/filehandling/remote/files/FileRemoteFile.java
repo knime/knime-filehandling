@@ -139,6 +139,22 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public boolean move(final RemoteFile file) throws Exception {
+        boolean success;
+        if (file instanceof FileRemoteFile) {
+            FileRemoteFile source = (FileRemoteFile)file;
+            success = new File(m_uri).renameTo(new File(source.m_uri));
+        } else {
+            write(file);
+            success = file.delete();
+        }
+        return success;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void write(final RemoteFile file) throws Exception {
         byte[] buffer = new byte[1024];
         InputStream in = file.openInputStream();
@@ -189,6 +205,32 @@ public class FileRemoteFile extends RemoteFile {
     @Override
     public boolean delete() throws Exception {
         return deleteRecursively(m_uri.getPath());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public RemoteFile[] listFiles() throws Exception {
+        RemoteFile[] files;
+        if (isDirectory()) {
+            File[] f = new File(m_uri).listFiles();
+            files = new RemoteFile[f.length];
+            for (int i = 0; i < f.length; i++) {
+                files[i] = new FileRemoteFile(f[i].toURI());
+            }
+        } else {
+            files = new RemoteFile[0];
+        }
+        return files;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean mkDir() throws Exception {
+        return new File(m_uri).mkdir();
     }
 
     /**
