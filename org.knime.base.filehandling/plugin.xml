@@ -21,12 +21,14 @@
    <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.porttouri.PortToURINodeFactory" id="org.knime.base.filehandling.porttouri.PortToURINodeFactory" />
    <node category-path="/misc/filehandling/uri" factory-class="org.knime.base.filehandling.extracturiinfo.ExtractURIInfoNodeFactory" id="org.knime.base.filehandling.extracturiinfo.ExtractURIInfoNodeFactory" />
    <node category-path="/misc/filehandling" factory-class="org.knime.base.filehandling.copyfiles.CopyFilesNodeFactory" id="org.knime.base.filehandling.copyfiles.CopyFilesNodeFactory" />
+   <node category-path="/misc/filehandling/remote" factory-class="org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeFactory" id="org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeFactory" />
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category description="Nodes to handle files" icon="icons/missing.gif" level-id="filehandling" name="File Handling" path="/misc" />
       <category description="Nodes to handle zip files" icon="icons/missing.gif" level-id="zip" name="Zip" path="/misc/filehandling" />
       <category description="Nodes to handle binary objects" icon="icons/missing.gif" level-id="binaryobjects" name="Binary Objects" path="/misc/filehandling" />
       <category description="Nodes to handle URI conversion" icon="icons/missing.gif" level-id="uri" name="URI" path="/misc/filehandling" />
+      <category description="Nodes to handle remote file operations" icon="icons/missing.gif" level-id="remote" name="Remote" path="/misc/filehandling" />
    </extension>
 
 </plugin>

@@ -85,7 +85,7 @@ import org.knime.core.node.workflow.FlowVariable;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class CopyFilesNodeDialog extends NodeDialogPane {
+class CopyFilesNodeDialog extends NodeDialogPane {
 
     private ColumnSelectionComboxBox m_sourcecolumn;
 
