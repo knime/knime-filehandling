@@ -44,110 +44,91 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- *
+ * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Nov 9, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remotecredentials;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.knime.core.node.CanceledExecutionException;
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.ExecutionMonitor;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.port.PortObject;
-import org.knime.core.node.port.PortObjectSpec;
-
 /**
- * This is the model implementation.
- * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class RemoteCredentialsNodeModel extends NodeModel {
+enum Protocol {
 
-    /**
-     * Constructor for the node model.
-     */
-    protected RemoteCredentialsNodeModel() {
-        super(0, 1);
+    /** SSH protocol. */
+    SSH("SSH", 22, true),
+
+    /** FTP protocol. */
+    FTP("FTP", 21, false),
+
+    /** HTTP protocol. */
+    HTTP("HTTP", 80, false),
+
+    /** HTTPS protocol. */
+    HTTPS("HTTPS", 443, false);
+
+    private String m_name;
+
+    private int m_port;
+
+    private boolean m_keyfilesupport;
+
+    private Protocol(final String name, final int port,
+            final boolean keyfileSupport) {
+        m_name = name;
+        m_port = port;
+        m_keyfilesupport = keyfileSupport;
     }
 
     /**
-     * {@inheritDoc}
+     * @return the name
      */
-    @Override
-    protected PortObject[] execute(final PortObject[] inObjects,
-            final ExecutionContext exec) throws Exception {
-        return new PortObject[]{null};
+    String getName() {
+        return m_name;
     }
 
     /**
-     * {@inheritDoc}
+     * @return the port
      */
-    @Override
-    protected void reset() {
-        // Not used
+    int getPort() {
+        return m_port;
     }
 
     /**
-     * {@inheritDoc}
+     * @return If this protocol has support for key files
      */
-    @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException {
-        return new PortObjectSpec[]{null};
+    boolean hasKeyfilesupport() {
+        return m_keyfilesupport;
     }
 
     /**
-     * {@inheritDoc}
+     * Get the correspondent protocol to the name.
+     * 
+     * 
+     * @param protocolName The name of the protocol
+     * @return Protocol to the name
      */
-    @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings) {
-        // Not used
+    static Protocol getProtocol(final String protocolName) {
+        Protocol protocol = null;
+        if (protocolName.equals(SSH.getName())) {
+            protocol = SSH;
+        } else if (protocolName.equals(FTP.getName())) {
+            protocol = FTP;
+        } else if (protocolName.equals(HTTP.getName())) {
+            protocol = HTTP;
+        } else if (protocolName.equals(HTTPS.getName())) {
+            protocol = HTTPS;
+        }
+        return protocol;
     }
 
     /**
-     * {@inheritDoc}
+     * @return Array with all protocol names
      */
-    @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        // Not used
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        // Not used
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
-        // Not used
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
-        // Not used
+    static String[] getAllProtocols() {
+        return new String[]{SSH.getName(), FTP.getName(), HTTP.getName(),
+                HTTPS.getName()};
     }
 
 }
