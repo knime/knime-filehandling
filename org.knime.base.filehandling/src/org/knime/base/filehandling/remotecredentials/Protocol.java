@@ -57,16 +57,16 @@ package org.knime.base.filehandling.remotecredentials;
 enum Protocol {
 
     /** SSH protocol. */
-    SSH("SSH", 22, true),
+    SSH("SSH", 22, true, true),
 
     /** FTP protocol. */
-    FTP("FTP", 21, false),
+    FTP("FTP", 21, false, false),
 
     /** HTTP protocol. */
-    HTTP("HTTP", 80, false),
+    HTTP("HTTP", 80, false, false),
 
     /** HTTPS protocol. */
-    HTTPS("HTTPS", 443, false);
+    HTTPS("HTTPS", 443, false, true);
 
     private String m_name;
 
@@ -74,11 +74,14 @@ enum Protocol {
 
     private boolean m_keyfilesupport;
 
+    private boolean m_certificatesupport;
+
     private Protocol(final String name, final int port,
-            final boolean keyfileSupport) {
+            final boolean keyfileSupport, final boolean certificateSupport) {
         m_name = name;
         m_port = port;
         m_keyfilesupport = keyfileSupport;
+        m_certificatesupport = certificateSupport;
     }
 
     /**
@@ -98,8 +101,15 @@ enum Protocol {
     /**
      * @return If this protocol has support for key files
      */
-    boolean hasKeyfilesupport() {
+    boolean hasKeyfileSupport() {
         return m_keyfilesupport;
+    }
+
+    /**
+     * @return If this protocol has support for certificates
+     */
+    boolean hasCertificateSupport() {
+        return m_certificatesupport;
     }
 
     /**

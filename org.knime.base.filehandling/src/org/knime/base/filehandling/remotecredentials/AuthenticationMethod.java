@@ -44,117 +44,51 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- *
+ * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remotecredentials;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.knime.core.node.CanceledExecutionException;
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.ExecutionMonitor;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.port.PortObject;
-import org.knime.core.node.port.PortObjectSpec;
-
 /**
- * This is the model implementation.
+ * Enums for authentication method.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class RemoteCredentialsNodeModel extends NodeModel {
-
-    private RemoteCredentialsConfiguration m_configuration;
+enum AuthenticationMethod {
 
     /**
-     * Constructor for the node model.
+     * Use password.
      */
-    protected RemoteCredentialsNodeModel() {
-        super(0, 1);
+    PASSWORD("Password:"),
+
+    /**
+     * Use keyfile.
+     */
+    KEYFILE("Keyfile:");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this setting
+     */
+    AuthenticationMethod(final String name) {
+        m_name = name;
     }
 
     /**
-     * {@inheritDoc}
+     * @return Name of this setting
      */
-    @Override
-    protected PortObject[] execute(final PortObject[] inObjects,
-            final ExecutionContext exec) throws Exception {
-        return new PortObject[]{null};
+    String getName() {
+        return m_name;
     }
 
     /**
-     * {@inheritDoc}
+     * @return Array of all authentication method settings
      */
-    @Override
-    protected void reset() {
-        // Not used
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException {
-        return new PortObjectSpec[]{null};
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings) {
-        if (m_configuration != null) {
-            m_configuration.save(settings);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        RemoteCredentialsConfiguration config =
-                new RemoteCredentialsConfiguration();
-        config.loadInModel(settings);
-        m_configuration = config;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        new RemoteCredentialsConfiguration().loadInModel(settings);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
-        // Not used
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
-        // Not used
+    static String[] getAllSettings() {
+        return new String[]{PASSWORD.getName(), KEYFILE.getName()};
     }
 
 }

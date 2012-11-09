@@ -50,34 +50,24 @@
  */
 package org.knime.base.filehandling.remotecredentials;
 
-import java.awt.Container;
-import java.awt.Dialog;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
-import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
-import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.table.TableColumn;
 
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
@@ -97,22 +87,6 @@ import org.knime.core.node.workflow.FlowVariable;
  */
 public class RemoteCredentialsNodeDialog extends NodeDialogPane {
 
-    private static final String ACTION_ADD = "add";
-
-    private static final String ACTION_EDIT = "edit";
-
-    private static final String ACTION_REMOVE = "remove";
-
-    private static final String ACTION_OK = "ok";
-
-    private static final String ACTION_CANCEL = "cancel";
-
-    private JButton m_add;
-
-    private JButton m_edit;
-
-    private JButton m_remove;
-
     private JComboBox<String> m_protocol;
 
     private JTextField m_user;
@@ -129,7 +103,13 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
 
     private FlowVariableModelButton m_keyfilefvm;
 
-    private JDialog m_dialog;
+    private JCheckBox m_usecertificate;
+
+    private JLabel m_certificateLabel;
+
+    private FilesHistoryPanel m_certificate;
+
+    private FlowVariableModelButton m_certificatefvm;
 
     /**
      * New pane for configuring the node dialog.
@@ -139,65 +119,6 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     }
 
     private JPanel initLayout() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        // Table
-        String[] columns = new String[]{"Protocol", "User", "Host", "Port"};
-        Object[][] data = {};
-        JTable table = new JTable(data, columns);
-        table.setFillsViewportHeight(true);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        TableColumn protocolCol = table.getColumnModel().getColumn(0);
-        protocolCol.setMinWidth(75);
-        protocolCol.setMaxWidth(75);
-        TableColumn userCol = table.getColumnModel().getColumn(1);
-        userCol.setMinWidth(100);
-        userCol.setMaxWidth(100);
-        TableColumn hostCol = table.getColumnModel().getColumn(2);
-        hostCol.setPreferredWidth(150);
-        hostCol.setMinWidth(150);
-        TableColumn portCol = table.getColumnModel().getColumn(3);
-        portCol.setMinWidth(75);
-        portCol.setMaxWidth(75);
-        // Buttons
-        m_add = new JButton("Add");
-        m_add.setActionCommand(ACTION_ADD);
-        m_add.addActionListener(new ModifyButtonListener());
-        m_edit = new JButton("Edit");
-        m_edit.setActionCommand(ACTION_EDIT);
-        m_edit.addActionListener(new ModifyButtonListener());
-        m_remove = new JButton("Remove");
-        m_remove.setActionCommand(ACTION_REMOVE);
-        m_remove.addActionListener(new ModifyButtonListener());
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
-        buttonPanel.add(m_add, gbc);
-        gbc.gridy++;
-        buttonPanel.add(m_edit, gbc);
-        gbc.gridy++;
-        buttonPanel.add(m_remove, gbc);
-        gbc.gridy++;
-        gbc.weighty = 1;
-        buttonPanel.add(new JPanel(), gbc);
-        // Hosts panel
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        panel.add(new JScrollPane(table), gbc);
-        gbc.weightx = 0;
-        gbc.gridx++;
-        panel.add(buttonPanel, gbc);
-        panel.setBorder(new TitledBorder(new EtchedBorder(), "Known hosts"));
-        // TODO add certificate panel
-        return panel;
-    }
-
-    private void openHostDialog(final String action) {
         GridBagConstraints gbc = new GridBagConstraints();
         // Protocol
         JLabel protocolLabel = new JLabel("Protocol:");
@@ -231,19 +152,6 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
                         updateEnabledState();
                     }
                 });
-        // Buttons
-        JButton ok = new JButton("   OK   ");
-        ok.setActionCommand(ACTION_OK);
-        ok.addActionListener(new DialogButtonListener());
-        JButton cancel = new JButton("Cancel");
-        cancel.setActionCommand(ACTION_CANCEL);
-        cancel.addActionListener(new DialogButtonListener());
-        // Button panel
-        resetGBC(gbc);
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
-        buttonPanel.add(ok, gbc);
-        gbc.gridx++;
-        buttonPanel.add(cancel, gbc);
         // Keyfile panel
         resetGBC(gbc);
         JPanel keyfilePanel = new JPanel(new GridBagLayout());
@@ -254,6 +162,37 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         gbc.gridx++;
         gbc.insets = new Insets(0, 0, 0, 0);
         keyfilePanel.add(m_keyfilefvm, gbc);
+        // Certificate
+        m_usecertificate = new JCheckBox("Use custom certificate");
+        m_usecertificate.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                updateEnabledState();
+            }
+        });
+        m_certificateLabel = new JLabel("Certificate:");
+        m_certificate = new FilesHistoryPanel("certificateHistory", false);
+        m_certificate.setSelectMode(JFileChooser.FILES_ONLY);
+        m_certificatefvm =
+                new FlowVariableModelButton(createFlowVariableModel(
+                        "certificate", FlowVariable.Type.STRING));
+        m_certificatefvm.getFlowVariableModel().addChangeListener(
+                new ChangeListener() {
+                    @Override
+                    public void stateChanged(final ChangeEvent e) {
+                        updateEnabledState();
+                    }
+                });
+        // Certificate panel
+        resetGBC(gbc);
+        JPanel certificatePanel = new JPanel(new GridBagLayout());
+        gbc.weightx = 1;
+        gbc.insets = new Insets(0, 0, 0, 5);
+        certificatePanel.add(m_certificate, gbc);
+        gbc.weightx = 0;
+        gbc.gridx++;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        certificatePanel.add(m_certificatefvm, gbc);
         // Outer Panel
         resetGBC(gbc);
         JPanel panel = new JPanel(new GridBagLayout());
@@ -297,27 +236,17 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         gbc.weightx = 1;
         panel.add(keyfilePanel, gbc);
         gbc.gridx = 0;
-        gbc.gridwidth = 2;
         gbc.gridy++;
-        panel.add(buttonPanel, gbc);
-        // Open dialog
-        Frame frame = null;
-        Container container = getPanel().getParent();
-        while (container != null) {
-            if (container instanceof Frame) {
-                frame = (Frame)container;
-                break;
-            }
-            container = container.getParent();
-        }
-        m_dialog = new JDialog(frame);
-        m_dialog.setContentPane(panel);
-        m_dialog.setTitle("Known host");
-        m_dialog.pack();
-        m_dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
-        updateEnabledState();
-        m_dialog.setVisible(true);
-        m_dialog.dispose();
+        gbc.gridwidth = 2;
+        panel.add(m_usecertificate, gbc);
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.gridy++;
+        panel.add(m_certificateLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        panel.add(certificatePanel, gbc);
+        return panel;
     }
 
     private void resetGBC(final GridBagConstraints gbc) {
@@ -333,50 +262,23 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     private void updateEnabledState() {
         Protocol protocol =
                 Protocol.getProtocol((String)m_protocol.getSelectedItem());
-        boolean keyfile = protocol.hasKeyfilesupport();
-        boolean replacement =
+        boolean keyfile = protocol.hasKeyfileSupport();
+        boolean keyfileReplacement =
                 m_keyfilefvm.getFlowVariableModel()
                         .isVariableReplacementEnabled();
         m_keyfileLabel.setEnabled(keyfile);
-        m_keyfile.setEnabled(keyfile && !replacement);
+        m_keyfile.setEnabled(keyfile && !keyfileReplacement);
         m_keyfilefvm.setEnabled(keyfile);
-    }
-
-    private class ModifyButtonListener implements ActionListener {
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-            String action = e.getActionCommand();
-            if (action.equals(ACTION_ADD)) {
-                openHostDialog(ACTION_ADD);
-            } else if (action.equals(ACTION_EDIT)) {
-                openHostDialog(ACTION_EDIT);
-            } else if (action.equals(ACTION_REMOVE)) {
-                // TODO remove selected table entry
-            }
-        }
-
-    }
-
-    private class DialogButtonListener implements ActionListener {
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-            String action = e.getActionCommand();
-            if (action.equals(ACTION_OK)) {
-                // TODO persist data from dialog
-                m_dialog.setVisible(false);
-            } else if (action.equals(ACTION_CANCEL)) {
-                m_dialog.setVisible(false);
-            }
-        }
-
+        boolean certificate = protocol.hasCertificateSupport();
+        boolean usecertificate = m_usecertificate.isSelected();
+        boolean certificateReplacement =
+                m_certificatefvm.getFlowVariableModel()
+                        .isVariableReplacementEnabled();
+        m_usecertificate.setEnabled(certificate);
+        m_certificateLabel.setEnabled(certificate && usecertificate);
+        m_certificate.setEnabled(certificate && usecertificate
+                && !certificateReplacement);
+        m_certificatefvm.setEnabled(certificate && usecertificate);
     }
 
     private class ProtocolListener implements ActionListener {
@@ -400,7 +302,18 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
-        // not used
+        RemoteCredentialsConfiguration config =
+                new RemoteCredentialsConfiguration();
+        config.setProtocol((String)m_protocol.getSelectedItem());
+        config.setUser(m_user.getText());
+        config.setHost(m_host.getText());
+        config.setPort((Integer)m_port.getValue());
+        // TODO authmethod
+        config.setPassword(new String(m_password.getPassword()));
+        config.setKeyfile(m_keyfile.getSelectedFile());
+        config.setUsecertificate(m_usecertificate.isSelected());
+        config.setCertificate(m_certificate.getSelectedFile());
+        config.save(settings);
     }
 
     /**
@@ -409,7 +322,19 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings,
             final PortObjectSpec[] specs) throws NotConfigurableException {
-        // not used
+        RemoteCredentialsConfiguration config =
+                new RemoteCredentialsConfiguration();
+        config.loadInDialog(settings);
+        m_protocol.setSelectedItem(config.getProtocol());
+        m_user.setText(config.getUser());
+        m_host.setText(config.getHost());
+        m_port.setValue(config.getPort());
+        // TODO authmethod
+        m_password.setText(config.getPassword());
+        m_keyfile.setSelectedFile(config.getKeyfile());
+        m_usecertificate.setSelected(config.getUsecertificate());
+        m_certificate.setSelectedFile(config.getCertificate());
+        updateEnabledState();
     }
 
 }
