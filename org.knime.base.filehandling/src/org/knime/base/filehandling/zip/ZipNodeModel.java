@@ -92,17 +92,17 @@ class ZipNodeModel extends NodeModel {
     private static final NodeLogger LOGGER = NodeLogger
             .getLogger(ZipNodeModel.class);
 
-    private SettingsModelString m_locationcolumn;
+    private final SettingsModelString m_locationcolumn;
 
-    private SettingsModelString m_target;
+    private final SettingsModelString m_target;
 
-    private SettingsModelIntegerBounded m_compressionlevel;
+    private final SettingsModelIntegerBounded m_compressionlevel;
 
-    private SettingsModelString m_pathhandling;
+    private final SettingsModelString m_pathhandling;
 
-    private SettingsModelString m_prefix;
+    private final SettingsModelString m_prefix;
 
-    private SettingsModelString m_ifexists;
+    private final SettingsModelString m_ifexists;
 
     /**
      * Constructor for the node model.
@@ -147,18 +147,7 @@ class ZipNodeModel extends NodeModel {
         int index = inData[0].getDataTableSpec().findColumnIndex(column);
         DataType type =
                 inData[0].getDataTableSpec().getColumnSpec(index).getType();
-        boolean isString = type.isCompatible(StringValue.class);
-        boolean isURI = type.isCompatible(URIDataValue.class);
-        if (isString) {
-            // Add filenames from string column
-            for (DataRow row : inData[0]) {
-                if (!row.getCell(index).isMissing()) {
-                    StringValue value = (StringValue)row.getCell(index);
-                    entries.add(value.getStringValue());
-                }
-            }
-        }
-        if (isURI) {
+        if (type.isCompatible(URIDataValue.class)) {
             // Add filenames from URI column
             for (DataRow row : inData[0]) {
                 if (!row.getCell(index).isMissing()) {
@@ -171,6 +160,14 @@ class ZipNodeModel extends NodeModel {
                     entries.add(value.getURIContent().getURI().getPath());
                 }
             }
+        } else if (type.isCompatible(StringValue.class)) {
+        	// Add filenames from string column
+        	for (DataRow row : inData[0]) {
+        		if (!row.getCell(index).isMissing()) {
+        			StringValue value = (StringValue)row.getCell(index);
+        			entries.add(value.getStringValue());
+        		}
+        	}
         }
         String[] filenames = entries.toArray(new String[entries.size()]);
         // Write files to zip file
