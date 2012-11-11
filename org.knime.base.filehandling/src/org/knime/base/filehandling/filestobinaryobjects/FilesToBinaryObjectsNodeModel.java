@@ -51,9 +51,11 @@
 package org.knime.base.filehandling.filestobinaryobjects;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URL;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
@@ -64,7 +66,6 @@ import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
 import org.knime.core.data.blob.BinaryObjectCellFactory;
 import org.knime.core.data.blob.BinaryObjectDataCell;
-import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.data.container.SingleCellFactory;
 import org.knime.core.data.uri.URIDataValue;
@@ -73,6 +74,7 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -84,13 +86,15 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class FilesToBinaryObjectsNodeModel extends NodeModel {
+final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
-    private SettingsModelString m_uricolumn;
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(FilesToBinaryObjectsNodeModel.class);
 
-    private SettingsModelString m_bocolumnname;
+    private final SettingsModelString m_uricolumn;
 
-    private SettingsModelString m_replace;
+    private final SettingsModelString m_bocolumnname;
+
+    private final SettingsModelString m_replace;
 
     /**
      * Constructor for the node model.
@@ -108,7 +112,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-            final ExecutionContext exec) throws Exception {
+        final ExecutionContext exec) throws Exception {
         ColumnRearranger rearranger =
                 createColumnRearranger(inData[0].getDataTableSpec(), exec);
         BufferedDataTable out =
@@ -127,7 +131,7 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final ExecutionContext exec) throws InvalidSettingsException {
+        final ExecutionContext exec) throws InvalidSettingsException {
         boolean replace =
                 m_replace.getStringValue().equals(
                         ReplacePolicy.REPLACE.getName());
@@ -148,17 +152,12 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
         DataColumnSpec colSpec =
                 new DataColumnSpecCreator(bocolumnname,
                         BinaryObjectDataCell.TYPE).createSpec();
+        int inColIndex = inSpec.findColumnIndex(uricolumn);
         // Factory that creates the binary objects
-        CellFactory factory = new SingleCellFactory(colSpec) {
-            @Override
-            public DataCell getCell(final DataRow row) {
-                return createBinaryObjectCell(row, inSpec, bocellfactory);
-            }
-        };
+        FilesToBinaryCellFactory factory =  new FilesToBinaryCellFactory(colSpec, bocellfactory, inColIndex);
         if (replace) {
             // Replace URI column with the binary object column
-            int index = inSpec.findColumnIndex(uricolumn);
-            rearranger.replace(factory, index);
+            rearranger.replace(factory, inColIndex);
         } else {
             // Append the binary object column
             rearranger.append(factory);
@@ -193,43 +192,6 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
                         "Binary object column name already taken");
             }
         }
-    }
-
-    /**
-     * Create a cell containing the binary object.
-     * 
-     * 
-     * Create a cell containing the binary object to the file referenced by the
-     * URI cell of the row.
-     * 
-     * @param row The current row
-     * @param inSpec Specification of the input table
-     * @param bocellfactory Factory for the creation of the binary objects
-     * @return Cell containing the binary object
-     */
-    private DataCell createBinaryObjectCell(final DataRow row,
-            final DataTableSpec inSpec,
-            final BinaryObjectCellFactory bocellfactory) {
-        // Assume missing cell
-        DataCell result = DataType.getMissingCell();
-        int uriIndex = inSpec.findColumnIndex(m_uricolumn.getStringValue());
-        if (!row.getCell(uriIndex).isMissing()) {
-            // Get URI
-            URIDataValue value = (URIDataValue)row.getCell(uriIndex);
-            if (!value.getURIContent().getURI().getScheme().equals("file")) {
-                throw new RuntimeException(
-                        "This node only supports the protocol \"file\"");
-            }
-            String location = value.getURIContent().getURI().getPath();
-            try {
-                // Create input stream and give it to the factory
-                InputStream input = new FileInputStream(location);
-                result = bocellfactory.create(input);
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage());
-            }
-        }
-        return result;
     }
 
     /**
@@ -289,8 +251,8 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+        final ExecutionMonitor exec) throws IOException,
+        CanceledExecutionException {
         // Not used
     }
 
@@ -299,9 +261,69 @@ class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+        final ExecutionMonitor exec) throws IOException,
+        CanceledExecutionException {
         // Not used
+    }
+
+    private final class FilesToBinaryCellFactory extends SingleCellFactory {
+    
+        private final BinaryObjectCellFactory m_bocellfactory;
+        private final int m_colIndex;
+        
+        /** Error count, atomic integer because of possible async exec. */
+        private final AtomicInteger m_errorCount = new AtomicInteger();
+        private final AtomicInteger m_totalCount = new AtomicInteger();
+        
+        private FilesToBinaryCellFactory(final DataColumnSpec newColSpec, 
+            final BinaryObjectCellFactory bocellfactory, final int colIndex) {
+            super(newColSpec);
+            m_bocellfactory = bocellfactory;
+            m_colIndex = colIndex;
+        }
+        
+        /** {@inheritDoc} */
+        @Override
+        public DataCell getCell(final DataRow row) {
+            DataCell cell = row.getCell(m_colIndex);
+            if (cell.isMissing()) {
+                return DataType.getMissingCell();
+            }
+            URIDataValue value = (URIDataValue)cell;
+            URI uri = value.getURIContent().getURI();
+            InputStream input = null;
+            try {
+                m_totalCount.incrementAndGet();
+                URL url = uri.toURL();
+                input = url.openStream();
+                return m_bocellfactory.create(input);
+            } catch (Exception e) {
+                String error = "Can't read \"" + uri + "\": " + e.getMessage();
+                if (m_errorCount.getAndIncrement() == 0) {
+                    error = error + " (suppressing further warnings)";
+                    LOGGER.error(error, e);
+                } else {
+                    LOGGER.debug(error, e);
+                }
+                return DataType.getMissingCell();
+            } finally {
+                if (input != null) {
+                    try {
+                        input.close();
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                }
+            }
+        }
+        @Override
+        public void afterProcessing() {
+            int error = m_errorCount.get();
+            if (error != 0) {
+                int total = m_totalCount.get();
+                setWarningMessage(String.format("Failed to read %d/%d files (see log for details)", error, total));
+            }
+        }
     }
 
 }
