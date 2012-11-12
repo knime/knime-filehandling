@@ -59,14 +59,19 @@ package org.knime.base.filehandling.remotecredentials;
 enum AuthenticationMethod {
 
     /**
+     * Use no authentication.
+     */
+    NONE("None"),
+
+    /**
      * Use password.
      */
-    PASSWORD("Password:"),
+    PASSWORD("Password"),
 
     /**
      * Use keyfile.
      */
-    KEYFILE("Keyfile:");
+    KEYFILE("Keyfile");
 
     private final String m_name;
 
@@ -88,7 +93,8 @@ enum AuthenticationMethod {
      * @return Array of all authentication method settings
      */
     static String[] getAllSettings() {
-        return new String[]{PASSWORD.getName(), KEYFILE.getName()};
+        return new String[]{NONE.getName(), PASSWORD.getName(),
+                KEYFILE.getName()};
     }
 
 }

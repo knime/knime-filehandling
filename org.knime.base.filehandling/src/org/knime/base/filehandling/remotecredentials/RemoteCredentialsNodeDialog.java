@@ -56,16 +56,20 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -89,11 +93,23 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
 
     private JComboBox<String> m_protocol;
 
-    private JTextField m_user;
-
     private JTextField m_host;
 
     private JSpinner m_port;
+
+    private JRadioButton m_authnone;
+
+    private JRadioButton m_authpassword;
+
+    private JRadioButton m_authkeyfile;
+
+    private ButtonGroup m_authmethod;
+
+    private JLabel m_userLabel;
+
+    private JTextField m_user;
+
+    private JLabel m_passwordLabel;
 
     private JPasswordField m_password;
 
@@ -115,28 +131,37 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
      * New pane for configuring the node dialog.
      */
     public RemoteCredentialsNodeDialog() {
-        addTab("Options", initLayout());
-    }
-
-    private JPanel initLayout() {
-        GridBagConstraints gbc = new GridBagConstraints();
         // Protocol
-        JLabel protocolLabel = new JLabel("Protocol:");
         String[] protocols = Protocol.getAllProtocols();
         m_protocol = new JComboBox<String>(protocols);
         m_protocol.addActionListener(new ProtocolListener());
-        // User
-        JLabel userLabel = new JLabel("User:");
-        m_user = new JTextField();
         // Host
-        JLabel hostLabel = new JLabel("Host:");
         m_host = new JTextField();
         // Port
-        JLabel portLabel = new JLabel("Port:");
         SpinnerModel portModel = new SpinnerNumberModel(0, 0, 65535, 1);
         m_port = new JSpinner(portModel);
+        // Authentication method
+        m_authnone = new JRadioButton(AuthenticationMethod.NONE.getName());
+        m_authnone.setActionCommand(AuthenticationMethod.NONE.getName());
+        m_authnone.addChangeListener(new UpdateListener());
+        m_authpassword =
+                new JRadioButton(AuthenticationMethod.PASSWORD.getName());
+        m_authpassword
+                .setActionCommand(AuthenticationMethod.PASSWORD.getName());
+        m_authpassword.addChangeListener(new UpdateListener());
+        m_authkeyfile =
+                new JRadioButton(AuthenticationMethod.KEYFILE.getName());
+        m_authkeyfile.setActionCommand(AuthenticationMethod.KEYFILE.getName());
+        m_authkeyfile.addChangeListener(new UpdateListener());
+        m_authmethod = new ButtonGroup();
+        m_authmethod.add(m_authnone);
+        m_authmethod.add(m_authpassword);
+        m_authmethod.add(m_authkeyfile);
+        // User
+        m_userLabel = new JLabel("User:");
+        m_user = new JTextField();
         // Password
-        JLabel passwordLabel = new JLabel("Password:");
+        m_passwordLabel = new JLabel("Password:");
         m_password = new JPasswordField();
         // Keyfile
         m_keyfileLabel = new JLabel("Keyfile:");
@@ -146,12 +171,39 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
                 new FlowVariableModelButton(createFlowVariableModel("keyfile",
                         FlowVariable.Type.STRING));
         m_keyfilefvm.getFlowVariableModel().addChangeListener(
-                new ChangeListener() {
-                    @Override
-                    public void stateChanged(final ChangeEvent e) {
-                        updateEnabledState();
-                    }
-                });
+                new UpdateListener());
+        // Certificate
+        m_usecertificate = new JCheckBox("Use custom certificate");
+        m_usecertificate.addChangeListener(new UpdateListener());
+        m_certificateLabel = new JLabel("Certificate:");
+        m_certificate = new FilesHistoryPanel("certificateHistory", false);
+        m_certificate.setSelectMode(JFileChooser.FILES_ONLY);
+        m_certificatefvm =
+                new FlowVariableModelButton(createFlowVariableModel(
+                        "certificate", FlowVariable.Type.STRING));
+        m_certificatefvm.getFlowVariableModel().addChangeListener(
+                new UpdateListener());
+        addTab("Options", initLayout());
+    }
+
+    private JPanel initLayout() {
+        GridBagConstraints gbc = new GridBagConstraints();
+        // Protocol
+        JLabel protocolLabel = new JLabel("Protocol:");
+        // Host
+        JLabel hostLabel = new JLabel("Host:");
+        // Port
+        JLabel portLabel = new JLabel("Port:");
+        // Authentication panel
+        resetGBC(gbc);
+        JPanel authenticationPanel = new JPanel(new GridBagLayout());
+        authenticationPanel.setBorder(new TitledBorder(new EtchedBorder(),
+                "Authentication method"));
+        authenticationPanel.add(m_authnone);
+        gbc.gridx++;
+        authenticationPanel.add(m_authpassword);
+        gbc.gridx++;
+        authenticationPanel.add(m_authkeyfile);
         // Keyfile panel
         resetGBC(gbc);
         JPanel keyfilePanel = new JPanel(new GridBagLayout());
@@ -162,27 +214,6 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         gbc.gridx++;
         gbc.insets = new Insets(0, 0, 0, 0);
         keyfilePanel.add(m_keyfilefvm, gbc);
-        // Certificate
-        m_usecertificate = new JCheckBox("Use custom certificate");
-        m_usecertificate.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                updateEnabledState();
-            }
-        });
-        m_certificateLabel = new JLabel("Certificate:");
-        m_certificate = new FilesHistoryPanel("certificateHistory", false);
-        m_certificate.setSelectMode(JFileChooser.FILES_ONLY);
-        m_certificatefvm =
-                new FlowVariableModelButton(createFlowVariableModel(
-                        "certificate", FlowVariable.Type.STRING));
-        m_certificatefvm.getFlowVariableModel().addChangeListener(
-                new ChangeListener() {
-                    @Override
-                    public void stateChanged(final ChangeEvent e) {
-                        updateEnabledState();
-                    }
-                });
         // Certificate panel
         resetGBC(gbc);
         JPanel certificatePanel = new JPanel(new GridBagLayout());
@@ -203,13 +234,6 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         gbc.gridx = 0;
         gbc.weightx = 0;
         gbc.gridy++;
-        panel.add(userLabel, gbc);
-        gbc.gridx++;
-        gbc.weightx = 1;
-        panel.add(m_user, gbc);
-        gbc.gridx = 0;
-        gbc.weightx = 0;
-        gbc.gridy++;
         panel.add(hostLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
@@ -222,9 +246,22 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         gbc.weightx = 1;
         panel.add(m_port, gbc);
         gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.NONE;
+        panel.add(authenticationPanel, gbc);
+        gbc.weightx = 0;
+        gbc.gridwidth = 1;
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(m_userLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        panel.add(m_user, gbc);
+        gbc.gridx = 0;
         gbc.weightx = 0;
         gbc.gridy++;
-        panel.add(passwordLabel, gbc);
+        panel.add(m_passwordLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
         panel.add(m_password, gbc);
@@ -266,19 +303,44 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         boolean keyfileReplacement =
                 m_keyfilefvm.getFlowVariableModel()
                         .isVariableReplacementEnabled();
-        m_keyfileLabel.setEnabled(keyfile);
-        m_keyfile.setEnabled(keyfile && !keyfileReplacement);
-        m_keyfilefvm.setEnabled(keyfile);
         boolean certificate = protocol.hasCertificateSupport();
         boolean usecertificate = m_usecertificate.isSelected();
         boolean certificateReplacement =
                 m_certificatefvm.getFlowVariableModel()
                         .isVariableReplacementEnabled();
+        boolean usePassword =
+                m_authmethod.getSelection() != null ? m_authmethod
+                        .getSelection().getActionCommand()
+                        .equals(AuthenticationMethod.PASSWORD.getName())
+                        : false;
+        boolean useKeyfile =
+                m_authmethod.getSelection() != null ? m_authmethod
+                        .getSelection().getActionCommand()
+                        .equals(AuthenticationMethod.KEYFILE.getName()) : false;
+        m_userLabel.setEnabled(usePassword || useKeyfile);
+        m_user.setEnabled(usePassword || useKeyfile);
+        m_passwordLabel.setEnabled(usePassword);
+        m_password.setEnabled(usePassword);
+        m_keyfileLabel.setEnabled(keyfile && useKeyfile);
+        m_keyfile.setEnabled(keyfile && !keyfileReplacement && useKeyfile);
+        m_keyfilefvm.setEnabled(keyfile && useKeyfile);
         m_usecertificate.setEnabled(certificate);
         m_certificateLabel.setEnabled(certificate && usecertificate);
         m_certificate.setEnabled(certificate && usecertificate
                 && !certificateReplacement);
         m_certificatefvm.setEnabled(certificate && usecertificate);
+    }
+
+    private class UpdateListener implements ChangeListener {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void stateChanged(final ChangeEvent e) {
+            updateEnabledState();
+        }
+
     }
 
     private class ProtocolListener implements ActionListener {
@@ -308,7 +370,8 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         config.setUser(m_user.getText());
         config.setHost(m_host.getText());
         config.setPort((Integer)m_port.getValue());
-        // TODO authmethod
+        config.setAuthenticationmethod(m_authmethod.getSelection()
+                .getActionCommand());
         config.setPassword(new String(m_password.getPassword()));
         config.setKeyfile(m_keyfile.getSelectedFile());
         config.setUsecertificate(m_usecertificate.isSelected());
@@ -329,7 +392,14 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         m_user.setText(config.getUser());
         m_host.setText(config.getHost());
         m_port.setValue(config.getPort());
-        // TODO authmethod
+        String authmethod = config.getAuthenticationmethod();
+        if (authmethod.equals(m_authnone.getActionCommand())) {
+            m_authmethod.setSelected(m_authnone.getModel(), true);
+        } else if (authmethod.equals(m_authpassword.getActionCommand())) {
+            m_authmethod.setSelected(m_authpassword.getModel(), true);
+        } else if (authmethod.equals(m_authkeyfile.getActionCommand())) {
+            m_authmethod.setSelected(m_authkeyfile.getModel(), true);
+        }
         m_password.setText(config.getPassword());
         m_keyfile.setSelectedFile(config.getKeyfile());
         m_usecertificate.setSelected(config.getUsecertificate());

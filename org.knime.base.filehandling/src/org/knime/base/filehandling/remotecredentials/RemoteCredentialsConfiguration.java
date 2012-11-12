@@ -233,7 +233,7 @@ class RemoteCredentialsConfiguration {
                         AuthenticationMethod.PASSWORD.getName());
         m_password = settings.getString("password", "");
         m_keyfile = settings.getString("keyfile", "");
-        m_usecertificate = settings.getBoolean("usescertificate", false);
+        m_usecertificate = settings.getBoolean("usecertificate", false);
         m_certificate = settings.getString("certificate", "");
     }
 
@@ -246,7 +246,6 @@ class RemoteCredentialsConfiguration {
         m_protocol = settings.getString("protocol");
         validate(m_protocol);
         m_user = settings.getString("user");
-        validate(m_user);
         m_host = settings.getString("host");
         validate(m_host);
         m_port = settings.getInt("port");
@@ -255,14 +254,16 @@ class RemoteCredentialsConfiguration {
         m_password = settings.getString("password");
         if (m_authenticationmethod.equals(AuthenticationMethod.PASSWORD
                 .getName())) {
+            validate(m_user);
             validate(m_password);
         }
         m_keyfile = settings.getString("keyfile");
         if (m_authenticationmethod.equals(AuthenticationMethod.KEYFILE
                 .getName())) {
+            validate(m_user);
             validate(m_keyfile);
         }
-        m_usecertificate = settings.getBoolean("usescertificate");
+        m_usecertificate = settings.getBoolean("usecertificate");
         m_certificate = settings.getString("certificate");
         if (m_usecertificate) {
             validate(m_certificate);
