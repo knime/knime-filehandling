@@ -69,15 +69,20 @@ import org.knime.core.node.port.PortObjectSpec;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class RemoteCredentialsNodeModel extends NodeModel {
+public class RemoteCredentialsNodeModel extends NodeModel {
+
+    private Protocol m_protocol;
 
     private RemoteCredentialsConfiguration m_configuration;
 
     /**
      * Constructor for the node model.
+     * 
+     * @param protocol The protocol of this credentials model
      */
-    protected RemoteCredentialsNodeModel() {
+    public RemoteCredentialsNodeModel(final Protocol protocol) {
         super(0, 1);
+        m_protocol = protocol;
     }
 
     /**
@@ -123,7 +128,7 @@ class RemoteCredentialsNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         RemoteCredentialsConfiguration config =
-                new RemoteCredentialsConfiguration();
+                new RemoteCredentialsConfiguration(m_protocol);
         config.loadInModel(settings);
         m_configuration = config;
     }
@@ -134,7 +139,7 @@ class RemoteCredentialsNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        new RemoteCredentialsConfiguration().loadInModel(settings);
+        new RemoteCredentialsConfiguration(m_protocol).loadInModel(settings);
     }
 
     /**

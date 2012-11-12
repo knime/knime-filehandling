@@ -60,7 +60,7 @@ import org.knime.core.node.NodeSettingsWO;
  */
 class RemoteCredentialsConfiguration {
 
-    private String m_protocol;
+    private Protocol m_protocol;
 
     private String m_user;
 
@@ -79,16 +79,9 @@ class RemoteCredentialsConfiguration {
     private String m_certificate;
 
     /**
-     * @return the protocol
+     * @param protocol The protocol of this credential configuration
      */
-    String getProtocol() {
-        return m_protocol;
-    }
-
-    /**
-     * @param protocol the protocol to set
-     */
-    void setProtocol(final String protocol) {
+    RemoteCredentialsConfiguration(final Protocol protocol) {
         m_protocol = protocol;
     }
 
@@ -208,26 +201,27 @@ class RemoteCredentialsConfiguration {
      * @param settings The <code>NodeSettings</code> to write to
      */
     void save(final NodeSettingsWO settings) {
-        settings.addString("protocol", m_protocol);
         settings.addString("user", m_user);
         settings.addString("host", m_host);
         settings.addInt("port", m_port);
         settings.addString("authenticationmethod", m_authenticationmethod);
         settings.addString("password", m_password);
-        settings.addString("keyfile", m_keyfile);
-        settings.addBoolean("usecertificate", m_usecertificate);
-        settings.addString("certificate", m_certificate);
+        if (m_protocol.hasKeyfileSupport()) {
+            settings.addString("keyfile", m_keyfile);
+        }
+        if (m_protocol.hasCertificateSupport()) {
+            settings.addBoolean("usecertificate", m_usecertificate);
+            settings.addString("certificate", m_certificate);
+        }
     }
 
     /**
      * @param settings The <code>NodeSettings</code> to read from
      */
     void loadInDialog(final NodeSettingsRO settings) {
-        Protocol defaultProtocol = Protocol.SSH;
-        m_protocol = settings.getString("protocol", defaultProtocol.getName());
         m_user = settings.getString("user", "");
         m_host = settings.getString("host", "");
-        m_port = settings.getInt("port", defaultProtocol.getPort());
+        m_port = settings.getInt("port", m_protocol.getPort());
         m_authenticationmethod =
                 settings.getString("authenticationmethod",
                         AuthenticationMethod.PASSWORD.getName());
@@ -243,8 +237,6 @@ class RemoteCredentialsConfiguration {
      */
     void loadInModel(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        m_protocol = settings.getString("protocol");
-        validate(m_protocol);
         m_user = settings.getString("user");
         m_host = settings.getString("host");
         validate(m_host);

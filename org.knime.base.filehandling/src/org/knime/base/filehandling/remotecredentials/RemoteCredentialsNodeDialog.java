@@ -53,12 +53,9 @@ package org.knime.base.filehandling.remotecredentials;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -91,7 +88,7 @@ import org.knime.core.node.workflow.FlowVariable;
  */
 public class RemoteCredentialsNodeDialog extends NodeDialogPane {
 
-    private JComboBox<String> m_protocol;
+    private Protocol m_protocol;
 
     private JTextField m_host;
 
@@ -129,12 +126,11 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
 
     /**
      * New pane for configuring the node dialog.
+     * 
+     * @param protocol The protocol of this credentials dialog
      */
-    public RemoteCredentialsNodeDialog() {
-        // Protocol
-        String[] protocols = Protocol.getAllProtocols();
-        m_protocol = new JComboBox<String>(protocols);
-        m_protocol.addActionListener(new ProtocolListener());
+    public RemoteCredentialsNodeDialog(final Protocol protocol) {
+        m_protocol = protocol;
         // Host
         m_host = new JTextField();
         // Port
@@ -188,8 +184,6 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
 
     private JPanel initLayout() {
         GridBagConstraints gbc = new GridBagConstraints();
-        // Protocol
-        JLabel protocolLabel = new JLabel("Protocol:");
         // Host
         JLabel hostLabel = new JLabel("Host:");
         // Port
@@ -198,42 +192,43 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         resetGBC(gbc);
         JPanel authenticationPanel = new JPanel(new GridBagLayout());
         authenticationPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "Authentication method"));
+                "Authentication"));
         authenticationPanel.add(m_authnone);
         gbc.gridx++;
         authenticationPanel.add(m_authpassword);
-        gbc.gridx++;
-        authenticationPanel.add(m_authkeyfile);
+        if (m_protocol.hasKeyfileSupport()) {
+            gbc.gridx++;
+            authenticationPanel.add(m_authkeyfile);
+        }
         // Keyfile panel
-        resetGBC(gbc);
-        JPanel keyfilePanel = new JPanel(new GridBagLayout());
-        gbc.weightx = 1;
-        gbc.insets = new Insets(0, 0, 0, 5);
-        keyfilePanel.add(m_keyfile, gbc);
-        gbc.weightx = 0;
-        gbc.gridx++;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        keyfilePanel.add(m_keyfilefvm, gbc);
+        JPanel keyfilePanel = null;
+        if (m_protocol.hasKeyfileSupport()) {
+            resetGBC(gbc);
+            keyfilePanel = new JPanel(new GridBagLayout());
+            gbc.weightx = 1;
+            gbc.insets = new Insets(0, 0, 0, 5);
+            keyfilePanel.add(m_keyfile, gbc);
+            gbc.weightx = 0;
+            gbc.gridx++;
+            gbc.insets = new Insets(0, 0, 0, 0);
+            keyfilePanel.add(m_keyfilefvm, gbc);
+        }
         // Certificate panel
-        resetGBC(gbc);
-        JPanel certificatePanel = new JPanel(new GridBagLayout());
-        gbc.weightx = 1;
-        gbc.insets = new Insets(0, 0, 0, 5);
-        certificatePanel.add(m_certificate, gbc);
-        gbc.weightx = 0;
-        gbc.gridx++;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        certificatePanel.add(m_certificatefvm, gbc);
+        JPanel certificatePanel = null;
+        if (m_protocol.hasCertificateSupport()) {
+            resetGBC(gbc);
+            certificatePanel = new JPanel(new GridBagLayout());
+            gbc.weightx = 1;
+            gbc.insets = new Insets(0, 0, 0, 5);
+            certificatePanel.add(m_certificate, gbc);
+            gbc.weightx = 0;
+            gbc.gridx++;
+            gbc.insets = new Insets(0, 0, 0, 0);
+            certificatePanel.add(m_certificatefvm, gbc);
+        }
         // Outer Panel
         resetGBC(gbc);
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(protocolLabel, gbc);
-        gbc.gridx++;
-        gbc.weightx = 1;
-        panel.add(m_protocol, gbc);
-        gbc.gridx = 0;
-        gbc.weightx = 0;
-        gbc.gridy++;
         panel.add(hostLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
@@ -265,24 +260,28 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         gbc.gridx++;
         gbc.weightx = 1;
         panel.add(m_password, gbc);
-        gbc.gridx = 0;
-        gbc.weightx = 0;
-        gbc.gridy++;
-        panel.add(m_keyfileLabel, gbc);
-        gbc.gridx++;
-        gbc.weightx = 1;
-        panel.add(keyfilePanel, gbc);
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.gridwidth = 2;
-        panel.add(m_usecertificate, gbc);
-        gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        gbc.gridy++;
-        panel.add(m_certificateLabel, gbc);
-        gbc.gridx++;
-        gbc.weightx = 1;
-        panel.add(certificatePanel, gbc);
+        if (m_protocol.hasKeyfileSupport()) {
+            gbc.gridx = 0;
+            gbc.weightx = 0;
+            gbc.gridy++;
+            panel.add(m_keyfileLabel, gbc);
+            gbc.gridx++;
+            gbc.weightx = 1;
+            panel.add(keyfilePanel, gbc);
+        }
+        if (m_protocol.hasCertificateSupport()) {
+            gbc.gridx = 0;
+            gbc.gridy++;
+            gbc.gridwidth = 2;
+            panel.add(m_usecertificate, gbc);
+            gbc.gridwidth = 1;
+            gbc.weightx = 0;
+            gbc.gridy++;
+            panel.add(m_certificateLabel, gbc);
+            gbc.gridx++;
+            gbc.weightx = 1;
+            panel.add(certificatePanel, gbc);
+        }
         return panel;
     }
 
@@ -297,17 +296,6 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     }
 
     private void updateEnabledState() {
-        Protocol protocol =
-                Protocol.getProtocol((String)m_protocol.getSelectedItem());
-        boolean keyfile = protocol.hasKeyfileSupport();
-        boolean keyfileReplacement =
-                m_keyfilefvm.getFlowVariableModel()
-                        .isVariableReplacementEnabled();
-        boolean certificate = protocol.hasCertificateSupport();
-        boolean usecertificate = m_usecertificate.isSelected();
-        boolean certificateReplacement =
-                m_certificatefvm.getFlowVariableModel()
-                        .isVariableReplacementEnabled();
         boolean usePassword =
                 m_authmethod.getSelection() != null ? m_authmethod
                         .getSelection().getActionCommand()
@@ -321,14 +309,23 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         m_user.setEnabled(usePassword || useKeyfile);
         m_passwordLabel.setEnabled(usePassword);
         m_password.setEnabled(usePassword);
-        m_keyfileLabel.setEnabled(keyfile && useKeyfile);
-        m_keyfile.setEnabled(keyfile && !keyfileReplacement && useKeyfile);
-        m_keyfilefvm.setEnabled(keyfile && useKeyfile);
-        m_usecertificate.setEnabled(certificate);
-        m_certificateLabel.setEnabled(certificate && usecertificate);
-        m_certificate.setEnabled(certificate && usecertificate
-                && !certificateReplacement);
-        m_certificatefvm.setEnabled(certificate && usecertificate);
+        if (m_protocol.hasKeyfileSupport()) {
+            boolean keyfileReplacement =
+                    m_keyfilefvm.getFlowVariableModel()
+                            .isVariableReplacementEnabled();
+            m_keyfileLabel.setEnabled(useKeyfile);
+            m_keyfile.setEnabled(!keyfileReplacement && useKeyfile);
+            m_keyfilefvm.setEnabled(useKeyfile);
+        }
+        if (m_protocol.hasCertificateSupport()) {
+            boolean usecertificate = m_usecertificate.isSelected();
+            boolean certificateReplacement =
+                    m_certificatefvm.getFlowVariableModel()
+                            .isVariableReplacementEnabled();
+            m_certificateLabel.setEnabled(usecertificate);
+            m_certificate.setEnabled(usecertificate && !certificateReplacement);
+            m_certificatefvm.setEnabled(usecertificate);
+        }
     }
 
     private class UpdateListener implements ChangeListener {
@@ -343,21 +340,6 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
 
     }
 
-    private class ProtocolListener implements ActionListener {
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public void actionPerformed(final ActionEvent e) {
-            updateEnabledState();
-            Protocol protocol =
-                    Protocol.getProtocol((String)m_protocol.getSelectedItem());
-            m_port.setValue(protocol.getPort());
-        }
-
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -365,17 +347,20 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
         RemoteCredentialsConfiguration config =
-                new RemoteCredentialsConfiguration();
-        config.setProtocol((String)m_protocol.getSelectedItem());
+                new RemoteCredentialsConfiguration(m_protocol);
         config.setUser(m_user.getText());
         config.setHost(m_host.getText());
         config.setPort((Integer)m_port.getValue());
         config.setAuthenticationmethod(m_authmethod.getSelection()
                 .getActionCommand());
         config.setPassword(new String(m_password.getPassword()));
-        config.setKeyfile(m_keyfile.getSelectedFile());
-        config.setUsecertificate(m_usecertificate.isSelected());
-        config.setCertificate(m_certificate.getSelectedFile());
+        if (m_protocol.hasKeyfileSupport()) {
+            config.setKeyfile(m_keyfile.getSelectedFile());
+        }
+        if (m_protocol.hasCertificateSupport()) {
+            config.setUsecertificate(m_usecertificate.isSelected());
+            config.setCertificate(m_certificate.getSelectedFile());
+        }
         config.save(settings);
     }
 
@@ -386,24 +371,27 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     protected void loadSettingsFrom(final NodeSettingsRO settings,
             final PortObjectSpec[] specs) throws NotConfigurableException {
         RemoteCredentialsConfiguration config =
-                new RemoteCredentialsConfiguration();
+                new RemoteCredentialsConfiguration(m_protocol);
         config.loadInDialog(settings);
-        m_protocol.setSelectedItem(config.getProtocol());
         m_user.setText(config.getUser());
         m_host.setText(config.getHost());
         m_port.setValue(config.getPort());
         String authmethod = config.getAuthenticationmethod();
-        if (authmethod.equals(m_authnone.getActionCommand())) {
+        if (authmethod.equals(AuthenticationMethod.NONE.getName())) {
             m_authmethod.setSelected(m_authnone.getModel(), true);
-        } else if (authmethod.equals(m_authpassword.getActionCommand())) {
+        } else if (authmethod.equals(AuthenticationMethod.PASSWORD.getName())) {
             m_authmethod.setSelected(m_authpassword.getModel(), true);
-        } else if (authmethod.equals(m_authkeyfile.getActionCommand())) {
+        } else if (authmethod.equals(AuthenticationMethod.KEYFILE.getName())) {
             m_authmethod.setSelected(m_authkeyfile.getModel(), true);
         }
         m_password.setText(config.getPassword());
-        m_keyfile.setSelectedFile(config.getKeyfile());
-        m_usecertificate.setSelected(config.getUsecertificate());
-        m_certificate.setSelectedFile(config.getCertificate());
+        if (m_protocol.hasKeyfileSupport()) {
+            m_keyfile.setSelectedFile(config.getKeyfile());
+        }
+        if (m_protocol.hasCertificateSupport()) {
+            m_usecertificate.setSelected(config.getUsecertificate());
+            m_certificate.setSelectedFile(config.getCertificate());
+        }
         updateEnabledState();
     }
 

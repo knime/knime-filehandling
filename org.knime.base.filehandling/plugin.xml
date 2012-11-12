@@ -21,7 +21,10 @@
    <node category-path="/labs/filehandling/uri" factory-class="org.knime.base.filehandling.porttouri.PortToURINodeFactory" id="org.knime.base.filehandling.porttouri.PortToURINodeFactory" />
    <node category-path="/labs/filehandling/uri" factory-class="org.knime.base.filehandling.extracturiinfo.ExtractURIInfoNodeFactory" id="org.knime.base.filehandling.extracturiinfo.ExtractURIInfoNodeFactory" />
    <node category-path="/labs/filehandling" factory-class="org.knime.base.filehandling.copyfiles.CopyFilesNodeFactory" id="org.knime.base.filehandling.copyfiles.CopyFilesNodeFactory" />
-   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeFactory" id="org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeFactory" />
+   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.remotecredentials.ftp.FTPRemoteCredentialsNodeFactory" id="org.knime.base.filehandling.remotecredentials.ftp.FTPRemoteCredentialsNodeFactory" />
+   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.remotecredentials.http.HTTPRemoteCredentialsNodeFactory" id="org.knime.base.filehandling.remotecredentials.http.HTTPRemoteCredentialsNodeFactory" />
+   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.remotecredentials.https.HTTPSRemoteCredentialsNodeFactory" id="org.knime.base.filehandling.remotecredentials.https.HTTPSRemoteCredentialsNodeFactory" />
+   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.remotecredentials.ssh.SSHRemoteCredentialsNodeFactory" id="org.knime.base.filehandling.remotecredentials.ssh.SSHRemoteCredentialsNodeFactory" />
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category description="Nodes to handle files" icon="icons/missing.gif" level-id="filehandling" name="File Handling" path="/labs" />

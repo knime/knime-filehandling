@@ -54,7 +54,7 @@ package org.knime.base.filehandling.remotecredentials;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-enum Protocol {
+public enum Protocol {
 
     /** SSH protocol. */
     SSH("SSH", 22, true, true),

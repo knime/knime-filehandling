@@ -48,8 +48,11 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials;
+package org.knime.base.filehandling.remotecredentials.ssh;
 
+import org.knime.base.filehandling.remotecredentials.Protocol;
+import org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeDialog;
+import org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeModel;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
@@ -60,7 +63,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsNodeFactory extends
+public class SSHRemoteCredentialsNodeFactory extends
         NodeFactory<RemoteCredentialsNodeModel> {
 
     /**
@@ -68,7 +71,7 @@ public class RemoteCredentialsNodeFactory extends
      */
     @Override
     public RemoteCredentialsNodeModel createNodeModel() {
-        return new RemoteCredentialsNodeModel();
+        return new RemoteCredentialsNodeModel(Protocol.SSH);
     }
 
     /**
@@ -101,7 +104,7 @@ public class RemoteCredentialsNodeFactory extends
      */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new RemoteCredentialsNodeDialog();
+        return new RemoteCredentialsNodeDialog(Protocol.SSH);
     }
 
 }
