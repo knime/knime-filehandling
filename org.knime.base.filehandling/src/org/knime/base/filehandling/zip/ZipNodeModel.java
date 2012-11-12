@@ -161,13 +161,13 @@ class ZipNodeModel extends NodeModel {
                 }
             }
         } else if (type.isCompatible(StringValue.class)) {
-        	// Add filenames from string column
-        	for (DataRow row : inData[0]) {
-        		if (!row.getCell(index).isMissing()) {
-        			StringValue value = (StringValue)row.getCell(index);
-        			entries.add(value.getStringValue());
-        		}
-        	}
+            // Add filenames from string column
+            for (DataRow row : inData[0]) {
+                if (!row.getCell(index).isMissing()) {
+                    StringValue value = (StringValue)row.getCell(index);
+                    entries.add(value.getStringValue());
+                }
+            }
         }
         String[] filenames = entries.toArray(new String[entries.size()]);
         // Write files to zip file

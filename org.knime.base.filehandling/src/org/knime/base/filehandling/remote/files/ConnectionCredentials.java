@@ -46,53 +46,118 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 2, 2012 (Patrick Winter): created
+ *   Nov 12, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
 
 /**
- * Factory for remote files.
+ * Contains the credentials for a connection.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class RemoteFileFactory {
+public class ConnectionCredentials {
 
-    private RemoteFileFactory() {
-        // Disable default constructor
-    }
+    private String m_protocol;
+
+    private String m_host;
+
+    private int m_port;
+
+    private String m_user;
+
+    private String m_password;
+
+    private String m_keyfile;
+
+    private String m_certificate;
+
+    // TODO load from port object
 
     /**
-     * Creates a remote file for the URI.
+     * Checks if this credentials object fits to the URI.
      * 
      * 
      * @param uri The URI
-     * @param credentials Credentials to the given URI
-     * @return Remote file for the given URI
-     * @throws Exception If creation of the remote file failed
+     * @throws Exception If something is incompatible
      */
-    public static RemoteFile createRemoteFile(final URI uri,
-            final ConnectionCredentials credentials) throws Exception {
-        credentials.fitsToURI(uri);
+    public void fitsToURI(final URI uri) throws Exception {
+        // Scheme
         String scheme = uri.getScheme().toLowerCase();
-        RemoteFile remoteFile = null;
-        if (scheme.equals("file")) {
-            remoteFile = new FileRemoteFile(uri, credentials);
-        } else if (scheme.equals("ftp")) {
-            remoteFile = new FTPRemoteFile(uri, credentials);
-        } else if (scheme.equals("sftp")) {
-            remoteFile = new SFTPRemoteFile(uri, credentials);
-        } else if (scheme.equals("http") || scheme.equals("https")) {
-            remoteFile = new HTTPRemoteFile(uri, credentials);
+        if (scheme.equals("sftp")) {
+            scheme = scheme.replace("sftp", "ssh");
         } else if (scheme.equals("scp")) {
-            remoteFile = new SCPRemoteFile(uri, credentials);
+            scheme = scheme.replace("scp", "ssh");
         }
-        if (remoteFile != null) {
-            remoteFile.open();
+        if (!scheme.equals(m_protocol)) {
+            throw new Exception("Protocol incompatible");
         }
-        return remoteFile;
+        // Host
+        if (!uri.getHost().toLowerCase().equals(m_host.toLowerCase())) {
+            throw new Exception("Host incompatible");
+        }
+        // Port
+        int port = uri.getPort();
+        // TODO port = port<0 ? defaultPort(scheme) : port
+        if (port != m_port) {
+            throw new Exception("Port incompatible");
+        }
+        // User
+        String user = uri.getUserInfo().toLowerCase();
+        if (user != null && !user.equals(m_user.toLowerCase())) {
+            throw new Exception("User incompatible");
+        }
+    }
+
+    /**
+     * @return the protocol
+     */
+    public String getProtocol() {
+        return m_protocol;
+    }
+
+    /**
+     * @return the host
+     */
+    public String getHost() {
+        return m_host;
+    }
+
+    /**
+     * @return the port
+     */
+    public int getPort() {
+        return m_port;
+    }
+
+    /**
+     * @return the user
+     */
+    public String getUser() {
+        return m_user;
+    }
+
+    /**
+     * @return the password
+     */
+    public String getPassword() {
+        return m_password;
+    }
+
+    /**
+     * @return the keyfile
+     */
+    public String getKeyfile() {
+        return m_keyfile;
+    }
+
+    /**
+     * @return the certificate
+     */
+    public String getCertificate() {
+        return m_certificate;
     }
 
 }

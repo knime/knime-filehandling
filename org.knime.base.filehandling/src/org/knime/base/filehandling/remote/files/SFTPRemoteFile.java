@@ -71,6 +71,8 @@ public class SFTPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
+    private ConnectionCredentials m_credentials;
+
     private ChannelSftp m_channel;
 
     /**
@@ -78,14 +80,16 @@ public class SFTPRemoteFile extends RemoteFile {
      * 
      * 
      * @param uri The URI
+     * @param credentials Credentials to the given URI
      */
-    SFTPRemoteFile(final URI uri) {
+    SFTPRemoteFile(final URI uri, final ConnectionCredentials credentials) {
         // Change protocol to general SSH
         try {
             m_uri = new URI(uri.toString().replaceFirst("sftp", "ssh"));
         } catch (URISyntaxException e) {
             // should not happen
         }
+        m_credentials = credentials;
     }
 
     /**
@@ -102,7 +106,7 @@ public class SFTPRemoteFile extends RemoteFile {
     @Override
     protected Connection createConnection() {
         // Use general SSH connection
-        return new SSHConnection(m_uri);
+        return new SSHConnection(m_uri, m_credentials);
     }
 
     /**
@@ -281,7 +285,7 @@ public class SFTPRemoteFile extends RemoteFile {
                         new URI(m_uri.getScheme() + "://"
                                 + m_uri.getAuthority()
                                 + entries.get(i).getFilename());
-                files[i] = new SFTPRemoteFile(uri);
+                files[i] = new SFTPRemoteFile(uri, m_credentials);
             }
         } else {
             files = new RemoteFile[0];

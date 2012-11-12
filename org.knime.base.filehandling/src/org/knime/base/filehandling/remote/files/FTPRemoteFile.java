@@ -57,6 +57,7 @@ import java.net.URI;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
+import org.knime.core.util.KnimeEncryption;
 
 /**
  * Implementation of the FTP remote file.
@@ -68,14 +69,18 @@ public class FTPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
+    private ConnectionCredentials m_credentials;
+
     /**
      * Creates a FTP remote file for the given URI.
      * 
      * 
      * @param uri The URI
+     * @param credentials Credentials to the given URI
      */
-    FTPRemoteFile(final URI uri) {
+    FTPRemoteFile(final URI uri, final ConnectionCredentials credentials) {
         m_uri = uri;
+        m_credentials = credentials;
     }
 
     /**
@@ -252,7 +257,7 @@ public class FTPRemoteFile extends RemoteFile {
                 URI uri =
                         new URI(m_uri.getScheme() + "://"
                                 + m_uri.getAuthority() + ftpFiles[i].getName());
-                files[i] = new FTPRemoteFile(uri);
+                files[i] = new FTPRemoteFile(uri, m_credentials);
             }
         } else {
             files = new RemoteFile[0];
@@ -368,7 +373,8 @@ public class FTPRemoteFile extends RemoteFile {
             int port =
                     m_uri.getPort() != -1 ? m_uri.getPort() : getDefaultPort();
             String user = m_uri.getUserInfo();
-            String password = "password";
+            String password =
+                    KnimeEncryption.decrypt(m_credentials.getPassword());
             // Open connection
             m_client.connect(host, port);
             // Login

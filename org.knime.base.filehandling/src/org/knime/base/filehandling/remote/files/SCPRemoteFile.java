@@ -76,19 +76,23 @@ public class SCPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
+    private ConnectionCredentials m_credentials;
+
     /**
      * Creates a SCP remote file for the given URI.
      * 
      * 
      * @param uri The URI
+     * @param credentials Credentials to the given URI
      */
-    SCPRemoteFile(final URI uri) {
+    SCPRemoteFile(final URI uri, final ConnectionCredentials credentials) {
         // Change protocol to general SSH
         try {
             m_uri = new URI(uri.toString().replaceFirst("scp", "ssh"));
         } catch (URISyntaxException e) {
             // should not happen
         }
+        m_credentials = credentials;
     }
 
     /**
@@ -105,7 +109,7 @@ public class SCPRemoteFile extends RemoteFile {
     @Override
     protected Connection createConnection() {
         // Use general SSH connection
-        return new SSHConnection(m_uri);
+        return new SSHConnection(m_uri, m_credentials);
     }
 
     /**

@@ -73,12 +73,14 @@ import javax.swing.event.ChangeListener;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.FilesHistoryPanel;
 import org.knime.core.node.workflow.FlowVariable;
+import org.knime.core.util.KnimeEncryption;
 
 /**
  * <code>NodeDialog</code> for the node.
@@ -87,6 +89,9 @@ import org.knime.core.node.workflow.FlowVariable;
  * @author Patrick Winter, University of Konstanz
  */
 public class RemoteCredentialsNodeDialog extends NodeDialogPane {
+
+    private static final NodeLogger LOGGER = NodeLogger
+            .getLogger(RemoteCredentialsNodeDialog.class);
 
     private Protocol m_protocol;
 
@@ -109,6 +114,8 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     private JLabel m_passwordLabel;
 
     private JPasswordField m_password;
+
+    private boolean m_passwordChanged;
 
     private JLabel m_keyfileLabel;
 
@@ -313,9 +320,12 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
             boolean keyfileReplacement =
                     m_keyfilefvm.getFlowVariableModel()
                             .isVariableReplacementEnabled();
-            m_keyfileLabel.setEnabled(useKeyfile);
-            m_keyfile.setEnabled(!keyfileReplacement && useKeyfile);
-            m_keyfilefvm.setEnabled(useKeyfile);
+            m_keyfile.setEnabled(!keyfileReplacement);
+            m_keyfileLabel.setVisible(useKeyfile);
+            m_keyfile.setVisible(useKeyfile);
+            m_keyfilefvm.setVisible(useKeyfile);
+            m_passwordLabel.setVisible(!useKeyfile);
+            m_password.setVisible(!useKeyfile);
         }
         if (m_protocol.hasCertificateSupport()) {
             boolean usecertificate = m_usecertificate.isSelected();
@@ -353,7 +363,18 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         config.setPort((Integer)m_port.getValue());
         config.setAuthenticationmethod(m_authmethod.getSelection()
                 .getActionCommand());
-        config.setPassword(new String(m_password.getPassword()));
+        if (m_passwordChanged) {
+            try {
+                config.setPassword(KnimeEncryption.encrypt(m_password
+                        .getPassword()));
+            } catch (Throwable t) {
+                LOGGER.error(
+                        "Could not encrypt password, reason: " + t.getMessage(),
+                        t);
+            }
+        } else {
+            config.setPassword(new String(m_password.getPassword()));
+        }
         if (m_protocol.hasKeyfileSupport()) {
             config.setKeyfile(m_keyfile.getSelectedFile());
         }
@@ -384,6 +405,7 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         } else if (authmethod.equals(AuthenticationMethod.KEYFILE.getName())) {
             m_authmethod.setSelected(m_authkeyfile.getModel(), true);
         }
+        m_passwordChanged = false;
         m_password.setText(config.getPassword());
         if (m_protocol.hasKeyfileSupport()) {
             m_keyfile.setSelectedFile(config.getKeyfile());

@@ -52,6 +52,8 @@ package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
 
+import org.knime.core.util.KnimeEncryption;
+
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 
@@ -67,14 +69,18 @@ public class SSHConnection extends Connection {
 
     private Session m_session;
 
+    private ConnectionCredentials m_credentials;
+
     /**
      * Create a SSH connection to the given URI.
      * 
      * 
      * @param uri The URI
+     * @param credentials Credentials to the given URI
      */
-    public SSHConnection(final URI uri) {
+    public SSHConnection(final URI uri, final ConnectionCredentials credentials) {
         m_uri = uri;
+        m_credentials = credentials;
     }
 
     /**
@@ -86,11 +92,16 @@ public class SSHConnection extends Connection {
         String host = m_uri.getHost();
         int port = m_uri.getPort() != -1 ? m_uri.getPort() : 22;
         String user = m_uri.getUserInfo();
-        String password = "password";
+        String password = KnimeEncryption.decrypt(m_credentials.getPassword());
         // Open session
         JSch jsch = new JSch();
+        String certificate = m_credentials.getCertificate();
+        if (certificate != null) {
+            jsch.setKnownHosts(certificate);
+        }
         Session session = jsch.getSession(user, host, port);
         session.setPassword(password);
+        // TODO remove the following line
         session.setConfig("StrictHostKeyChecking", "no");
         session.connect();
         m_session = session;

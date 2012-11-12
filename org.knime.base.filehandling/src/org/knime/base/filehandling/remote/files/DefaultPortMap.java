@@ -46,53 +46,43 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 2, 2012 (Patrick Winter): created
+ *   Nov 12, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remote.files;
 
-import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Factory for remote files.
- * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public final class RemoteFileFactory {
+public class DefaultPortMap {
 
-    private RemoteFileFactory() {
-        // Disable default constructor
+    private static DefaultPortMap m_portMap = null;
+
+    private Map<String, Integer> m_map;
+
+    private DefaultPortMap() {
+        m_map = new HashMap<String, Integer>();
+        // Known ports
+        m_map.put("ssh", 22);
+        m_map.put("sftp", 22);
+        m_map.put("scp", 22);
+        m_map.put("ftp", 22);
+        m_map.put("http", 80);
+        m_map.put("https", 443);
     }
 
-    /**
-     * Creates a remote file for the URI.
-     * 
-     * 
-     * @param uri The URI
-     * @param credentials Credentials to the given URI
-     * @return Remote file for the given URI
-     * @throws Exception If creation of the remote file failed
-     */
-    public static RemoteFile createRemoteFile(final URI uri,
-            final ConnectionCredentials credentials) throws Exception {
-        credentials.fitsToURI(uri);
-        String scheme = uri.getScheme().toLowerCase();
-        RemoteFile remoteFile = null;
-        if (scheme.equals("file")) {
-            remoteFile = new FileRemoteFile(uri, credentials);
-        } else if (scheme.equals("ftp")) {
-            remoteFile = new FTPRemoteFile(uri, credentials);
-        } else if (scheme.equals("sftp")) {
-            remoteFile = new SFTPRemoteFile(uri, credentials);
-        } else if (scheme.equals("http") || scheme.equals("https")) {
-            remoteFile = new HTTPRemoteFile(uri, credentials);
-        } else if (scheme.equals("scp")) {
-            remoteFile = new SCPRemoteFile(uri, credentials);
+    public static DefaultPortMap getMap() {
+        if (m_portMap == null) {
+            m_portMap = new DefaultPortMap();
         }
-        if (remoteFile != null) {
-            remoteFile.open();
-        }
-        return remoteFile;
+        return m_portMap;
+    }
+
+    public int get(final String key) {
+        return m_map.get(key);
     }
 
 }

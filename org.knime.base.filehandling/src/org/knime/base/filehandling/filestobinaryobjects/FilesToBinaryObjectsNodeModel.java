@@ -88,7 +88,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
-    private static final NodeLogger LOGGER = NodeLogger.getLogger(FilesToBinaryObjectsNodeModel.class);
+    private static final NodeLogger LOGGER = NodeLogger
+            .getLogger(FilesToBinaryObjectsNodeModel.class);
 
     private final SettingsModelString m_uricolumn;
 
@@ -112,7 +113,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-        final ExecutionContext exec) throws Exception {
+            final ExecutionContext exec) throws Exception {
         ColumnRearranger rearranger =
                 createColumnRearranger(inData[0].getDataTableSpec(), exec);
         BufferedDataTable out =
@@ -131,7 +132,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-        final ExecutionContext exec) throws InvalidSettingsException {
+            final ExecutionContext exec) throws InvalidSettingsException {
         boolean replace =
                 m_replace.getStringValue().equals(
                         ReplacePolicy.REPLACE.getName());
@@ -154,7 +155,8 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
                         BinaryObjectDataCell.TYPE).createSpec();
         int inColIndex = inSpec.findColumnIndex(uricolumn);
         // Factory that creates the binary objects
-        FilesToBinaryCellFactory factory =  new FilesToBinaryCellFactory(colSpec, bocellfactory, inColIndex);
+        FilesToBinaryCellFactory factory =
+                new FilesToBinaryCellFactory(colSpec, bocellfactory, inColIndex);
         if (replace) {
             // Replace URI column with the binary object column
             rearranger.replace(factory, inColIndex);
@@ -251,8 +253,8 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected void loadInternals(final File internDir,
-        final ExecutionMonitor exec) throws IOException,
-        CanceledExecutionException {
+            final ExecutionMonitor exec) throws IOException,
+            CanceledExecutionException {
         // Not used
     }
 
@@ -261,27 +263,29 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected void saveInternals(final File internDir,
-        final ExecutionMonitor exec) throws IOException,
-        CanceledExecutionException {
+            final ExecutionMonitor exec) throws IOException,
+            CanceledExecutionException {
         // Not used
     }
 
     private final class FilesToBinaryCellFactory extends SingleCellFactory {
-    
+
         private final BinaryObjectCellFactory m_bocellfactory;
+
         private final int m_colIndex;
-        
+
         /** Error count, atomic integer because of possible async exec. */
         private final AtomicInteger m_errorCount = new AtomicInteger();
+
         private final AtomicInteger m_totalCount = new AtomicInteger();
-        
-        private FilesToBinaryCellFactory(final DataColumnSpec newColSpec, 
-            final BinaryObjectCellFactory bocellfactory, final int colIndex) {
+
+        private FilesToBinaryCellFactory(final DataColumnSpec newColSpec,
+                final BinaryObjectCellFactory bocellfactory, final int colIndex) {
             super(newColSpec);
             m_bocellfactory = bocellfactory;
             m_colIndex = colIndex;
         }
-        
+
         /** {@inheritDoc} */
         @Override
         public DataCell getCell(final DataRow row) {
@@ -316,12 +320,15 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
                 }
             }
         }
+
         @Override
         public void afterProcessing() {
             int error = m_errorCount.get();
             if (error != 0) {
                 int total = m_totalCount.get();
-                setWarningMessage(String.format("Failed to read %d/%d files (see log for details)", error, total));
+                setWarningMessage(String.format(
+                        "Failed to read %d/%d files (see log for details)",
+                        error, total));
             }
         }
     }

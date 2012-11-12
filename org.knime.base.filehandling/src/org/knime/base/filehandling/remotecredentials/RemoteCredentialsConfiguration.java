@@ -226,9 +226,13 @@ class RemoteCredentialsConfiguration {
                 settings.getString("authenticationmethod",
                         AuthenticationMethod.PASSWORD.getName());
         m_password = settings.getString("password", "");
-        m_keyfile = settings.getString("keyfile", "");
-        m_usecertificate = settings.getBoolean("usecertificate", false);
-        m_certificate = settings.getString("certificate", "");
+        if (m_protocol.hasKeyfileSupport()) {
+            m_keyfile = settings.getString("keyfile", "");
+        }
+        if (m_protocol.hasCertificateSupport()) {
+            m_usecertificate = settings.getBoolean("usecertificate", false);
+            m_certificate = settings.getString("certificate", "");
+        }
     }
 
     /**
@@ -239,26 +243,30 @@ class RemoteCredentialsConfiguration {
             throws InvalidSettingsException {
         m_user = settings.getString("user");
         m_host = settings.getString("host");
-        validate(m_host);
+        validate(m_host, "host");
         m_port = settings.getInt("port");
         m_authenticationmethod = settings.getString("authenticationmethod");
-        validate(m_authenticationmethod);
+        validate(m_authenticationmethod, "authenticationmethod");
         m_password = settings.getString("password");
         if (m_authenticationmethod.equals(AuthenticationMethod.PASSWORD
                 .getName())) {
-            validate(m_user);
-            validate(m_password);
+            validate(m_user, "user");
+            validate(m_password, "password");
         }
-        m_keyfile = settings.getString("keyfile");
-        if (m_authenticationmethod.equals(AuthenticationMethod.KEYFILE
-                .getName())) {
-            validate(m_user);
-            validate(m_keyfile);
+        if (m_protocol.hasKeyfileSupport()) {
+            m_keyfile = settings.getString("keyfile");
+            if (m_authenticationmethod.equals(AuthenticationMethod.KEYFILE
+                    .getName())) {
+                validate(m_user, "user");
+                validate(m_keyfile, "keyfile");
+            }
         }
-        m_usecertificate = settings.getBoolean("usecertificate");
-        m_certificate = settings.getString("certificate");
-        if (m_usecertificate) {
-            validate(m_certificate);
+        if (m_protocol.hasCertificateSupport()) {
+            m_usecertificate = settings.getBoolean("usecertificate");
+            m_certificate = settings.getString("certificate");
+            if (m_usecertificate) {
+                validate(m_certificate, "certificate");
+            }
         }
     }
 
@@ -267,11 +275,13 @@ class RemoteCredentialsConfiguration {
      * 
      * 
      * @param string The string to check
+     * @param settingName The name of the setting
      * @throws InvalidSettingsException If the string is null or empty
      */
-    private void validate(final String string) throws InvalidSettingsException {
+    private void validate(final String string, final String settingName)
+            throws InvalidSettingsException {
         if (string == null || string.length() == 0) {
-            throw new InvalidSettingsException("Invalid setting");
+            throw new InvalidSettingsException(settingName + " missing");
         }
     }
 

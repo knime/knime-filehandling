@@ -60,6 +60,7 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.knime.core.util.KnimeEncryption;
 
 /**
  * Implementation of the HTTP and HTTPS remote file.
@@ -71,14 +72,18 @@ public class HTTPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
+    private ConnectionCredentials m_credentials;
+
     /**
      * Creates a HTTP remote file for the given URI.
      * 
      * 
      * @param uri The URI
+     * @param credentials Credentials to the given URI
      */
-    HTTPRemoteFile(final URI uri) {
+    HTTPRemoteFile(final URI uri, final ConnectionCredentials credentials) {
         m_uri = uri;
+        m_credentials = credentials;
     }
 
     /**
@@ -245,7 +250,8 @@ public class HTTPRemoteFile extends RemoteFile {
         // Create request
         DefaultHttpClient client = new DefaultHttpClient();
         if (m_uri.getUserInfo().length() > 0) {
-            String password = "password";
+            String password =
+                    KnimeEncryption.decrypt(m_credentials.getPassword());
             int port = m_uri.getPort();
             if (port < 0) {
                 port = getDefaultPort();

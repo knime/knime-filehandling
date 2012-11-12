@@ -72,8 +72,9 @@ public class FileRemoteFile extends RemoteFile {
      * 
      * 
      * @param uri The URI
+     * @param credentials Credentials to the given URI
      */
-    FileRemoteFile(final URI uri) {
+    FileRemoteFile(final URI uri, final ConnectionCredentials credentials) {
         m_uri = uri;
     }
 
@@ -217,7 +218,7 @@ public class FileRemoteFile extends RemoteFile {
             File[] f = new File(m_uri).listFiles();
             files = new RemoteFile[f.length];
             for (int i = 0; i < f.length; i++) {
-                files[i] = new FileRemoteFile(f[i].toURI());
+                files[i] = new FileRemoteFile(f[i].toURI(), null);
             }
         } else {
             files = new RemoteFile[0];
