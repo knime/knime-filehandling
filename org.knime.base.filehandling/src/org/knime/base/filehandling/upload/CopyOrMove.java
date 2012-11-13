@@ -46,91 +46,49 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 13, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.port;
-
-import javax.swing.JComponent;
-
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.ModelContentRO;
-import org.knime.core.node.ModelContentWO;
-import org.knime.core.node.port.AbstractSimplePortObjectSpec;
+package org.knime.base.filehandling.upload;
 
 /**
+ * Enums for copy or move setting.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsPortObjectSpec extends
-        AbstractSimplePortObjectSpec {
-
-    private RemoteCredentials m_credentials;
+enum CopyOrMove {
 
     /**
-     * 
+     * Copy the files.
      */
-    public RemoteCredentialsPortObjectSpec() {
-        m_credentials = null;
+    COPY("Copy"),
+
+    /**
+     * Move the original files.
+     */
+    MOVE("Move");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this option
+     */
+    CopyOrMove(final String name) {
+        m_name = name;
     }
 
     /**
-     * @param credentials The content of this port object
+     * @return Name of this option
      */
-    public RemoteCredentialsPortObjectSpec(final RemoteCredentials credentials) {
-        if (credentials == null) {
-            throw new NullPointerException("List argument must not be null");
-        }
-        m_credentials = credentials;
+    String getName() {
+        return m_name;
     }
 
     /**
-     * @return The content of this port object
+     * @return Array of all copy or move settings
      */
-    public RemoteCredentials getCredentials() {
-        return m_credentials;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public JComponent[] getViews() {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean equals(final Object ospec) {
-        return ospec != null
-                && ospec.getClass().equals(
-                        RemoteCredentialsPortObjectSpec.class);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode() {
-        return RemoteCredentialsPortObjectSpec.class.hashCode();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void save(final ModelContentWO model) {
-        m_credentials.save(model);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void load(final ModelContentRO model)
-            throws InvalidSettingsException {
-        m_credentials = RemoteCredentials.load(model);
+    static String[] getAllSettings() {
+        return new String[]{COPY.getName(), MOVE.getName()};
     }
 
 }

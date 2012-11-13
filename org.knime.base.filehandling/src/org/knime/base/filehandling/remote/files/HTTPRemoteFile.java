@@ -54,6 +54,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -119,6 +120,18 @@ public class HTTPRemoteFile extends RemoteFile {
     @Override
     public String getType() {
         return m_uri.getScheme();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String name() throws Exception {
+        String name = FilenameUtils.getName(m_uri.getPath());
+        if (name == null) {
+            throw new Exception("No name available");
+        }
+        return name;
     }
 
     /**

@@ -126,7 +126,7 @@ public class RemoteCredentialsNodeModel extends NodeModel {
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
-        return new PortObjectSpec[]{RemoteCredentialsPortObjectSpec.INSTANCE};
+        return new PortObjectSpec[]{new RemoteCredentialsPortObjectSpec()};
     }
 
     /**

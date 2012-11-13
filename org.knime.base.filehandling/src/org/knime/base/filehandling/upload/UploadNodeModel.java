@@ -44,93 +44,114 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
- *   Nov 13, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.port;
+package org.knime.base.filehandling.upload;
 
-import javax.swing.JComponent;
+import java.io.File;
+import java.io.IOException;
 
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObject;
+import org.knime.core.node.BufferedDataTable;
+import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.ExecutionContext;
+import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.ModelContentRO;
-import org.knime.core.node.ModelContentWO;
-import org.knime.core.node.port.AbstractSimplePortObjectSpec;
+import org.knime.core.node.NodeModel;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.port.PortObject;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortType;
 
 /**
+ * This is the model implementation.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsPortObjectSpec extends
-        AbstractSimplePortObjectSpec {
-
-    private RemoteCredentials m_credentials;
+public class UploadNodeModel extends NodeModel {
 
     /**
      * 
      */
-    public RemoteCredentialsPortObjectSpec() {
-        m_credentials = null;
-    }
-
-    /**
-     * @param credentials The content of this port object
-     */
-    public RemoteCredentialsPortObjectSpec(final RemoteCredentials credentials) {
-        if (credentials == null) {
-            throw new NullPointerException("List argument must not be null");
-        }
-        m_credentials = credentials;
-    }
-
-    /**
-     * @return The content of this port object
-     */
-    public RemoteCredentials getCredentials() {
-        return m_credentials;
+    public UploadNodeModel() {
+        super(new PortType[]{RemoteCredentialsPortObject.TYPE,
+                BufferedDataTable.TYPE}, new PortType[]{});
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public JComponent[] getViews() {
-        return null;
+    protected PortObject[] execute(final PortObject[] inObjects,
+            final ExecutionContext exec) throws Exception {
+        return new PortObject[]{};
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean equals(final Object ospec) {
-        return ospec != null
-                && ospec.getClass().equals(
-                        RemoteCredentialsPortObjectSpec.class);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode() {
-        return RemoteCredentialsPortObjectSpec.class.hashCode();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void save(final ModelContentWO model) {
-        m_credentials.save(model);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void load(final ModelContentRO model)
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
-        m_credentials = RemoteCredentials.load(model);
+        return new PortObjectSpec[]{};
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadInternals(final File nodeInternDir,
+            final ExecutionMonitor exec) throws IOException,
+            CanceledExecutionException {
+        //
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void saveInternals(final File nodeInternDir,
+            final ExecutionMonitor exec) throws IOException,
+            CanceledExecutionException {
+        //
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void saveSettingsTo(final NodeSettingsWO settings) {
+        //
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void validateSettings(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
+        //
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
+        //
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void reset() {
+        //
     }
 
 }

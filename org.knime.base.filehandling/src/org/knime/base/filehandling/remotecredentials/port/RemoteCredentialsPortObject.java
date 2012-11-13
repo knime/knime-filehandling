@@ -110,7 +110,7 @@ public class RemoteCredentialsPortObject extends AbstractSimplePortObject {
      */
     @Override
     public PortObjectSpec getSpec() {
-        return RemoteCredentialsPortObjectSpec.INSTANCE;
+        return new RemoteCredentialsPortObjectSpec(m_credentials);
     }
 
     /**

@@ -25,6 +25,7 @@
    <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.remotecredentials.http.HTTPRemoteCredentialsNodeFactory" id="org.knime.base.filehandling.remotecredentials.http.HTTPRemoteCredentialsNodeFactory" />
    <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.remotecredentials.https.HTTPSRemoteCredentialsNodeFactory" id="org.knime.base.filehandling.remotecredentials.https.HTTPSRemoteCredentialsNodeFactory" />
    <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.remotecredentials.ssh.SSHRemoteCredentialsNodeFactory" id="org.knime.base.filehandling.remotecredentials.ssh.SSHRemoteCredentialsNodeFactory" />
+   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.upload.UploadNodeFactory" id="org.knime.base.filehandling.upload.UploadNodeFactory" />
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category description="Nodes to handle files" icon="icons/missing.gif" level-id="filehandling" name="File Handling" path="/labs" />

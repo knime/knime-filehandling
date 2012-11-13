@@ -46,91 +46,89 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 13, 2012 (Patrick Winter): created
+ *   Oct 30, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.port;
+package org.knime.base.filehandling.upload;
 
-import javax.swing.JComponent;
+import java.awt.Container;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import javax.swing.JButton;
+import javax.swing.JPanel;
+
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.ModelContentRO;
-import org.knime.core.node.ModelContentWO;
-import org.knime.core.node.port.AbstractSimplePortObjectSpec;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.port.PortObjectSpec;
 
 /**
+ * <code>NodeDialog</code> for the node.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsPortObjectSpec extends
-        AbstractSimplePortObjectSpec {
+public class UploadNodeDialog extends NodeDialogPane {
 
     private RemoteCredentials m_credentials;
 
+    private JButton m_target;
+
     /**
-     * 
+     * New pane for configuring the node dialog.
      */
-    public RemoteCredentialsPortObjectSpec() {
-        m_credentials = null;
+    public UploadNodeDialog() {
+        m_target = new JButton("Browse");
+        m_target.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                // Open dialog
+                Frame frame = null;
+                Container container = getPanel().getParent();
+                while (container != null) {
+                    if (container instanceof Frame) {
+                        frame = (Frame)container;
+                        break;
+                    }
+                    container = container.getParent();
+                }
+                RemoteListDialog.open(frame, m_credentials);
+            }
+        });
+        addTab("Options", initLayout());
+    }
+
+    private JPanel initLayout() {
+        JPanel panel = new JPanel();
+        panel.add(m_target);
+        return panel;
     }
 
     /**
-     * @param credentials The content of this port object
+     * {@inheritDoc}
      */
-    public RemoteCredentialsPortObjectSpec(final RemoteCredentials credentials) {
-        if (credentials == null) {
-            throw new NullPointerException("List argument must not be null");
+    @Override
+    protected void loadSettingsFrom(final NodeSettingsRO settings,
+            final PortObjectSpec[] specs) throws NotConfigurableException {
+        RemoteCredentialsPortObjectSpec object =
+                (RemoteCredentialsPortObjectSpec)specs[0];
+        m_credentials = object.getCredentials();
+        if (m_credentials == null) {
+            throw new NotConfigurableException("No credentials available");
         }
-        m_credentials = credentials;
-    }
-
-    /**
-     * @return The content of this port object
-     */
-    public RemoteCredentials getCredentials() {
-        return m_credentials;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public JComponent[] getViews() {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean equals(final Object ospec) {
-        return ospec != null
-                && ospec.getClass().equals(
-                        RemoteCredentialsPortObjectSpec.class);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode() {
-        return RemoteCredentialsPortObjectSpec.class.hashCode();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void save(final ModelContentWO model) {
-        m_credentials.save(model);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void load(final ModelContentRO model)
+    protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
-        m_credentials = RemoteCredentials.load(model);
+        //
     }
-
 }

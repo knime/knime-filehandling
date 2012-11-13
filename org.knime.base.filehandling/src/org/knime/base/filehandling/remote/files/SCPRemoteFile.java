@@ -133,6 +133,18 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public String name() throws Exception {
+        String name = FilenameUtils.getName(m_uri.getPath());
+        if (name == null) {
+            throw new Exception("No name available");
+        }
+        return name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean exists() throws Exception {
         // Assume missing file
         boolean exists = false;

@@ -120,6 +120,14 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public String name() throws Exception {
+        return getFTPFile().getName();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean exists() throws Exception {
         return getFTPFile() != null;
     }

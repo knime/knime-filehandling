@@ -48,89 +48,61 @@
  * History
  *   Nov 13, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.port;
+package org.knime.base.filehandling.upload;
 
-import javax.swing.JComponent;
+import java.awt.Dialog;
+import java.awt.Frame;
 
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.ModelContentRO;
-import org.knime.core.node.ModelContentWO;
-import org.knime.core.node.port.AbstractSimplePortObjectSpec;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
+
+import org.knime.base.filehandling.remote.files.RemoteFile;
+import org.knime.base.filehandling.remote.files.RemoteFileFactory;
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 
 /**
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsPortObjectSpec extends
-        AbstractSimplePortObjectSpec {
+public final class RemoteListDialog {
 
-    private RemoteCredentials m_credentials;
-
-    /**
-     * 
-     */
-    public RemoteCredentialsPortObjectSpec() {
-        m_credentials = null;
+    private RemoteListDialog() {
+        //
     }
 
     /**
-     * @param credentials The content of this port object
+     * @param parent Parent of this dialog
+     * @param credentials Credentials to the remote connection
      */
-    public RemoteCredentialsPortObjectSpec(final RemoteCredentials credentials) {
-        if (credentials == null) {
-            throw new NullPointerException("List argument must not be null");
+    public static void open(final Frame parent,
+            final RemoteCredentials credentials) {
+        RemoteFile root = null;
+        try {
+            root =
+                    RemoteFileFactory.createRemoteFile(credentials.toURI(),
+                            credentials);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        m_credentials = credentials;
+        JPanel panel = initPanel(root);
+        JDialog dialog = new JDialog(parent);
+        dialog.setContentPane(panel);
+        dialog.setTitle("Files on server");
+        dialog.pack();
+        dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
+        dialog.setVisible(true);
+        dialog.dispose();
     }
 
-    /**
-     * @return The content of this port object
-     */
-    public RemoteCredentials getCredentials() {
-        return m_credentials;
+    private static JPanel initPanel(final RemoteFile root) {
+        JPanel panel = new JPanel();
+        try {
+            panel.add(new JTree(new DefaultMutableTreeNode(root.name())));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return panel;
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public JComponent[] getViews() {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean equals(final Object ospec) {
-        return ospec != null
-                && ospec.getClass().equals(
-                        RemoteCredentialsPortObjectSpec.class);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int hashCode() {
-        return RemoteCredentialsPortObjectSpec.class.hashCode();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void save(final ModelContentWO model) {
-        m_credentials.save(model);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void load(final ModelContentRO model)
-            throws InvalidSettingsException {
-        m_credentials = RemoteCredentials.load(model);
-    }
-
 }

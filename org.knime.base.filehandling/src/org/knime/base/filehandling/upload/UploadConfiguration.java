@@ -46,91 +46,78 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 13, 2012 (Patrick Winter): created
+ *   Nov 9, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.port;
-
-import javax.swing.JComponent;
-
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.ModelContentRO;
-import org.knime.core.node.ModelContentWO;
-import org.knime.core.node.port.AbstractSimplePortObjectSpec;
+package org.knime.base.filehandling.upload;
 
 /**
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsPortObjectSpec extends
-        AbstractSimplePortObjectSpec {
+class UploadConfiguration {
 
-    private RemoteCredentials m_credentials;
+    private String m_copyOrMove;
+
+    private String m_source;
+
+    private String m_target;
+
+    private String m_overwritePolicy;
 
     /**
-     * 
+     * @return the copyOrMove
      */
-    public RemoteCredentialsPortObjectSpec() {
-        m_credentials = null;
+    public String getCopyOrMove() {
+        return m_copyOrMove;
     }
 
     /**
-     * @param credentials The content of this port object
+     * @param copyOrMove the copyOrMove to set
      */
-    public RemoteCredentialsPortObjectSpec(final RemoteCredentials credentials) {
-        if (credentials == null) {
-            throw new NullPointerException("List argument must not be null");
-        }
-        m_credentials = credentials;
+    public void setCopyOrMove(final String copyOrMove) {
+        m_copyOrMove = copyOrMove;
     }
 
     /**
-     * @return The content of this port object
+     * @return the source
      */
-    public RemoteCredentials getCredentials() {
-        return m_credentials;
+    public String getSource() {
+        return m_source;
     }
 
     /**
-     * {@inheritDoc}
+     * @param source the source to set
      */
-    @Override
-    public JComponent[] getViews() {
-        return null;
+    public void setSource(final String source) {
+        m_source = source;
     }
 
     /**
-     * {@inheritDoc}
+     * @return the target
      */
-    @Override
-    public boolean equals(final Object ospec) {
-        return ospec != null
-                && ospec.getClass().equals(
-                        RemoteCredentialsPortObjectSpec.class);
+    public String getTarget() {
+        return m_target;
     }
 
     /**
-     * {@inheritDoc}
+     * @param target the target to set
      */
-    @Override
-    public int hashCode() {
-        return RemoteCredentialsPortObjectSpec.class.hashCode();
+    public void setTarget(final String target) {
+        m_target = target;
     }
 
     /**
-     * {@inheritDoc}
+     * @return the overwritePolicy
      */
-    @Override
-    protected void save(final ModelContentWO model) {
-        m_credentials.save(model);
+    public String getOverwritePolicy() {
+        return m_overwritePolicy;
     }
 
     /**
-     * {@inheritDoc}
+     * @param overwritePolicy the overwritePolicy to set
      */
-    @Override
-    protected void load(final ModelContentRO model)
-            throws InvalidSettingsException {
-        m_credentials = RemoteCredentials.load(model);
+    public void setOverwritePolicy(final String overwritePolicy) {
+        m_overwritePolicy = overwritePolicy;
     }
 
 }

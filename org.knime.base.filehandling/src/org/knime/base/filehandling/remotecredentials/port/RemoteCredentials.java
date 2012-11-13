@@ -55,6 +55,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
@@ -189,6 +190,21 @@ public class RemoteCredentials implements Serializable {
         if (user != null && !user.equals(m_user.toLowerCase())) {
             throw new Exception("User incompatible");
         }
+    }
+
+    /**
+     * @return URI to this credentials
+     */
+    public URI toURI() {
+        URI uri = null;
+        String user = m_user != null ? m_user + "@" : "";
+        try {
+            uri = new URI(m_protocol + "://" + user + m_host + ":" + m_port);
+        } catch (URISyntaxException e) {
+            //
+        }
+        return uri;
+
     }
 
     /**

@@ -48,53 +48,40 @@
  * History
  *   Nov 13, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.port;
+package org.knime.base.filehandling.upload;
 
-import javax.swing.JComponent;
-
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.ModelContentRO;
-import org.knime.core.node.ModelContentWO;
-import org.knime.core.node.port.AbstractSimplePortObjectSpec;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsPortObjectSpec extends
-        AbstractSimplePortObjectSpec {
-
-    private RemoteCredentials m_credentials;
+public class UploadNodeFactory extends NodeFactory<UploadNodeModel> {
 
     /**
-     * 
+     * {@inheritDoc}
      */
-    public RemoteCredentialsPortObjectSpec() {
-        m_credentials = null;
-    }
-
-    /**
-     * @param credentials The content of this port object
-     */
-    public RemoteCredentialsPortObjectSpec(final RemoteCredentials credentials) {
-        if (credentials == null) {
-            throw new NullPointerException("List argument must not be null");
-        }
-        m_credentials = credentials;
-    }
-
-    /**
-     * @return The content of this port object
-     */
-    public RemoteCredentials getCredentials() {
-        return m_credentials;
+    @Override
+    public UploadNodeModel createNodeModel() {
+        return new UploadNodeModel();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public JComponent[] getViews() {
+    public int getNrNodeViews() {
+        return 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeView<UploadNodeModel> createNodeView(final int viewIndex,
+            final UploadNodeModel nodeModel) {
         return null;
     }
 
@@ -102,35 +89,15 @@ public class RemoteCredentialsPortObjectSpec extends
      * {@inheritDoc}
      */
     @Override
-    public boolean equals(final Object ospec) {
-        return ospec != null
-                && ospec.getClass().equals(
-                        RemoteCredentialsPortObjectSpec.class);
+    public boolean hasDialog() {
+        return true;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int hashCode() {
-        return RemoteCredentialsPortObjectSpec.class.hashCode();
+    public NodeDialogPane createNodeDialogPane() {
+        return new UploadNodeDialog();
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void save(final ModelContentWO model) {
-        m_credentials.save(model);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void load(final ModelContentRO model)
-            throws InvalidSettingsException {
-        m_credentials = RemoteCredentials.load(model);
-    }
-
 }

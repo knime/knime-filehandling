@@ -131,6 +131,15 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public String name() throws Exception {
+        LsEntry entry = getLsEntry();
+        return entry.getFilename();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean exists() throws Exception {
         return getLsEntry() != null;
     }

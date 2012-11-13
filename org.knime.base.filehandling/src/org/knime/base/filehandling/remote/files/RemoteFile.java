@@ -163,6 +163,12 @@ public abstract class RemoteFile {
     public abstract String getType();
 
     /**
+     * @return The name of this file
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract String name() throws Exception;
+
+    /**
      * Check if the file does exist.
      * 
      * 
