@@ -53,6 +53,9 @@ package org.knime.base.filehandling.remotecredentials;
 import java.io.File;
 import java.io.IOException;
 
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObject;
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -62,6 +65,7 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortType;
 
 /**
  * This is the model implementation.
@@ -81,7 +85,8 @@ public class RemoteCredentialsNodeModel extends NodeModel {
      * @param protocol The protocol of this credentials model
      */
     public RemoteCredentialsNodeModel(final Protocol protocol) {
-        super(0, 1);
+        super(new PortType[]{},
+                new PortType[]{RemoteCredentialsPortObject.TYPE});
         m_protocol = protocol;
     }
 
@@ -91,7 +96,20 @@ public class RemoteCredentialsNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
-        return new PortObject[]{null};
+        RemoteCredentials credentials = new RemoteCredentials();
+        credentials.setProtocol(m_protocol.getName());
+        credentials.setHost(m_configuration.getHost());
+        credentials.setPort(m_configuration.getPort());
+        credentials.setUser(m_configuration.getUser());
+        credentials.setPassword(m_configuration.getPassword());
+        if (m_protocol.hasKeyfileSupport()) {
+            credentials.setKeyfile(m_configuration.getKeyfile());
+        }
+        if (m_protocol.hasCertificateSupport()
+                && m_configuration.getUsecertificate()) {
+            credentials.setCertificate(m_configuration.getCertificate());
+        }
+        return new PortObject[]{new RemoteCredentialsPortObject(credentials)};
     }
 
     /**
@@ -108,7 +126,7 @@ public class RemoteCredentialsNodeModel extends NodeModel {
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
-        return new PortObjectSpec[]{null};
+        return new PortObjectSpec[]{RemoteCredentialsPortObjectSpec.INSTANCE};
     }
 
     /**

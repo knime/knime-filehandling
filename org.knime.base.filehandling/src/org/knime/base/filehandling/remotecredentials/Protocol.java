@@ -57,16 +57,16 @@ package org.knime.base.filehandling.remotecredentials;
 public enum Protocol {
 
     /** SSH protocol. */
-    SSH("SSH", 22, true, true),
+    SSH("ssh", 22, true, true),
 
     /** FTP protocol. */
-    FTP("FTP", 21, false, false),
+    FTP("ftp", 21, false, false),
 
     /** HTTP protocol. */
-    HTTP("HTTP", 80, false, false),
+    HTTP("http", 80, false, false),
 
     /** HTTPS protocol. */
-    HTTPS("HTTPS", 443, false, true);
+    HTTPS("https", 443, false, true);
 
     private String m_name;
 
