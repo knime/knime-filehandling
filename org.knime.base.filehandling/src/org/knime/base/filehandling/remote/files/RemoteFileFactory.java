@@ -52,6 +52,8 @@ package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
 
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+
 /**
  * Factory for remote files.
  * 
@@ -74,7 +76,7 @@ public final class RemoteFileFactory {
      * @throws Exception If creation of the remote file failed
      */
     public static RemoteFile createRemoteFile(final URI uri,
-            final ConnectionCredentials credentials) throws Exception {
+            final RemoteCredentials credentials) throws Exception {
         credentials.fitsToURI(uri);
         String scheme = uri.getScheme().toLowerCase();
         RemoteFile remoteFile = null;

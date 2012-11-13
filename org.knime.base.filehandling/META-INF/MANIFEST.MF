@@ -16,3 +16,4 @@ Require-Bundle: org.apache.commons.net;bundle-version="3.1.0",
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.knime.base.filehandling.FilehandlingPlugin
+Export-Package: org.knime.base.filehandling.remotecredentials.port

@@ -60,6 +60,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.apache.commons.io.FilenameUtils;
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.Session;
@@ -76,7 +77,7 @@ public class SCPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
-    private ConnectionCredentials m_credentials;
+    private RemoteCredentials m_credentials;
 
     /**
      * Creates a SCP remote file for the given URI.
@@ -85,7 +86,7 @@ public class SCPRemoteFile extends RemoteFile {
      * @param uri The URI
      * @param credentials Credentials to the given URI
      */
-    SCPRemoteFile(final URI uri, final ConnectionCredentials credentials) {
+    SCPRemoteFile(final URI uri, final RemoteCredentials credentials) {
         // Change protocol to general SSH
         try {
             m_uri = new URI(uri.toString().replaceFirst("scp", "ssh"));

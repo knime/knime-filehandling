@@ -57,6 +57,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+
 /**
  * Implementation of the file remote file.
  * 
@@ -74,7 +76,7 @@ public class FileRemoteFile extends RemoteFile {
      * @param uri The URI
      * @param credentials Credentials to the given URI
      */
-    FileRemoteFile(final URI uri, final ConnectionCredentials credentials) {
+    FileRemoteFile(final URI uri, final RemoteCredentials credentials) {
         m_uri = uri;
     }
 

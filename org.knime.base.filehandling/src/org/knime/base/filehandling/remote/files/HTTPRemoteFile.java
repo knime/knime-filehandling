@@ -60,6 +60,7 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 import org.knime.core.util.KnimeEncryption;
 
 /**
@@ -72,7 +73,7 @@ public class HTTPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
-    private ConnectionCredentials m_credentials;
+    private RemoteCredentials m_credentials;
 
     /**
      * Creates a HTTP remote file for the given URI.
@@ -81,7 +82,7 @@ public class HTTPRemoteFile extends RemoteFile {
      * @param uri The URI
      * @param credentials Credentials to the given URI
      */
-    HTTPRemoteFile(final URI uri, final ConnectionCredentials credentials) {
+    HTTPRemoteFile(final URI uri, final RemoteCredentials credentials) {
         m_uri = uri;
         m_credentials = credentials;
     }

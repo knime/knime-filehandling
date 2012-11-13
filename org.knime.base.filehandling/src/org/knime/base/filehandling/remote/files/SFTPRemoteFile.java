@@ -56,6 +56,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Vector;
 
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.Session;
@@ -71,7 +73,7 @@ public class SFTPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
-    private ConnectionCredentials m_credentials;
+    private RemoteCredentials m_credentials;
 
     private ChannelSftp m_channel;
 
@@ -82,7 +84,7 @@ public class SFTPRemoteFile extends RemoteFile {
      * @param uri The URI
      * @param credentials Credentials to the given URI
      */
-    SFTPRemoteFile(final URI uri, final ConnectionCredentials credentials) {
+    SFTPRemoteFile(final URI uri, final RemoteCredentials credentials) {
         // Change protocol to general SSH
         try {
             m_uri = new URI(uri.toString().replaceFirst("sftp", "ssh"));

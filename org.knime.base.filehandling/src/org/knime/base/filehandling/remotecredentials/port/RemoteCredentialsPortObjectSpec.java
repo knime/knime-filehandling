@@ -46,118 +46,71 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 12, 2012 (Patrick Winter): created
+ *   Nov 13, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remote.files;
+package org.knime.base.filehandling.remotecredentials.port;
 
-import java.net.URI;
+import javax.swing.JComponent;
+
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.ModelContentRO;
+import org.knime.core.node.ModelContentWO;
+import org.knime.core.node.port.AbstractSimplePortObjectSpec;
 
 /**
- * Contains the credentials for a connection.
- * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class ConnectionCredentials {
-
-    private String m_protocol;
-
-    private String m_host;
-
-    private int m_port;
-
-    private String m_user;
-
-    private String m_password;
-
-    private String m_keyfile;
-
-    private String m_certificate;
-
-    // TODO load from port object
+public class RemoteCredentialsPortObjectSpec extends
+        AbstractSimplePortObjectSpec {
 
     /**
-     * Checks if this credentials object fits to the URI.
-     * 
-     * 
-     * @param uri The URI
-     * @throws Exception If something is incompatible
+     * Singleton instance of this spec.
      */
-    public void fitsToURI(final URI uri) throws Exception {
-        // Scheme
-        String scheme = uri.getScheme().toLowerCase();
-        if (scheme.equals("sftp")) {
-            scheme = scheme.replace("sftp", "ssh");
-        } else if (scheme.equals("scp")) {
-            scheme = scheme.replace("scp", "ssh");
-        }
-        if (!scheme.equals(m_protocol)) {
-            throw new Exception("Protocol incompatible");
-        }
-        // Host
-        if (!uri.getHost().toLowerCase().equals(m_host.toLowerCase())) {
-            throw new Exception("Host incompatible");
-        }
-        // Port
-        int port = uri.getPort();
-        // TODO port = port<0 ? defaultPort(scheme) : port
-        if (port != m_port) {
-            throw new Exception("Port incompatible");
-        }
-        // User
-        String user = uri.getUserInfo().toLowerCase();
-        if (user != null && !user.equals(m_user.toLowerCase())) {
-            throw new Exception("User incompatible");
-        }
+    public static final RemoteCredentialsPortObjectSpec INSTANCE =
+            new RemoteCredentialsPortObjectSpec();
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public JComponent[] getViews() {
+        return null;
     }
 
     /**
-     * @return the protocol
+     * {@inheritDoc}
      */
-    public String getProtocol() {
-        return m_protocol;
+    @Override
+    public boolean equals(final Object ospec) {
+        return ospec != null
+                && ospec.getClass().equals(
+                        RemoteCredentialsPortObjectSpec.class);
     }
 
     /**
-     * @return the host
+     * {@inheritDoc}
      */
-    public String getHost() {
-        return m_host;
+    @Override
+    public int hashCode() {
+        return RemoteCredentialsPortObjectSpec.class.hashCode();
     }
 
     /**
-     * @return the port
+     * {@inheritDoc}
      */
-    public int getPort() {
-        return m_port;
+    @Override
+    protected void save(final ModelContentWO model) {
+        // not used
     }
 
     /**
-     * @return the user
+     * {@inheritDoc}
      */
-    public String getUser() {
-        return m_user;
-    }
-
-    /**
-     * @return the password
-     */
-    public String getPassword() {
-        return m_password;
-    }
-
-    /**
-     * @return the keyfile
-     */
-    public String getKeyfile() {
-        return m_keyfile;
-    }
-
-    /**
-     * @return the certificate
-     */
-    public String getCertificate() {
-        return m_certificate;
+    @Override
+    protected void load(final ModelContentRO model)
+            throws InvalidSettingsException {
+        // not used
     }
 
 }

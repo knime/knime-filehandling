@@ -46,100 +46,90 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 5, 2012 (Patrick Winter): created
+ *   Nov 13, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remote.files;
+package org.knime.base.filehandling.remotecredentials.port;
 
-import java.net.URI;
-
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
-import org.knime.core.util.KnimeEncryption;
-
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
+import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.ExecutionMonitor;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.ModelContentRO;
+import org.knime.core.node.ModelContentWO;
+import org.knime.core.node.port.AbstractSimplePortObject;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortType;
 
 /**
- * Connection over SSH.
- * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class SSHConnection extends Connection {
-
-    private URI m_uri;
-
-    private Session m_session;
+public class RemoteCredentialsPortObject extends AbstractSimplePortObject {
 
     private RemoteCredentials m_credentials;
 
     /**
-     * Create a SSH connection to the given URI.
-     * 
-     * 
-     * @param uri The URI
-     * @param credentials Credentials to the given URI
+     * Type of this port.
      */
-    public SSHConnection(final URI uri, final RemoteCredentials credentials) {
-        m_uri = uri;
+    public static final PortType TYPE = new PortType(
+            RemoteCredentialsPortObject.class);
+
+    /**
+     * 
+     */
+    public RemoteCredentialsPortObject() {
+        // Used by framework
+    }
+
+    /**
+     * @param credentials The content of this port object
+     */
+    public RemoteCredentialsPortObject(final RemoteCredentials credentials) {
+        if (credentials == null) {
+            throw new NullPointerException("List argument must not be null");
+        }
         m_credentials = credentials;
     }
 
     /**
-     * {@inheritDoc}
+     * @return The content of this port object
      */
-    @Override
-    public void open() throws Exception {
-        // Read attributes
-        String host = m_uri.getHost();
-        int port =
-                m_uri.getPort() != -1 ? m_uri.getPort() : DefaultPortMap
-                        .getMap().get("ssh");
-        String user = m_uri.getUserInfo();
-        String password = KnimeEncryption.decrypt(m_credentials.getPassword());
-        // Open session
-        JSch jsch = new JSch();
-        String keyfile = m_credentials.getKeyfile();
-        if (keyfile != null) {
-            jsch.addIdentity(keyfile, password);
-        }
-        String certificate = m_credentials.getCertificate();
-        if (certificate != null) {
-            jsch.setKnownHosts(certificate);
-        }
-        Session session = jsch.getSession(user, host, port);
-        if (keyfile == null) {
-            session.setPassword(password);
-        }
-        // TODO remove the following line
-        session.setConfig("StrictHostKeyChecking", "no");
-        session.connect();
-        m_session = session;
+    public RemoteCredentials getCredentials() {
+        return m_credentials;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean isOpen() {
-        return m_session.isConnected();
+    public String getSummary() {
+        return null;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void close() throws Exception {
-        m_session.disconnect();
+    public PortObjectSpec getSpec() {
+        return RemoteCredentialsPortObjectSpec.INSTANCE;
     }
 
     /**
-     * Returns the Session of this connection.
-     * 
-     * 
-     * @return The session
+     * {@inheritDoc}
      */
-    public Session getSession() {
-        return m_session;
+    @Override
+    protected void save(final ModelContentWO model, final ExecutionMonitor exec)
+            throws CanceledExecutionException {
+        m_credentials.save(model);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void load(final ModelContentRO model, final PortObjectSpec spec,
+            final ExecutionMonitor exec) throws InvalidSettingsException,
+            CanceledExecutionException {
+        m_credentials = RemoteCredentials.load(model);
     }
 
 }

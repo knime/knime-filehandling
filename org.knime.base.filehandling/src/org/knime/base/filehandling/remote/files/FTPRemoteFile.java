@@ -57,6 +57,7 @@ import java.net.URI;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 import org.knime.core.util.KnimeEncryption;
 
 /**
@@ -69,7 +70,7 @@ public class FTPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
-    private ConnectionCredentials m_credentials;
+    private RemoteCredentials m_credentials;
 
     /**
      * Creates a FTP remote file for the given URI.
@@ -78,7 +79,7 @@ public class FTPRemoteFile extends RemoteFile {
      * @param uri The URI
      * @param credentials Credentials to the given URI
      */
-    FTPRemoteFile(final URI uri, final ConnectionCredentials credentials) {
+    FTPRemoteFile(final URI uri, final RemoteCredentials credentials) {
         m_uri = uri;
         m_credentials = credentials;
     }
