@@ -115,15 +115,6 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public int getDefaultPort() {
-        // Does not use ports
-        return -1;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public boolean exists() throws Exception {
         return new File(m_uri).exists();
     }

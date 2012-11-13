@@ -135,7 +135,7 @@ public abstract class RemoteFile {
         int port = uri.getPort();
         // If no port is available use the default port
         if (port < 0) {
-            port = getDefaultPort();
+            port = DefaultPortMap.getMap().get(getType());
         }
         // Format: scheme://user@host:port
         return uri.getScheme() + "://" + uri.getUserInfo() + "@"
@@ -161,14 +161,6 @@ public abstract class RemoteFile {
      * @return The remote files type
      */
     public abstract String getType();
-
-    /**
-     * Return the default port used by this remote files protocol.
-     * 
-     * 
-     * @return The default port
-     */
-    public abstract int getDefaultPort();
 
     /**
      * Check if the file does exist.

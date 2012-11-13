@@ -132,14 +132,6 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public int getDefaultPort() {
-        return 22;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public boolean exists() throws Exception {
         // Assume missing file
         boolean exists = false;

@@ -119,14 +119,6 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public int getDefaultPort() {
-        return 21;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public boolean exists() throws Exception {
         return getFTPFile() != null;
     }
@@ -371,7 +363,8 @@ public class FTPRemoteFile extends RemoteFile {
             // Read attributes
             String host = m_uri.getHost();
             int port =
-                    m_uri.getPort() != -1 ? m_uri.getPort() : getDefaultPort();
+                    m_uri.getPort() != -1 ? m_uri.getPort() : DefaultPortMap
+                            .getMap().get(getType());
             String user = m_uri.getUserInfo();
             String password =
                     KnimeEncryption.decrypt(m_credentials.getPassword());

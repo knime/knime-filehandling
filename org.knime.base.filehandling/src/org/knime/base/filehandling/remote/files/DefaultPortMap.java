@@ -54,12 +54,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Mapping for the default ports.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class DefaultPortMap {
+public final class DefaultPortMap {
 
-    private static DefaultPortMap m_portMap = null;
+    private static DefaultPortMap portMap = null;
 
     private Map<String, Integer> m_map;
 
@@ -74,15 +76,23 @@ public class DefaultPortMap {
         m_map.put("https", 443);
     }
 
+    /**
+     * @return Singleton instance of default port map
+     */
     public static DefaultPortMap getMap() {
-        if (m_portMap == null) {
-            m_portMap = new DefaultPortMap();
+        if (portMap == null) {
+            portMap = new DefaultPortMap();
         }
-        return m_portMap;
+        return portMap;
     }
 
+    /**
+     * @param key Name of the protocol
+     * @return Default port of this protocol
+     */
     public int get(final String key) {
-        return m_map.get(key);
+        Integer port = m_map.get(key);
+        return port != null ? port : -1;
     }
 
 }

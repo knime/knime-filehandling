@@ -90,17 +90,25 @@ public class SSHConnection extends Connection {
     public void open() throws Exception {
         // Read attributes
         String host = m_uri.getHost();
-        int port = m_uri.getPort() != -1 ? m_uri.getPort() : 22;
+        int port =
+                m_uri.getPort() != -1 ? m_uri.getPort() : DefaultPortMap
+                        .getMap().get("ssh");
         String user = m_uri.getUserInfo();
         String password = KnimeEncryption.decrypt(m_credentials.getPassword());
         // Open session
         JSch jsch = new JSch();
+        String keyfile = m_credentials.getKeyfile();
+        if (keyfile != null) {
+            jsch.addIdentity(keyfile, password);
+        }
         String certificate = m_credentials.getCertificate();
         if (certificate != null) {
             jsch.setKnownHosts(certificate);
         }
         Session session = jsch.getSession(user, host, port);
-        session.setPassword(password);
+        if (keyfile == null) {
+            session.setPassword(password);
+        }
         // TODO remove the following line
         session.setConfig("StrictHostKeyChecking", "no");
         session.connect();

@@ -117,16 +117,7 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public String getType() {
-        return "http";
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int getDefaultPort() {
-        // HTTP port:80, HTTPS port:443
-        return m_uri.getScheme().equals("https") ? 443 : 80;
+        return m_uri.getScheme();
     }
 
     /**
@@ -254,7 +245,7 @@ public class HTTPRemoteFile extends RemoteFile {
                     KnimeEncryption.decrypt(m_credentials.getPassword());
             int port = m_uri.getPort();
             if (port < 0) {
-                port = getDefaultPort();
+                port = DefaultPortMap.getMap().get(getType());
             }
             Credentials credentials =
                     new UsernamePasswordCredentials(m_uri.getUserInfo(),

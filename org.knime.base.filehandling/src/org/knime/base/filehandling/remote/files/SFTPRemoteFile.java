@@ -129,14 +129,6 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public int getDefaultPort() {
-        return 22;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public boolean exists() throws Exception {
         return getLsEntry() != null;
     }

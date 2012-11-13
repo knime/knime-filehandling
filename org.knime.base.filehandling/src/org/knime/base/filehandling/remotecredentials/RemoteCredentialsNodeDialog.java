@@ -314,18 +314,15 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
                         .equals(AuthenticationMethod.KEYFILE.getName()) : false;
         m_userLabel.setEnabled(usePassword || useKeyfile);
         m_user.setEnabled(usePassword || useKeyfile);
-        m_passwordLabel.setEnabled(usePassword);
-        m_password.setEnabled(usePassword);
+        m_passwordLabel.setEnabled(usePassword || useKeyfile);
+        m_password.setEnabled(usePassword || useKeyfile);
         if (m_protocol.hasKeyfileSupport()) {
             boolean keyfileReplacement =
                     m_keyfilefvm.getFlowVariableModel()
                             .isVariableReplacementEnabled();
-            m_keyfile.setEnabled(!keyfileReplacement);
-            m_keyfileLabel.setVisible(useKeyfile);
-            m_keyfile.setVisible(useKeyfile);
-            m_keyfilefvm.setVisible(useKeyfile);
-            m_passwordLabel.setVisible(!useKeyfile);
-            m_password.setVisible(!useKeyfile);
+            m_keyfileLabel.setEnabled(useKeyfile);
+            m_keyfile.setEnabled(useKeyfile && !keyfileReplacement);
+            m_keyfilefvm.setEnabled(useKeyfile);
         }
         if (m_protocol.hasCertificateSupport()) {
             boolean usecertificate = m_usecertificate.isSelected();
