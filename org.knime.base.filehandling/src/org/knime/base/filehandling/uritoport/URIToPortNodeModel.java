@@ -62,7 +62,6 @@ import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.uri.URIContent;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.data.uri.URIPortObject;
-import org.knime.core.data.uri.URIPortObjectSpec;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -84,7 +83,7 @@ import org.knime.core.node.port.PortType;
  */
 class URIToPortNodeModel extends NodeModel {
 
-    private SettingsModelString m_uricolumn;
+    private final SettingsModelString m_uricolumn;
 
     /**
      * Constructor for the node model.
@@ -103,8 +102,7 @@ class URIToPortNodeModel extends NodeModel {
     protected PortObject[] execute(final PortObject[] inData,
             final ExecutionContext exec) throws Exception {
         BufferedDataTable data = (BufferedDataTable)inData[0];
-        int index =
-                data.getSpec().findColumnIndex(m_uricolumn.getStringValue());
+        int index = data.getSpec().findColumnIndex(m_uricolumn.getStringValue());
         // Create list of uris
         List<URIContent> uris = new ArrayList<URIContent>(data.getRowCount());
         for (DataRow row : data) {
@@ -149,7 +147,7 @@ class URIToPortNodeModel extends NodeModel {
             throws InvalidSettingsException {
         // Validate settings
         checkSettings((DataTableSpec)inSpecs[0]);
-        return new PortObjectSpec[]{URIPortObjectSpec.INSTANCE};
+        return new PortObjectSpec[] {null};
     }
 
     /**
