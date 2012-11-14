@@ -121,7 +121,7 @@ public class FileRemoteFile extends RemoteFile {
     @Override
     public String getName() throws Exception {
         String name = FilenameUtils.getName(m_uri.getPath());
-        if (name == null) {
+        if (name == null || name.length() == 0) {
             name =
                     FilenameUtils.getName(FilenameUtils
                             .getFullPathNoEndSeparator(m_uri.getPath()));

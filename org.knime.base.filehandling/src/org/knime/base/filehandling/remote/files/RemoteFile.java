@@ -312,7 +312,11 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
     public int compareTo(final RemoteFile o) {
         int result = 1;
         try {
-            result = getFullName().compareTo(o.getFullName());
+            if (isDirectory() == o.isDirectory()) {
+                result = getName().compareTo(o.getName());
+            } else if (isDirectory()) {
+                result = -1;
+            }
         } catch (Exception e) {
             // put this after o
         }
