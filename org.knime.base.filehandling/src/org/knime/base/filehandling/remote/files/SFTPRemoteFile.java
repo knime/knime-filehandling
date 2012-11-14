@@ -54,6 +54,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Vector;
 
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
@@ -131,9 +132,26 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public String name() throws Exception {
+    public String getName() throws Exception {
         LsEntry entry = getLsEntry();
         return entry.getFilename();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getFullName() throws Exception {
+        return getName() + "/" + getPath();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getPath() throws Exception {
+        // TODO get correct path
+        return null;
     }
 
     /**
@@ -293,6 +311,7 @@ public class SFTPRemoteFile extends RemoteFile {
         } else {
             files = new RemoteFile[0];
         }
+        Arrays.sort(files);
         return files;
     }
 

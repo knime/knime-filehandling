@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.Arrays;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.net.ftp.FTPClient;
@@ -121,8 +122,33 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public String name() throws Exception {
+    public String getName() throws Exception {
         return getFTPFile().getName();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getFullName() throws Exception {
+        return getPath() + "/" + getName();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getPath() throws Exception {
+        FTPClient client = getClient();
+        String path = m_uri.getPath();
+        if (path == null || path.length() == 0) {
+            path = client.printWorkingDirectory();
+        }
+        boolean changed = client.changeWorkingDirectory(path);
+        if (!changed) {
+            path = FilenameUtils.getFullPath(path);
+        }
+        return path;
     }
 
     /**
@@ -272,6 +298,7 @@ public class FTPRemoteFile extends RemoteFile {
         } else {
             files = new RemoteFile[0];
         }
+        Arrays.sort(files);
         return files;
     }
 

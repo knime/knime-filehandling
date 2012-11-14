@@ -133,12 +133,30 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public String name() throws Exception {
+    public String getName() throws Exception {
         String name = FilenameUtils.getName(m_uri.getPath());
         if (name == null) {
-            throw new Exception("No name available");
+            name =
+                    FilenameUtils.getName(FilenameUtils
+                            .getFullPathNoEndSeparator(m_uri.getPath()));
         }
         return name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getFullName() throws Exception {
+        return m_uri.getPath();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getPath() throws Exception {
+        return FilenameUtils.getPathNoEndSeparator(m_uri.getPath());
     }
 
     /**

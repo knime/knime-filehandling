@@ -60,7 +60,7 @@ import java.net.URI;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public abstract class RemoteFile {
+public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     private Connection m_connection = null;
 
@@ -166,7 +166,19 @@ public abstract class RemoteFile {
      * @return The name of this file
      * @throws Exception If the operation could not be executed
      */
-    public abstract String name() throws Exception;
+    public abstract String getName() throws Exception;
+
+    /**
+     * @return The full name with path.
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract String getFullName() throws Exception;
+
+    /**
+     * @return The path without the filename
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract String getPath() throws Exception;
 
     /**
      * Check if the file does exist.
@@ -286,11 +298,24 @@ public abstract class RemoteFile {
     public String toString() {
         String string = "Unknown file";
         try {
-            string = name();
+            string = getName();
         } catch (Exception e) {
             // File name is unknown
         }
         return string;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compareTo(final RemoteFile o) {
+        int result = 1;
+        try {
+            result = getFullName().compareTo(o.getFullName());
+        } catch (Exception e) {
+            // put this after o
+        }
+        return result;
+    }
 }

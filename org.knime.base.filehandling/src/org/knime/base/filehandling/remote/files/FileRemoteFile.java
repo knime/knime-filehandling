@@ -56,6 +56,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.Arrays;
 
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
@@ -118,12 +119,30 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public String name() throws Exception {
+    public String getName() throws Exception {
         String name = FilenameUtils.getName(m_uri.getPath());
         if (name == null) {
-            throw new Exception("No name available");
+            name =
+                    FilenameUtils.getName(FilenameUtils
+                            .getFullPathNoEndSeparator(m_uri.getPath()));
         }
         return name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getFullName() throws Exception {
+        return m_uri.getPath();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getPath() throws Exception {
+        return FilenameUtils.getPathNoEndSeparator(m_uri.getPath());
     }
 
     /**
@@ -229,6 +248,7 @@ public class FileRemoteFile extends RemoteFile {
         } else {
             files = new RemoteFile[0];
         }
+        Arrays.sort(files);
         return files;
     }
 
