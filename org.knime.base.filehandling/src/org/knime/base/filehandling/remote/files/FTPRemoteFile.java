@@ -55,6 +55,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
@@ -252,13 +253,21 @@ public class FTPRemoteFile extends RemoteFile {
         RemoteFile[] files;
         if (isDirectory()) {
             FTPClient client = getClient();
-            FTPFile[] ftpFiles = client.listFiles(m_uri.getPath());
+            String path = m_uri.getPath();
+            if (path == null || path.length() == 0) {
+                path = client.printWorkingDirectory();
+            }
+            client.changeWorkingDirectory(path);
+            FTPFile[] ftpFiles = client.listFiles();
             files = new RemoteFile[ftpFiles.length];
             for (int i = 0; i < ftpFiles.length; i++) {
                 URI uri =
                         new URI(m_uri.getScheme() + "://"
-                                + m_uri.getAuthority() + ftpFiles[i].getName());
+                                + m_uri.getAuthority()
+                                + client.printWorkingDirectory() + "/"
+                                + ftpFiles[i].getName());
                 files[i] = new FTPRemoteFile(uri, m_credentials);
+                files[i].open();
             }
         } else {
             files = new RemoteFile[0];
@@ -294,8 +303,10 @@ public class FTPRemoteFile extends RemoteFile {
      * 
      * @return The FTP Client
      */
-    private FTPClient getClient() {
-        return ((FTPConnection)getConnection()).getClient();
+    private FTPClient getClient() throws Exception {
+        FTPConnection connection = (FTPConnection)getConnection();
+        connection.resetWorkingDir();
+        return connection.getClient();
     }
 
     /**
@@ -306,13 +317,26 @@ public class FTPRemoteFile extends RemoteFile {
      * @throws Exception If the operation could not be executed
      */
     private FTPFile getFTPFile() throws Exception {
+        boolean isDir = true;
         FTPFile file = null;
         FTPClient client = getClient();
         String path = m_uri.getPath();
-        FTPFile[] files = client.listFiles(path);
+        if (path == null || path.length() == 0) {
+            path = client.printWorkingDirectory();
+        }
+        boolean changed = client.changeWorkingDirectory(path);
+        if (!changed) {
+            isDir = false;
+            client.changeWorkingDirectory(FilenameUtils.getFullPath(path));
+        }
+        String name = FilenameUtils.getName(path);
+        if (isDir) {
+            client.changeToParentDirectory();
+        }
+        FTPFile[] files = client.listFiles();
         for (int i = 0; i < files.length; i++) {
             FTPFile currentFile = files[i];
-            if (currentFile.getName().equals(path)) {
+            if (currentFile.getName().equals(name)) {
                 file = currentFile;
                 break;
             }
@@ -362,6 +386,8 @@ public class FTPRemoteFile extends RemoteFile {
 
         private FTPClient m_client;
 
+        private String m_defaultDir;
+
         /**
          * {@inheritDoc}
          */
@@ -384,6 +410,7 @@ public class FTPRemoteFile extends RemoteFile {
             if (!loggedIn) {
                 throw new IOException("Login failed");
             }
+            m_defaultDir = m_client.printWorkingDirectory();
         }
 
         /**
@@ -415,6 +442,10 @@ public class FTPRemoteFile extends RemoteFile {
          */
         public FTPClient getClient() {
             return m_client;
+        }
+
+        public void resetWorkingDir() throws Exception {
+            m_client.changeWorkingDirectory(m_defaultDir);
         }
 
     }

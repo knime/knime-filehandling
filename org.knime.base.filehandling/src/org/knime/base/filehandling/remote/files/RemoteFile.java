@@ -279,4 +279,18 @@ public abstract class RemoteFile {
      */
     public abstract void close() throws Exception;
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+        String string = "Unknown file";
+        try {
+            string = name();
+        } catch (Exception e) {
+            // File name is unknown
+        }
+        return string;
+    }
+
 }

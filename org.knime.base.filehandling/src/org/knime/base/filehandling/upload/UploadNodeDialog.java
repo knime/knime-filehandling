@@ -97,7 +97,10 @@ public class UploadNodeDialog extends NodeDialogPane {
                     }
                     container = container.getParent();
                 }
-                RemoteListDialog.open(frame, m_credentials);
+                RemoteFileChooser dialog =
+                        new RemoteFileChooser(m_credentials.toURI(),
+                                m_credentials, RemoteFileChooser.SELECT_DIR);
+                dialog.open(frame);
             }
         });
         addTab("Options", initLayout());
