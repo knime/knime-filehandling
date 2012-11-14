@@ -142,7 +142,11 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public String getFullName() throws Exception {
-        return getName() + "/" + getPath();
+        String fullname = getPath();
+        if (!isDirectory()) {
+            fullname += "/" + getName();
+        }
+        return fullname;
     }
 
     /**

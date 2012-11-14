@@ -48,7 +48,7 @@
  * History
  *   Nov 13, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.upload;
+package org.knime.base.filehandling.remote.dialog;
 
 import java.awt.Component;
 import java.awt.Dialog;
@@ -133,6 +133,7 @@ public final class RemoteFileChooser {
         dialog.setTitle("Files on server");
         dialog.pack();
         dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
+        dialog.setSize(400, 600);
         dialog.setVisible(true);
         dialog.dispose();
         ConnectionMonitor.closeAll();

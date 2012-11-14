@@ -58,6 +58,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import org.knime.base.filehandling.remote.dialog.RemoteFileChooser;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
 import org.knime.core.node.InvalidSettingsException;

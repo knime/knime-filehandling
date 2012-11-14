@@ -123,7 +123,8 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public String getName() throws Exception {
-        return getFTPFile().getName();
+        return isDirectory() ? FilenameUtils.getName(getPath()) : FilenameUtils
+                .getName(m_uri.getPath());
     }
 
     /**
@@ -131,7 +132,11 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public String getFullName() throws Exception {
-        return getPath() + "/" + getName();
+        String fullname = getPath();
+        if (!isDirectory()) {
+            fullname += "/" + getName();
+        }
+        return fullname;
     }
 
     /**
@@ -164,12 +169,12 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean isDirectory() throws Exception {
-        boolean isDirectory = false;
-        FTPFile ftpFile = getFTPFile();
-        if (ftpFile != null) {
-            isDirectory = ftpFile.isDirectory();
+        FTPClient client = getClient();
+        String path = m_uri.getPath();
+        if (path == null || path.length() == 0) {
+            path = client.printWorkingDirectory();
         }
-        return isDirectory;
+        return client.changeWorkingDirectory(path);
     }
 
     /**
@@ -279,11 +284,7 @@ public class FTPRemoteFile extends RemoteFile {
         RemoteFile[] files;
         if (isDirectory()) {
             FTPClient client = getClient();
-            String path = m_uri.getPath();
-            if (path == null || path.length() == 0) {
-                path = client.printWorkingDirectory();
-            }
-            client.changeWorkingDirectory(path);
+            client.changeWorkingDirectory(getPath());
             FTPFile[] ftpFiles = client.listFiles();
             files = new RemoteFile[ftpFiles.length];
             for (int i = 0; i < ftpFiles.length; i++) {
@@ -344,26 +345,17 @@ public class FTPRemoteFile extends RemoteFile {
      * @throws Exception If the operation could not be executed
      */
     private FTPFile getFTPFile() throws Exception {
-        boolean isDir = true;
         FTPFile file = null;
         FTPClient client = getClient();
-        String path = m_uri.getPath();
-        if (path == null || path.length() == 0) {
-            path = client.printWorkingDirectory();
-        }
-        boolean changed = client.changeWorkingDirectory(path);
-        if (!changed) {
-            isDir = false;
-            client.changeWorkingDirectory(FilenameUtils.getFullPath(path));
-        }
-        String name = FilenameUtils.getName(path);
-        if (isDir) {
+        client.changeWorkingDirectory(getPath());
+        if (isDirectory()) {
             client.changeToParentDirectory();
         }
         FTPFile[] files = client.listFiles();
         for (int i = 0; i < files.length; i++) {
             FTPFile currentFile = files[i];
-            if (currentFile.getName().equals(name)) {
+            if (currentFile.getName().equals(
+                    FilenameUtils.getName(m_uri.getPath()))) {
                 file = currentFile;
                 break;
             }
