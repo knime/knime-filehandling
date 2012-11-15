@@ -99,11 +99,11 @@ public class SSHConnection extends Connection {
         // Open session
         JSch jsch = new JSch();
         String keyfile = m_credentials.getKeyfile();
-        if (keyfile != null) {
+        if (keyfile != null && keyfile.length() != 0) {
             jsch.addIdentity(keyfile, password);
         }
         String certificate = m_credentials.getCertificate();
-        if (certificate != null) {
+        if (certificate != null && certificate.length() != 0) {
             jsch.setKnownHosts(certificate);
         }
         Session session = jsch.getSession(user, host, port);

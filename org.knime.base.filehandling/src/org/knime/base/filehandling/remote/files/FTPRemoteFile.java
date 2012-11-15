@@ -156,9 +156,6 @@ public class FTPRemoteFile extends RemoteFile {
         if (!changed) {
             path = FilenameUtils.getFullPath(path);
         }
-        if (path.startsWith("//")) {
-            path = path.replaceFirst("//", "/");
-        }
         if (!path.endsWith("/")) {
             path += "/";
         }
@@ -299,8 +296,7 @@ public class FTPRemoteFile extends RemoteFile {
             for (int i = 0; i < ftpFiles.length; i++) {
                 URI uri =
                         new URI(m_uri.getScheme() + "://"
-                                + m_uri.getAuthority()
-                                + client.printWorkingDirectory() + "/"
+                                + m_uri.getAuthority() + getPath()
                                 + ftpFiles[i].getName());
                 files[i] = new FTPRemoteFile(uri, m_credentials);
                 files[i].open();

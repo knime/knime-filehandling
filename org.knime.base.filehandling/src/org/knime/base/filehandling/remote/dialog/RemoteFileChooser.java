@@ -217,10 +217,10 @@ public final class RemoteFileChooser {
                     add(new RemoteFileTreeNode(files[i]));
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 // ignore
             }
         }
-
     }
 
     private class RemoteFileTreeCellRenderer extends DefaultTreeCellRenderer {

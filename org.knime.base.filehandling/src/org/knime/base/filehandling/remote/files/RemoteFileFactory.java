@@ -84,7 +84,7 @@ public final class RemoteFileFactory {
             remoteFile = new FileRemoteFile(uri, credentials);
         } else if (scheme.equals("ftp")) {
             remoteFile = new FTPRemoteFile(uri, credentials);
-        } else if (scheme.equals("sftp")) {
+        } else if (scheme.equals("sftp") || scheme.equals("ssh")) {
             remoteFile = new SFTPRemoteFile(uri, credentials);
         } else if (scheme.equals("http") || scheme.equals("https")) {
             remoteFile = new HTTPRemoteFile(uri, credentials);
