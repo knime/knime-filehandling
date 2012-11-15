@@ -124,6 +124,14 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public URI getURI() {
+        return m_uri;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getType() {
         return "sftp";
     }
@@ -135,18 +143,6 @@ public class SFTPRemoteFile extends RemoteFile {
     public String getName() throws Exception {
         LsEntry entry = getLsEntry();
         return entry.getFilename();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getFullName() throws Exception {
-        String fullname = getPath();
-        if (!isDirectory()) {
-            fullname += "/" + getName();
-        }
-        return fullname;
     }
 
     /**

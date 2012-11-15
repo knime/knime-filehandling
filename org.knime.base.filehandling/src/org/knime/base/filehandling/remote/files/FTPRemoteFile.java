@@ -114,6 +114,14 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public URI getURI() {
+        return m_uri;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getType() {
         return "ftp";
     }
@@ -123,20 +131,15 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public String getName() throws Exception {
-        return isDirectory() ? FilenameUtils.getName(getPath()) : FilenameUtils
-                .getName(m_uri.getPath());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getFullName() throws Exception {
-        String fullname = getPath();
-        if (!isDirectory()) {
-            fullname += "/" + getName();
+        String name;
+        if (isDirectory()) {
+            name =
+                    FilenameUtils.getName(FilenameUtils
+                            .normalizeNoEndSeparator(getPath()));
+        } else {
+            name = FilenameUtils.getName(m_uri.getPath());
         }
-        return fullname;
+        return FilenameUtils.normalize(name);
     }
 
     /**
@@ -153,7 +156,13 @@ public class FTPRemoteFile extends RemoteFile {
         if (!changed) {
             path = FilenameUtils.getFullPath(path);
         }
-        return path;
+        if (path.startsWith("//")) {
+            path = path.replaceFirst("//", "/");
+        }
+        if (!path.endsWith("/")) {
+            path += "/";
+        }
+        return FilenameUtils.normalize(path);
     }
 
     /**
@@ -429,7 +438,12 @@ public class FTPRemoteFile extends RemoteFile {
             if (!loggedIn) {
                 throw new IOException("Login failed");
             }
-            m_defaultDir = m_client.printWorkingDirectory();
+            String oldDir;
+            do {
+                oldDir = m_client.printWorkingDirectory();
+                m_client.changeToParentDirectory();
+                m_defaultDir = m_client.printWorkingDirectory();
+            } while (!m_defaultDir.equals(oldDir));
         }
 
         /**

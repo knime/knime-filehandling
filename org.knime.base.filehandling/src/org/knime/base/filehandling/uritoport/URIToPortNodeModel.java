@@ -102,7 +102,8 @@ class URIToPortNodeModel extends NodeModel {
     protected PortObject[] execute(final PortObject[] inData,
             final ExecutionContext exec) throws Exception {
         BufferedDataTable data = (BufferedDataTable)inData[0];
-        int index = data.getSpec().findColumnIndex(m_uricolumn.getStringValue());
+        int index =
+                data.getSpec().findColumnIndex(m_uricolumn.getStringValue());
         // Create list of uris
         List<URIContent> uris = new ArrayList<URIContent>(data.getRowCount());
         for (DataRow row : data) {
@@ -147,7 +148,7 @@ class URIToPortNodeModel extends NodeModel {
             throws InvalidSettingsException {
         // Validate settings
         checkSettings((DataTableSpec)inSpecs[0]);
-        return new PortObjectSpec[] {null};
+        return new PortObjectSpec[]{null};
     }
 
     /**

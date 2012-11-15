@@ -146,8 +146,7 @@ public final class RemoteFileChooser {
         gbc.weightx = 1;
         gbc.weighty = 1;
         try {
-            DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(root);
-            addChildren(root, rootNode);
+            RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root);
             JTree tree = new JTree(rootNode);
             tree.setCellRenderer(new RemoteFileTreeCellRenderer());
             panel.add(new JScrollPane(tree), gbc);
@@ -155,20 +154,6 @@ public final class RemoteFileChooser {
             e.printStackTrace();
         }
         return panel;
-    }
-
-    private void addChildren(final RemoteFile file,
-            final DefaultMutableTreeNode node) throws Exception {
-        if (file.isDirectory()) {
-            RemoteFile[] children = file.listFiles();
-            for (int i = 0; i < children.length; i++) {
-                RemoteFile child = children[i];
-                DefaultMutableTreeNode childNode =
-                        new DefaultMutableTreeNode(child);
-                addChildren(child, childNode);
-                node.add(childNode);
-            }
-        }
     }
 
     private void resetGBC(final GridBagConstraints gbc) {
@@ -179,6 +164,63 @@ public final class RemoteFileChooser {
         gbc.weighty = 0;
         gbc.gridx = 0;
         gbc.gridy = 0;
+    }
+
+    private class RemoteFileTreeNode extends DefaultMutableTreeNode {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1215339655731965368L;
+
+        private boolean m_loaded;
+
+        /**
+         * @param object The user object
+         * 
+         */
+        public RemoteFileTreeNode(final Object object) {
+            super(object);
+            m_loaded = false;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean isLeaf() {
+            boolean result = true;
+            try {
+                result = !((RemoteFile)getUserObject()).isDirectory();
+            } catch (Exception e) {
+                // ignore
+            }
+            return result;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int getChildCount() {
+            if (!m_loaded) {
+                loadChildren();
+            }
+            return super.getChildCount();
+        }
+
+        private void loadChildren() {
+            m_loaded = true;
+            try {
+                RemoteFile[] files = ((RemoteFile)getUserObject()).listFiles();
+                for (int i = 0; i < files.length; i++) {
+                    add(new RemoteFileTreeNode(files[i]));
+                }
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+
     }
 
     private class RemoteFileTreeCellRenderer extends DefaultTreeCellRenderer {

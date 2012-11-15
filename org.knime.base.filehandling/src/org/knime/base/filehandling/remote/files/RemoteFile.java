@@ -54,6 +54,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
+import org.apache.commons.io.FilenameUtils;
+
 /**
  * Remote file.
  * 
@@ -155,6 +157,11 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
     }
 
     /**
+     * @return The URI to this file
+     */
+    public abstract URI getURI();
+
+    /**
      * Returns the type (URI scheme) of the remote file.
      * 
      * 
@@ -163,22 +170,64 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
     public abstract String getType();
 
     /**
+     * Returns the name of this file without path information.
+     * 
+     * 
+     * File: /usr/bin/ssh -> ssh
+     * 
+     * Directory: /usr/bin/ -> bin
+     * 
      * @return The name of this file
      * @throws Exception If the operation could not be executed
      */
-    public abstract String getName() throws Exception;
+    public String getName() throws Exception {
+        URI uri = getURI();
+        String name = FilenameUtils.getName(uri.getPath());
+        if (name == null || name.length() == 0) {
+            name =
+                    FilenameUtils.getName(FilenameUtils
+                            .getFullPathNoEndSeparator(uri.getPath()));
+        }
+        return FilenameUtils.normalize(name);
+    }
 
     /**
+     * Returns the name of this file with path information.
+     * 
+     * 
+     * File: /usr/bin/ssh -> /usr/bin/ssh
+     * 
+     * Directory: /usr/bin/ -> /usr/bin
+     * 
      * @return The full name with path.
      * @throws Exception If the operation could not be executed
      */
-    public abstract String getFullName() throws Exception;
+    public final String getFullName() throws Exception {
+        String fullname = getPath();
+        if (!isDirectory()) {
+            fullname += getName();
+        }
+        return FilenameUtils.normalize(fullname);
+    }
 
     /**
+     * Returns the path of this file.
+     * 
+     * 
+     * File: /usr/bin/ssh -> /usr/bin/
+     * 
+     * Directory: /usr/bin/ -> /usr/bin/
+     * 
      * @return The path without the filename
      * @throws Exception If the operation could not be executed
      */
-    public abstract String getPath() throws Exception;
+    public String getPath() throws Exception {
+        String path = FilenameUtils.getPath(getURI().getPath());
+        if (isDirectory() && !path.endsWith("/")) {
+            path += "/";
+        }
+        return FilenameUtils.normalize(path);
+    }
 
     /**
      * Check if the file does exist.

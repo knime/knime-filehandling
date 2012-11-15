@@ -58,7 +58,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
 
-import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 
 /**
@@ -111,38 +110,16 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public URI getURI() {
+        return m_uri;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getType() {
         return "file";
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getName() throws Exception {
-        String name = FilenameUtils.getName(m_uri.getPath());
-        if (name == null || name.length() == 0) {
-            name =
-                    FilenameUtils.getName(FilenameUtils
-                            .getFullPathNoEndSeparator(m_uri.getPath()));
-        }
-        return name;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getFullName() throws Exception {
-        return m_uri.getPath();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getPath() throws Exception {
-        return FilenameUtils.getPathNoEndSeparator(m_uri.getPath());
     }
 
     /**
