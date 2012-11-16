@@ -96,7 +96,9 @@ public class RemoteCredentialsNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
+        // Create remote credentials object
         RemoteCredentials credentials = new RemoteCredentials();
+        // Put settings into object
         credentials.setProtocol(m_protocol.getName());
         credentials.setHost(m_configuration.getHost());
         credentials.setPort(m_configuration.getPort());
@@ -111,6 +113,7 @@ public class RemoteCredentialsNodeModel extends NodeModel {
                 && m_configuration.getUsecertificate()) {
             credentials.setCertificate(m_configuration.getCertificate());
         }
+        // Return port object with remote credentials
         return new PortObject[]{new RemoteCredentialsPortObject(credentials)};
     }
 
@@ -128,6 +131,7 @@ public class RemoteCredentialsNodeModel extends NodeModel {
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
+        // Return empty port object spec
         return new PortObjectSpec[]{new RemoteCredentialsPortObjectSpec()};
     }
 

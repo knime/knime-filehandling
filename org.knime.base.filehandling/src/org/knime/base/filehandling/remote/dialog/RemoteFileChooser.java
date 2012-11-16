@@ -50,7 +50,6 @@
  */
 package org.knime.base.filehandling.remote.dialog;
 
-import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -62,12 +61,11 @@ import java.net.URI;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -77,6 +75,8 @@ import org.knime.base.filehandling.remote.files.RemoteFileFactory;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 
 /**
+ * Dialog that presents the file structure of a remote folder in a tree.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
@@ -101,15 +101,17 @@ public final class RemoteFileChooser {
 
     private RemoteCredentials m_credentials;
 
-    private JDialog m_dialog;
-
-    private JTree m_tree;
-
     private int m_selectionType;
 
     private String m_selectedFile;
 
+    private JDialog m_dialog;
+
+    private JTree m_tree;
+
     /**
+     * Creates remote file chooser for the specified folder.
+     * 
      * 
      * @param uri The URI
      * @param credentials Credentials to the URI
@@ -124,43 +126,69 @@ public final class RemoteFileChooser {
     }
 
     /**
-     * @return the selectedFile
+     * Get the selected file.
+     * 
+     * 
+     * Returns null if no selection has been made
+     * 
+     * @return the selectedFile or null if no file has been selected
      */
     public String getSelectedFile() {
         return m_selectedFile;
     }
 
     /**
+     * Opens the actual dialog window.
+     * 
+     * 
      * @param parent Parent of this dialog
      */
     public void open(final Frame parent) {
-        RemoteFile root = null;
         try {
-            root = RemoteFileFactory.createRemoteFile(m_uri, m_credentials);
+            // Create remote file to the root of the tree
+            RemoteFile root =
+                    RemoteFileFactory.createRemoteFile(m_uri, m_credentials);
+            JPanel panel = initPanel(root);
+            // Create dialog
+            m_dialog = new JDialog(parent);
+            m_dialog.setLayout(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
+            resetGBC(gbc);
+            gbc.weightx = 1;
+            gbc.weighty = 1;
+            gbc.insets = new Insets(0, 0, 0, 0);
+            m_dialog.add(panel, gbc);
+            m_dialog.setTitle("Files on server");
+            m_dialog.pack();
+            m_dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
+            m_dialog.setSize(400, 600);
+            m_dialog.setVisible(true);
+            // Stops here as long as the dialog is open, then disposes of the
+            // dialog
+            m_dialog.dispose();
         } catch (Exception e) {
-            // ignore
+            // Show error if connection problem
+            JOptionPane.showMessageDialog(parent, "Could not connect to "
+                    + m_uri, "No connection", JOptionPane.ERROR_MESSAGE);
         }
-        JPanel panel = initPanel(root);
-        m_dialog = new JDialog(parent);
-        m_dialog.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        resetGBC(gbc);
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        m_dialog.add(panel, gbc);
-        m_dialog.setTitle("Files on server");
-        m_dialog.pack();
-        m_dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
-        m_dialog.setSize(400, 600);
-        m_dialog.setVisible(true);
-        m_dialog.dispose();
+        // Close used connections
         ConnectionMonitor.closeAll();
     }
 
-    private JPanel initPanel(final RemoteFile root) {
-        JPanel panel = new JPanel(new GridBagLayout());
+    /**
+     * Initializes the panel of this dialog.
+     * 
+     * 
+     * @param root Root directory of the tree
+     * @return Panel with all components of this dialog
+     */
+    private JPanel initPanel(final RemoteFile root) throws Exception {
         GridBagConstraints gbc = new GridBagConstraints();
+        // Tree
+        RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root);
+        m_tree = new JTree(rootNode);
+        m_tree.getSelectionModel().setSelectionMode(
+                TreeSelectionModel.SINGLE_TREE_SELECTION);
         // Buttons
         resetGBC(gbc);
         JPanel buttonPanel = new JPanel(new GridBagLayout());
@@ -175,25 +203,23 @@ public final class RemoteFileChooser {
         gbc.gridx++;
         buttonPanel.add(cancel, gbc);
         // Outer panel
+        JPanel panel = new JPanel(new GridBagLayout());
         resetGBC(gbc);
         gbc.weightx = 1;
         gbc.weighty = 1;
-        try {
-            RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root);
-            m_tree = new JTree(rootNode);
-            m_tree.getSelectionModel().setSelectionMode(
-                    TreeSelectionModel.SINGLE_TREE_SELECTION);
-            m_tree.setCellRenderer(new RemoteFileTreeCellRenderer());
-            panel.add(new JScrollPane(m_tree), gbc);
-        } catch (Exception e) {
-            // ignore
-        }
+        panel.add(new JScrollPane(m_tree), gbc);
         gbc.weighty = 0;
         gbc.gridy++;
         panel.add(buttonPanel, gbc);
         return panel;
     }
 
+    /**
+     * Resets the grid bag constraints to usefull defaults.
+     * 
+     * 
+     * @param gbc The grid bag constraints
+     */
     private void resetGBC(final GridBagConstraints gbc) {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -204,19 +230,26 @@ public final class RemoteFileChooser {
         gbc.gridy = 0;
     }
 
+    /**
+     * Listener that performs the appropriate actions for button clicks.
+     */
     private class ButtonListener implements ActionListener {
 
         @Override
         public void actionPerformed(final ActionEvent e) {
+            // Get action of the button
             String action = e.getActionCommand();
             if (action.equals("ok")) {
+                // Get selected nodes
                 TreePath[] paths =
                         m_tree.getSelectionModel().getSelectionPaths();
                 if (paths.length > 0) {
+                    // Get file from selected node (single selection)
                     RemoteFile file =
                             (RemoteFile)((RemoteFileTreeNode)paths[0]
                                     .getLastPathComponent()).getUserObject();
                     try {
+                        // Check if the selection has the correct type
                         boolean typeOk = false;
                         switch (m_selectionType) {
                         case SELECT_DIR:
@@ -229,22 +262,26 @@ public final class RemoteFileChooser {
                             typeOk = true;
                             break;
                         }
+                        // Save and close only if the type is correct
                         if (typeOk) {
-                            saveAndQuit(file);
+                            saveAndClose(file);
                         }
                     } catch (Exception ex) {
                         // do not save or close
                     }
                 }
             } else if (action.equals("cancel")) {
+                // Close dialog on cancel
                 m_dialog.dispose();
                 ConnectionMonitor.closeAll();
             }
         }
 
-        private void saveAndQuit(final RemoteFile file) {
+        private void saveAndClose(final RemoteFile file) {
             try {
+                // Save path of the selected file in variable
                 m_selectedFile = file.getFullName();
+                // Close dialog and connections
                 m_dialog.dispose();
                 ConnectionMonitor.closeAll();
             } catch (Exception e) {
@@ -253,21 +290,29 @@ public final class RemoteFileChooser {
         }
     }
 
+    /**
+     * Extended tree node that uses lazy loading.
+     * 
+     * 
+     * @author Patrick Winter, University of Konstanz
+     */
     private class RemoteFileTreeNode extends DefaultMutableTreeNode {
 
         /**
-         * 
+         * Serial ID.
          */
         private static final long serialVersionUID = 1215339655731965368L;
 
         private boolean m_loaded;
 
         /**
-         * @param object The user object
+         * Create a tree node to a remote file.
          * 
+         * 
+         * @param file The remote file
          */
-        public RemoteFileTreeNode(final Object object) {
-            super(object);
+        public RemoteFileTreeNode(final RemoteFile file) {
+            super(file);
             m_loaded = false;
         }
 
@@ -278,9 +323,10 @@ public final class RemoteFileChooser {
         public boolean isLeaf() {
             boolean result = true;
             try {
+                // If the file is a directory than the node is no leaf
                 result = !((RemoteFile)getUserObject()).isDirectory();
             } catch (Exception e) {
-                // ignore
+                // in case of exception the node is a leaf
             }
             return result;
         }
@@ -290,58 +336,31 @@ public final class RemoteFileChooser {
          */
         @Override
         public int getChildCount() {
+            // When this method gets loaded the children have to be initialized
+            // Load children if this is not done yet
             if (!m_loaded) {
                 loadChildren();
             }
             return super.getChildCount();
         }
 
+        /**
+         * Loads the children of this node by using the list files ability of
+         * the remote file.
+         */
         private void loadChildren() {
             m_loaded = true;
             try {
+                // List files in directory
                 RemoteFile[] files = ((RemoteFile)getUserObject()).listFiles();
+                // Add every file to the node
                 for (int i = 0; i < files.length; i++) {
                     add(new RemoteFileTreeNode(files[i]));
                 }
             } catch (Exception e) {
-                // ignore
+                // do not add anything
             }
         }
-    }
-
-    private class RemoteFileTreeCellRenderer extends DefaultTreeCellRenderer {
-
-        /**
-         * 
-         */
-        private static final long serialVersionUID = 1891399815069956785L;
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public Component getTreeCellRendererComponent(final JTree tree,
-                final Object value, final boolean sel, final boolean expanded,
-                final boolean leaf, final int row, final boolean hasFocus1) {
-            JLabel renderer =
-                    (JLabel)super.getTreeCellRendererComponent(tree, value,
-                            sel, expanded, leaf, row, hasFocus1);
-            RemoteFile file =
-                    (RemoteFile)((DefaultMutableTreeNode)value).getUserObject();
-            try {
-                if (file.isDirectory()) {
-                    if (expanded) {
-                        renderer.setIcon(openIcon);
-                    } else {
-                        renderer.setIcon(closedIcon);
-                    }
-                }
-            } catch (Exception e) {
-                // ignore
-            }
-            return renderer;
-        }
-
     }
 
 }

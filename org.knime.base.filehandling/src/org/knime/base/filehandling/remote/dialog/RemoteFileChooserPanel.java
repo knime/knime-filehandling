@@ -50,7 +50,6 @@
  */
 package org.knime.base.filehandling.remote.dialog;
 
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -64,7 +63,6 @@ import java.util.Set;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
@@ -77,26 +75,16 @@ import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.util.StringHistory;
 
 /**
+ * Panel to choose a file from a remote location.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
 public class RemoteFileChooserPanel {
 
-    /**
-     * Select files.
-     */
-    public static final int FILES = RemoteFileChooser.SELECT_FILE;
+    private RemoteCredentials m_credentials;
 
-    /**
-     * Select directories.
-     */
-    public static final int DIRECTORIES = RemoteFileChooser.SELECT_DIR;
-
-    /**
-     * Select files or directories.
-     */
-    public static final int FILES_AND_DIRECTORIES =
-            RemoteFileChooser.SELECT_FILE_OR_DIR;
+    private String m_historyID;
 
     private JPanel m_panel;
 
@@ -106,11 +94,10 @@ public class RemoteFileChooserPanel {
 
     private FlowVariableModelButton m_fvmbutton;
 
-    private RemoteCredentials m_credentials;
-
-    private String m_historyID;
-
     /**
+     * Create panel.
+     * 
+     * 
      * @param parentPanel The parent of this panel
      * @param label Label of the file chooser
      * @param border If a border should be used
@@ -125,22 +112,11 @@ public class RemoteFileChooserPanel {
             final RemoteCredentials credentials) {
         m_credentials = credentials;
         m_historyID = historyID;
-        m_panel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 0);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.VERTICAL;
-        if (border) {
-            m_panel.setBorder(new TitledBorder(new EtchedBorder(), label));
-        } else if (!label.equals("")) {
-            m_panel.setBorder(new TitledBorder(label));
-        }
-        final JFileChooser chooser = new JFileChooser();
-        chooser.setFileSelectionMode(selectionMode);
+        // Combobox
         m_combobox = new JComboBox<String>(new String[0]);
         m_combobox.setEditable(true);
-        m_button = new JButton("Browse...");
+        // Browse button
+        m_button = new JButton("Browse");
         m_button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
@@ -165,6 +141,7 @@ public class RemoteFileChooserPanel {
                 }
             }
         });
+        // Flow variable model
         fvm.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
@@ -172,6 +149,18 @@ public class RemoteFileChooserPanel {
             }
         });
         m_fvmbutton = new FlowVariableModelButton(fvm);
+        // Outer panel
+        m_panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        if (border) {
+            m_panel.setBorder(new TitledBorder(new EtchedBorder(), label));
+        } else if (!label.equals("")) {
+            m_panel.setBorder(new TitledBorder(label));
+        }
+        gbc.insets = new Insets(5, 5, 5, 0);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.VERTICAL;
         m_panel.add(m_combobox, gbc);
         gbc.fill = GridBagConstraints.NONE;
         ++gbc.gridx;
@@ -179,12 +168,19 @@ public class RemoteFileChooserPanel {
         gbc.insets = new Insets(5, 5, 5, 5);
         ++gbc.gridx;
         m_panel.add(m_fvmbutton, gbc);
+        // Initialize enabled states
+        setEnabled(true);
     }
 
     /**
-     * @param credentials The credentials for the connection
+     * Set the credentials that will be used for this connection.
+     * 
+     * 
+     * @param credentials The credentials for the connection.
      */
     public void setCredentials(final RemoteCredentials credentials) {
+        // If credentials get initialized here than adjust history id
+        // accordingly
         if (m_credentials == null) {
             m_historyID =
                     credentials.toURI().toString().replaceAll("[/@:?&#]", "")
@@ -195,6 +191,9 @@ public class RemoteFileChooserPanel {
     }
 
     /**
+     * Set the selection of this file chooser.
+     * 
+     * 
      * @param selection The new selection
      */
     public void setSelection(final String selection) {
@@ -202,6 +201,9 @@ public class RemoteFileChooserPanel {
     }
 
     /**
+     * Get the current selection.
+     * 
+     * 
      * @return The current selection
      */
     public String getSelection() {
@@ -209,16 +211,23 @@ public class RemoteFileChooserPanel {
     }
 
     /**
-     * @return The component
+     * Get the panel.
+     * 
+     * 
+     * @return The panel
      */
-    public Component getComponent() {
+    public JPanel getPanel() {
         return m_panel;
     }
 
     /**
-     * @param enabled If the component should be enabled
+     * Enable or disable this panel.
+     * 
+     * 
+     * @param enabled If the panel should be enabled
      */
     public void setEnabled(final boolean enabled) {
+        // Some components will only be enabled if replacement is not enabled
         boolean replacement =
                 m_fvmbutton.getFlowVariableModel()
                         .isVariableReplacementEnabled();
@@ -228,16 +237,24 @@ public class RemoteFileChooserPanel {
         m_fvmbutton.setEnabled(enabled);
     }
 
+    /**
+     * Update the history of the combo box.
+     */
     private void updateHistory() {
+        // Get history
         StringHistory history = StringHistory.getInstance(m_historyID);
+        // Get values
         String[] strings = history.getHistory();
+        // Make values unique through use of set
         Set<String> set = new LinkedHashSet<String>();
         for (int i = 0; i < strings.length; i++) {
             set.add(strings[i]);
         }
+        // Remove old elements
         DefaultComboBoxModel<String> model =
                 (DefaultComboBoxModel<String>)m_combobox.getModel();
         model.removeAllElements();
+        // Add new elements
         for (String string : set) {
             model.addElement(string);
         }

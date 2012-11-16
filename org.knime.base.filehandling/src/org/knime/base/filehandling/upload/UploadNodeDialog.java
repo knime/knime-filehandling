@@ -52,6 +52,7 @@ package org.knime.base.filehandling.upload;
 
 import javax.swing.JPanel;
 
+import org.knime.base.filehandling.remote.dialog.RemoteFileChooser;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooserPanel;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
@@ -81,7 +82,7 @@ public class UploadNodeDialog extends NodeDialogPane {
     public UploadNodeDialog() {
         m_target =
                 new RemoteFileChooserPanel(getPanel(), "Remote folder", true,
-                        "targetHistory", RemoteFileChooserPanel.DIRECTORIES,
+                        "targetHistory", RemoteFileChooser.SELECT_DIR,
                         createFlowVariableModel("target",
                                 FlowVariable.Type.STRING), m_credentials);
         addTab("Options", initLayout());
@@ -89,7 +90,7 @@ public class UploadNodeDialog extends NodeDialogPane {
 
     private JPanel initLayout() {
         JPanel panel = new JPanel();
-        panel.add(m_target.getComponent());
+        panel.add(m_target.getPanel());
         return panel;
     }
 

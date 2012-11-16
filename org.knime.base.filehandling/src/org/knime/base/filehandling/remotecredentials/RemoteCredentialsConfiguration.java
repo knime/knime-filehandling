@@ -55,6 +55,8 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 
 /**
+ * Configuration for the node.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
@@ -79,6 +81,9 @@ class RemoteCredentialsConfiguration {
     private String m_certificate;
 
     /**
+     * Create uninitialized configuration to a certain protocol.
+     * 
+     * 
      * @param protocol The protocol of this credential configuration
      */
     RemoteCredentialsConfiguration(final Protocol protocol) {
@@ -198,6 +203,9 @@ class RemoteCredentialsConfiguration {
     }
 
     /**
+     * Save this configuration into the settings.
+     * 
+     * 
      * @param settings The <code>NodeSettings</code> to write to
      */
     void save(final NodeSettingsWO settings) {
@@ -216,6 +224,9 @@ class RemoteCredentialsConfiguration {
     }
 
     /**
+     * Load this configuration from the settings.
+     * 
+     * 
      * @param settings The <code>NodeSettings</code> to read from
      */
     void loadInDialog(final NodeSettingsRO settings) {
@@ -236,6 +247,9 @@ class RemoteCredentialsConfiguration {
     }
 
     /**
+     * Load and validate this configuration from the settings.
+     * 
+     * 
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
@@ -258,6 +272,7 @@ class RemoteCredentialsConfiguration {
             if (m_authenticationmethod.equals(AuthenticationMethod.KEYFILE
                     .getName())) {
                 validate(m_user, "user");
+                validate(m_password, "password");
                 validate(m_keyfile, "keyfile");
             }
         }

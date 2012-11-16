@@ -76,6 +76,15 @@ public enum Protocol {
 
     private boolean m_certificatesupport;
 
+    /**
+     * Create a protocol.
+     * 
+     * 
+     * @param name The name
+     * @param port The default port
+     * @param keyfileSupport If authentication via keyfile is supported
+     * @param certificateSupport If adding of certificates is supported
+     */
     private Protocol(final String name, final int port,
             final boolean keyfileSupport, final boolean certificateSupport) {
         m_name = name;
