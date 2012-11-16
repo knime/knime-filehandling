@@ -56,8 +56,11 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.net.URI;
 
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -65,6 +68,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
@@ -96,19 +101,33 @@ public final class RemoteFileChooser {
 
     private RemoteCredentials m_credentials;
 
-    // private int m_selection;
+    private JDialog m_dialog;
+
+    private JTree m_tree;
+
+    private int m_selectionType;
+
+    private String m_selectedFile;
 
     /**
      * 
      * @param uri The URI
      * @param credentials Credentials to the URI
-     * @param selection Whether a file or a directory should be selected
+     * @param selectionType Whether a file or a directory should be selected
      */
     public RemoteFileChooser(final URI uri,
-            final RemoteCredentials credentials, final int selection) {
+            final RemoteCredentials credentials, final int selectionType) {
         m_uri = uri;
         m_credentials = credentials;
-        // m_selection = selection;
+        m_selectionType = selectionType;
+        m_selectedFile = null;
+    }
+
+    /**
+     * @return the selectedFile
+     */
+    public String getSelectedFile() {
+        return m_selectedFile;
     }
 
     /**
@@ -122,37 +141,56 @@ public final class RemoteFileChooser {
             // ignore
         }
         JPanel panel = initPanel(root);
-        JDialog dialog = new JDialog(parent);
-        dialog.setLayout(new GridBagLayout());
+        m_dialog = new JDialog(parent);
+        m_dialog.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         resetGBC(gbc);
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.insets = new Insets(0, 0, 0, 0);
-        dialog.add(panel, gbc);
-        dialog.setTitle("Files on server");
-        dialog.pack();
-        dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
-        dialog.setSize(400, 600);
-        dialog.setVisible(true);
-        dialog.dispose();
+        m_dialog.add(panel, gbc);
+        m_dialog.setTitle("Files on server");
+        m_dialog.pack();
+        m_dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
+        m_dialog.setSize(400, 600);
+        m_dialog.setVisible(true);
+        m_dialog.dispose();
         ConnectionMonitor.closeAll();
     }
 
     private JPanel initPanel(final RemoteFile root) {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
+        // Buttons
+        resetGBC(gbc);
+        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        JButton ok = new JButton("OK");
+        ok.setActionCommand("ok");
+        ok.addActionListener(new ButtonListener());
+        JButton cancel = new JButton("Cancel");
+        cancel.setActionCommand("cancel");
+        cancel.addActionListener(new ButtonListener());
+        ok.setPreferredSize(cancel.getPreferredSize());
+        buttonPanel.add(ok, gbc);
+        gbc.gridx++;
+        buttonPanel.add(cancel, gbc);
+        // Outer panel
         resetGBC(gbc);
         gbc.weightx = 1;
         gbc.weighty = 1;
         try {
             RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root);
-            JTree tree = new JTree(rootNode);
-            tree.setCellRenderer(new RemoteFileTreeCellRenderer());
-            panel.add(new JScrollPane(tree), gbc);
+            m_tree = new JTree(rootNode);
+            m_tree.getSelectionModel().setSelectionMode(
+                    TreeSelectionModel.SINGLE_TREE_SELECTION);
+            m_tree.setCellRenderer(new RemoteFileTreeCellRenderer());
+            panel.add(new JScrollPane(m_tree), gbc);
         } catch (Exception e) {
             // ignore
         }
+        gbc.weighty = 0;
+        gbc.gridy++;
+        panel.add(buttonPanel, gbc);
         return panel;
     }
 
@@ -164,6 +202,55 @@ public final class RemoteFileChooser {
         gbc.weighty = 0;
         gbc.gridx = 0;
         gbc.gridy = 0;
+    }
+
+    private class ButtonListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+            String action = e.getActionCommand();
+            if (action.equals("ok")) {
+                TreePath[] paths =
+                        m_tree.getSelectionModel().getSelectionPaths();
+                if (paths.length > 0) {
+                    RemoteFile file =
+                            (RemoteFile)((RemoteFileTreeNode)paths[0]
+                                    .getLastPathComponent()).getUserObject();
+                    try {
+                        boolean typeOk = false;
+                        switch (m_selectionType) {
+                        case SELECT_DIR:
+                            typeOk = file.isDirectory();
+                            break;
+                        case SELECT_FILE:
+                            typeOk = !file.isDirectory();
+                            break;
+                        case SELECT_FILE_OR_DIR:
+                            typeOk = true;
+                            break;
+                        }
+                        if (typeOk) {
+                            saveAndQuit(file);
+                        }
+                    } catch (Exception ex) {
+                        // do not save or close
+                    }
+                }
+            } else if (action.equals("cancel")) {
+                m_dialog.dispose();
+                ConnectionMonitor.closeAll();
+            }
+        }
+
+        private void saveAndQuit(final RemoteFile file) {
+            try {
+                m_selectedFile = file.getFullName();
+                m_dialog.dispose();
+                ConnectionMonitor.closeAll();
+            } catch (Exception e) {
+                // do not close in case of exception
+            }
+        }
     }
 
     private class RemoteFileTreeNode extends DefaultMutableTreeNode {

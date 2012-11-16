@@ -50,15 +50,9 @@
  */
 package org.knime.base.filehandling.upload;
 
-import java.awt.Container;
-import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.JButton;
 import javax.swing.JPanel;
 
-import org.knime.base.filehandling.remote.dialog.RemoteFileChooser;
+import org.knime.base.filehandling.remote.dialog.RemoteFileChooserPanel;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
 import org.knime.core.node.InvalidSettingsException;
@@ -67,6 +61,7 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.workflow.FlowVariable;
 
 /**
  * <code>NodeDialog</code> for the node.
@@ -78,38 +73,23 @@ public class UploadNodeDialog extends NodeDialogPane {
 
     private RemoteCredentials m_credentials;
 
-    private JButton m_target;
+    private RemoteFileChooserPanel m_target;
 
     /**
      * New pane for configuring the node dialog.
      */
     public UploadNodeDialog() {
-        m_target = new JButton("Browse");
-        m_target.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                // Open dialog
-                Frame frame = null;
-                Container container = getPanel().getParent();
-                while (container != null) {
-                    if (container instanceof Frame) {
-                        frame = (Frame)container;
-                        break;
-                    }
-                    container = container.getParent();
-                }
-                RemoteFileChooser dialog =
-                        new RemoteFileChooser(m_credentials.toURI(),
-                                m_credentials, RemoteFileChooser.SELECT_DIR);
-                dialog.open(frame);
-            }
-        });
+        m_target =
+                new RemoteFileChooserPanel(getPanel(), "Remote folder", true,
+                        "targetHistory", RemoteFileChooserPanel.DIRECTORIES,
+                        createFlowVariableModel("target",
+                                FlowVariable.Type.STRING), m_credentials);
         addTab("Options", initLayout());
     }
 
     private JPanel initLayout() {
         JPanel panel = new JPanel();
-        panel.add(m_target);
+        panel.add(m_target.getComponent());
         return panel;
     }
 
@@ -122,6 +102,7 @@ public class UploadNodeDialog extends NodeDialogPane {
         RemoteCredentialsPortObjectSpec object =
                 (RemoteCredentialsPortObjectSpec)specs[0];
         m_credentials = object.getCredentials();
+        m_target.setCredentials(m_credentials);
         if (m_credentials == null) {
             throw new NotConfigurableException("No credentials available");
         }
