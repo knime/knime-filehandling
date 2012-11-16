@@ -349,7 +349,6 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
         try {
             string = getName();
         } catch (Exception e) {
-            e.printStackTrace();
             // File name is unknown
         }
         return string;
@@ -368,7 +367,6 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
                 result = -1;
             }
         } catch (Exception e) {
-            e.printStackTrace();
             // put this after o
         }
         return result;

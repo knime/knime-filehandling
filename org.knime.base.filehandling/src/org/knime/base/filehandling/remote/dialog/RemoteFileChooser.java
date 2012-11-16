@@ -119,7 +119,7 @@ public final class RemoteFileChooser {
         try {
             root = RemoteFileFactory.createRemoteFile(m_uri, m_credentials);
         } catch (Exception e) {
-            e.printStackTrace();
+            // ignore
         }
         JPanel panel = initPanel(root);
         JDialog dialog = new JDialog(parent);
@@ -151,7 +151,7 @@ public final class RemoteFileChooser {
             tree.setCellRenderer(new RemoteFileTreeCellRenderer());
             panel.add(new JScrollPane(tree), gbc);
         } catch (Exception e) {
-            e.printStackTrace();
+            // ignore
         }
         return panel;
     }
@@ -217,7 +217,6 @@ public final class RemoteFileChooser {
                     add(new RemoteFileTreeNode(files[i]));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 // ignore
             }
         }
