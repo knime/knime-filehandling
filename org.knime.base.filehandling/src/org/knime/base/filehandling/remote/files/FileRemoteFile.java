@@ -58,8 +58,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
 
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
-
 /**
  * Implementation of the file remote file.
  * 
@@ -75,9 +73,8 @@ public class FileRemoteFile extends RemoteFile {
      * 
      * 
      * @param uri The URI
-     * @param credentials Credentials to the given URI
      */
-    FileRemoteFile(final URI uri, final RemoteCredentials credentials) {
+    FileRemoteFile(final URI uri) {
         m_uri = uri;
     }
 
@@ -96,14 +93,6 @@ public class FileRemoteFile extends RemoteFile {
     protected Connection createConnection() {
         // Does not use a connection
         return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String getIdentifier() {
-        return buildIdentifier(m_uri);
     }
 
     /**
@@ -142,32 +131,16 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public boolean move(final RemoteFile file) throws Exception {
-        boolean success;
+    public void move(final RemoteFile file) throws Exception {
         if (file instanceof FileRemoteFile) {
             FileRemoteFile source = (FileRemoteFile)file;
-            success = new File(m_uri).renameTo(new File(source.m_uri));
+            boolean success = new File(m_uri).renameTo(new File(source.m_uri));
+            if (!success) {
+                throw new Exception("Move operation failed");
+            }
         } else {
-            write(file);
-            success = file.delete();
+            super.move(file);
         }
-        return success;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void write(final RemoteFile file) throws Exception {
-        byte[] buffer = new byte[1024];
-        InputStream in = file.openInputStream();
-        OutputStream out = openOutputStream();
-        int length;
-        while (((length = in.read(buffer)) > 0)) {
-            out.write(buffer, 0, length);
-        }
-        in.close();
-        out.close();
     }
 
     /**
@@ -217,10 +190,12 @@ public class FileRemoteFile extends RemoteFile {
     public RemoteFile[] listFiles() throws Exception {
         RemoteFile[] files;
         if (isDirectory()) {
+            // Get files in directory
             File[] f = new File(m_uri).listFiles();
             files = new RemoteFile[f.length];
+            // Create remote files from local files
             for (int i = 0; i < f.length; i++) {
-                files[i] = new FileRemoteFile(f[i].toURI(), null);
+                files[i] = new FileRemoteFile(f[i].toURI());
             }
         } else {
             files = new RemoteFile[0];
@@ -242,7 +217,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public void close() throws Exception {
-        // Not used
+        // No connection to close
     }
 
     /**
@@ -255,11 +230,14 @@ public class FileRemoteFile extends RemoteFile {
     private boolean deleteRecursively(final String path) {
         File file = new File(path);
         if (file.isDirectory()) {
+            // Get files in directory
             String[] files = file.list();
             for (int i = 0; i < files.length; i++) {
+                // Delete each file recursively
                 deleteRecursively(files[i]);
             }
         }
+        // Delete this file
         return file.delete();
     }
 

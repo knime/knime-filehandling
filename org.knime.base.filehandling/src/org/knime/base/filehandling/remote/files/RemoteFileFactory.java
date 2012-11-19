@@ -73,15 +73,18 @@ public final class RemoteFileFactory {
      * @param uri The URI
      * @param credentials Credentials to the given URI
      * @return Remote file for the given URI
-     * @throws Exception If creation of the remote file failed
+     * @throws Exception If creation of the remote file or opening of its
+     *             connection failed
      */
     public static RemoteFile createRemoteFile(final URI uri,
             final RemoteCredentials credentials) throws Exception {
+        // Check if the credentials fit to the URI
         credentials.fitsToURI(uri);
         String scheme = uri.getScheme().toLowerCase();
         RemoteFile remoteFile = null;
+        // Create remote file that fits to the scheme
         if (scheme.equals("file")) {
-            remoteFile = new FileRemoteFile(uri, credentials);
+            remoteFile = new FileRemoteFile(uri);
         } else if (scheme.equals("ftp")) {
             remoteFile = new FTPRemoteFile(uri, credentials);
         } else if (scheme.equals("sftp") || scheme.equals("ssh")) {
@@ -92,6 +95,7 @@ public final class RemoteFileFactory {
             remoteFile = new SCPRemoteFile(uri, credentials);
         }
         if (remoteFile != null) {
+            // Open connection of the remote file
             remoteFile.open();
         }
         return remoteFile;

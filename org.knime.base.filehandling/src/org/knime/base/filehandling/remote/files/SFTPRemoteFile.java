@@ -77,11 +77,11 @@ public class SFTPRemoteFile extends RemoteFile {
 
     private static ChannelSftp channel = null;
 
+    private String m_path = null;
+
     private URI m_uri;
 
     private RemoteCredentials m_credentials;
-
-    private String m_path = null;
 
     /**
      * Creates a SFTP remote file for the given URI.
@@ -95,7 +95,7 @@ public class SFTPRemoteFile extends RemoteFile {
         try {
             m_uri = new URI(uri.toString().replaceFirst("sftp", "ssh"));
         } catch (URISyntaxException e) {
-            // should not happen
+            // Should not happen, since the syntax remains untouched
         }
         m_credentials = credentials;
     }
@@ -121,14 +121,6 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    protected String getIdentifier() {
-        return buildIdentifier(m_uri);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public URI getURI() {
         return m_uri;
     }
@@ -148,10 +140,12 @@ public class SFTPRemoteFile extends RemoteFile {
     public String getName() throws Exception {
         String name;
         if (isDirectory()) {
+            // Remove '/' from path and separate name
             name =
                     FilenameUtils.getName(FilenameUtils
                             .normalizeNoEndSeparator(getPath()));
         } else {
+            // Use name from URI
             name = FilenameUtils.getName(m_uri.getPath());
         }
         return FilenameUtils.normalize(name);
@@ -163,7 +157,9 @@ public class SFTPRemoteFile extends RemoteFile {
     @Override
     public String getPath() throws Exception {
         openChannel();
+        // Use path determined through first run of openChannel()
         String path = m_path;
+        // Make sure that the path ends with a '/'
         if (!path.endsWith("/")) {
             path += "/";
         }
@@ -175,6 +171,7 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean exists() throws Exception {
+        // If the file can be found through ls, the file exists
         return getLsEntry() != null;
     }
 
@@ -183,48 +180,45 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean isDirectory() throws Exception {
+        boolean isDirectory = false;
         openChannel();
-        String path = m_uri.getPath();
-        if (path == null || path.length() == 0) {
-            path = m_path;
+        // Use path from URI
+        String path = FilenameUtils.normalize(m_uri.getPath());
+        if (path != null && path.length() > 0) {
+            // If path is not missing, try to cd to it
+            isDirectory = cd(path);
+        } else {
+            // If path is missing, interpret this file as root directory, so it
+            // is always a directory
+            isDirectory = true;
         }
-        return cd(path);
+        return isDirectory;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean move(final RemoteFile file) throws Exception {
-        boolean success;
+    public void move(final RemoteFile file) throws Exception {
+        // If the file is also an SFTP remote file and over the same connection
+        // it can be moved
         if (file instanceof SFTPRemoteFile
                 && getIdentifier().equals(file.getIdentifier())) {
             SFTPRemoteFile source = (SFTPRemoteFile)file;
             openChannel();
+            // Remember if file existed before
             boolean existed = exists();
+            // Move file
             channel.rename(source.m_uri.getPath(), m_uri.getPath());
-            success = !existed && exists() && !source.exists();
+            // Success if target did not exist and now exists and the source
+            // does not exist anymore
+            boolean success = !existed && exists() && !source.exists();
+            if (!success) {
+                throw new Exception("Move operation failed");
+            }
         } else {
-            write(file);
-            success = file.delete();
+            super.move(file);
         }
-        return success;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void write(final RemoteFile file) throws Exception {
-        byte[] buffer = new byte[1024];
-        InputStream in = file.openInputStream();
-        OutputStream out = openOutputStream();
-        int length;
-        while (((length = in.read(buffer)) > 0)) {
-            out.write(buffer, 0, length);
-        }
-        in.close();
-        out.close();
     }
 
     /**
@@ -235,6 +229,7 @@ public class SFTPRemoteFile extends RemoteFile {
         openChannel();
         String path = m_uri.getPath();
         InputStream stream = channel.get(path);
+        // Open stream (null if stream could not be opened)
         if (stream == null) {
             throw new Exception("Path not reachable");
         }
@@ -249,6 +244,7 @@ public class SFTPRemoteFile extends RemoteFile {
         openChannel();
         String path = m_uri.getPath();
         OutputStream stream = channel.put(path);
+        // Open stream (null if stream could not be opened)
         if (stream == null) {
             throw new Exception("Path not reachable");
         }
@@ -260,6 +256,7 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public long getSize() throws Exception {
+        // Assume missing
         long size = 0;
         LsEntry entry = getLsEntry();
         if (entry != null) {
@@ -287,21 +284,22 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean delete() throws Exception {
-        boolean result = true;
+        // Delete can only be true if the file exists
+        boolean result = exists();
         openChannel();
-        String path = m_uri.getPath();
-        try {
+        String path = getFullName();
+        if (exists()) {
             if (isDirectory()) {
+                // Delete inner files first
+                RemoteFile[] files = listFiles();
+                for (int i = 0; i < files.length; i++) {
+                    files[i].delete();
+                }
+                // Delete this directory
                 channel.rmdir(path);
             } else {
+                // Delete this file
                 channel.rm(path);
-            }
-        } catch (SftpException e) {
-            int code = Integer.parseInt(e.toString().split(":")[0]);
-            if (code == ChannelSftp.SSH_FX_NO_SUCH_FILE) {
-                result = false;
-            } else {
-                throw e;
             }
         }
         return result;
@@ -317,19 +315,25 @@ public class SFTPRemoteFile extends RemoteFile {
         RemoteFile[] outFiles = new RemoteFile[0];
         if (isDirectory()) {
             try {
+                // Get ls entries
                 Vector<LsEntry> entries = channel.ls(".");
+                // Generate remote file for each entry that is a file
                 for (int i = 0; i < entries.size(); i++) {
+                    // . and .. will return null after normalization
                     String filename =
                             FilenameUtils.normalize(entries.get(i)
                                     .getFilename());
                     if (filename != null && filename.length() > 0) {
+                        // Build URI
                         URI uri =
                                 new URI(m_uri.getScheme() + "://"
                                         + m_uri.getAuthority() + getPath()
                                         + filename);
+                        // Create remote file and open it
                         RemoteFile file =
                                 new SFTPRemoteFile(uri, m_credentials);
                         file.open();
+                        // Add remote file to the result list
                         files.add(file);
                     }
                 }
@@ -338,6 +342,7 @@ public class SFTPRemoteFile extends RemoteFile {
                 // return 0 files
             }
         }
+        // Sort results
         Arrays.sort(outFiles);
         return outFiles;
     }
@@ -348,7 +353,7 @@ public class SFTPRemoteFile extends RemoteFile {
     @Override
     public boolean mkDir() throws Exception {
         boolean existed = exists();
-        channel.mkdir(m_uri.getPath());
+        channel.mkdir(getFullName());
         return !existed && exists();
     }
 
@@ -369,20 +374,28 @@ public class SFTPRemoteFile extends RemoteFile {
      * @throws Exception If the channel could not be opened
      */
     private void openChannel() throws Exception {
-        if (channel == null || !channel.isConnected()) {
+        // Check if channel is ready
+        if (channel == null) {
             Session session = ((SSHConnection)getConnection()).getSession();
             channel = (ChannelSftp)session.openChannel("sftp");
+        }
+        // Connect channel
+        if (!channel.isConnected()) {
             channel.connect();
         }
+        // Check if path is initialized
         if (m_path == null) {
             boolean pathSet = false;
             String path =
                     FilenameUtils.normalizeNoEndSeparator(m_uri.getPath());
+            // If URI has path
             if (path != null && path.length() > 0) {
                 if (cd(path)) {
+                    // Path points to directory
                     m_path = path;
                     pathSet = true;
                 } else {
+                    // Path points to file
                     path = FilenameUtils.getPath(path);
                     if (cd(path)) {
                         m_path = path;
@@ -391,8 +404,11 @@ public class SFTPRemoteFile extends RemoteFile {
                 }
             }
             if (!pathSet) {
+                // Use root directory
                 String oldDir;
                 String newDir;
+                // Change directory to parent until the path does not change
+                // anymore
                 do {
                     oldDir = channel.pwd();
                     cd("..");
@@ -401,6 +417,7 @@ public class SFTPRemoteFile extends RemoteFile {
                 m_path = newDir;
             }
         }
+        // Change to correct directory
         cd(m_path);
     }
 
@@ -413,12 +430,20 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @SuppressWarnings("unchecked")
     private LsEntry getLsEntry() throws Exception {
+        // Assume missing
         LsEntry entry = null;
         openChannel();
+        // If this is a directory change to parent
+        if (isDirectory()) {
+            channel.cd("..");
+        }
+        // Get all entries in working directory
         Vector<LsEntry> entries = channel.ls(".");
+        // Check all entries by name
         for (int i = 0; i < entries.size(); i++) {
             LsEntry currentEntry = entries.get(i);
             if (currentEntry.getFilename().equals(getName())) {
+                // Entry with the same name is the correct one
                 entry = currentEntry;
                 break;
             }
@@ -426,13 +451,20 @@ public class SFTPRemoteFile extends RemoteFile {
         return entry;
     }
 
+    /**
+     * Change to another directory.
+     * 
+     * 
+     * @param path Path to the new directory
+     * @return true if the cd was successful, false otherwise
+     */
     private boolean cd(final String path) {
         boolean result = false;
         try {
             channel.cd(path);
             result = true;
         } catch (SftpException e) {
-            // return false
+            // return false if cd was not possible
         }
         return result;
     }

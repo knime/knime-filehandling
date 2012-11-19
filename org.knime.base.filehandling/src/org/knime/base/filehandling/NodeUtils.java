@@ -50,6 +50,9 @@
  */
 package org.knime.base.filehandling;
 
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
 import org.knime.core.data.DataValue;
@@ -108,6 +111,25 @@ public final class NodeUtils {
                         + " column not set");
             }
         }
+    }
+
+    /**
+     * Reset the grid bag constraints to useful defaults.
+     * 
+     * 
+     * The defaults are all insets to 5, anchor northwest, fill both, x and y 0
+     * and x and y weight 0.
+     * 
+     * @param gbc The constraints object.
+     */
+    public static void resetGBC(final GridBagConstraints gbc) {
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
     }
 
 }

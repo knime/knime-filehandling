@@ -60,6 +60,8 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 
 /**
+ * Port object containing remote credentials.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
@@ -74,13 +76,16 @@ public class RemoteCredentialsPortObject extends AbstractSimplePortObject {
             RemoteCredentialsPortObject.class);
 
     /**
-     * 
+     * Should only be used by the framework.
      */
     public RemoteCredentialsPortObject() {
         // Used by framework
     }
 
     /**
+     * Creates a port object with the given credentials.
+     * 
+     * 
      * @param credentials The content of this port object
      */
     public RemoteCredentialsPortObject(final RemoteCredentials credentials) {
@@ -91,6 +96,9 @@ public class RemoteCredentialsPortObject extends AbstractSimplePortObject {
     }
 
     /**
+     * Returns the credentials contained by this port object.
+     * 
+     * 
      * @return The content of this port object
      */
     public RemoteCredentials getCredentials() {

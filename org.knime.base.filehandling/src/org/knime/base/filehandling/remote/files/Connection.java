@@ -62,7 +62,7 @@ public abstract class Connection {
      * Open this connection.
      * 
      * 
-     * @throws Exception If the opening failed
+     * @throws Exception If opening failed
      */
     public abstract void open() throws Exception;
 
@@ -78,7 +78,7 @@ public abstract class Connection {
      * Close this connection.
      * 
      * 
-     * @throws Exception If the closing failed
+     * @throws Exception If closing failed
      */
     public abstract void close() throws Exception;
 

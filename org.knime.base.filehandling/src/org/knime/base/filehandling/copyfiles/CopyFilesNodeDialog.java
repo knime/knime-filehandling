@@ -67,6 +67,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.FlowVariableModelButton;
@@ -177,20 +178,20 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         // Copy or move
-        resetGBC(gbc);
+        NodeUtils.resetGBC(gbc);
         JPanel copyOrMovePanel = new JPanel(new GridBagLayout());
         copyOrMovePanel.add(m_copy, gbc);
         gbc.gridx++;
         copyOrMovePanel.add(m_move, gbc);
         // Source column
-        resetGBC(gbc);
+        NodeUtils.resetGBC(gbc);
         JPanel sourceColumnPanel = new JPanel(new GridBagLayout());
         sourceColumnPanel.add(m_sourcecolumnlabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
         sourceColumnPanel.add(m_sourcecolumn, gbc);
         // Output directory
-        resetGBC(gbc);
+        NodeUtils.resetGBC(gbc);
         JPanel outputDirectoryPanel = new JPanel(new GridBagLayout());
         gbc.weightx = 1;
         outputDirectoryPanel.add(m_outputdirectory, gbc);
@@ -199,7 +200,7 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         gbc.insets = new Insets(5, 0, 5, 5);
         outputDirectoryPanel.add(m_outputdirectoryfvm, gbc);
         // Filename handling
-        resetGBC(gbc);
+        NodeUtils.resetGBC(gbc);
         JPanel filenameHandlingPanel = new JPanel(new GridBagLayout());
         filenameHandlingPanel.setBorder(new EtchedBorder());
         filenameHandlingPanel.add(m_fromseparatecolumn, gbc);
@@ -215,7 +216,7 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         gbc.gridy++;
         filenameHandlingPanel.add(outputDirectoryPanel, gbc);
         // If exists
-        resetGBC(gbc);
+        NodeUtils.resetGBC(gbc);
         JPanel ifExistsPanel = new JPanel(new GridBagLayout());
         ifExistsPanel.setBorder(new TitledBorder(new EtchedBorder(),
                 "If a file exists..."));
@@ -223,7 +224,7 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         gbc.gridx++;
         ifExistsPanel.add(m_abort, gbc);
         // Outer panel
-        resetGBC(gbc);
+        NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.NONE;
         panel.add(copyOrMovePanel, gbc);
@@ -236,16 +237,6 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         gbc.fill = GridBagConstraints.NONE;
         panel.add(ifExistsPanel, gbc);
         return panel;
-    }
-
-    private void resetGBC(final GridBagConstraints gbc) {
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
     }
 
     private void enableFilenamehandlingComponents() {

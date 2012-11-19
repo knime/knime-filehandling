@@ -91,10 +91,13 @@ public final class ConnectionMonitor {
      */
     public static synchronized Connection findConnection(final String identifier) {
         Connection connection = connections.get(identifier);
+        // Check if connection is open
         if (connection != null && !connection.isOpen()) {
             try {
+                // Try to open connection
                 connection.open();
             } catch (Exception e) {
+                // Remove in case of error
                 connections.remove(identifier);
                 connection = null;
             }
@@ -103,7 +106,7 @@ public final class ConnectionMonitor {
     }
 
     /**
-     * Close all connections.
+     * Close and remove all connections.
      */
     public static synchronized void closeAll() {
         Set<String> identifiers = connections.keySet();

@@ -86,6 +86,8 @@ public class RemoteFileChooserPanel {
 
     private String m_historyID;
 
+    private String m_hostSpecificID;
+
     private JPanel m_panel;
 
     private JComboBox<String> m_combobox;
@@ -111,6 +113,7 @@ public class RemoteFileChooserPanel {
             final int selectionMode, final FlowVariableModel fvm,
             final RemoteCredentials credentials) {
         m_credentials = credentials;
+        m_hostSpecificID = historyID;
         m_historyID = historyID;
         // Combobox
         m_combobox = new JComboBox<String>(new String[0]);
@@ -135,7 +138,7 @@ public class RemoteFileChooserPanel {
                 dialog.open(frame);
                 String selected = dialog.getSelectedFile();
                 if (selected != null) {
-                    StringHistory.getInstance(m_historyID).add(selected);
+                    StringHistory.getInstance(m_hostSpecificID).add(selected);
                     setSelection(selected);
                     updateHistory();
                 }
@@ -179,14 +182,12 @@ public class RemoteFileChooserPanel {
      * @param credentials The credentials for the connection.
      */
     public void setCredentials(final RemoteCredentials credentials) {
-        // If credentials get initialized here than adjust history id
-        // accordingly
-        if (m_credentials == null) {
-            m_historyID =
-                    credentials.toURI().toString().replaceAll("[/@:?&#]", "")
-                            + m_historyID;
-            updateHistory();
-        }
+        // Build specific history id by using the host information and the
+        // history id
+        m_hostSpecificID =
+                credentials.toURI().toString().replaceAll("[/@:?&#]", "")
+                        + m_historyID;
+        updateHistory();
         m_credentials = credentials;
     }
 
@@ -242,7 +243,7 @@ public class RemoteFileChooserPanel {
      */
     private void updateHistory() {
         // Get history
-        StringHistory history = StringHistory.getInstance(m_historyID);
+        StringHistory history = StringHistory.getInstance(m_hostSpecificID);
         // Get values
         String[] strings = history.getHistory();
         // Make values unique through use of set

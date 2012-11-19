@@ -214,9 +214,11 @@ class RemoteCredentialsConfiguration {
         settings.addInt("port", m_port);
         settings.addString("authenticationmethod", m_authenticationmethod);
         settings.addString("password", m_password);
+        // Only save if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             settings.addString("keyfile", m_keyfile);
         }
+        // Only save if the protocol supports certificates
         if (m_protocol.hasCertificateSupport()) {
             settings.addBoolean("usecertificate", m_usecertificate);
             settings.addString("certificate", m_certificate);
@@ -237,9 +239,11 @@ class RemoteCredentialsConfiguration {
                 settings.getString("authenticationmethod",
                         AuthenticationMethod.PASSWORD.getName());
         m_password = settings.getString("password", "");
+        // Only load if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             m_keyfile = settings.getString("keyfile", "");
         }
+        // Only load if the protocol supports certificates
         if (m_protocol.hasCertificateSupport()) {
             m_usecertificate = settings.getBoolean("usecertificate", false);
             m_certificate = settings.getString("certificate", "");
@@ -262,13 +266,16 @@ class RemoteCredentialsConfiguration {
         m_authenticationmethod = settings.getString("authenticationmethod");
         validate(m_authenticationmethod, "authenticationmethod");
         m_password = settings.getString("password");
+        // Only validate if the authentication method is set to password
         if (m_authenticationmethod.equals(AuthenticationMethod.PASSWORD
                 .getName())) {
             validate(m_user, "user");
             validate(m_password, "password");
         }
+        // Only load if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             m_keyfile = settings.getString("keyfile");
+            // Only validate if the authentication method is set to keyfile
             if (m_authenticationmethod.equals(AuthenticationMethod.KEYFILE
                     .getName())) {
                 validate(m_user, "user");
@@ -276,6 +283,7 @@ class RemoteCredentialsConfiguration {
                 validate(m_keyfile, "keyfile");
             }
         }
+        // Only load if the protocol supports certificates
         if (m_protocol.hasCertificateSupport()) {
             m_usecertificate = settings.getBoolean("usecertificate");
             m_certificate = settings.getString("certificate");

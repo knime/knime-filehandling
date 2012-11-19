@@ -87,7 +87,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
             String identifier = getIdentifier();
             Connection connection =
                     ConnectionMonitor.findConnection(identifier);
-            // If no connection available create a new one
+            // If no connection is available create a new one
             if (connection == null) {
                 connection = createConnection();
                 connection.open();
@@ -121,19 +121,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * 
      * @return Identifier to this remote files connection
      */
-    protected abstract String getIdentifier();
-
-    /**
-     * Build the default identifier to the given URI.
-     * 
-     * 
-     * Consists of the scheme, the user, the host and the port. Uses the default
-     * port if the URI specifies no port.
-     * 
-     * @param uri The URI
-     * @return Identifier for the given URI
-     */
-    protected final String buildIdentifier(final URI uri) {
+    protected String getIdentifier() {
+        URI uri = getURI();
         int port = uri.getPort();
         // If no port is available use the default port
         if (port < 0) {
@@ -157,6 +146,9 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
     }
 
     /**
+     * Get the URI to this file.
+     * 
+     * 
      * @return The URI to this file
      */
     public abstract URI getURI();
@@ -181,9 +173,11 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * @throws Exception If the operation could not be executed
      */
     public String getName() throws Exception {
+        // Default implementation using just the URI
         URI uri = getURI();
         String name = FilenameUtils.getName(uri.getPath());
-        if (name == null || name.length() == 0) {
+        if (name != null && name.length() == 0) {
+            // If name is empty it might be a directory
             name =
                     FilenameUtils.getName(FilenameUtils
                             .getFullPathNoEndSeparator(uri.getPath()));
@@ -197,7 +191,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * 
      * File: /usr/bin/ssh -> /usr/bin/ssh
      * 
-     * Directory: /usr/bin/ -> /usr/bin
+     * Directory: /usr/bin/ -> /usr/bin/
      * 
      * @return The full name with path.
      * @throws Exception If the operation could not be executed
@@ -205,6 +199,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
     public final String getFullName() throws Exception {
         String fullname = getPath();
         if (!isDirectory()) {
+            // Append name to path
             fullname += getName();
         }
         return FilenameUtils.normalize(fullname);
@@ -222,11 +217,15 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * @throws Exception If the operation could not be executed
      */
     public String getPath() throws Exception {
+        // Default implementation using just the URI
         String path = FilenameUtils.getPath(getURI().getPath());
-        if (isDirectory() && !path.endsWith("/")) {
-            path += "/";
+        if (path != null) {
+            if (isDirectory() && !path.endsWith("/")) {
+                path += "/";
+            }
+            path = FilenameUtils.normalize(path);
         }
-        return FilenameUtils.normalize(path);
+        return path;
     }
 
     /**
@@ -252,10 +251,13 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * 
      * 
      * @param file The file to be moved
-     * @return true if the file was successfully moved, false otherwise
      * @throws Exception If the operation could not be executed
      */
-    public abstract boolean move(final RemoteFile file) throws Exception;
+    public void move(final RemoteFile file) throws Exception {
+        // Default implementation using just remote file methods
+        write(file);
+        file.delete();
+    }
 
     /**
      * Write the given remote file into this files location.
@@ -266,7 +268,18 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * @param file Source remote file
      * @throws Exception If the operation could not be executed
      */
-    public abstract void write(final RemoteFile file) throws Exception;
+    public void write(final RemoteFile file) throws Exception {
+        // Default implementation using just remote file methods
+        byte[] buffer = new byte[1024];
+        InputStream in = file.openInputStream();
+        OutputStream out = openOutputStream();
+        int length;
+        while (((length = in.read(buffer)) > 0)) {
+            out.write(buffer, 0, length);
+        }
+        in.close();
+        out.close();
+    }
 
     /**
      * Opens an input stream.
@@ -345,7 +358,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      */
     @Override
     public String toString() {
-        String string = "Unknown file";
+        String string = "unknown_file";
         try {
             string = getName();
         } catch (Exception e) {

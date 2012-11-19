@@ -69,6 +69,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
@@ -153,7 +154,7 @@ public final class RemoteFileChooser {
             m_dialog = new JDialog(parent);
             m_dialog.setLayout(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
-            resetGBC(gbc);
+            NodeUtils.resetGBC(gbc);
             gbc.weightx = 1;
             gbc.weighty = 1;
             gbc.insets = new Insets(0, 0, 0, 0);
@@ -190,7 +191,7 @@ public final class RemoteFileChooser {
         m_tree.getSelectionModel().setSelectionMode(
                 TreeSelectionModel.SINGLE_TREE_SELECTION);
         // Buttons
-        resetGBC(gbc);
+        NodeUtils.resetGBC(gbc);
         JPanel buttonPanel = new JPanel(new GridBagLayout());
         JButton ok = new JButton("OK");
         ok.setActionCommand("ok");
@@ -204,7 +205,7 @@ public final class RemoteFileChooser {
         buttonPanel.add(cancel, gbc);
         // Outer panel
         JPanel panel = new JPanel(new GridBagLayout());
-        resetGBC(gbc);
+        NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
         gbc.weighty = 1;
         panel.add(new JScrollPane(m_tree), gbc);
@@ -212,22 +213,6 @@ public final class RemoteFileChooser {
         gbc.gridy++;
         panel.add(buttonPanel, gbc);
         return panel;
-    }
-
-    /**
-     * Resets the grid bag constraints to usefull defaults.
-     * 
-     * 
-     * @param gbc The grid bag constraints
-     */
-    private void resetGBC(final GridBagConstraints gbc) {
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
     }
 
     /**

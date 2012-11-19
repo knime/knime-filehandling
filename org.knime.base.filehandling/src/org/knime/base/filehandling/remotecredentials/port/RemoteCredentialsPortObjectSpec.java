@@ -58,6 +58,8 @@ import org.knime.core.node.ModelContentWO;
 import org.knime.core.node.port.AbstractSimplePortObjectSpec;
 
 /**
+ * Spec for remote credentials port object.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
@@ -67,13 +69,16 @@ public class RemoteCredentialsPortObjectSpec extends
     private RemoteCredentials m_credentials;
 
     /**
-     * 
+     * Create default port object spec without credentials.
      */
     public RemoteCredentialsPortObjectSpec() {
         m_credentials = null;
     }
 
     /**
+     * Create specs that contain credentials.
+     * 
+     * 
      * @param credentials The content of this port object
      */
     public RemoteCredentialsPortObjectSpec(final RemoteCredentials credentials) {
@@ -84,6 +89,9 @@ public class RemoteCredentialsPortObjectSpec extends
     }
 
     /**
+     * Return the credentials contained by this port object spec.
+     * 
+     * 
      * @return The content of this port object
      */
     public RemoteCredentials getCredentials() {

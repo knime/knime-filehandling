@@ -109,14 +109,6 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    protected String getIdentifier() {
-        return buildIdentifier(m_uri);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public URI getURI() {
         return m_uri;
     }
@@ -137,6 +129,7 @@ public class HTTPRemoteFile extends RemoteFile {
         boolean exists;
         HttpResponse response = getResponse();
         int code = response.getStatusLine().getStatusCode();
+        // Status codes above 300 indicate missing resources
         exists = code < 300;
         return exists;
     }
@@ -146,15 +139,15 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean isDirectory() throws Exception {
-        throw new UnsupportedOperationException(
-                unsupportedMessage("isDirectory"));
+        // HTTP resource does always point to a file
+        return false;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean move(final RemoteFile file) throws Exception {
+    public void move(final RemoteFile file) throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("move"));
     }
 
@@ -236,7 +229,7 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public void close() throws Exception {
-        // Not used
+        // No persistent connection to close
     }
 
     /**
@@ -249,9 +242,12 @@ public class HTTPRemoteFile extends RemoteFile {
     private HttpResponse getResponse() throws Exception {
         // Create request
         DefaultHttpClient client = new DefaultHttpClient();
+        // If user info is given in the URI use HTTP basic authentication
         if (m_uri.getUserInfo().length() > 0) {
+            // Decrypt password from the credentials
             String password =
                     KnimeEncryption.decrypt(m_credentials.getPassword());
+            // Get port (replacing it with the default port if necessary)
             int port = m_uri.getPort();
             if (port < 0) {
                 port = DefaultPortMap.getMap().get(getType());

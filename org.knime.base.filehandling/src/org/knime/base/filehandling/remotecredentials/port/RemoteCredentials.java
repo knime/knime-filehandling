@@ -57,6 +57,7 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.knime.base.filehandling.remote.files.DefaultPortMap;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
 import org.knime.core.node.ModelContentWO;
@@ -89,6 +90,9 @@ public class RemoteCredentials implements Serializable {
     private String m_certificate = null;
 
     /**
+     * Save the credentials in a model content object.
+     * 
+     * 
      * @param model The model to save in
      */
     public void save(final ModelContentWO model) {
@@ -102,11 +106,14 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Create a remote credentials object loaded from the content object.
+     * 
+     * 
      * @param model The model to read from
-     * @return RemoteCredentials object
+     * @return The created <code>RemoteCredentials</code> object
      * @throws InvalidSettingsException If the model contains invalid
      *             information.
-     * @noreference Not to be called by client.
+     * @noreference Not to be called by client
      */
     public static RemoteCredentials load(final ModelContentRO model)
             throws InvalidSettingsException {
@@ -122,9 +129,12 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Serializes this object.
+     * 
+     * 
      * @param output The output to save in
-     * @throws IOException ...
-     * @noreference Not to be called by client.
+     * @throws IOException If an error occurs
+     * @noreference Not to be called by client
      */
     public void save(final DataOutput output) throws IOException {
         output.writeUTF(m_protocol);
@@ -137,12 +147,12 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
-     * Load from stream (e.g. inline data stream).
+     * Deserialize this object.
      * 
-     * @param input ...
-     * @return ...
-     * @throws IOException ...
-     * @noreference Not to be called by client.
+     * @param input The input to load from
+     * @return The created <code>RemoteCredentials</code> object
+     * @throws IOException If an error occurs
+     * @noreference Not to be called by client
      */
     public static RemoteCredentials load(final DataInput input)
             throws IOException {
@@ -161,12 +171,13 @@ public class RemoteCredentials implements Serializable {
      * Checks if this credentials object fits to the URI.
      * 
      * 
-     * @param uri The URI
+     * @param uri The URI to check against
      * @throws Exception If something is incompatible
      */
     public void fitsToURI(final URI uri) throws Exception {
         // Scheme
         String scheme = uri.getScheme().toLowerCase();
+        // Change sftp and scp to ssh
         if (scheme.equals("sftp")) {
             scheme = scheme.replace("sftp", "ssh");
         } else if (scheme.equals("scp")) {
@@ -181,47 +192,72 @@ public class RemoteCredentials implements Serializable {
         }
         // Port
         int port = uri.getPort();
-        // TODO port = port<0 ? defaultPort(scheme) : port
+        // If port is invalid use default port
+        port = port < 0 ? DefaultPortMap.getMap().get(scheme) : port;
         if (port != m_port) {
             throw new Exception("Port incompatible");
         }
         // User
-        String user = uri.getUserInfo().toLowerCase();
+        String user = uri.getUserInfo();
+        // User might not be used
         if (user != null && !user.equals(m_user.toLowerCase())) {
             throw new Exception("User incompatible");
         }
     }
 
     /**
+     * Create the corresponding uri to this credentials.
+     * 
+     * 
      * @return URI to this credentials
      */
     public URI toURI() {
         URI uri = null;
+        // Add user only if available
         String user = m_user != null ? m_user + "@" : "";
         try {
             uri = new URI(m_protocol + "://" + user + m_host + ":" + m_port);
         } catch (URISyntaxException e) {
-            //
+            // Should not happen
         }
         return uri;
 
     }
 
     /**
+     * Set the protocol.
+     * 
+     * 
+     * Will convert the protocol to lower case and change sftp and scp to ssh.
+     * 
      * @param protocol the protocol to set
      */
     public void setProtocol(final String protocol) {
-        m_protocol = protocol;
+        m_protocol = protocol.toLowerCase();
+        // Change sftp and scp to ssh
+        if (m_protocol.equals("sftp")) {
+            m_protocol = m_protocol.replace("sftp", "ssh");
+        } else if (m_protocol.equals("scp")) {
+            m_protocol = m_protocol.replace("scp", "ssh");
+        }
     }
 
     /**
+     * Set the host.
+     * 
+     * 
+     * Will convert the host to lower case.
+     * 
      * @param host the host to set
      */
     public void setHost(final String host) {
-        m_host = host;
+        m_host = host.toLowerCase();
     }
 
     /**
+     * Set the port.
+     * 
+     * 
      * @param port the port to set
      */
     public void setPort(final int port) {
@@ -229,6 +265,11 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Set the user.
+     * 
+     * 
+     * User may be null to disable user authentication.
+     * 
      * @param user the user to set
      */
     public void setUser(final String user) {
@@ -236,6 +277,11 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Set the password.
+     * 
+     * 
+     * Password may be null to disable authentication via password.
+     * 
      * @param password the password to set
      */
     public void setPassword(final String password) {
@@ -243,6 +289,11 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Set the keyfile.
+     * 
+     * 
+     * Keyfile may be null to disable authentication via keyfile.
+     * 
      * @param keyfile the keyfile to set
      */
     public void setKeyfile(final String keyfile) {
@@ -250,6 +301,11 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Set the certificate.
+     * 
+     * 
+     * Certificate may be null to disable use of custom certificate.
+     * 
      * @param certificate the certificate to set
      */
     public void setCertificate(final String certificate) {
@@ -257,6 +313,9 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Get the protocol.
+     * 
+     * 
      * @return the protocol
      */
     public String getProtocol() {
@@ -264,6 +323,9 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Get the host.
+     * 
+     * 
      * @return the host
      */
     public String getHost() {
@@ -271,6 +333,9 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Get the port.
+     * 
+     * 
      * @return the port
      */
     public int getPort() {
@@ -278,6 +343,9 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Get the user.
+     * 
+     * 
      * @return the user
      */
     public String getUser() {
@@ -285,6 +353,9 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Get the password.
+     * 
+     * 
      * @return the password
      */
     public String getPassword() {
@@ -292,6 +363,9 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Get the keyfile.
+     * 
+     * 
      * @return the keyfile
      */
     public String getKeyfile() {
@@ -299,6 +373,9 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
+     * Get the certificate.
+     * 
+     * 
      * @return the certificate
      */
     public String getCertificate() {

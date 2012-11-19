@@ -92,25 +92,25 @@ public class SSHConnection extends Connection {
         // Read attributes
         String host = m_uri.getHost();
         int port =
-                m_uri.getPort() != -1 ? m_uri.getPort() : DefaultPortMap
+                m_uri.getPort() >= 0 ? m_uri.getPort() : DefaultPortMap
                         .getMap().get("ssh");
         String user = m_uri.getUserInfo();
         String password = KnimeEncryption.decrypt(m_credentials.getPassword());
         // Open session
         JSch jsch = new JSch();
+        // Use keyfile if available
         String keyfile = m_credentials.getKeyfile();
         if (keyfile != null && keyfile.length() != 0) {
             jsch.addIdentity(keyfile, password);
         }
+        // Add custom certificate to known hosts if available
         String certificate = m_credentials.getCertificate();
         if (certificate != null && certificate.length() != 0) {
             jsch.setKnownHosts(certificate);
         }
         Session session = jsch.getSession(user, host, port);
-        if (keyfile == null) {
-            session.setPassword(password);
-        }
-        // TODO remove the following line
+        session.setPassword(password);
+        // TODO remove the next line after debugging
         session.setConfig("StrictHostKeyChecking", "no");
         session.connect();
         m_session = session;

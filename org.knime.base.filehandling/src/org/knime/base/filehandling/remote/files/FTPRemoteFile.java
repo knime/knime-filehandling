@@ -106,14 +106,6 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    protected String getIdentifier() {
-        return buildIdentifier(m_uri);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public URI getURI() {
         return m_uri;
     }
@@ -133,10 +125,12 @@ public class FTPRemoteFile extends RemoteFile {
     public String getName() throws Exception {
         String name;
         if (isDirectory()) {
+            // Remove '/' from path and separate name
             name =
                     FilenameUtils.getName(FilenameUtils
                             .normalizeNoEndSeparator(getPath()));
         } else {
+            // Use name from URI
             name = FilenameUtils.getName(m_uri.getPath());
         }
         return FilenameUtils.normalize(name);
@@ -149,13 +143,16 @@ public class FTPRemoteFile extends RemoteFile {
     public String getPath() throws Exception {
         FTPClient client = getClient();
         String path = m_uri.getPath();
+        // If path is empty use working directory
         if (path == null || path.length() == 0) {
             path = client.printWorkingDirectory();
         }
         boolean changed = client.changeWorkingDirectory(path);
+        // If directory has not changed the path pointed to a file
         if (!changed) {
             path = FilenameUtils.getFullPath(path);
         }
+        // Make sure that the path ends with a '/'
         if (!path.endsWith("/")) {
             path += "/";
         }
@@ -187,34 +184,19 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public boolean move(final RemoteFile file) throws Exception {
-        boolean success;
+    public void move(final RemoteFile file) throws Exception {
         if (file instanceof FTPRemoteFile
                 && getIdentifier().equals(file.getIdentifier())) {
             FTPRemoteFile source = (FTPRemoteFile)file;
             FTPClient client = getClient();
-            success = client.rename(source.m_uri.getPath(), m_uri.getPath());
+            boolean success =
+                    client.rename(source.m_uri.getPath(), m_uri.getPath());
+            if (!success) {
+                throw new Exception("Move operation failed");
+            }
         } else {
-            write(file);
-            success = file.delete();
+            super.move(file);
         }
-        return success;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void write(final RemoteFile file) throws Exception {
-        byte[] buffer = new byte[1024];
-        InputStream in = file.openInputStream();
-        OutputStream out = openOutputStream();
-        int length;
-        while (((length = in.read(buffer)) > 0)) {
-            out.write(buffer, 0, length);
-        }
-        in.close();
-        out.close();
     }
 
     /**

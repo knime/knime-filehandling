@@ -65,6 +65,9 @@ public final class DefaultPortMap {
 
     private Map<String, Integer> m_map;
 
+    /**
+     * Create instance of default port map with known ports.
+     */
     private DefaultPortMap() {
         m_map = new HashMap<String, Integer>();
         // Known ports
@@ -77,6 +80,9 @@ public final class DefaultPortMap {
     }
 
     /**
+     * Get the instance of the default port map.
+     * 
+     * 
      * @return Singleton instance of default port map
      */
     public static DefaultPortMap getMap() {
@@ -87,6 +93,9 @@ public final class DefaultPortMap {
     }
 
     /**
+     * Get the port to a protocol.
+     * 
+     * 
      * @param key Name of the protocol
      * @return Default port of this protocol
      */

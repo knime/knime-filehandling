@@ -57,20 +57,22 @@ package org.knime.base.filehandling.remotecredentials;
 public enum Protocol {
 
     /** SSH protocol. */
-    SSH("ssh", 22, true, true),
+    SSH("ssh", 22, false, true, true),
 
     /** FTP protocol. */
-    FTP("ftp", 21, false, false),
+    FTP("ftp", 21, true, false, false),
 
     /** HTTP protocol. */
-    HTTP("http", 80, false, false),
+    HTTP("http", 80, true, false, false),
 
     /** HTTPS protocol. */
-    HTTPS("https", 443, false, true);
+    HTTPS("https", 443, true, false, true);
 
     private String m_name;
 
     private int m_port;
+
+    private boolean m_authnonesupport;
 
     private boolean m_keyfilesupport;
 
@@ -82,13 +84,16 @@ public enum Protocol {
      * 
      * @param name The name
      * @param port The default port
+     * @param authNoneSupport If the authentication method none is supported
      * @param keyfileSupport If authentication via keyfile is supported
      * @param certificateSupport If adding of certificates is supported
      */
     private Protocol(final String name, final int port,
-            final boolean keyfileSupport, final boolean certificateSupport) {
+            final boolean authNoneSupport, final boolean keyfileSupport,
+            final boolean certificateSupport) {
         m_name = name;
         m_port = port;
+        m_authnonesupport = authNoneSupport;
         m_keyfilesupport = keyfileSupport;
         m_certificatesupport = certificateSupport;
     }
@@ -105,6 +110,13 @@ public enum Protocol {
      */
     int getPort() {
         return m_port;
+    }
+
+    /**
+     * @return If this protocol supports the authentication method none
+     */
+    boolean hasAuthNoneSupport() {
+        return m_authnonesupport;
     }
 
     /**

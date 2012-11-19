@@ -70,6 +70,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
@@ -196,12 +197,14 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         // Port
         JLabel portLabel = new JLabel("Port:");
         // Authentication panel
-        resetGBC(gbc);
+        NodeUtils.resetGBC(gbc);
         JPanel authenticationPanel = new JPanel(new GridBagLayout());
         authenticationPanel.setBorder(new TitledBorder(new EtchedBorder(),
                 "Authentication"));
-        authenticationPanel.add(m_authnone);
-        gbc.gridx++;
+        if (m_protocol.hasAuthNoneSupport()) {
+            authenticationPanel.add(m_authnone);
+            gbc.gridx++;
+        }
         authenticationPanel.add(m_authpassword);
         if (m_protocol.hasKeyfileSupport()) {
             gbc.gridx++;
@@ -210,7 +213,7 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         // Keyfile panel
         JPanel keyfilePanel = null;
         if (m_protocol.hasKeyfileSupport()) {
-            resetGBC(gbc);
+            NodeUtils.resetGBC(gbc);
             keyfilePanel = new JPanel(new GridBagLayout());
             gbc.weightx = 1;
             gbc.insets = new Insets(0, 0, 0, 5);
@@ -223,7 +226,7 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         // Certificate panel
         JPanel certificatePanel = null;
         if (m_protocol.hasCertificateSupport()) {
-            resetGBC(gbc);
+            NodeUtils.resetGBC(gbc);
             certificatePanel = new JPanel(new GridBagLayout());
             gbc.weightx = 1;
             gbc.insets = new Insets(0, 0, 0, 5);
@@ -234,7 +237,7 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
             certificatePanel.add(m_certificatefvm, gbc);
         }
         // Outer Panel
-        resetGBC(gbc);
+        NodeUtils.resetGBC(gbc);
         JPanel panel = new JPanel(new GridBagLayout());
         panel.add(hostLabel, gbc);
         gbc.gridx++;
@@ -292,44 +295,44 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         return panel;
     }
 
-    private void resetGBC(final GridBagConstraints gbc) {
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-    }
-
     private void updateEnabledState() {
+        // If a password should be used
         boolean usePassword =
                 m_authmethod.getSelection() != null ? m_authmethod
                         .getSelection().getActionCommand()
                         .equals(AuthenticationMethod.PASSWORD.getName())
                         : false;
+        // If a keyfile should be used
         boolean useKeyfile =
                 m_authmethod.getSelection() != null ? m_authmethod
                         .getSelection().getActionCommand()
                         .equals(AuthenticationMethod.KEYFILE.getName()) : false;
+        // Disable user if auth method is none
         m_userLabel.setEnabled(usePassword || useKeyfile);
         m_user.setEnabled(usePassword || useKeyfile);
+        // Password should be enabled if the password or the keyfile get used
         m_passwordLabel.setEnabled(usePassword || useKeyfile);
         m_password.setEnabled(usePassword || useKeyfile);
+        // Do this only if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             boolean keyfileReplacement =
                     m_keyfilefvm.getFlowVariableModel()
                             .isVariableReplacementEnabled();
             m_keyfileLabel.setEnabled(useKeyfile);
+            // Enable file panel only if the flow variable replacement is not
+            // active
             m_keyfile.setEnabled(useKeyfile && !keyfileReplacement);
             m_keyfilefvm.setEnabled(useKeyfile);
         }
+        // Do this only if the protocol supports certificates
         if (m_protocol.hasCertificateSupport()) {
             boolean usecertificate = m_usecertificate.isSelected();
             boolean certificateReplacement =
                     m_certificatefvm.getFlowVariableModel()
                             .isVariableReplacementEnabled();
             m_certificateLabel.setEnabled(usecertificate);
+            // Enable file panel only if the flow variable replacement is not
+            // active
             m_certificate.setEnabled(usecertificate && !certificateReplacement);
             m_certificatefvm.setEnabled(usecertificate);
         }
@@ -360,6 +363,7 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         config.setPort((Integer)m_port.getValue());
         config.setAuthenticationmethod(m_authmethod.getSelection()
                 .getActionCommand());
+        // If password changed it has to be encrypted again
         if (m_passwordChanged) {
             try {
                 config.setPassword(KnimeEncryption.encrypt(m_password
@@ -372,9 +376,11 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         } else {
             config.setPassword(new String(m_password.getPassword()));
         }
+        // Only save if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             config.setKeyfile(m_keyfile.getSelectedFile());
         }
+        // Only save if the protocol supports certificates
         if (m_protocol.hasCertificateSupport()) {
             config.setUsecertificate(m_usecertificate.isSelected());
             config.setCertificate(m_certificate.getSelectedFile());
@@ -395,6 +401,7 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         m_host.setText(config.getHost());
         m_port.setValue(config.getPort());
         String authmethod = config.getAuthenticationmethod();
+        // Select correct auth method
         if (authmethod.equals(AuthenticationMethod.NONE.getName())) {
             m_authmethod.setSelected(m_authnone.getModel(), true);
         } else if (authmethod.equals(AuthenticationMethod.PASSWORD.getName())) {
@@ -404,9 +411,11 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         }
         m_passwordChanged = false;
         m_password.setText(config.getPassword());
+        // Only load if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             m_keyfile.setSelectedFile(config.getKeyfile());
         }
+        // Only load if the protocol supports certificates
         if (m_protocol.hasCertificateSupport()) {
             m_usecertificate.setSelected(config.getUsecertificate());
             m_certificate.setSelectedFile(config.getCertificate());
