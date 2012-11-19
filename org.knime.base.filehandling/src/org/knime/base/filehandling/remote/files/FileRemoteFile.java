@@ -198,8 +198,10 @@ public class FileRemoteFile extends RemoteFile {
                 files[i] = new FileRemoteFile(f[i].toURI());
             }
         } else {
+            // Return 0 files
             files = new RemoteFile[0];
         }
+        // Sort files
         Arrays.sort(files);
         return files;
     }

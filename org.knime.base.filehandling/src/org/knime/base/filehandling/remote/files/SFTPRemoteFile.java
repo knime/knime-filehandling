@@ -339,7 +339,7 @@ public class SFTPRemoteFile extends RemoteFile {
                 }
                 outFiles = files.toArray(new RemoteFile[files.size()]);
             } catch (SftpException e) {
-                // return 0 files
+                // Return 0 files
             }
         }
         // Sort results

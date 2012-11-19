@@ -172,12 +172,19 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean isDirectory() throws Exception {
+        boolean isDirectory = false;
         FTPClient client = getClient();
+        // Use path from URI
         String path = m_uri.getPath();
-        if (path == null || path.length() == 0) {
-            path = client.printWorkingDirectory();
+        if (path != null && path.length() > 0) {
+            // If path is not missing, try to change to it
+            isDirectory = client.changeWorkingDirectory(path);
+        } else {
+            // If path is missing, interpret this file as root directory, so it
+            // is always a directory
+            isDirectory = true;
         }
-        return client.changeWorkingDirectory(path);
+        return isDirectory;
     }
 
     /**
@@ -185,6 +192,8 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public void move(final RemoteFile file) throws Exception {
+        // If the file is also an FTP remote file and over the same connection
+        // it can be moved
         if (file instanceof FTPRemoteFile
                 && getIdentifier().equals(file.getIdentifier())) {
             FTPRemoteFile source = (FTPRemoteFile)file;
@@ -234,6 +243,7 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public long getSize() throws Exception {
+        // Assume missing
         long size = 0;
         FTPFile ftpFile = getFTPFile();
         if (ftpFile != null && ftpFile.getSize() > 0) {
@@ -273,19 +283,25 @@ public class FTPRemoteFile extends RemoteFile {
         if (isDirectory()) {
             FTPClient client = getClient();
             client.changeWorkingDirectory(getPath());
+            // Get FTP files
             FTPFile[] ftpFiles = client.listFiles();
             files = new RemoteFile[ftpFiles.length];
+            // Generate remote file for each file
             for (int i = 0; i < ftpFiles.length; i++) {
+                // Build URI
                 URI uri =
                         new URI(m_uri.getScheme() + "://"
                                 + m_uri.getAuthority() + getPath()
                                 + ftpFiles[i].getName());
+                // Create remote file and open it
                 files[i] = new FTPRemoteFile(uri, m_credentials);
                 files[i].open();
             }
         } else {
+            // Return 0 files
             files = new RemoteFile[0];
         }
+        // Sort results
         Arrays.sort(files);
         return files;
     }
@@ -319,8 +335,11 @@ public class FTPRemoteFile extends RemoteFile {
      * @return The FTP Client
      */
     private FTPClient getClient() throws Exception {
+        // Get FTP connection from super class
         FTPConnection connection = (FTPConnection)getConnection();
+        // Change to default working directory
         connection.resetWorkingDir();
+        // Return FTP client of the FTP connection
         return connection.getClient();
     }
 
@@ -334,15 +353,20 @@ public class FTPRemoteFile extends RemoteFile {
     private FTPFile getFTPFile() throws Exception {
         FTPFile file = null;
         FTPClient client = getClient();
+        // Change to this files path
         client.changeWorkingDirectory(getPath());
+        // If this file is a directory change to the parent directory
         if (isDirectory()) {
             client.changeToParentDirectory();
         }
+        // Get all files in working directory
         FTPFile[] files = client.listFiles();
+        // Check all files by name
         for (int i = 0; i < files.length; i++) {
             FTPFile currentFile = files[i];
             if (currentFile.getName().equals(
                     FilenameUtils.getName(m_uri.getPath()))) {
+                // File with the same name is the correct one
                 file = currentFile;
                 break;
             }
