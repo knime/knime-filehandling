@@ -53,7 +53,6 @@ package org.knime.base.filehandling.filemetainfo;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.util.Calendar;
 
 import org.apache.commons.io.FileUtils;
@@ -196,10 +195,6 @@ class FileMetaInfoNodeModel extends NodeModel {
                     // Hidden
                     cells[Attributes.HIDDEN.getPosition()] =
                             BooleanCell.get(file.isHidden());
-                    // Symbolic link
-                    cells[Attributes.SYMLINK.getPosition()] =
-                            BooleanCell
-                                    .get(Files.isSymbolicLink(file.toPath()));
                     // Size
                     long size = getFileSize(file);
                     cells[Attributes.SIZE.getPosition()] = new LongCell(size);
@@ -226,10 +221,6 @@ class FileMetaInfoNodeModel extends NodeModel {
                     permissions += file.canExecute() ? "x" : "";
                     cells[Attributes.PERMISSIONS.getPosition()] =
                             new StringCell(permissions);
-                    // Owner
-                    cells[Attributes.OWNER.getPosition()] =
-                            new StringCell(Files.getOwner(file.toPath())
-                                    .getName());
                 } catch (Exception e) {
                     // If one file does not work, go on
                 }
