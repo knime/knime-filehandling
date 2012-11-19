@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 16, 2012 (Patrick Winter): created
  */
@@ -76,8 +76,8 @@ import org.knime.core.node.util.StringHistory;
 
 /**
  * Panel to choose a file from a remote location.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, University of Konstanz
  */
 public class RemoteFileChooserPanel {
@@ -90,7 +90,7 @@ public class RemoteFileChooserPanel {
 
     private JPanel m_panel;
 
-    private JComboBox<String> m_combobox;
+    private JComboBox m_combobox;
 
     private JButton m_button;
 
@@ -98,8 +98,8 @@ public class RemoteFileChooserPanel {
 
     /**
      * Create panel.
-     * 
-     * 
+     *
+     *
      * @param parentPanel The parent of this panel
      * @param label Label of the file chooser
      * @param border If a border should be used
@@ -116,7 +116,7 @@ public class RemoteFileChooserPanel {
         m_hostSpecificID = historyID;
         m_historyID = historyID;
         // Combobox
-        m_combobox = new JComboBox<String>(new String[0]);
+        m_combobox = new JComboBox(new Object[0]);
         m_combobox.setEditable(true);
         // Browse button
         m_button = new JButton("Browse");
@@ -177,8 +177,8 @@ public class RemoteFileChooserPanel {
 
     /**
      * Set the credentials that will be used for this connection.
-     * 
-     * 
+     *
+     *
      * @param credentials The credentials for the connection.
      */
     public void setCredentials(final RemoteCredentials credentials) {
@@ -193,8 +193,8 @@ public class RemoteFileChooserPanel {
 
     /**
      * Set the selection of this file chooser.
-     * 
-     * 
+     *
+     *
      * @param selection The new selection
      */
     public void setSelection(final String selection) {
@@ -203,8 +203,8 @@ public class RemoteFileChooserPanel {
 
     /**
      * Get the current selection.
-     * 
-     * 
+     *
+     *
      * @return The current selection
      */
     public String getSelection() {
@@ -213,8 +213,8 @@ public class RemoteFileChooserPanel {
 
     /**
      * Get the panel.
-     * 
-     * 
+     *
+     *
      * @return The panel
      */
     public JPanel getPanel() {
@@ -223,8 +223,8 @@ public class RemoteFileChooserPanel {
 
     /**
      * Enable or disable this panel.
-     * 
-     * 
+     *
+     *
      * @param enabled If the panel should be enabled
      */
     public void setEnabled(final boolean enabled) {
@@ -252,8 +252,7 @@ public class RemoteFileChooserPanel {
             set.add(strings[i]);
         }
         // Remove old elements
-        DefaultComboBoxModel<String> model =
-                (DefaultComboBoxModel<String>)m_combobox.getModel();
+        DefaultComboBoxModel model = (DefaultComboBoxModel)m_combobox.getModel();
         model.removeAllElements();
         // Add new elements
         for (String string : set) {
