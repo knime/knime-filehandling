@@ -271,7 +271,27 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean delete() throws Exception {
-        return deleteRecursively(m_uri.getPath());
+        // Delete can only be true if the file exists
+        boolean result = exists();
+        FTPClient client = getClient();
+        String path = getFullName();
+        if (exists()) {
+            if (isDirectory()) {
+                // Delete inner files first
+                RemoteFile[] files = listFiles();
+                for (int i = 0; i < files.length; i++) {
+                    files[i].delete();
+                }
+                // Delete this directory
+                client.rmd(path);
+                result = result && !exists();
+            } else {
+                // Delete this file
+                client.deleteFile(path);
+                result = result && !exists();
+            }
+        }
+        return result;
     }
 
     /**
@@ -375,38 +395,6 @@ public class FTPRemoteFile extends RemoteFile {
     }
 
     /**
-     * Deletes files and directories recursively.
-     * 
-     * 
-     * @param path Path to the file or directory
-     * @return true if deletion was successful, false otherwise
-     */
-    private boolean deleteRecursively(final String path) throws Exception {
-        boolean deleted = false;
-        FTPFile file = null;
-        FTPClient client = getClient();
-        FTPFile[] files = client.listFiles(path);
-        for (int i = 0; i < files.length; i++) {
-            FTPFile currentFile = files[i];
-            if (currentFile.getName().equals(path)) {
-                file = currentFile;
-            }
-        }
-        if (file != null) {
-            if (file.isDirectory()) {
-                files = client.listFiles(path);
-                for (int i = 0; i < files.length; i++) {
-                    deleteRecursively(files[i].getName());
-                }
-                deleted = client.removeDirectory(path);
-            } else {
-                deleted = client.deleteFile(path);
-            }
-        }
-        return deleted;
-    }
-
-    /**
      * Connection over FTP.
      * 
      * 
@@ -431,8 +419,10 @@ public class FTPRemoteFile extends RemoteFile {
                     m_uri.getPort() != -1 ? m_uri.getPort() : DefaultPortMap
                             .getMap().get(getType());
             String user = m_uri.getUserInfo();
-            String password =
-                    KnimeEncryption.decrypt(m_credentials.getPassword());
+            String password = m_credentials.getPassword();
+            if (password != null) {
+                password = KnimeEncryption.decrypt(password);
+            }
             // Open connection
             m_client.connect(host, port);
             // Login
@@ -440,6 +430,7 @@ public class FTPRemoteFile extends RemoteFile {
             if (!loggedIn) {
                 throw new IOException("Login failed");
             }
+            // Find root directory
             String oldDir;
             do {
                 oldDir = m_client.printWorkingDirectory();
@@ -479,6 +470,12 @@ public class FTPRemoteFile extends RemoteFile {
             return m_client;
         }
 
+        /**
+         * Change working directory to root.
+         * 
+         * 
+         * @throws Exception If the operation could not be executed
+         */
         public void resetWorkingDir() throws Exception {
             m_client.changeWorkingDirectory(m_defaultDir);
         }

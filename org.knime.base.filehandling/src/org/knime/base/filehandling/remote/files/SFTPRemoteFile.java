@@ -297,9 +297,11 @@ public class SFTPRemoteFile extends RemoteFile {
                 }
                 // Delete this directory
                 channel.rmdir(path);
+                result = result && !exists();
             } else {
                 // Delete this file
                 channel.rm(path);
+                result = result && !exists();
             }
         }
         return result;
