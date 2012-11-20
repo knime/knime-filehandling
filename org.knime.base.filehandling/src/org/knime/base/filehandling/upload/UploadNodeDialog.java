@@ -50,18 +50,32 @@
  */
 package org.knime.base.filehandling.upload;
 
-import javax.swing.JPanel;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
+import javax.swing.ButtonGroup;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooser;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooserPanel;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.util.ColumnSelectionComboxBox;
 import org.knime.core.node.workflow.FlowVariable;
 
 /**
@@ -76,21 +90,74 @@ public class UploadNodeDialog extends NodeDialogPane {
 
     private RemoteFileChooserPanel m_target;
 
+    private ColumnSelectionComboxBox m_source;
+
+    private ButtonGroup m_overwritePolicy;
+
+    private JRadioButton m_overwrite;
+
+    private JRadioButton m_overwriteIfNewer;
+
+    private JRadioButton m_abort;
+
     /**
      * New pane for configuring the node dialog.
      */
+    @SuppressWarnings("unchecked")
     public UploadNodeDialog() {
         m_target =
                 new RemoteFileChooserPanel(getPanel(), "Remote folder", true,
                         "targetHistory", RemoteFileChooser.SELECT_DIR,
                         createFlowVariableModel("target",
                                 FlowVariable.Type.STRING), m_credentials);
+        m_source =
+                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
+        m_overwritePolicy = new ButtonGroup();
+        m_overwrite = new JRadioButton(OverwritePolicy.OVERWRITE.getName());
+        m_overwrite.setActionCommand(OverwritePolicy.OVERWRITE.getName());
+        m_overwriteIfNewer =
+                new JRadioButton(OverwritePolicy.OVERWRITEIFNEWER.getName());
+        m_overwriteIfNewer.setActionCommand(OverwritePolicy.OVERWRITEIFNEWER
+                .getName());
+        m_abort = new JRadioButton(OverwritePolicy.ABORT.getName());
+        m_abort.setActionCommand(OverwritePolicy.ABORT.getName());
+        m_overwritePolicy.add(m_overwrite);
+        m_overwritePolicy.add(m_overwriteIfNewer);
+        m_overwritePolicy.add(m_abort);
         addTab("Options", initLayout());
     }
 
     private JPanel initLayout() {
-        JPanel panel = new JPanel();
-        panel.add(m_target.getPanel());
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        // Source column
+        NodeUtils.resetGBC(gbc);
+        JPanel sourcePanel = new JPanel(new GridBagLayout());
+        JLabel sourceLabel = new JLabel("Source");
+        sourcePanel.add(sourceLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        sourcePanel.add(m_source, gbc);
+        // Overwrite policy
+        NodeUtils.resetGBC(gbc);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        JPanel overwritePolicyPanel = new JPanel(new GridBagLayout());
+        overwritePolicyPanel.add(m_overwrite, gbc);
+        gbc.gridx++;
+        overwritePolicyPanel.add(m_overwriteIfNewer, gbc);
+        gbc.gridx++;
+        overwritePolicyPanel.add(m_abort, gbc);
+        overwritePolicyPanel.setBorder(new TitledBorder(new EtchedBorder(),
+                "If exists..."));
+        // Outer panel
+        NodeUtils.resetGBC(gbc);
+        gbc.weightx = 1;
+        panel.add(m_target.getPanel(), gbc);
+        gbc.gridy++;
+        panel.add(sourcePanel, gbc);
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
+        panel.add(overwritePolicyPanel, gbc);
         return panel;
     }
 
@@ -110,6 +177,20 @@ public class UploadNodeDialog extends NodeDialogPane {
             throw new NotConfigurableException("No credentials available");
         }
         m_target.setCredentials(m_credentials);
+        UploadConfiguration config = new UploadConfiguration();
+        config.loadInDialog(settings);
+        m_target.setSelection(config.getTarget());
+        m_source.update((DataTableSpec)specs[1], config.getSource());
+        String overwritePolicy = config.getOverwritePolicy();
+        if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
+            m_overwritePolicy.setSelected(m_overwrite.getModel(), true);
+        }
+        if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER.getName())) {
+            m_overwritePolicy.setSelected(m_overwriteIfNewer.getModel(), true);
+        }
+        if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
+            m_overwritePolicy.setSelected(m_abort.getModel(), true);
+        }
     }
 
     /**
@@ -118,6 +199,11 @@ public class UploadNodeDialog extends NodeDialogPane {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
-        //
+        UploadConfiguration config = new UploadConfiguration();
+        config.setTarget(m_target.getSelection());
+        config.setSource(m_source.getSelectedColumn());
+        config.setOverwritePolicy(m_overwritePolicy.getSelection()
+                .getActionCommand());
+        config.save(settings);
     }
 }

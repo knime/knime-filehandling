@@ -50,33 +50,21 @@
  */
 package org.knime.base.filehandling.upload;
 
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+
 /**
  * 
  * @author Patrick Winter, University of Konstanz
  */
 class UploadConfiguration {
 
-    private String m_copyOrMove;
-
     private String m_source;
 
     private String m_target;
 
     private String m_overwritePolicy;
-
-    /**
-     * @return the copyOrMove
-     */
-    public String getCopyOrMove() {
-        return m_copyOrMove;
-    }
-
-    /**
-     * @param copyOrMove the copyOrMove to set
-     */
-    public void setCopyOrMove(final String copyOrMove) {
-        m_copyOrMove = copyOrMove;
-    }
 
     /**
      * @return the source
@@ -118,6 +106,53 @@ class UploadConfiguration {
      */
     public void setOverwritePolicy(final String overwritePolicy) {
         m_overwritePolicy = overwritePolicy;
+    }
+
+    /**
+     * @param settings The <code>NodeSettings</code> to write to
+     */
+    void save(final NodeSettingsWO settings) {
+        settings.addString("source", m_source);
+        settings.addString("target", m_target);
+        settings.addString("overwritepolicy", m_overwritePolicy);
+    }
+
+    /**
+     * @param settings The <code>NodeSettings</code> to read from
+     */
+    void loadInDialog(final NodeSettingsRO settings) {
+        m_source = settings.getString("source", "");
+        m_target = settings.getString("target", "");
+        m_overwritePolicy =
+                settings.getString("overwritepolicy",
+                        OverwritePolicy.OVERWRITE.getName());
+    }
+
+    /**
+     * @param settings The <code>NodeSettings</code> to read from
+     * @throws InvalidSettingsException If one of the settings is not valid
+     */
+    void loadInModel(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
+        m_source = settings.getString("source");
+        validate(m_source);
+        m_target = settings.getString("target");
+        validate(m_target);
+        m_overwritePolicy = settings.getString("overwritepolicy");
+        validate(m_overwritePolicy);
+    }
+
+    /**
+     * Checks if the string is not null or empty.
+     * 
+     * 
+     * @param string The string to check
+     * @throws InvalidSettingsException If the string is null or empty
+     */
+    private void validate(final String string) throws InvalidSettingsException {
+        if (string == null || string.length() == 0) {
+            throw new InvalidSettingsException("Invalid setting");
+        }
     }
 
 }

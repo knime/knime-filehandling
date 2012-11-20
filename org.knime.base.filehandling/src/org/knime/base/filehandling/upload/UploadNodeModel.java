@@ -53,7 +53,12 @@ package org.knime.base.filehandling.upload;
 import java.io.File;
 import java.io.IOException;
 
+import org.knime.base.filehandling.NodeUtils;
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObject;
+import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -74,6 +79,10 @@ import org.knime.core.node.port.PortType;
  */
 public class UploadNodeModel extends NodeModel {
 
+    private RemoteCredentials m_credentials;
+
+    private UploadConfiguration m_configuration;
+
     /**
      * 
      */
@@ -88,15 +97,32 @@ public class UploadNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
+        // TODO upload files
         return new PortObject[]{};
     }
 
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("unchecked")
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
+        if (inSpecs[0] == null) {
+            throw new InvalidSettingsException("No credentials available");
+        }
+        RemoteCredentialsPortObjectSpec object =
+                (RemoteCredentialsPortObjectSpec)inSpecs[0];
+        m_credentials = object.getCredentials();
+        if (m_credentials == null) {
+            throw new InvalidSettingsException("No credentials available");
+        }
+        if (m_configuration == null) {
+            throw new InvalidSettingsException("No settings available");
+        }
+        String source = m_configuration.getSource();
+        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Source",
+                source, URIDataValue.class);
         return new PortObjectSpec[]{};
     }
 
@@ -107,7 +133,7 @@ public class UploadNodeModel extends NodeModel {
     protected void loadInternals(final File nodeInternDir,
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
-        //
+        // not used
     }
 
     /**
@@ -117,7 +143,7 @@ public class UploadNodeModel extends NodeModel {
     protected void saveInternals(final File nodeInternDir,
             final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
-        //
+        // not used
     }
 
     /**
@@ -125,7 +151,9 @@ public class UploadNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        //
+        if (m_configuration != null) {
+            m_configuration.save(settings);
+        }
     }
 
     /**
@@ -134,7 +162,7 @@ public class UploadNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        //
+        new UploadConfiguration().loadInModel(settings);
     }
 
     /**
@@ -143,7 +171,9 @@ public class UploadNodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        //
+        UploadConfiguration config = new UploadConfiguration();
+        config.loadInModel(settings);
+        m_configuration = config;
     }
 
     /**
@@ -151,7 +181,7 @@ public class UploadNodeModel extends NodeModel {
      */
     @Override
     protected void reset() {
-        //
+        // not used
     }
 
 }

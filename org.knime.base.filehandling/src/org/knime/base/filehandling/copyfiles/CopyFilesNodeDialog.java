@@ -217,6 +217,7 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         filenameHandlingPanel.add(outputDirectoryPanel, gbc);
         // If exists
         NodeUtils.resetGBC(gbc);
+        gbc.insets = new Insets(0, 0, 0, 0);
         JPanel ifExistsPanel = new JPanel(new GridBagLayout());
         ifExistsPanel.setBorder(new TitledBorder(new EtchedBorder(),
                 "If a file exists..."));

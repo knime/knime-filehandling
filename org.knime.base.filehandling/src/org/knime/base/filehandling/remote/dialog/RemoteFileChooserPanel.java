@@ -69,6 +69,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.FlowVariableModelButton;
@@ -160,11 +161,11 @@ public class RemoteFileChooserPanel {
         } else if (!label.equals("")) {
             m_panel.setBorder(new TitledBorder(label));
         }
+        NodeUtils.resetGBC(gbc);
         gbc.insets = new Insets(5, 5, 5, 0);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.VERTICAL;
+        gbc.weightx = 1;
         m_panel.add(m_combobox, gbc);
+        gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         ++gbc.gridx;
         m_panel.add(m_button, gbc);
