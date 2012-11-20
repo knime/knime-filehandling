@@ -372,11 +372,12 @@ public class FTPRemoteFile extends RemoteFile {
      */
     private FTPFile getFTPFile() throws Exception {
         FTPFile file = null;
+        boolean isDirectory = isDirectory();
         FTPClient client = getClient();
         // Change to this files path
         client.changeWorkingDirectory(getPath());
         // If this file is a directory change to the parent directory
-        if (isDirectory()) {
+        if (isDirectory) {
             client.changeToParentDirectory();
         }
         // Get all files in working directory
