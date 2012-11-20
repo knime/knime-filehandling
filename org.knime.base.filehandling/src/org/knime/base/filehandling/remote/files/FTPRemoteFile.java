@@ -150,7 +150,9 @@ public class FTPRemoteFile extends RemoteFile {
         boolean changed = client.changeWorkingDirectory(path);
         // If directory has not changed the path pointed to a file
         if (!changed) {
-            path = FilenameUtils.getFullPath(path);
+            path =
+                    FilenameUtils.getPrefix(path)
+                            + FilenameUtils.getFullPath(path);
         }
         // Make sure that the path ends with a '/'
         if (!path.endsWith("/")) {
