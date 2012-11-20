@@ -398,9 +398,7 @@ public class SFTPRemoteFile extends RemoteFile {
                     pathSet = true;
                 } else {
                     // Path points to file
-                    path =
-                            FilenameUtils.getPrefix(path)
-                                    + FilenameUtils.getPath(path);
+                    path = FilenameUtils.getFullPath(path);
                     if (cd(path)) {
                         m_path = path;
                         pathSet = true;
