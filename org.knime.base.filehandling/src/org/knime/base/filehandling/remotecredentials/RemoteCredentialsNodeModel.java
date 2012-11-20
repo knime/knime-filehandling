@@ -102,8 +102,11 @@ public class RemoteCredentialsNodeModel extends NodeModel {
         credentials.setProtocol(m_protocol.getName());
         credentials.setHost(m_configuration.getHost());
         credentials.setPort(m_configuration.getPort());
-        credentials.setUser(m_configuration.getUser());
-        credentials.setPassword(m_configuration.getPassword());
+        if (!m_configuration.getAuthenticationmethod().equals(
+                AuthenticationMethod.NONE.getName())) {
+            credentials.setUser(m_configuration.getUser());
+            credentials.setPassword(m_configuration.getPassword());
+        }
         if (m_protocol.hasKeyfileSupport()
                 && m_configuration.getAuthenticationmethod().equals(
                         AuthenticationMethod.KEYFILE.getName())) {

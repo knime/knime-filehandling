@@ -100,13 +100,16 @@ public class UploadNodeDialog extends NodeDialogPane {
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings,
             final PortObjectSpec[] specs) throws NotConfigurableException {
+        if (specs[0] == null) {
+            throw new NotConfigurableException("No credentials available");
+        }
         RemoteCredentialsPortObjectSpec object =
                 (RemoteCredentialsPortObjectSpec)specs[0];
         m_credentials = object.getCredentials();
-        m_target.setCredentials(m_credentials);
         if (m_credentials == null) {
             throw new NotConfigurableException("No credentials available");
         }
+        m_target.setCredentials(m_credentials);
     }
 
     /**

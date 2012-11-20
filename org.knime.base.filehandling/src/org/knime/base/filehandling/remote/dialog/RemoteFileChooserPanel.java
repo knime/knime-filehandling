@@ -90,7 +90,7 @@ public class RemoteFileChooserPanel {
 
     private JPanel m_panel;
 
-    private JComboBox m_combobox;
+    private JComboBox<String> m_combobox;
 
     private JButton m_button;
 
@@ -116,7 +116,7 @@ public class RemoteFileChooserPanel {
         m_hostSpecificID = historyID;
         m_historyID = historyID;
         // Combobox
-        m_combobox = new JComboBox(new Object[0]);
+        m_combobox = new JComboBox<String>(new String[0]);
         m_combobox.setEditable(true);
         // Browse button
         m_button = new JButton("Browse");
@@ -252,8 +252,8 @@ public class RemoteFileChooserPanel {
             set.add(strings[i]);
         }
         // Remove old elements
-        DefaultComboBoxModel model =
-                (DefaultComboBoxModel)m_combobox.getModel();
+        DefaultComboBoxModel<String> model =
+                (DefaultComboBoxModel<String>)m_combobox.getModel();
         model.removeAllElements();
         // Add new elements
         for (String string : set) {

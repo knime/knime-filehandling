@@ -69,6 +69,8 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.node.FlowVariableModelButton;
@@ -167,6 +169,22 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
         // Password
         m_passwordLabel = new JLabel("Password:");
         m_password = new JPasswordField();
+        m_password.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void removeUpdate(final DocumentEvent e) {
+                m_passwordChanged = true;
+            }
+
+            @Override
+            public void insertUpdate(final DocumentEvent e) {
+                m_passwordChanged = true;
+            }
+
+            @Override
+            public void changedUpdate(final DocumentEvent e) {
+                m_passwordChanged = true;
+            }
+        });
         // Keyfile
         m_keyfileLabel = new JLabel("Keyfile:");
         m_keyfile = new FilesHistoryPanel("keyfileHistory", false);
