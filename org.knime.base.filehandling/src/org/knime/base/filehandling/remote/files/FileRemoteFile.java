@@ -172,7 +172,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public long lastModified() throws Exception {
-        return new File(m_uri).lastModified();
+        return new File(m_uri).lastModified() / 1000;
     }
 
     /**

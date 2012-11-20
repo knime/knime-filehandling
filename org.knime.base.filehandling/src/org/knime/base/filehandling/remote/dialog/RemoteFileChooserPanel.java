@@ -91,7 +91,6 @@ public class RemoteFileChooserPanel {
 
     private JPanel m_panel;
 
-    @SuppressWarnings("rawtypes")
     private JComboBox m_combobox;
 
     private JButton m_button;
@@ -110,7 +109,6 @@ public class RemoteFileChooserPanel {
      * @param fvm Model for the flow variable button
      * @param credentials Credentials for the remote connection
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public RemoteFileChooserPanel(final JPanel parentPanel, final String label,
             final boolean border, final String historyID,
             final int selectionMode, final FlowVariableModel fvm,
@@ -244,7 +242,6 @@ public class RemoteFileChooserPanel {
     /**
      * Update the history of the combo box.
      */
-    @SuppressWarnings({"rawtypes", "unchecked"})
     private void updateHistory() {
         // Get history
         StringHistory history = StringHistory.getInstance(m_hostSpecificID);
