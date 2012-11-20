@@ -91,7 +91,8 @@ public class RemoteFileChooserPanel {
 
     private JPanel m_panel;
 
-    private JComboBox<String> m_combobox;
+    @SuppressWarnings("rawtypes")
+    private JComboBox m_combobox;
 
     private JButton m_button;
 
@@ -109,6 +110,7 @@ public class RemoteFileChooserPanel {
      * @param fvm Model for the flow variable button
      * @param credentials Credentials for the remote connection
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public RemoteFileChooserPanel(final JPanel parentPanel, final String label,
             final boolean border, final String historyID,
             final int selectionMode, final FlowVariableModel fvm,
@@ -117,7 +119,7 @@ public class RemoteFileChooserPanel {
         m_hostSpecificID = historyID;
         m_historyID = historyID;
         // Combobox
-        m_combobox = new JComboBox<String>(new String[0]);
+        m_combobox = new JComboBox(new String[0]);
         m_combobox.setEditable(true);
         // Browse button
         m_button = new JButton("Browse");
@@ -242,6 +244,7 @@ public class RemoteFileChooserPanel {
     /**
      * Update the history of the combo box.
      */
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private void updateHistory() {
         // Get history
         StringHistory history = StringHistory.getInstance(m_hostSpecificID);
@@ -253,8 +256,8 @@ public class RemoteFileChooserPanel {
             set.add(strings[i]);
         }
         // Remove old elements
-        DefaultComboBoxModel<String> model =
-                (DefaultComboBoxModel<String>)m_combobox.getModel();
+        DefaultComboBoxModel model =
+                (DefaultComboBoxModel)m_combobox.getModel();
         model.removeAllElements();
         // Add new elements
         for (String string : set) {
