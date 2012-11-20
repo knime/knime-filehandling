@@ -52,11 +52,16 @@ package org.knime.base.filehandling.upload;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 import org.knime.base.filehandling.NodeUtils;
+import org.knime.base.filehandling.remote.files.ConnectionMonitor;
+import org.knime.base.filehandling.remote.files.RemoteFile;
+import org.knime.base.filehandling.remote.files.RemoteFileFactory;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObject;
 import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
+import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.BufferedDataTable;
@@ -97,8 +102,56 @@ public class UploadNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
-        // TODO upload files
+        String source = m_configuration.getSource();
+        BufferedDataTable table = (BufferedDataTable)inObjects[1];
+        int index = table.getDataTableSpec().findColumnIndex(source);
+        int i = 0;
+        int rows = table.getRowCount();
+        for (DataRow row : table) {
+            if (!row.getCell(index).isMissing()) {
+                exec.checkCanceled();
+                exec.setProgress((double)i / rows);
+                URI uri =
+                        ((URIDataValue)row.getCell(index)).getURIContent()
+                                .getURI();
+                upload(uri);
+                i++;
+            }
+        }
+        ConnectionMonitor.closeAll();
         return new PortObject[]{};
+    }
+
+    private void upload(final URI uri) throws Exception {
+        String overwritePolicy = m_configuration.getOverwritePolicy();
+        RemoteFile source = RemoteFileFactory.createRemoteFile(uri, null);
+        URI targetUri =
+                new URI(m_credentials.toURI().toString()
+                        + m_configuration.getTarget() + source.getName());
+        RemoteFile target =
+                RemoteFileFactory.createRemoteFile(targetUri, m_credentials);
+        if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
+            target.write(source);
+        } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
+                .getName())) {
+            long sourceTime = source.lastModified();
+            long targetTime = target.lastModified();
+            if (sourceTime > 0 && targetTime > 0) {
+                if (target.lastModified() < source.lastModified()) {
+                    target.write(source);
+                }
+            } else {
+                target.write(source);
+            }
+        } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
+            if (target.exists()) {
+                throw new Exception("File " + target.getFullName()
+                        + " already exists.");
+            }
+            target.write(source);
+        }
+        source.close();
+        target.close();
     }
 
     /**
