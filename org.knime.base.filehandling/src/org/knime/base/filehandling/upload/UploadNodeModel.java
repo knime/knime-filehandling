@@ -140,10 +140,21 @@ public class UploadNodeModel extends NodeModel {
         String overwritePolicy = m_configuration.getOverwritePolicy();
         // Create source file (no connection information supported)
         RemoteFile source = RemoteFileFactory.createRemoteFile(uri, null);
+        // Get filename
+        String pathHandling = m_configuration.getPathHandling();
+        String name = "";
+        if (pathHandling.equals(PathHandling.FULL_PATH.getName())) {
+            name = source.getFullName();
+        } else if (pathHandling.equals(PathHandling.ONLY_FILENAME.getName())) {
+            name = source.getName();
+        } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
+            String prefix = m_configuration.getPrefix();
+            name = source.getFullName().replaceFirst(prefix, "");
+        }
         // Generate URI to the target
         URI targetUri =
                 new URI(m_connectionInformation.toURI().toString()
-                        + m_configuration.getTarget() + source.getName());
+                        + m_configuration.getTarget() + name);
         // Create target file
         RemoteFile target =
                 RemoteFileFactory.createRemoteFile(targetUri,

@@ -53,14 +53,19 @@ package org.knime.base.filehandling.upload;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
@@ -69,6 +74,7 @@ import org.knime.base.filehandling.remote.dialog.RemoteFileChooser;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooserPanel;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.uri.URIDataValue;
+import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
@@ -76,6 +82,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.ColumnSelectionComboxBox;
+import org.knime.core.node.util.FilesHistoryPanel;
 import org.knime.core.node.workflow.FlowVariable;
 
 /**
@@ -100,6 +107,18 @@ public class UploadNodeDialog extends NodeDialogPane {
 
     private JRadioButton m_abort;
 
+    private ButtonGroup m_pathhandling;
+
+    private JRadioButton m_fullpath;
+
+    private JRadioButton m_onlyfilename;
+
+    private JRadioButton m_truncate;
+
+    private FilesHistoryPanel m_prefix;
+
+    private FlowVariableModelButton m_prefixfvm;
+
     /**
      * New pane for configuring the node dialog.
      */
@@ -115,6 +134,33 @@ public class UploadNodeDialog extends NodeDialogPane {
                         createFlowVariableModel("target",
                                 FlowVariable.Type.STRING),
                         m_connectionInformation);
+        // Path handling
+        m_pathhandling = new ButtonGroup();
+        m_fullpath = new JRadioButton(PathHandling.FULL_PATH.getName());
+        m_fullpath.setActionCommand(PathHandling.FULL_PATH.getName());
+        m_fullpath.addActionListener(new PathHandlingListener());
+        m_onlyfilename = new JRadioButton(PathHandling.ONLY_FILENAME.getName());
+        m_onlyfilename.setActionCommand(PathHandling.ONLY_FILENAME.getName());
+        m_onlyfilename.addActionListener(new PathHandlingListener());
+        m_truncate = new JRadioButton(PathHandling.TRUNCATE_PREFIX.getName());
+        m_truncate.setActionCommand(PathHandling.TRUNCATE_PREFIX.getName());
+        m_truncate.addActionListener(new PathHandlingListener());
+        m_pathhandling.add(m_fullpath);
+        m_pathhandling.add(m_onlyfilename);
+        m_pathhandling.add(m_truncate);
+        // Truncate directory
+        m_prefix = new FilesHistoryPanel("prefixHistory", false);
+        m_prefix.setSelectMode(JFileChooser.DIRECTORIES_ONLY);
+        m_prefixfvm =
+                new FlowVariableModelButton(createFlowVariableModel(
+                        "truncatedirectory", FlowVariable.Type.STRING));
+        m_prefixfvm.getFlowVariableModel().addChangeListener(
+                new ChangeListener() {
+                    @Override
+                    public void stateChanged(final ChangeEvent e) {
+                        enableComponents();
+                    }
+                });
         // Overwrite policy
         m_overwritePolicy = new ButtonGroup();
         m_overwrite = new JRadioButton(OverwritePolicy.OVERWRITE.getName());
@@ -130,6 +176,7 @@ public class UploadNodeDialog extends NodeDialogPane {
         m_overwritePolicy.add(m_abort);
         // Set layout
         addTab("Options", initLayout());
+        enableComponents();
     }
 
     /**
@@ -149,6 +196,26 @@ public class UploadNodeDialog extends NodeDialogPane {
         gbc.gridx++;
         gbc.weightx = 1;
         sourcePanel.add(m_source, gbc);
+        // Path handling
+        NodeUtils.resetGBC(gbc);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        JPanel pathHandlingPanel = new JPanel(new GridBagLayout());
+        pathHandlingPanel.add(m_fullpath, gbc);
+        gbc.gridx++;
+        pathHandlingPanel.add(m_onlyfilename, gbc);
+        gbc.gridx++;
+        pathHandlingPanel.add(m_truncate, gbc);
+        pathHandlingPanel.setBorder(new TitledBorder(new EtchedBorder(),
+                "Path handling"));
+        // Prefix
+        NodeUtils.resetGBC(gbc);
+        JPanel prefixPanel = new JPanel(new GridBagLayout());
+        gbc.weightx = 1;
+        prefixPanel.add(m_prefix, gbc);
+        gbc.weightx = 0;
+        gbc.gridx++;
+        gbc.insets = new Insets(5, 0, 5, 5);
+        prefixPanel.add(m_prefixfvm, gbc);
         // Overwrite policy
         NodeUtils.resetGBC(gbc);
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -168,8 +235,45 @@ public class UploadNodeDialog extends NodeDialogPane {
         panel.add(m_target.getPanel(), gbc);
         gbc.gridy++;
         gbc.fill = GridBagConstraints.NONE;
+        panel.add(pathHandlingPanel, gbc);
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(prefixPanel, gbc);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridy++;
         panel.add(overwritePolicyPanel, gbc);
         return panel;
+    }
+
+    /**
+     * Listener that updates the enabled state of the components.
+     * 
+     * 
+     * @author Patrick Winter, University of Konstanz
+     */
+    private class PathHandlingListener implements ActionListener {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void actionPerformed(final ActionEvent arg0) {
+            enableComponents();
+        }
+
+    }
+
+    /**
+     * Will enable and disable the components based on the current
+     * configuration.
+     */
+    private void enableComponents() {
+        boolean usePrefix = m_truncate.isSelected();
+        boolean replacement =
+                m_prefixfvm.getFlowVariableModel()
+                        .isVariableReplacementEnabled();
+        m_prefix.setEnabled(usePrefix && !replacement);
+        m_prefixfvm.setEnabled(usePrefix);
     }
 
     /**
@@ -200,13 +304,21 @@ public class UploadNodeDialog extends NodeDialogPane {
         String overwritePolicy = config.getOverwritePolicy();
         if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
             m_overwritePolicy.setSelected(m_overwrite.getModel(), true);
-        }
-        if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER.getName())) {
+        } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
+                .getName())) {
             m_overwritePolicy.setSelected(m_overwriteIfNewer.getModel(), true);
-        }
-        if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
+        } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
             m_overwritePolicy.setSelected(m_abort.getModel(), true);
         }
+        String pathHandling = config.getPathHandling();
+        if (pathHandling.equals(PathHandling.FULL_PATH.getName())) {
+            m_pathhandling.setSelected(m_fullpath.getModel(), true);
+        } else if (pathHandling.equals(PathHandling.ONLY_FILENAME.getName())) {
+            m_pathhandling.setSelected(m_onlyfilename.getModel(), true);
+        } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
+            m_pathhandling.setSelected(m_truncate.getModel(), true);
+        }
+        m_prefix.setSelectedFile(config.getPrefix());
     }
 
     /**
@@ -220,6 +332,8 @@ public class UploadNodeDialog extends NodeDialogPane {
         config.setSource(m_source.getSelectedColumn());
         config.setOverwritePolicy(m_overwritePolicy.getSelection()
                 .getActionCommand());
+        config.setPathHandling(m_pathhandling.getSelection().getActionCommand());
+        config.setPrefix(m_prefix.getSelectedFile());
         config.save(settings);
     }
 }

@@ -68,6 +68,10 @@ class UploadConfiguration {
 
     private String m_overwritePolicy;
 
+    private String m_pathHandling;
+
+    private String m_prefix;
+
     /**
      * @return the source
      */
@@ -111,6 +115,34 @@ class UploadConfiguration {
     }
 
     /**
+     * @return the pathHandling
+     */
+    public String getPathHandling() {
+        return m_pathHandling;
+    }
+
+    /**
+     * @param pathHandling the pathHandling to set
+     */
+    public void setPathHandling(final String pathHandling) {
+        m_pathHandling = pathHandling;
+    }
+
+    /**
+     * @return the prefix
+     */
+    public String getPrefix() {
+        return m_prefix;
+    }
+
+    /**
+     * @param prefix the prefix to set
+     */
+    public void setPrefix(final String prefix) {
+        m_prefix = prefix;
+    }
+
+    /**
      * Save the configuration.
      * 
      * 
@@ -120,6 +152,8 @@ class UploadConfiguration {
         settings.addString("source", m_source);
         settings.addString("target", m_target);
         settings.addString("overwritepolicy", m_overwritePolicy);
+        settings.addString("pathhandling", m_pathHandling);
+        settings.addString("prefix", m_prefix);
     }
 
     /**
@@ -134,6 +168,10 @@ class UploadConfiguration {
         m_overwritePolicy =
                 settings.getString("overwritepolicy",
                         OverwritePolicy.OVERWRITE.getName());
+        m_pathHandling =
+                settings.getString("pathhandling",
+                        PathHandling.ONLY_FILENAME.getName());
+        m_prefix = settings.getString("prefix", "");
     }
 
     /**
@@ -151,6 +189,12 @@ class UploadConfiguration {
         validate(m_target);
         m_overwritePolicy = settings.getString("overwritepolicy");
         validate(m_overwritePolicy);
+        m_pathHandling = settings.getString("pathhandling");
+        validate(m_pathHandling);
+        m_prefix = settings.getString("prefix");
+        if (m_pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
+            validate(m_prefix);
+        }
     }
 
     /**
