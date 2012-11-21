@@ -55,6 +55,8 @@ import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
 
 /**
+ * <code>NodeFactory</code> for node.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */

@@ -88,9 +88,9 @@ public class UploadNodeDialog extends NodeDialogPane {
 
     private RemoteCredentials m_credentials;
 
-    private RemoteFileChooserPanel m_target;
-
     private ColumnSelectionComboxBox m_source;
+
+    private RemoteFileChooserPanel m_target;
 
     private ButtonGroup m_overwritePolicy;
 
@@ -105,13 +105,16 @@ public class UploadNodeDialog extends NodeDialogPane {
      */
     @SuppressWarnings("unchecked")
     public UploadNodeDialog() {
+        // Source
+        m_source =
+                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
+        // Target
         m_target =
                 new RemoteFileChooserPanel(getPanel(), "Remote folder", true,
                         "targetHistory", RemoteFileChooser.SELECT_DIR,
                         createFlowVariableModel("target",
                                 FlowVariable.Type.STRING), m_credentials);
-        m_source =
-                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
+        // Overwrite policy
         m_overwritePolicy = new ButtonGroup();
         m_overwrite = new JRadioButton(OverwritePolicy.OVERWRITE.getName());
         m_overwrite.setActionCommand(OverwritePolicy.OVERWRITE.getName());
@@ -124,9 +127,16 @@ public class UploadNodeDialog extends NodeDialogPane {
         m_overwritePolicy.add(m_overwrite);
         m_overwritePolicy.add(m_overwriteIfNewer);
         m_overwritePolicy.add(m_abort);
+        // Set layout
         addTab("Options", initLayout());
     }
 
+    /**
+     * Create and fill panel for the dialog.
+     * 
+     * 
+     * @return The panel for the dialog
+     */
     private JPanel initLayout() {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -152,9 +162,9 @@ public class UploadNodeDialog extends NodeDialogPane {
         // Outer panel
         NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
-        panel.add(m_target.getPanel(), gbc);
-        gbc.gridy++;
         panel.add(sourcePanel, gbc);
+        gbc.gridy++;
+        panel.add(m_target.getPanel(), gbc);
         gbc.gridy++;
         gbc.fill = GridBagConstraints.NONE;
         panel.add(overwritePolicyPanel, gbc);
@@ -167,18 +177,21 @@ public class UploadNodeDialog extends NodeDialogPane {
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings,
             final PortObjectSpec[] specs) throws NotConfigurableException {
+        // Check if a port object is available
         if (specs[0] == null) {
             throw new NotConfigurableException("No credentials available");
         }
         RemoteCredentialsPortObjectSpec object =
                 (RemoteCredentialsPortObjectSpec)specs[0];
         m_credentials = object.getCredentials();
+        // Check if the port object has credentials
         if (m_credentials == null) {
             throw new NotConfigurableException("No credentials available");
         }
         m_target.setCredentials(m_credentials);
+        // Load configuration
         UploadConfiguration config = new UploadConfiguration();
-        config.loadInDialog(settings);
+        config.load(settings);
         m_target.setSelection(config.getTarget());
         m_source.update((DataTableSpec)specs[1], config.getSource());
         String overwritePolicy = config.getOverwritePolicy();

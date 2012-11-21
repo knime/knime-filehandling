@@ -55,6 +55,8 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 
 /**
+ * Configuration for the node.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
@@ -109,6 +111,9 @@ class UploadConfiguration {
     }
 
     /**
+     * Save the configuration.
+     * 
+     * 
      * @param settings The <code>NodeSettings</code> to write to
      */
     void save(final NodeSettingsWO settings) {
@@ -118,9 +123,12 @@ class UploadConfiguration {
     }
 
     /**
+     * Load the configuration.
+     * 
+     * 
      * @param settings The <code>NodeSettings</code> to read from
      */
-    void loadInDialog(final NodeSettingsRO settings) {
+    void load(final NodeSettingsRO settings) {
         m_source = settings.getString("source", "");
         m_target = settings.getString("target", "");
         m_overwritePolicy =
@@ -129,10 +137,13 @@ class UploadConfiguration {
     }
 
     /**
+     * Load the configuration and check for validity.
+     * 
+     * 
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
-    void loadInModel(final NodeSettingsRO settings)
+    void loadAndValidate(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_source = settings.getString("source");
         validate(m_source);

@@ -79,7 +79,7 @@ public final class RemoteFileFactory {
     public static RemoteFile createRemoteFile(final URI uri,
             final RemoteCredentials credentials) throws Exception {
         String scheme = uri.getScheme().toLowerCase();
-        if (!scheme.equals("file")) {
+        if (credentials != null) {
             // Check if the credentials fit to the URI
             credentials.fitsToURI(uri);
         }

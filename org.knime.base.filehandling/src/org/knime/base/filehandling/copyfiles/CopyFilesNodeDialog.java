@@ -174,6 +174,12 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         addTab("Options", initLayout());
     }
 
+    /**
+     * Create and fill panel for the dialog.
+     * 
+     * 
+     * @return The panel for the dialog
+     */
     private JPanel initLayout() {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -240,6 +246,10 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         return panel;
     }
 
+    /**
+     * Will enable and disable the components of the filename handling based on
+     * the current configuration.
+     */
     private void enableFilenamehandlingComponents() {
         boolean separateColumn = m_fromseparatecolumn.isSelected();
         boolean replacement =
@@ -250,6 +260,12 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         m_outputdirectoryfvm.setEnabled(!separateColumn);
     }
 
+    /**
+     * Listener for the filename handling setting.
+     * 
+     * 
+     * @author Patrick Winter, University of Konstanz
+     */
     private class FilenamehandlingListener implements ActionListener {
 
         /**
@@ -269,7 +285,7 @@ class CopyFilesNodeDialog extends NodeDialogPane {
     protected void loadSettingsFrom(final NodeSettingsRO settings,
             final DataTableSpec[] specs) throws NotConfigurableException {
         CopyFilesConfiguration config = new CopyFilesConfiguration();
-        config.loadInDialog(settings);
+        config.load(settings);
         m_sourcecolumn.update(specs[0], config.getSourcecolumn());
         m_targetcolumn.update(specs[0], config.getTargetcolumn());
         m_outputdirectory.updateHistory();

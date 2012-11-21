@@ -89,7 +89,7 @@ public class UploadNodeModel extends NodeModel {
     private UploadConfiguration m_configuration;
 
     /**
-     * 
+     * Constructor for the node model.
      */
     public UploadNodeModel() {
         super(new PortType[]{RemoteCredentialsPortObject.TYPE,
@@ -103,40 +103,63 @@ public class UploadNodeModel extends NodeModel {
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
         String source = m_configuration.getSource();
+        // Get table with source URIs
         BufferedDataTable table = (BufferedDataTable)inObjects[1];
         int index = table.getDataTableSpec().findColumnIndex(source);
         int i = 0;
         int rows = table.getRowCount();
+        // Process each row
         for (DataRow row : table) {
+            // Skip missing values
             if (!row.getCell(index).isMissing()) {
                 exec.checkCanceled();
                 exec.setProgress((double)i / rows);
+                // Get source URI
                 URI uri =
                         ((URIDataValue)row.getCell(index)).getURIContent()
                                 .getURI();
+                // Upload file
                 upload(uri);
                 i++;
             }
         }
+        // Close connections
         ConnectionMonitor.closeAll();
         return new PortObject[]{};
     }
 
+    /**
+     * Uploads a single file to the configured remote location.
+     * 
+     * 
+     * @param uri The URI to the source file
+     * @throws Exception If the operation could not be processed
+     */
     private void upload(final URI uri) throws Exception {
+        // Get overwrite policy
         String overwritePolicy = m_configuration.getOverwritePolicy();
+        // Create source file (no credentials supported)
         RemoteFile source = RemoteFileFactory.createRemoteFile(uri, null);
+        // Generate URI to the target
         URI targetUri =
                 new URI(m_credentials.toURI().toString()
                         + m_configuration.getTarget() + source.getName());
+        // Create target file
         RemoteFile target =
                 RemoteFileFactory.createRemoteFile(targetUri, m_credentials);
         if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
+            // Policy overwrite:
+            // Just write
             target.write(source);
         } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
                 .getName())) {
+            // Policy overwrite if newer:
+            // Get modification time
             long sourceTime = source.lastModified();
             long targetTime = target.lastModified();
+            // Check if both times could be retrieved, else do an overwrite
             if (sourceTime > 0 && targetTime > 0) {
+                // Check if the target is older then the source
                 if (target.lastModified() < source.lastModified()) {
                     target.write(source);
                 }
@@ -144,12 +167,15 @@ public class UploadNodeModel extends NodeModel {
                 target.write(source);
             }
         } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
+            // Policy abort:
+            // Throw exception if the target exists
             if (target.exists()) {
                 throw new Exception("File " + target.getFullName()
                         + " already exists.");
             }
             target.write(source);
         }
+        // Close remote files
         source.close();
         target.close();
     }
@@ -161,18 +187,22 @@ public class UploadNodeModel extends NodeModel {
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
+        // Check if a port object is available
         if (inSpecs[0] == null) {
             throw new InvalidSettingsException("No credentials available");
         }
         RemoteCredentialsPortObjectSpec object =
                 (RemoteCredentialsPortObjectSpec)inSpecs[0];
         m_credentials = object.getCredentials();
+        // Check if the port object has credentials
         if (m_credentials == null) {
             throw new InvalidSettingsException("No credentials available");
         }
+        // Check if configuration has been loaded
         if (m_configuration == null) {
             throw new InvalidSettingsException("No settings available");
         }
+        // Check that source configuration is correct
         String source = m_configuration.getSource();
         NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Source",
                 source, URIDataValue.class);
@@ -215,7 +245,7 @@ public class UploadNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        new UploadConfiguration().loadInModel(settings);
+        new UploadConfiguration().loadAndValidate(settings);
     }
 
     /**
@@ -225,7 +255,7 @@ public class UploadNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         UploadConfiguration config = new UploadConfiguration();
-        config.loadInModel(settings);
+        config.loadAndValidate(settings);
         m_configuration = config;
     }
 

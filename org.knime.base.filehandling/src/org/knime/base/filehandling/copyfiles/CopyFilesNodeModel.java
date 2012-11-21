@@ -403,7 +403,7 @@ class CopyFilesNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         CopyFilesConfiguration config = new CopyFilesConfiguration();
-        config.loadInModel(settings);
+        config.loadAndValidate(settings);
         m_configuration = config;
     }
 
@@ -413,7 +413,7 @@ class CopyFilesNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        new CopyFilesConfiguration().loadInModel(settings);
+        new CopyFilesConfiguration().loadAndValidate(settings);
     }
 
     /**

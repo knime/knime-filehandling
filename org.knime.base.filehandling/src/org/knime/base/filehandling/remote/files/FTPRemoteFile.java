@@ -261,7 +261,7 @@ public class FTPRemoteFile extends RemoteFile {
         long time = 0;
         FTPFile ftpFile = getFTPFile();
         if (ftpFile != null) {
-            time = ftpFile.getTimestamp().getTimeInMillis();
+            time = ftpFile.getTimestamp().getTimeInMillis() / 1000;
         }
         return time;
     }
