@@ -348,6 +348,35 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
     public abstract boolean mkDir() throws Exception;
 
     /**
+     * Create all not existing directories of this files path.
+     * 
+     * 
+     * @param includeThis If this file should also be created as directory
+     * @return true if all upper directories could be created
+     * @throws Exception If the operation could not be executed
+     */
+    public final boolean mkDirs(final boolean includeThis) throws Exception {
+        boolean success = true;
+        RemoteFile parent = getParent();
+        if (!parent.exists()) {
+            success = parent.mkDirs(true);
+        }
+        if (success && !exists() && includeThis) {
+            success = mkDir();
+        }
+        return success;
+    }
+
+    /**
+     * Get the parent of this file.
+     * 
+     * 
+     * @return The parent file
+     * @throws Exception If the operation could not be executed
+     */
+    public abstract RemoteFile getParent() throws Exception;
+
+    /**
      * Close this remote file.
      * 
      * 

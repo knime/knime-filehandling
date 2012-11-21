@@ -263,6 +263,14 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public RemoteFile getParent() throws Exception {
+        throw new UnsupportedOperationException(unsupportedMessage("getParent"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void close() throws Exception {
         // Every operation uses its own execution channel and is responsible for
         // closing it

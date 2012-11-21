@@ -340,6 +340,26 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public RemoteFile getParent() throws Exception {
+        FTPClient client = getClient();
+        client.changeWorkingDirectory(getPath());
+        if (isDirectory()) {
+            client.changeToParentDirectory();
+        }
+        String path = client.printWorkingDirectory();
+        // Build URI
+        URI uri =
+                new URI(m_uri.getScheme() + "://" + m_uri.getAuthority() + path);
+        // Create remote file and open it
+        RemoteFile file = new FTPRemoteFile(uri, m_connectionInformation);
+        file.open();
+        return file;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void close() throws Exception {
         FTPClient client = getClient();
         // Complete all operations

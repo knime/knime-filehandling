@@ -364,6 +364,25 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public RemoteFile getParent() throws Exception {
+        openChannel();
+        if (isDirectory()) {
+            channel.cd("..");
+        }
+        String path = channel.pwd();
+        // Build URI
+        URI uri =
+                new URI(m_uri.getScheme() + "://" + m_uri.getAuthority() + path);
+        // Create remote file and open it
+        RemoteFile file = new SFTPRemoteFile(uri, m_connectionInformation);
+        file.open();
+        return file;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void close() throws Exception {
         if (channel != null) {
             channel.disconnect();

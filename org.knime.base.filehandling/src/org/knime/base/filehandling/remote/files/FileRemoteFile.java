@@ -218,6 +218,14 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public RemoteFile getParent() throws Exception {
+        return new FileRemoteFile(new File(new File(m_uri).getParent()).toURI());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void close() throws Exception {
         // No connection to close
     }

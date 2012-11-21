@@ -229,6 +229,14 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public RemoteFile getParent() throws Exception {
+        throw new UnsupportedOperationException(unsupportedMessage("getParent"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void close() throws Exception {
         // No persistent connection to close
     }
