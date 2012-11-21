@@ -46,65 +46,55 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.http;
-
-import org.knime.base.filehandling.remotecredentials.Protocol;
-import org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeDialog;
-import org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeModel;
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+package org.knime.base.filehandling.remote.connectioninformation.node;
 
 /**
- * <code>NodeFactory</code> for node.
+ * Enums for authentication method.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class HTTPRemoteCredentialsNodeFactory extends
-        NodeFactory<RemoteCredentialsNodeModel> {
+enum AuthenticationMethod {
 
     /**
-     * {@inheritDoc}
+     * Use no authentication.
      */
-    @Override
-    public RemoteCredentialsNodeModel createNodeModel() {
-        return new RemoteCredentialsNodeModel(Protocol.HTTP);
+    NONE("None"),
+
+    /**
+     * Use password.
+     */
+    PASSWORD("Password"),
+
+    /**
+     * Use keyfile.
+     */
+    KEYFILE("Keyfile");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this setting
+     */
+    private AuthenticationMethod(final String name) {
+        m_name = name;
     }
 
     /**
-     * {@inheritDoc}
+     * @return Name of this setting
      */
-    @Override
-    public int getNrNodeViews() {
-        return 0;
+    String getName() {
+        return m_name;
     }
 
     /**
-     * {@inheritDoc}
+     * @return Array of all authentication method settings
      */
-    @Override
-    public NodeView<RemoteCredentialsNodeModel> createNodeView(
-            final int viewIndex, final RemoteCredentialsNodeModel nodeModel) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new RemoteCredentialsNodeDialog(Protocol.HTTP);
+    static String[] getAllSettings() {
+        return new String[]{NONE.getName(), PASSWORD.getName(),
+                KEYFILE.getName()};
     }
 
 }

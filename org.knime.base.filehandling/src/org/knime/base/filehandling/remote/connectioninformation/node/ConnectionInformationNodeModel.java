@@ -48,14 +48,14 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials;
+package org.knime.base.filehandling.remote.connectioninformation.node;
 
 import java.io.File;
 import java.io.IOException;
 
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObject;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -73,20 +73,20 @@ import org.knime.core.node.port.PortType;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsNodeModel extends NodeModel {
+public class ConnectionInformationNodeModel extends NodeModel {
 
     private Protocol m_protocol;
 
-    private RemoteCredentialsConfiguration m_configuration;
+    private ConnectionInformationConfiguration m_configuration;
 
     /**
      * Constructor for the node model.
      * 
-     * @param protocol The protocol of this credentials model
+     * @param protocol The protocol of this connection information model
      */
-    public RemoteCredentialsNodeModel(final Protocol protocol) {
+    public ConnectionInformationNodeModel(final Protocol protocol) {
         super(new PortType[]{},
-                new PortType[]{RemoteCredentialsPortObject.TYPE});
+                new PortType[]{ConnectionInformationPortObject.TYPE});
         m_protocol = protocol;
     }
 
@@ -96,28 +96,31 @@ public class RemoteCredentialsNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
-        // Create remote credentials object
-        RemoteCredentials credentials = new RemoteCredentials();
+        // Create connection information object
+        ConnectionInformation connectionInformation =
+                new ConnectionInformation();
         // Put settings into object
-        credentials.setProtocol(m_protocol.getName());
-        credentials.setHost(m_configuration.getHost());
-        credentials.setPort(m_configuration.getPort());
+        connectionInformation.setProtocol(m_protocol.getName());
+        connectionInformation.setHost(m_configuration.getHost());
+        connectionInformation.setPort(m_configuration.getPort());
         if (!m_configuration.getAuthenticationmethod().equals(
                 AuthenticationMethod.NONE.getName())) {
-            credentials.setUser(m_configuration.getUser());
-            credentials.setPassword(m_configuration.getPassword());
+            connectionInformation.setUser(m_configuration.getUser());
+            connectionInformation.setPassword(m_configuration.getPassword());
         }
         if (m_protocol.hasKeyfileSupport()
                 && m_configuration.getAuthenticationmethod().equals(
                         AuthenticationMethod.KEYFILE.getName())) {
-            credentials.setKeyfile(m_configuration.getKeyfile());
+            connectionInformation.setKeyfile(m_configuration.getKeyfile());
         }
         if (m_protocol.hasCertificateSupport()
                 && m_configuration.getUsecertificate()) {
-            credentials.setCertificate(m_configuration.getCertificate());
+            connectionInformation.setCertificate(m_configuration
+                    .getCertificate());
         }
-        // Return port object with remote credentials
-        return new PortObject[]{new RemoteCredentialsPortObject(credentials)};
+        // Return port object with connection information
+        return new PortObject[]{new ConnectionInformationPortObject(
+                connectionInformation)};
     }
 
     /**
@@ -135,7 +138,7 @@ public class RemoteCredentialsNodeModel extends NodeModel {
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
         // Return empty port object spec
-        return new PortObjectSpec[]{new RemoteCredentialsPortObjectSpec()};
+        return new PortObjectSpec[]{new ConnectionInformationPortObjectSpec()};
     }
 
     /**
@@ -154,8 +157,8 @@ public class RemoteCredentialsNodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        RemoteCredentialsConfiguration config =
-                new RemoteCredentialsConfiguration(m_protocol);
+        ConnectionInformationConfiguration config =
+                new ConnectionInformationConfiguration(m_protocol);
         config.loadInModel(settings);
         m_configuration = config;
     }
@@ -166,7 +169,8 @@ public class RemoteCredentialsNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        new RemoteCredentialsConfiguration(m_protocol).loadInModel(settings);
+        new ConnectionInformationConfiguration(m_protocol)
+                .loadInModel(settings);
     }
 
     /**

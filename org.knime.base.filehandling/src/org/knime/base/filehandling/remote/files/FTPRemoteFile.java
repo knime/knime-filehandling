@@ -59,7 +59,7 @@ import java.util.Arrays;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.util.KnimeEncryption;
 
 /**
@@ -72,18 +72,19 @@ public class FTPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
-    private RemoteCredentials m_credentials;
+    private ConnectionInformation m_connectionInformation;
 
     /**
      * Creates a FTP remote file for the given URI.
      * 
      * 
      * @param uri The URI
-     * @param credentials Credentials to the given URI
+     * @param connectionInformation Connection information to the given URI
      */
-    FTPRemoteFile(final URI uri, final RemoteCredentials credentials) {
+    FTPRemoteFile(final URI uri,
+            final ConnectionInformation connectionInformation) {
         m_uri = uri;
-        m_credentials = credentials;
+        m_connectionInformation = connectionInformation;
     }
 
     /**
@@ -314,7 +315,7 @@ public class FTPRemoteFile extends RemoteFile {
                                 + m_uri.getAuthority() + getPath()
                                 + ftpFiles[i].getName());
                 // Create remote file and open it
-                files[i] = new FTPRemoteFile(uri, m_credentials);
+                files[i] = new FTPRemoteFile(uri, m_connectionInformation);
                 files[i].open();
             }
         } else {
@@ -420,7 +421,7 @@ public class FTPRemoteFile extends RemoteFile {
                     m_uri.getPort() != -1 ? m_uri.getPort() : DefaultPortMap
                             .getMap().get(getType());
             String user = m_uri.getUserInfo();
-            String password = m_credentials.getPassword();
+            String password = m_connectionInformation.getPassword();
             if (password != null) {
                 password = KnimeEncryption.decrypt(password);
             }

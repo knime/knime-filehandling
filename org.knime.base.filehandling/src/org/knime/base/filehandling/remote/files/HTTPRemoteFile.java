@@ -60,7 +60,7 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.util.KnimeEncryption;
 
 /**
@@ -73,18 +73,19 @@ public class HTTPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
-    private RemoteCredentials m_credentials;
+    private ConnectionInformation m_connectionInformation;
 
     /**
      * Creates a HTTP remote file for the given URI.
      * 
      * 
      * @param uri The URI
-     * @param credentials Credentials to the given URI
+     * @param connectionInformation Connection information to the given URI
      */
-    HTTPRemoteFile(final URI uri, final RemoteCredentials credentials) {
+    HTTPRemoteFile(final URI uri,
+            final ConnectionInformation connectionInformation) {
         m_uri = uri;
-        m_credentials = credentials;
+        m_connectionInformation = connectionInformation;
     }
 
     /**
@@ -244,9 +245,10 @@ public class HTTPRemoteFile extends RemoteFile {
         DefaultHttpClient client = new DefaultHttpClient();
         // If user info is given in the URI use HTTP basic authentication
         if (m_uri.getUserInfo().length() > 0) {
-            // Decrypt password from the credentials
+            // Decrypt password from the connection information
             String password =
-                    KnimeEncryption.decrypt(m_credentials.getPassword());
+                    KnimeEncryption.decrypt(m_connectionInformation
+                            .getPassword());
             // Get port (replacing it with the default port if necessary)
             int port = m_uri.getPort();
             if (port < 0) {

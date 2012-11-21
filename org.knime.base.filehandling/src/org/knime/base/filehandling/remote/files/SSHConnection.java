@@ -52,7 +52,7 @@ package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
 
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.util.KnimeEncryption;
 
 import com.jcraft.jsch.JSch;
@@ -70,18 +70,19 @@ public class SSHConnection extends Connection {
 
     private Session m_session;
 
-    private RemoteCredentials m_credentials;
+    private ConnectionInformation m_connectionInformation;
 
     /**
      * Create a SSH connection to the given URI.
      * 
      * 
      * @param uri The URI
-     * @param credentials Credentials to the given URI
+     * @param connectionInformation Connection information to the given URI
      */
-    public SSHConnection(final URI uri, final RemoteCredentials credentials) {
+    public SSHConnection(final URI uri,
+            final ConnectionInformation connectionInformation) {
         m_uri = uri;
-        m_credentials = credentials;
+        m_connectionInformation = connectionInformation;
     }
 
     /**
@@ -95,16 +96,17 @@ public class SSHConnection extends Connection {
                 m_uri.getPort() >= 0 ? m_uri.getPort() : DefaultPortMap
                         .getMap().get("ssh");
         String user = m_uri.getUserInfo();
-        String password = KnimeEncryption.decrypt(m_credentials.getPassword());
+        String password =
+                KnimeEncryption.decrypt(m_connectionInformation.getPassword());
         // Open session
         JSch jsch = new JSch();
         // Use keyfile if available
-        String keyfile = m_credentials.getKeyfile();
+        String keyfile = m_connectionInformation.getKeyfile();
         if (keyfile != null && keyfile.length() != 0) {
             jsch.addIdentity(keyfile, password);
         }
         // Add custom certificate to known hosts if available
-        String certificate = m_credentials.getCertificate();
+        String certificate = m_connectionInformation.getCertificate();
         if (certificate != null && certificate.length() != 0) {
             jsch.setKnownHosts(certificate);
         }

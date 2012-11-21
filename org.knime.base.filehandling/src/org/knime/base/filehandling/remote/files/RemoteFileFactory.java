@@ -52,7 +52,7 @@ package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
 
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 
 /**
  * Factory for remote files.
@@ -71,30 +71,30 @@ public final class RemoteFileFactory {
      * 
      * 
      * @param uri The URI
-     * @param credentials Credentials to the given URI
+     * @param connectionInformation Connection information to the given URI
      * @return Remote file for the given URI
      * @throws Exception If creation of the remote file or opening of its
      *             connection failed
      */
     public static RemoteFile createRemoteFile(final URI uri,
-            final RemoteCredentials credentials) throws Exception {
+            final ConnectionInformation connectionInformation) throws Exception {
         String scheme = uri.getScheme().toLowerCase();
-        if (credentials != null) {
-            // Check if the credentials fit to the URI
-            credentials.fitsToURI(uri);
+        if (connectionInformation != null) {
+            // Check if the connection information fit to the URI
+            connectionInformation.fitsToURI(uri);
         }
         RemoteFile remoteFile = null;
         // Create remote file that fits to the scheme
         if (scheme.equals("file")) {
             remoteFile = new FileRemoteFile(uri);
         } else if (scheme.equals("ftp")) {
-            remoteFile = new FTPRemoteFile(uri, credentials);
+            remoteFile = new FTPRemoteFile(uri, connectionInformation);
         } else if (scheme.equals("sftp") || scheme.equals("ssh")) {
-            remoteFile = new SFTPRemoteFile(uri, credentials);
+            remoteFile = new SFTPRemoteFile(uri, connectionInformation);
         } else if (scheme.equals("http") || scheme.equals("https")) {
-            remoteFile = new HTTPRemoteFile(uri, credentials);
+            remoteFile = new HTTPRemoteFile(uri, connectionInformation);
         } else if (scheme.equals("scp")) {
-            remoteFile = new SCPRemoteFile(uri, credentials);
+            remoteFile = new SCPRemoteFile(uri, connectionInformation);
         }
         if (remoteFile != null) {
             // Open connection of the remote file

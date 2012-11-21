@@ -10,16 +10,16 @@
     <fullDescription>
         <intro>
             This node uploads the files referenced by the table to
-            the server specified by the credentials.
+            the server specified by the connection information.
         </intro>
 
 
     </fullDescription>
 
     <ports>
-        <inPort name="Credential port" index="0">
+        <inPort name="Connection information port" index="0">
             Port object
-            containing the credentials to the server.
+            containing the connection information to the server.
         </inPort>
         <inPort name="Filelist port" index="1">
             Table containing the

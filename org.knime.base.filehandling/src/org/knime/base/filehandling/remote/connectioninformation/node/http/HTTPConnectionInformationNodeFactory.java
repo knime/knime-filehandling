@@ -46,55 +46,65 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials;
+package org.knime.base.filehandling.remote.connectioninformation.node.http;
+
+import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeDialog;
+import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeModel;
+import org.knime.base.filehandling.remote.connectioninformation.node.Protocol;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
- * Enums for authentication method.
+ * <code>NodeFactory</code> for node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-enum AuthenticationMethod {
+public class HTTPConnectionInformationNodeFactory extends
+        NodeFactory<ConnectionInformationNodeModel> {
 
     /**
-     * Use no authentication.
+     * {@inheritDoc}
      */
-    NONE("None"),
-
-    /**
-     * Use password.
-     */
-    PASSWORD("Password"),
-
-    /**
-     * Use keyfile.
-     */
-    KEYFILE("Keyfile");
-
-    private final String m_name;
-
-    /**
-     * @param name Name of this setting
-     */
-    private AuthenticationMethod(final String name) {
-        m_name = name;
+    @Override
+    public ConnectionInformationNodeModel createNodeModel() {
+        return new ConnectionInformationNodeModel(Protocol.HTTP);
     }
 
     /**
-     * @return Name of this setting
+     * {@inheritDoc}
      */
-    String getName() {
-        return m_name;
+    @Override
+    public int getNrNodeViews() {
+        return 0;
     }
 
     /**
-     * @return Array of all authentication method settings
+     * {@inheritDoc}
      */
-    static String[] getAllSettings() {
-        return new String[]{NONE.getName(), PASSWORD.getName(),
-                KEYFILE.getName()};
+    @Override
+    public NodeView<ConnectionInformationNodeModel> createNodeView(
+            final int viewIndex, final ConnectionInformationNodeModel nodeModel) {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasDialog() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeDialogPane createNodeDialogPane() {
+        return new ConnectionInformationNodeDialog(Protocol.HTTP);
     }
 
 }

@@ -48,7 +48,7 @@
  * History
  *   Oct 30, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials;
+package org.knime.base.filehandling.remote.connectioninformation.node;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -91,10 +91,10 @@ import org.knime.core.util.KnimeEncryption;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsNodeDialog extends NodeDialogPane {
+public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     private static final NodeLogger LOGGER = NodeLogger
-            .getLogger(RemoteCredentialsNodeDialog.class);
+            .getLogger(ConnectionInformationNodeDialog.class);
 
     private Protocol m_protocol;
 
@@ -137,9 +137,9 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     /**
      * New pane for configuring the node dialog.
      * 
-     * @param protocol The protocol of this credentials dialog
+     * @param protocol The protocol of this connection information dialog
      */
-    public RemoteCredentialsNodeDialog(final Protocol protocol) {
+    public ConnectionInformationNodeDialog(final Protocol protocol) {
         m_protocol = protocol;
         // Host
         m_host = new JTextField();
@@ -374,8 +374,8 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
-        RemoteCredentialsConfiguration config =
-                new RemoteCredentialsConfiguration(m_protocol);
+        ConnectionInformationConfiguration config =
+                new ConnectionInformationConfiguration(m_protocol);
         config.setUser(m_user.getText());
         config.setHost(m_host.getText());
         config.setPort((Integer)m_port.getValue());
@@ -412,8 +412,8 @@ public class RemoteCredentialsNodeDialog extends NodeDialogPane {
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings,
             final PortObjectSpec[] specs) throws NotConfigurableException {
-        RemoteCredentialsConfiguration config =
-                new RemoteCredentialsConfiguration(m_protocol);
+        ConnectionInformationConfiguration config =
+                new ConnectionInformationConfiguration(m_protocol);
         config.loadInDialog(settings);
         m_user.setText(config.getUser());
         m_host.setText(config.getHost());

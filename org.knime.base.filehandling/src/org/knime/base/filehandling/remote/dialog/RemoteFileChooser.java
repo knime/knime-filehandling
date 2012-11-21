@@ -70,10 +70,10 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import org.knime.base.filehandling.NodeUtils;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
 
 /**
  * Dialog that presents the file structure of a remote folder in a tree.
@@ -100,7 +100,7 @@ public final class RemoteFileChooser {
 
     private URI m_uri;
 
-    private RemoteCredentials m_credentials;
+    private ConnectionInformation m_connectionInformation;
 
     private int m_selectionType;
 
@@ -115,13 +115,14 @@ public final class RemoteFileChooser {
      * 
      * 
      * @param uri The URI
-     * @param credentials Credentials to the URI
+     * @param connectionInformation Connection information to the URI
      * @param selectionType Whether a file or a directory should be selected
      */
     public RemoteFileChooser(final URI uri,
-            final RemoteCredentials credentials, final int selectionType) {
+            final ConnectionInformation connectionInformation,
+            final int selectionType) {
         m_uri = uri;
-        m_credentials = credentials;
+        m_connectionInformation = connectionInformation;
         m_selectionType = selectionType;
         m_selectedFile = null;
     }
@@ -148,7 +149,8 @@ public final class RemoteFileChooser {
         try {
             // Create remote file to the root of the tree
             RemoteFile root =
-                    RemoteFileFactory.createRemoteFile(m_uri, m_credentials);
+                    RemoteFileFactory.createRemoteFile(m_uri,
+                            m_connectionInformation);
             JPanel panel = initPanel(root);
             // Create dialog
             m_dialog = new JDialog(parent);

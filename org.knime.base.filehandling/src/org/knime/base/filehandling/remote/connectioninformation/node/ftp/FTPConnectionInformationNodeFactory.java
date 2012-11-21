@@ -46,63 +46,48 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 13, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.port;
+package org.knime.base.filehandling.remote.connectioninformation.node.ftp;
 
-import javax.swing.JComponent;
-
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.ModelContentRO;
-import org.knime.core.node.ModelContentWO;
-import org.knime.core.node.port.AbstractSimplePortObjectSpec;
+import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeDialog;
+import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeModel;
+import org.knime.base.filehandling.remote.connectioninformation.node.Protocol;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
- * Spec for remote credentials port object.
+ * <code>NodeFactory</code> for node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsPortObjectSpec extends
-        AbstractSimplePortObjectSpec {
-
-    private RemoteCredentials m_credentials;
+public class FTPConnectionInformationNodeFactory extends
+        NodeFactory<ConnectionInformationNodeModel> {
 
     /**
-     * Create default port object spec without credentials.
+     * {@inheritDoc}
      */
-    public RemoteCredentialsPortObjectSpec() {
-        m_credentials = null;
-    }
-
-    /**
-     * Create specs that contain credentials.
-     * 
-     * 
-     * @param credentials The content of this port object
-     */
-    public RemoteCredentialsPortObjectSpec(final RemoteCredentials credentials) {
-        if (credentials == null) {
-            throw new NullPointerException("List argument must not be null");
-        }
-        m_credentials = credentials;
-    }
-
-    /**
-     * Return the credentials contained by this port object spec.
-     * 
-     * 
-     * @return The content of this port object
-     */
-    public RemoteCredentials getCredentials() {
-        return m_credentials;
+    @Override
+    public ConnectionInformationNodeModel createNodeModel() {
+        return new ConnectionInformationNodeModel(Protocol.FTP);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public JComponent[] getViews() {
+    public int getNrNodeViews() {
+        return 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeView<ConnectionInformationNodeModel> createNodeView(
+            final int viewIndex, final ConnectionInformationNodeModel nodeModel) {
         return null;
     }
 
@@ -110,35 +95,16 @@ public class RemoteCredentialsPortObjectSpec extends
      * {@inheritDoc}
      */
     @Override
-    public boolean equals(final Object ospec) {
-        return ospec != null
-                && ospec.getClass().equals(
-                        RemoteCredentialsPortObjectSpec.class);
+    public boolean hasDialog() {
+        return true;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int hashCode() {
-        return RemoteCredentialsPortObjectSpec.class.hashCode();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void save(final ModelContentWO model) {
-        m_credentials.save(model);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void load(final ModelContentRO model)
-            throws InvalidSettingsException {
-        m_credentials = RemoteCredentials.load(model);
+    public NodeDialogPane createNodeDialogPane() {
+        return new ConnectionInformationNodeDialog(Protocol.FTP);
     }
 
 }

@@ -60,7 +60,7 @@ import java.util.List;
 import java.util.Vector;
 
 import org.apache.commons.io.FilenameUtils;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
@@ -81,23 +81,24 @@ public class SFTPRemoteFile extends RemoteFile {
 
     private URI m_uri;
 
-    private RemoteCredentials m_credentials;
+    private ConnectionInformation m_connectionInformation;
 
     /**
      * Creates a SFTP remote file for the given URI.
      * 
      * 
      * @param uri The URI
-     * @param credentials Credentials to the given URI
+     * @param connectionInformation Connection information to the given URI
      */
-    SFTPRemoteFile(final URI uri, final RemoteCredentials credentials) {
+    SFTPRemoteFile(final URI uri,
+            final ConnectionInformation connectionInformation) {
         // Change protocol to general SSH
         try {
             m_uri = new URI(uri.toString().replaceFirst("sftp", "ssh"));
         } catch (URISyntaxException e) {
             // Should not happen, since the syntax remains untouched
         }
-        m_credentials = credentials;
+        m_connectionInformation = connectionInformation;
     }
 
     /**
@@ -114,7 +115,7 @@ public class SFTPRemoteFile extends RemoteFile {
     @Override
     protected Connection createConnection() {
         // Use general SSH connection
-        return new SSHConnection(m_uri, m_credentials);
+        return new SSHConnection(m_uri, m_connectionInformation);
     }
 
     /**
@@ -333,7 +334,7 @@ public class SFTPRemoteFile extends RemoteFile {
                                         + filename);
                         // Create remote file and open it
                         RemoteFile file =
-                                new SFTPRemoteFile(uri, m_credentials);
+                                new SFTPRemoteFile(uri, m_connectionInformation);
                         file.open();
                         // Add remote file to the result list
                         files.add(file);

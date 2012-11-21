@@ -48,7 +48,7 @@
  * History
  *   Nov 9, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials;
+package org.knime.base.filehandling.remote.connectioninformation.node;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
@@ -60,7 +60,7 @@ import org.knime.core.node.NodeSettingsWO;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-class RemoteCredentialsConfiguration {
+class ConnectionInformationConfiguration {
 
     private Protocol m_protocol;
 
@@ -84,9 +84,9 @@ class RemoteCredentialsConfiguration {
      * Create uninitialized configuration to a certain protocol.
      * 
      * 
-     * @param protocol The protocol of this credential configuration
+     * @param protocol The protocol of this connection information configuration
      */
-    RemoteCredentialsConfiguration(final Protocol protocol) {
+    ConnectionInformationConfiguration(final Protocol protocol) {
         m_protocol = protocol;
     }
 

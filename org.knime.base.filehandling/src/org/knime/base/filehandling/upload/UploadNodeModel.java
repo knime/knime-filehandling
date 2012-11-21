@@ -55,12 +55,12 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.knime.base.filehandling.NodeUtils;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObject;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.uri.URIDataValue;
@@ -84,7 +84,7 @@ import org.knime.core.node.port.PortType;
  */
 public class UploadNodeModel extends NodeModel {
 
-    private RemoteCredentials m_credentials;
+    private ConnectionInformation m_connectionInformation;
 
     private UploadConfiguration m_configuration;
 
@@ -92,7 +92,7 @@ public class UploadNodeModel extends NodeModel {
      * Constructor for the node model.
      */
     public UploadNodeModel() {
-        super(new PortType[]{RemoteCredentialsPortObject.TYPE,
+        super(new PortType[]{ConnectionInformationPortObject.TYPE,
                 BufferedDataTable.TYPE}, new PortType[]{});
     }
 
@@ -138,15 +138,16 @@ public class UploadNodeModel extends NodeModel {
     private void upload(final URI uri) throws Exception {
         // Get overwrite policy
         String overwritePolicy = m_configuration.getOverwritePolicy();
-        // Create source file (no credentials supported)
+        // Create source file (no connection information supported)
         RemoteFile source = RemoteFileFactory.createRemoteFile(uri, null);
         // Generate URI to the target
         URI targetUri =
-                new URI(m_credentials.toURI().toString()
+                new URI(m_connectionInformation.toURI().toString()
                         + m_configuration.getTarget() + source.getName());
         // Create target file
         RemoteFile target =
-                RemoteFileFactory.createRemoteFile(targetUri, m_credentials);
+                RemoteFileFactory.createRemoteFile(targetUri,
+                        m_connectionInformation);
         if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
             // Policy overwrite:
             // Just write
@@ -189,14 +190,16 @@ public class UploadNodeModel extends NodeModel {
             throws InvalidSettingsException {
         // Check if a port object is available
         if (inSpecs[0] == null) {
-            throw new InvalidSettingsException("No credentials available");
+            throw new InvalidSettingsException(
+                    "No connection information available");
         }
-        RemoteCredentialsPortObjectSpec object =
-                (RemoteCredentialsPortObjectSpec)inSpecs[0];
-        m_credentials = object.getCredentials();
-        // Check if the port object has credentials
-        if (m_credentials == null) {
-            throw new InvalidSettingsException("No credentials available");
+        ConnectionInformationPortObjectSpec object =
+                (ConnectionInformationPortObjectSpec)inSpecs[0];
+        m_connectionInformation = object.getConnectionInformation();
+        // Check if the port object has connection information
+        if (m_connectionInformation == null) {
+            throw new InvalidSettingsException(
+                    "No connection information available");
         }
         // Check if configuration has been loaded
         if (m_configuration == null) {

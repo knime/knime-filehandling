@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./ftpremotecredentials.gif" type="Source">
-    <name>FTP Connection</name>
+<knimeNode icon="./httpconnectioninformation.gif" type="Source">
+    <name>HTTP Connection</name>
 
     <shortDescription>
-        Configures the credentials used to connect to a
+        Configures the connection information used to connect to a
         remote host.
     </shortDescription>
 
     <fullDescription>
         <intro>
-            This node configures the credentials that will be used to
+            This node configures the connection information that will be used to
             connect to a remote host.
         </intro>
 
@@ -18,9 +18,9 @@
     </fullDescription>
 
     <ports>
-        <outPort name="Credential port" index="0">
+        <outPort name="Connection information port" index="0">
             Port object
-            containing the credentials.
+            containing the connection information.
         </outPort>
     </ports>
 </knimeNode>

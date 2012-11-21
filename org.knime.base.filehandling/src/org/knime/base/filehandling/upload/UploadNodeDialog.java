@@ -63,10 +63,10 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 import org.knime.base.filehandling.NodeUtils;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooser;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooserPanel;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentialsPortObjectSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.InvalidSettingsException;
@@ -86,7 +86,7 @@ import org.knime.core.node.workflow.FlowVariable;
  */
 public class UploadNodeDialog extends NodeDialogPane {
 
-    private RemoteCredentials m_credentials;
+    private ConnectionInformation m_connectionInformation;
 
     private ColumnSelectionComboxBox m_source;
 
@@ -113,7 +113,8 @@ public class UploadNodeDialog extends NodeDialogPane {
                 new RemoteFileChooserPanel(getPanel(), "Remote folder", true,
                         "targetHistory", RemoteFileChooser.SELECT_DIR,
                         createFlowVariableModel("target",
-                                FlowVariable.Type.STRING), m_credentials);
+                                FlowVariable.Type.STRING),
+                        m_connectionInformation);
         // Overwrite policy
         m_overwritePolicy = new ButtonGroup();
         m_overwrite = new JRadioButton(OverwritePolicy.OVERWRITE.getName());
@@ -179,16 +180,18 @@ public class UploadNodeDialog extends NodeDialogPane {
             final PortObjectSpec[] specs) throws NotConfigurableException {
         // Check if a port object is available
         if (specs[0] == null) {
-            throw new NotConfigurableException("No credentials available");
+            throw new NotConfigurableException(
+                    "No connection information available");
         }
-        RemoteCredentialsPortObjectSpec object =
-                (RemoteCredentialsPortObjectSpec)specs[0];
-        m_credentials = object.getCredentials();
-        // Check if the port object has credentials
-        if (m_credentials == null) {
-            throw new NotConfigurableException("No credentials available");
+        ConnectionInformationPortObjectSpec object =
+                (ConnectionInformationPortObjectSpec)specs[0];
+        m_connectionInformation = object.getConnectionInformation();
+        // Check if the port object has connection information
+        if (m_connectionInformation == null) {
+            throw new NotConfigurableException(
+                    "No connection information available");
         }
-        m_target.setCredentials(m_credentials);
+        m_target.setConnectionInformation(m_connectionInformation);
         // Load configuration
         UploadConfiguration config = new UploadConfiguration();
         config.load(settings);

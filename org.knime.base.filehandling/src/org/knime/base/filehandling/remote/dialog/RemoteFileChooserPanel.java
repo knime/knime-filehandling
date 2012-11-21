@@ -70,7 +70,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.base.filehandling.NodeUtils;
-import org.knime.base.filehandling.remotecredentials.port.RemoteCredentials;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.util.StringHistory;
@@ -83,7 +83,7 @@ import org.knime.core.node.util.StringHistory;
  */
 public class RemoteFileChooserPanel {
 
-    private RemoteCredentials m_credentials;
+    private ConnectionInformation m_connectionInformation;
 
     private String m_historyID;
 
@@ -107,13 +107,14 @@ public class RemoteFileChooserPanel {
      * @param historyID ID for history persistence
      * @param selectionMode Select files, directories or both
      * @param fvm Model for the flow variable button
-     * @param credentials Credentials for the remote connection
+     * @param connectionInformation Connection information for the remote
+     *            connection
      */
     public RemoteFileChooserPanel(final JPanel parentPanel, final String label,
             final boolean border, final String historyID,
             final int selectionMode, final FlowVariableModel fvm,
-            final RemoteCredentials credentials) {
-        m_credentials = credentials;
+            final ConnectionInformation connectionInformation) {
+        m_connectionInformation = connectionInformation;
         m_hostSpecificID = historyID;
         m_historyID = historyID;
         // Combobox
@@ -134,8 +135,8 @@ public class RemoteFileChooserPanel {
                     container = container.getParent();
                 }
                 RemoteFileChooser dialog =
-                        new RemoteFileChooser(m_credentials.toURI(),
-                                m_credentials, selectionMode);
+                        new RemoteFileChooser(m_connectionInformation.toURI(),
+                                m_connectionInformation, selectionMode);
                 dialog.open(frame);
                 String selected = dialog.getSelectedFile();
                 if (selected != null) {
@@ -177,19 +178,22 @@ public class RemoteFileChooserPanel {
     }
 
     /**
-     * Set the credentials that will be used for this connection.
+     * Set the connection information that will be used for this connection.
      * 
      * 
-     * @param credentials The credentials for the connection.
+     * @param connectionInformation The connection information for the
+     *            connection.
      */
-    public void setCredentials(final RemoteCredentials credentials) {
+    public void setConnectionInformation(
+            final ConnectionInformation connectionInformation) {
         // Build specific history id by using the host information and the
         // history id
         m_hostSpecificID =
-                credentials.toURI().toString().replaceAll("[/@:?&#]", "")
+                connectionInformation.toURI().toString()
+                        .replaceAll("[/@:?&#]", "")
                         + m_historyID;
         updateHistory();
-        m_credentials = credentials;
+        m_connectionInformation = connectionInformation;
     }
 
     /**

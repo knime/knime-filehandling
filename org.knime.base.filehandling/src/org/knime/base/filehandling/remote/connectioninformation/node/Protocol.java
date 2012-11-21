@@ -46,65 +46,120 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Nov 9, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.ftp;
-
-import org.knime.base.filehandling.remotecredentials.Protocol;
-import org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeDialog;
-import org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeModel;
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+package org.knime.base.filehandling.remote.connectioninformation.node;
 
 /**
- * <code>NodeFactory</code> for node.
- * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class FTPRemoteCredentialsNodeFactory extends
-        NodeFactory<RemoteCredentialsNodeModel> {
+public enum Protocol {
+
+    /** SSH protocol. */
+    SSH("ssh", 22, false, true, true),
+
+    /** FTP protocol. */
+    FTP("ftp", 21, true, false, false),
+
+    /** HTTP protocol. */
+    HTTP("http", 80, true, false, false),
+
+    /** HTTPS protocol. */
+    HTTPS("https", 443, true, false, true);
+
+    private String m_name;
+
+    private int m_port;
+
+    private boolean m_authnonesupport;
+
+    private boolean m_keyfilesupport;
+
+    private boolean m_certificatesupport;
 
     /**
-     * {@inheritDoc}
+     * Create a protocol.
+     * 
+     * 
+     * @param name The name
+     * @param port The default port
+     * @param authNoneSupport If the authentication method none is supported
+     * @param keyfileSupport If authentication via keyfile is supported
+     * @param certificateSupport If adding of certificates is supported
      */
-    @Override
-    public RemoteCredentialsNodeModel createNodeModel() {
-        return new RemoteCredentialsNodeModel(Protocol.FTP);
+    private Protocol(final String name, final int port,
+            final boolean authNoneSupport, final boolean keyfileSupport,
+            final boolean certificateSupport) {
+        m_name = name;
+        m_port = port;
+        m_authnonesupport = authNoneSupport;
+        m_keyfilesupport = keyfileSupport;
+        m_certificatesupport = certificateSupport;
     }
 
     /**
-     * {@inheritDoc}
+     * @return the name
      */
-    @Override
-    public int getNrNodeViews() {
-        return 0;
+    String getName() {
+        return m_name;
     }
 
     /**
-     * {@inheritDoc}
+     * @return the port
      */
-    @Override
-    public NodeView<RemoteCredentialsNodeModel> createNodeView(
-            final int viewIndex, final RemoteCredentialsNodeModel nodeModel) {
-        return null;
+    int getPort() {
+        return m_port;
     }
 
     /**
-     * {@inheritDoc}
+     * @return If this protocol supports the authentication method none
      */
-    @Override
-    public boolean hasDialog() {
-        return true;
+    boolean hasAuthNoneSupport() {
+        return m_authnonesupport;
     }
 
     /**
-     * {@inheritDoc}
+     * @return If this protocol has support for key files
      */
-    @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new RemoteCredentialsNodeDialog(Protocol.FTP);
+    boolean hasKeyfileSupport() {
+        return m_keyfilesupport;
+    }
+
+    /**
+     * @return If this protocol has support for certificates
+     */
+    boolean hasCertificateSupport() {
+        return m_certificatesupport;
+    }
+
+    /**
+     * Get the correspondent protocol to the name.
+     * 
+     * 
+     * @param protocolName The name of the protocol
+     * @return Protocol to the name
+     */
+    static Protocol getProtocol(final String protocolName) {
+        Protocol protocol = null;
+        if (protocolName.equals(SSH.getName())) {
+            protocol = SSH;
+        } else if (protocolName.equals(FTP.getName())) {
+            protocol = FTP;
+        } else if (protocolName.equals(HTTP.getName())) {
+            protocol = HTTP;
+        } else if (protocolName.equals(HTTPS.getName())) {
+            protocol = HTTPS;
+        }
+        return protocol;
+    }
+
+    /**
+     * @return Array with all protocol names
+     */
+    static String[] getAllProtocols() {
+        return new String[]{SSH.getName(), FTP.getName(), HTTP.getName(),
+                HTTPS.getName()};
     }
 
 }

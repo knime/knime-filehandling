@@ -48,7 +48,7 @@
  * History
  *   Nov 12, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.port;
+package org.knime.base.filehandling.remote.connectioninformation.port;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -63,12 +63,12 @@ import org.knime.core.node.ModelContentRO;
 import org.knime.core.node.ModelContentWO;
 
 /**
- * Contains the credentials for a connection.
+ * Contains the connection information for a connection.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentials implements Serializable {
+public class ConnectionInformation implements Serializable {
 
     /**
      * Serial id.
@@ -90,7 +90,7 @@ public class RemoteCredentials implements Serializable {
     private String m_certificate = null;
 
     /**
-     * Save the credentials in a model content object.
+     * Save the connection information in a model content object.
      * 
      * 
      * @param model The model to save in
@@ -106,26 +106,27 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
-     * Create a remote credentials object loaded from the content object.
+     * Create a connection information object loaded from the content object.
      * 
      * 
      * @param model The model to read from
-     * @return The created <code>RemoteCredentials</code> object
+     * @return The created <code>ConnectionInformation</code> object
      * @throws InvalidSettingsException If the model contains invalid
      *             information.
      * @noreference Not to be called by client
      */
-    public static RemoteCredentials load(final ModelContentRO model)
+    public static ConnectionInformation load(final ModelContentRO model)
             throws InvalidSettingsException {
-        RemoteCredentials credentials = new RemoteCredentials();
-        credentials.setProtocol(model.getString("protocol"));
-        credentials.setHost(model.getString("host"));
-        credentials.setPort(model.getInt("port"));
-        credentials.setUser(model.getString("user"));
-        credentials.setPassword(model.getString("password"));
-        credentials.setKeyfile(model.getString("keyfile"));
-        credentials.setCertificate(model.getString("certificate"));
-        return credentials;
+        ConnectionInformation connectionInformation =
+                new ConnectionInformation();
+        connectionInformation.setProtocol(model.getString("protocol"));
+        connectionInformation.setHost(model.getString("host"));
+        connectionInformation.setPort(model.getInt("port"));
+        connectionInformation.setUser(model.getString("user"));
+        connectionInformation.setPassword(model.getString("password"));
+        connectionInformation.setKeyfile(model.getString("keyfile"));
+        connectionInformation.setCertificate(model.getString("certificate"));
+        return connectionInformation;
     }
 
     /**
@@ -150,25 +151,26 @@ public class RemoteCredentials implements Serializable {
      * Deserialize this object.
      * 
      * @param input The input to load from
-     * @return The created <code>RemoteCredentials</code> object
+     * @return The created <code>ConnectionInformation</code> object
      * @throws IOException If an error occurs
      * @noreference Not to be called by client
      */
-    public static RemoteCredentials load(final DataInput input)
+    public static ConnectionInformation load(final DataInput input)
             throws IOException {
-        RemoteCredentials credentials = new RemoteCredentials();
-        credentials.setProtocol(input.readUTF());
-        credentials.setHost(input.readUTF());
-        credentials.setPort(input.readInt());
-        credentials.setUser(input.readUTF());
-        credentials.setPassword(input.readUTF());
-        credentials.setKeyfile(input.readUTF());
-        credentials.setCertificate(input.readUTF());
-        return credentials;
+        ConnectionInformation connectionInformation =
+                new ConnectionInformation();
+        connectionInformation.setProtocol(input.readUTF());
+        connectionInformation.setHost(input.readUTF());
+        connectionInformation.setPort(input.readInt());
+        connectionInformation.setUser(input.readUTF());
+        connectionInformation.setPassword(input.readUTF());
+        connectionInformation.setKeyfile(input.readUTF());
+        connectionInformation.setCertificate(input.readUTF());
+        return connectionInformation;
     }
 
     /**
-     * Checks if this credentials object fits to the URI.
+     * Checks if this connection information object fits to the URI.
      * 
      * 
      * @param uri The URI to check against
@@ -206,10 +208,10 @@ public class RemoteCredentials implements Serializable {
     }
 
     /**
-     * Create the corresponding uri to this credentials.
+     * Create the corresponding uri to this connection information.
      * 
      * 
-     * @return URI to this credentials
+     * @return URI to this connection information
      */
     public URI toURI() {
         URI uri = null;

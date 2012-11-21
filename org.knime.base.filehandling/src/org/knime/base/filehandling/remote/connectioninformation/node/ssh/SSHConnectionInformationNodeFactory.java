@@ -48,11 +48,11 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.ssh;
+package org.knime.base.filehandling.remote.connectioninformation.node.ssh;
 
-import org.knime.base.filehandling.remotecredentials.Protocol;
-import org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeDialog;
-import org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeModel;
+import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeDialog;
+import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeModel;
+import org.knime.base.filehandling.remote.connectioninformation.node.Protocol;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
@@ -63,15 +63,15 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class SSHRemoteCredentialsNodeFactory extends
-        NodeFactory<RemoteCredentialsNodeModel> {
+public class SSHConnectionInformationNodeFactory extends
+        NodeFactory<ConnectionInformationNodeModel> {
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public RemoteCredentialsNodeModel createNodeModel() {
-        return new RemoteCredentialsNodeModel(Protocol.SSH);
+    public ConnectionInformationNodeModel createNodeModel() {
+        return new ConnectionInformationNodeModel(Protocol.SSH);
     }
 
     /**
@@ -86,8 +86,8 @@ public class SSHRemoteCredentialsNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<RemoteCredentialsNodeModel> createNodeView(
-            final int viewIndex, final RemoteCredentialsNodeModel nodeModel) {
+    public NodeView<ConnectionInformationNodeModel> createNodeView(
+            final int viewIndex, final ConnectionInformationNodeModel nodeModel) {
         return null;
     }
 
@@ -104,7 +104,7 @@ public class SSHRemoteCredentialsNodeFactory extends
      */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new RemoteCredentialsNodeDialog(Protocol.SSH);
+        return new ConnectionInformationNodeDialog(Protocol.SSH);
     }
 
 }

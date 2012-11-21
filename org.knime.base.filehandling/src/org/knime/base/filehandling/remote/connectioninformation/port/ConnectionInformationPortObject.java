@@ -46,48 +46,71 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Nov 13, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.https;
+package org.knime.base.filehandling.remote.connectioninformation.port;
 
-import org.knime.base.filehandling.remotecredentials.Protocol;
-import org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeDialog;
-import org.knime.base.filehandling.remotecredentials.RemoteCredentialsNodeModel;
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.knime.core.node.CanceledExecutionException;
+import org.knime.core.node.ExecutionMonitor;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.ModelContentRO;
+import org.knime.core.node.ModelContentWO;
+import org.knime.core.node.port.AbstractSimplePortObject;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortType;
 
 /**
- * <code>NodeFactory</code> for node.
+ * Port object containing connection information.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class HTTPSRemoteCredentialsNodeFactory extends
-        NodeFactory<RemoteCredentialsNodeModel> {
+public class ConnectionInformationPortObject extends AbstractSimplePortObject {
+
+    private ConnectionInformation m_connectionInformation;
 
     /**
-     * {@inheritDoc}
+     * Type of this port.
      */
-    @Override
-    public RemoteCredentialsNodeModel createNodeModel() {
-        return new RemoteCredentialsNodeModel(Protocol.HTTPS);
+    public static final PortType TYPE = new PortType(
+            ConnectionInformationPortObject.class);
+
+    /**
+     * Should only be used by the framework.
+     */
+    public ConnectionInformationPortObject() {
+        // Used by framework
+    }
+
+    /**
+     * Creates a port object with the given connection information.
+     * 
+     * 
+     * @param connectionInformation The content of this port object
+     */
+    public ConnectionInformationPortObject(
+            final ConnectionInformation connectionInformation) {
+        if (connectionInformation == null) {
+            throw new NullPointerException("List argument must not be null");
+        }
+        m_connectionInformation = connectionInformation;
+    }
+
+    /**
+     * Returns the connection information contained by this port object.
+     * 
+     * 
+     * @return The content of this port object
+     */
+    public ConnectionInformation getConnectionInformation() {
+        return m_connectionInformation;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int getNrNodeViews() {
-        return 0;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeView<RemoteCredentialsNodeModel> createNodeView(
-            final int viewIndex, final RemoteCredentialsNodeModel nodeModel) {
+    public String getSummary() {
         return null;
     }
 
@@ -95,16 +118,27 @@ public class HTTPSRemoteCredentialsNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public boolean hasDialog() {
-        return true;
+    public PortObjectSpec getSpec() {
+        return new ConnectionInformationPortObjectSpec(m_connectionInformation);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new RemoteCredentialsNodeDialog(Protocol.HTTPS);
+    protected void save(final ModelContentWO model, final ExecutionMonitor exec)
+            throws CanceledExecutionException {
+        m_connectionInformation.save(model);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void load(final ModelContentRO model, final PortObjectSpec spec,
+            final ExecutionMonitor exec) throws InvalidSettingsException,
+            CanceledExecutionException {
+        m_connectionInformation = ConnectionInformation.load(model);
     }
 
 }

@@ -46,70 +46,48 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 13, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials.port;
+package org.knime.base.filehandling.remote.connectioninformation.node.https;
 
-import org.knime.core.node.CanceledExecutionException;
-import org.knime.core.node.ExecutionMonitor;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.ModelContentRO;
-import org.knime.core.node.ModelContentWO;
-import org.knime.core.node.port.AbstractSimplePortObject;
-import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.port.PortType;
+import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeDialog;
+import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeModel;
+import org.knime.base.filehandling.remote.connectioninformation.node.Protocol;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
- * Port object containing remote credentials.
+ * <code>NodeFactory</code> for node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class RemoteCredentialsPortObject extends AbstractSimplePortObject {
-
-    private RemoteCredentials m_credentials;
-
-    /**
-     * Type of this port.
-     */
-    public static final PortType TYPE = new PortType(
-            RemoteCredentialsPortObject.class);
+public class HTTPSConnectionInformationNodeFactory extends
+        NodeFactory<ConnectionInformationNodeModel> {
 
     /**
-     * Should only be used by the framework.
+     * {@inheritDoc}
      */
-    public RemoteCredentialsPortObject() {
-        // Used by framework
-    }
-
-    /**
-     * Creates a port object with the given credentials.
-     * 
-     * 
-     * @param credentials The content of this port object
-     */
-    public RemoteCredentialsPortObject(final RemoteCredentials credentials) {
-        if (credentials == null) {
-            throw new NullPointerException("List argument must not be null");
-        }
-        m_credentials = credentials;
-    }
-
-    /**
-     * Returns the credentials contained by this port object.
-     * 
-     * 
-     * @return The content of this port object
-     */
-    public RemoteCredentials getCredentials() {
-        return m_credentials;
+    @Override
+    public ConnectionInformationNodeModel createNodeModel() {
+        return new ConnectionInformationNodeModel(Protocol.HTTPS);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public String getSummary() {
+    public int getNrNodeViews() {
+        return 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeView<ConnectionInformationNodeModel> createNodeView(
+            final int viewIndex, final ConnectionInformationNodeModel nodeModel) {
         return null;
     }
 
@@ -117,27 +95,16 @@ public class RemoteCredentialsPortObject extends AbstractSimplePortObject {
      * {@inheritDoc}
      */
     @Override
-    public PortObjectSpec getSpec() {
-        return new RemoteCredentialsPortObjectSpec(m_credentials);
+    public boolean hasDialog() {
+        return true;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected void save(final ModelContentWO model, final ExecutionMonitor exec)
-            throws CanceledExecutionException {
-        m_credentials.save(model);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void load(final ModelContentRO model, final PortObjectSpec spec,
-            final ExecutionMonitor exec) throws InvalidSettingsException,
-            CanceledExecutionException {
-        m_credentials = RemoteCredentials.load(model);
+    public NodeDialogPane createNodeDialogPane() {
+        return new ConnectionInformationNodeDialog(Protocol.HTTPS);
     }
 
 }

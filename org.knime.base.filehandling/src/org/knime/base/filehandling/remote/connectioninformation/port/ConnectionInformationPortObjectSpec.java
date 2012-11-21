@@ -46,120 +46,100 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 9, 2012 (Patrick Winter): created
+ *   Nov 13, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remotecredentials;
+package org.knime.base.filehandling.remote.connectioninformation.port;
+
+import javax.swing.JComponent;
+
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.ModelContentRO;
+import org.knime.core.node.ModelContentWO;
+import org.knime.core.node.port.AbstractSimplePortObjectSpec;
 
 /**
+ * Spec for the connection information port object.
+ * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public enum Protocol {
+public class ConnectionInformationPortObjectSpec extends
+        AbstractSimplePortObjectSpec {
 
-    /** SSH protocol. */
-    SSH("ssh", 22, false, true, true),
-
-    /** FTP protocol. */
-    FTP("ftp", 21, true, false, false),
-
-    /** HTTP protocol. */
-    HTTP("http", 80, true, false, false),
-
-    /** HTTPS protocol. */
-    HTTPS("https", 443, true, false, true);
-
-    private String m_name;
-
-    private int m_port;
-
-    private boolean m_authnonesupport;
-
-    private boolean m_keyfilesupport;
-
-    private boolean m_certificatesupport;
+    private ConnectionInformation m_connectionInformation;
 
     /**
-     * Create a protocol.
+     * Create default port object spec without connection information.
+     */
+    public ConnectionInformationPortObjectSpec() {
+        m_connectionInformation = null;
+    }
+
+    /**
+     * Create specs that contain connection information.
      * 
      * 
-     * @param name The name
-     * @param port The default port
-     * @param authNoneSupport If the authentication method none is supported
-     * @param keyfileSupport If authentication via keyfile is supported
-     * @param certificateSupport If adding of certificates is supported
+     * @param connectionInformation The content of this port object
      */
-    private Protocol(final String name, final int port,
-            final boolean authNoneSupport, final boolean keyfileSupport,
-            final boolean certificateSupport) {
-        m_name = name;
-        m_port = port;
-        m_authnonesupport = authNoneSupport;
-        m_keyfilesupport = keyfileSupport;
-        m_certificatesupport = certificateSupport;
-    }
-
-    /**
-     * @return the name
-     */
-    String getName() {
-        return m_name;
-    }
-
-    /**
-     * @return the port
-     */
-    int getPort() {
-        return m_port;
-    }
-
-    /**
-     * @return If this protocol supports the authentication method none
-     */
-    boolean hasAuthNoneSupport() {
-        return m_authnonesupport;
-    }
-
-    /**
-     * @return If this protocol has support for key files
-     */
-    boolean hasKeyfileSupport() {
-        return m_keyfilesupport;
-    }
-
-    /**
-     * @return If this protocol has support for certificates
-     */
-    boolean hasCertificateSupport() {
-        return m_certificatesupport;
-    }
-
-    /**
-     * Get the correspondent protocol to the name.
-     * 
-     * 
-     * @param protocolName The name of the protocol
-     * @return Protocol to the name
-     */
-    static Protocol getProtocol(final String protocolName) {
-        Protocol protocol = null;
-        if (protocolName.equals(SSH.getName())) {
-            protocol = SSH;
-        } else if (protocolName.equals(FTP.getName())) {
-            protocol = FTP;
-        } else if (protocolName.equals(HTTP.getName())) {
-            protocol = HTTP;
-        } else if (protocolName.equals(HTTPS.getName())) {
-            protocol = HTTPS;
+    public ConnectionInformationPortObjectSpec(
+            final ConnectionInformation connectionInformation) {
+        if (connectionInformation == null) {
+            throw new NullPointerException("List argument must not be null");
         }
-        return protocol;
+        m_connectionInformation = connectionInformation;
     }
 
     /**
-     * @return Array with all protocol names
+     * Return the connection information contained by this port object spec.
+     * 
+     * 
+     * @return The content of this port object
      */
-    static String[] getAllProtocols() {
-        return new String[]{SSH.getName(), FTP.getName(), HTTP.getName(),
-                HTTPS.getName()};
+    public ConnectionInformation getConnectionInformation() {
+        return m_connectionInformation;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public JComponent[] getViews() {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(final Object ospec) {
+        return ospec != null
+                && ospec.getClass().equals(
+                        ConnectionInformationPortObjectSpec.class);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int hashCode() {
+        return ConnectionInformationPortObjectSpec.class.hashCode();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void save(final ModelContentWO model) {
+        m_connectionInformation.save(model);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void load(final ModelContentRO model)
+            throws InvalidSettingsException {
+        m_connectionInformation = ConnectionInformation.load(model);
     }
 
 }
