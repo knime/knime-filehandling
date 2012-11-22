@@ -306,7 +306,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
         InputStream in = file.openInputStream();
         OutputStream out = openOutputStream();
         int length;
-        while (((length = in.read(buffer)) > 0)) {
+        while ((length = in.read(buffer)) > 0) {
             out.write(buffer, 0, length);
         }
         in.close();

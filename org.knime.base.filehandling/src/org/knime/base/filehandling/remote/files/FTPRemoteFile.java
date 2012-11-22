@@ -55,8 +55,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
@@ -251,7 +254,9 @@ public class FTPRemoteFile extends RemoteFile {
         long time = 0;
         FTPFile ftpFile = getFTPFile();
         if (ftpFile != null) {
-            time = ftpFile.getTimestamp().getTimeInMillis() / 1000;
+            Calendar calendar = ftpFile.getTimestamp();
+            calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
+            time = calendar.getTimeInMillis() / 1000;
         }
         return time;
     }
@@ -421,6 +426,9 @@ public class FTPRemoteFile extends RemoteFile {
             if (!loggedIn) {
                 throw new IOException("Login failed");
             }
+            m_client.enterLocalPassiveMode();
+            m_client.setFileType(FTP.BINARY_FILE_TYPE, FTP.BINARY_FILE_TYPE);
+            m_client.setFileTransferMode(FTP.BINARY_FILE_TYPE);
             // Find root directory
             String oldDir;
             do {
