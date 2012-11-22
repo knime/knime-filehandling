@@ -357,9 +357,7 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public void close() throws Exception {
-        if (channel != null) {
-            channel.disconnect();
-        }
+        // Not used
     }
 
     /**

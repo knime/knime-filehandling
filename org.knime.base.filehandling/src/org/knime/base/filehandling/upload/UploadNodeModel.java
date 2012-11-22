@@ -118,8 +118,11 @@ public class UploadNodeModel extends NodeModel {
                 URI uri =
                         ((URIDataValue)row.getCell(index)).getURIContent()
                                 .getURI();
+                // Create source file (no connection information supported)
+                RemoteFile sourceFile =
+                        RemoteFileFactory.createRemoteFile(uri, null);
                 // Upload file
-                upload(uri);
+                upload(sourceFile);
                 i++;
             }
         }
@@ -132,68 +135,76 @@ public class UploadNodeModel extends NodeModel {
      * Uploads a single file to the configured remote location.
      * 
      * 
-     * @param uri The URI to the source file
+     * @param source The source file
      * @throws Exception If the operation could not be processed
      */
-    private void upload(final URI uri) throws Exception {
+    private void upload(final RemoteFile source) throws Exception {
         // Get overwrite policy
         String overwritePolicy = m_configuration.getOverwritePolicy();
-        // Create source file (no connection information supported)
-        RemoteFile source = RemoteFileFactory.createRemoteFile(uri, null);
-        // Get filename
-        String pathHandling = m_configuration.getPathHandling();
-        String name = "";
-        if (pathHandling.equals(PathHandling.FULL_PATH.getName())) {
-            name = source.getFullName();
-        } else if (pathHandling.equals(PathHandling.ONLY_FILENAME.getName())) {
-            name = source.getName();
-        } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
-            String prefix = m_configuration.getPrefix();
-            name = source.getFullName().replaceFirst(prefix, "");
-        }
-        if (name.startsWith("/")) {
-            name = name.replaceFirst("/", "");
-        }
-        // Generate URI to the target
-        URI targetUri =
-                new URI(m_connectionInformation.toURI().toString()
-                        + m_configuration.getTarget() + name);
-        // Create target file
-        RemoteFile target =
-                RemoteFileFactory.createRemoteFile(targetUri,
-                        m_connectionInformation);
-        target.mkDirs(false);
-        if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
-            // Policy overwrite:
-            // Just write
-            target.write(source);
-        } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
-                .getName())) {
-            // Policy overwrite if newer:
-            // Get modification time
-            long sourceTime = source.lastModified();
-            long targetTime = target.lastModified();
-            // Check if both times could be retrieved, else do an overwrite
-            if (sourceTime > 0 && targetTime > 0) {
-                // Check if the target is older then the source
-                if (target.lastModified() < source.lastModified()) {
+        // If the source is a directory upload inner files
+        if (source.isDirectory()) {
+            RemoteFile[] files = source.listFiles();
+            for (int i = 0; i < files.length; i++) {
+                upload(files[i]);
+            }
+        } else {
+            // Get filename
+            String pathHandling = m_configuration.getPathHandling();
+            String name = "";
+            if (pathHandling.equals(PathHandling.FULL_PATH.getName())) {
+                name = source.getFullName();
+            } else if (pathHandling
+                    .equals(PathHandling.ONLY_FILENAME.getName())) {
+                name = source.getName();
+            } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX
+                    .getName())) {
+                String prefix = m_configuration.getPrefix();
+                name = source.getFullName().replaceFirst(prefix, "");
+            }
+            if (name.startsWith("/")) {
+                name = name.replaceFirst("/", "");
+            }
+            // Generate URI to the target
+            URI targetUri =
+                    new URI(m_connectionInformation.toURI().toString()
+                            + m_configuration.getTarget() + name);
+            // Create target file
+            RemoteFile target =
+                    RemoteFileFactory.createRemoteFile(targetUri,
+                            m_connectionInformation);
+            target.mkDirs(false);
+            if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
+                // Policy overwrite:
+                // Just write
+                target.write(source);
+            } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
+                    .getName())) {
+                // Policy overwrite if newer:
+                // Get modification time
+                long sourceTime = source.lastModified();
+                long targetTime = target.lastModified();
+                // Check if both times could be retrieved, else do an overwrite
+                if (sourceTime > 0 && targetTime > 0) {
+                    // Check if the target is older then the source
+                    if (target.lastModified() < source.lastModified()) {
+                        target.write(source);
+                    }
+                } else {
                     target.write(source);
                 }
-            } else {
+            } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
+                // Policy abort:
+                // Throw exception if the target exists
+                if (target.exists()) {
+                    throw new Exception("File " + target.getFullName()
+                            + " already exists.");
+                }
                 target.write(source);
             }
-        } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
-            // Policy abort:
-            // Throw exception if the target exists
-            if (target.exists()) {
-                throw new Exception("File " + target.getFullName()
-                        + " already exists.");
-            }
-            target.write(source);
+            // Close remote files
+            target.close();
         }
-        // Close remote files
         source.close();
-        target.close();
     }
 
     /**
