@@ -213,14 +213,6 @@ public class HTTPRemoteFile extends RemoteFile {
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws Exception {
-        // No persistent connection to close
-    }
-
-    /**
      * Get the response to this files get request.
      * 
      * 

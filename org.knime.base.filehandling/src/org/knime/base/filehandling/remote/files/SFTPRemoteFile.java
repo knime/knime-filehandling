@@ -353,14 +353,6 @@ public class SFTPRemoteFile extends RemoteFile {
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws Exception {
-        // Not used
-    }
-
-    /**
      * Opens the SFTP channel if it is not already open.
      * 
      * 

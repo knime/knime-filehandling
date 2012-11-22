@@ -331,19 +331,6 @@ public class FTPRemoteFile extends RemoteFile {
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws Exception {
-        FTPClient client = getClient();
-        // Complete all operations
-        boolean success = client.completePendingCommand();
-        if (!success) {
-            throw new IOException("Could not finalize the operation");
-        }
-    }
-
-    /**
      * Convenience method to get the FTP Client from the connection.
      * 
      * 
@@ -455,6 +442,7 @@ public class FTPRemoteFile extends RemoteFile {
          */
         @Override
         public void close() throws Exception {
+            m_client.completePendingCommand();
             m_client.logout();
             m_client.disconnect();
         }

@@ -422,14 +422,6 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
     }
 
     /**
-     * Close this remote file.
-     * 
-     * 
-     * @throws Exception If closing did not succeed
-     */
-    public abstract void close() throws Exception;
-
-    /**
      * {@inheritDoc}
      */
     @Override

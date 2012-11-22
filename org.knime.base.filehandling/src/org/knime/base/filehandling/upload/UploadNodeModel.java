@@ -201,10 +201,7 @@ public class UploadNodeModel extends NodeModel {
                 }
                 target.write(source);
             }
-            // Close remote files
-            target.close();
         }
-        source.close();
     }
 
     /**

@@ -206,14 +206,6 @@ public class FileRemoteFile extends RemoteFile {
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws Exception {
-        // No connection to close
-    }
-
-    /**
      * Deletes files and directories recursively.
      * 
      * 

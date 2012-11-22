@@ -241,15 +241,6 @@ public class SCPRemoteFile extends RemoteFile {
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws Exception {
-        // Every operation uses its own execution channel and is responsible for
-        // closing it
-    }
-
-    /**
      * SCP channel to handle the start and closing of SCP data transfer.
      * 
      * 
