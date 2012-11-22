@@ -70,10 +70,6 @@ import org.knime.core.util.KnimeEncryption;
  */
 public class FTPRemoteFile extends RemoteFile {
 
-    private URI m_uri;
-
-    private ConnectionInformation m_connectionInformation;
-
     /**
      * Creates a FTP remote file for the given URI.
      * 
@@ -83,8 +79,7 @@ public class FTPRemoteFile extends RemoteFile {
      */
     FTPRemoteFile(final URI uri,
             final ConnectionInformation connectionInformation) {
-        m_uri = uri;
-        m_connectionInformation = connectionInformation;
+        super(uri, connectionInformation);
     }
 
     /**
@@ -101,14 +96,6 @@ public class FTPRemoteFile extends RemoteFile {
     @Override
     protected Connection createConnection() {
         return new FTPConnection();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public URI getURI() {
-        return m_uri;
     }
 
     /**
@@ -132,7 +119,7 @@ public class FTPRemoteFile extends RemoteFile {
                             .normalizeNoEndSeparator(getPath()));
         } else {
             // Use name from URI
-            name = FilenameUtils.getName(m_uri.getPath());
+            name = FilenameUtils.getName(getURI().getPath());
         }
         return FilenameUtils.normalize(name);
     }
@@ -143,7 +130,7 @@ public class FTPRemoteFile extends RemoteFile {
     @Override
     public String getPath() throws Exception {
         FTPClient client = getClient();
-        String path = m_uri.getPath();
+        String path = getURI().getPath();
         // If path is empty use working directory
         if (path == null || path.length() == 0) {
             path = client.printWorkingDirectory();
@@ -165,7 +152,9 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean exists() throws Exception {
-        return getFTPFile() != null;
+        // In case of the root directory there is no FTP file available but
+        // isDirectory returns true
+        return getFTPFile() != null || isDirectory();
     }
 
     /**
@@ -176,7 +165,7 @@ public class FTPRemoteFile extends RemoteFile {
         boolean isDirectory = false;
         FTPClient client = getClient();
         // Use path from URI
-        String path = m_uri.getPath();
+        String path = getURI().getPath();
         if (path != null && path.length() > 0) {
             // If path is not missing, try to change to it
             isDirectory = client.changeWorkingDirectory(path);
@@ -200,7 +189,7 @@ public class FTPRemoteFile extends RemoteFile {
             FTPRemoteFile source = (FTPRemoteFile)file;
             FTPClient client = getClient();
             boolean success =
-                    client.rename(source.m_uri.getPath(), m_uri.getPath());
+                    client.rename(source.getURI().getPath(), getURI().getPath());
             if (!success) {
                 throw new Exception("Move operation failed");
             }
@@ -215,7 +204,7 @@ public class FTPRemoteFile extends RemoteFile {
     @Override
     public InputStream openInputStream() throws Exception {
         FTPClient client = getClient();
-        String path = m_uri.getPath();
+        String path = getURI().getPath();
         // Open stream (null if stream could not be opened)
         InputStream stream = client.retrieveFileStream(path);
         if (stream == null) {
@@ -230,7 +219,7 @@ public class FTPRemoteFile extends RemoteFile {
     @Override
     public OutputStream openOutputStream() throws Exception {
         FTPClient client = getClient();
-        String path = m_uri.getPath();
+        String path = getURI().getPath();
         // Open stream (null if stream could not be opened)
         OutputStream stream = client.storeFileStream(path);
         if (stream == null) {
@@ -311,11 +300,11 @@ public class FTPRemoteFile extends RemoteFile {
             for (int i = 0; i < ftpFiles.length; i++) {
                 // Build URI
                 URI uri =
-                        new URI(m_uri.getScheme() + "://"
-                                + m_uri.getAuthority() + getPath()
+                        new URI(getURI().getScheme() + "://"
+                                + getURI().getAuthority() + getPath()
                                 + ftpFiles[i].getName());
                 // Create remote file and open it
-                files[i] = new FTPRemoteFile(uri, m_connectionInformation);
+                files[i] = new FTPRemoteFile(uri, getConnectionInformation());
                 files[i].open();
             }
         } else {
@@ -333,27 +322,7 @@ public class FTPRemoteFile extends RemoteFile {
     @Override
     public boolean mkDir() throws Exception {
         FTPClient client = getClient();
-        return client.makeDirectory(m_uri.getPath());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public RemoteFile getParent() throws Exception {
-        FTPClient client = getClient();
-        client.changeWorkingDirectory(getPath());
-        if (isDirectory()) {
-            client.changeToParentDirectory();
-        }
-        String path = client.printWorkingDirectory();
-        // Build URI
-        URI uri =
-                new URI(m_uri.getScheme() + "://" + m_uri.getAuthority() + path);
-        // Create remote file and open it
-        RemoteFile file = new FTPRemoteFile(uri, m_connectionInformation);
-        file.open();
-        return file;
+        return client.makeDirectory(getURI().getPath());
     }
 
     /**
@@ -407,7 +376,7 @@ public class FTPRemoteFile extends RemoteFile {
         for (int i = 0; i < files.length; i++) {
             FTPFile currentFile = files[i];
             if (currentFile.getName().equals(
-                    FilenameUtils.getName(m_uri.getPath()))) {
+                    FilenameUtils.getName(getURI().getPath()))) {
                 // File with the same name is the correct one
                 file = currentFile;
                 break;
@@ -436,12 +405,12 @@ public class FTPRemoteFile extends RemoteFile {
             // Create client
             m_client = new FTPClient();
             // Read attributes
-            String host = m_uri.getHost();
+            String host = getURI().getHost();
             int port =
-                    m_uri.getPort() != -1 ? m_uri.getPort() : DefaultPortMap
-                            .getMap().get(getType());
-            String user = m_uri.getUserInfo();
-            String password = m_connectionInformation.getPassword();
+                    getURI().getPort() != -1 ? getURI().getPort()
+                            : DefaultPortMap.getMap().get(getType());
+            String user = getURI().getUserInfo();
+            String password = getConnectionInformation().getPassword();
             if (password != null) {
                 password = KnimeEncryption.decrypt(password);
             }

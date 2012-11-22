@@ -55,6 +55,7 @@ import java.io.OutputStream;
 import java.net.URI;
 
 import org.apache.commons.io.FilenameUtils;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 
 /**
  * Remote file.
@@ -65,6 +66,23 @@ import org.apache.commons.io.FilenameUtils;
 public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     private Connection m_connection = null;
+
+    private URI m_uri = null;
+
+    private ConnectionInformation m_connectionInformation = null;
+
+    /**
+     * Create a remote file.
+     * 
+     * 
+     * @param uri The uri pointing to the file
+     * @param connectionInformation Connection information to the file
+     */
+    protected RemoteFile(final URI uri,
+            final ConnectionInformation connectionInformation) {
+        m_uri = uri;
+        m_connectionInformation = connectionInformation;
+    }
 
     /**
      * If this remote file uses a connection.
@@ -151,7 +169,19 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * 
      * @return The URI to this file
      */
-    public abstract URI getURI();
+    public final URI getURI() {
+        return m_uri;
+    }
+
+    /**
+     * Get the connection information to this file.
+     * 
+     * 
+     * @return The connection information to this file
+     */
+    public final ConnectionInformation getConnectionInformation() {
+        return m_connectionInformation;
+    }
 
     /**
      * Returns the type (URI scheme) of the remote file.
@@ -374,7 +404,22 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * @return The parent file
      * @throws Exception If the operation could not be executed
      */
-    public abstract RemoteFile getParent() throws Exception;
+    public final RemoteFile getParent() throws Exception {
+        String path = getFullName();
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        path = FilenameUtils.getFullPath(path);
+        // Build URI
+        URI uri =
+                new URI(m_uri.getScheme() + "://" + m_uri.getAuthority() + path);
+        // Create remote file and open it
+        RemoteFile file =
+                RemoteFileFactory
+                        .createRemoteFile(uri, m_connectionInformation);
+        file.open();
+        return file;
+    }
 
     /**
      * Close this remote file.

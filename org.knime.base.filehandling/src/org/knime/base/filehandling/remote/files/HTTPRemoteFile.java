@@ -71,10 +71,6 @@ import org.knime.core.util.KnimeEncryption;
  */
 public class HTTPRemoteFile extends RemoteFile {
 
-    private URI m_uri;
-
-    private ConnectionInformation m_connectionInformation;
-
     /**
      * Creates a HTTP remote file for the given URI.
      * 
@@ -84,8 +80,7 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     HTTPRemoteFile(final URI uri,
             final ConnectionInformation connectionInformation) {
-        m_uri = uri;
-        m_connectionInformation = connectionInformation;
+        super(uri, connectionInformation);
     }
 
     /**
@@ -110,16 +105,8 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public URI getURI() {
-        return m_uri;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public String getType() {
-        return m_uri.getScheme();
+        return getURI().getScheme();
     }
 
     /**
@@ -198,7 +185,7 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public long lastModified() throws Exception {
-        return m_uri.toURL().openConnection().getLastModified();
+        return getURI().toURL().openConnection().getLastModified();
     }
 
     /**
@@ -229,14 +216,6 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public RemoteFile getParent() throws Exception {
-        throw new UnsupportedOperationException(unsupportedMessage("getParent"));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public void close() throws Exception {
         // No persistent connection to close
     }
@@ -252,23 +231,23 @@ public class HTTPRemoteFile extends RemoteFile {
         // Create request
         DefaultHttpClient client = new DefaultHttpClient();
         // If user info is given in the URI use HTTP basic authentication
-        if (m_uri.getUserInfo().length() > 0) {
+        if (getURI().getUserInfo().length() > 0) {
             // Decrypt password from the connection information
             String password =
-                    KnimeEncryption.decrypt(m_connectionInformation
+                    KnimeEncryption.decrypt(getConnectionInformation()
                             .getPassword());
             // Get port (replacing it with the default port if necessary)
-            int port = m_uri.getPort();
+            int port = getURI().getPort();
             if (port < 0) {
                 port = DefaultPortMap.getMap().get(getType());
             }
             Credentials credentials =
-                    new UsernamePasswordCredentials(m_uri.getUserInfo(),
+                    new UsernamePasswordCredentials(getURI().getUserInfo(),
                             password);
-            AuthScope scope = new AuthScope(m_uri.getHost(), port);
+            AuthScope scope = new AuthScope(getURI().getHost(), port);
             client.getCredentialsProvider().setCredentials(scope, credentials);
         }
-        HttpGet request = new HttpGet(m_uri);
+        HttpGet request = new HttpGet(getURI());
         // Get response
         HttpResponse response = client.execute(request);
         return response;

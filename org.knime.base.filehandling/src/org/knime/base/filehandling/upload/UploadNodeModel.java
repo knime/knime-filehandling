@@ -151,6 +151,9 @@ public class UploadNodeModel extends NodeModel {
             String prefix = m_configuration.getPrefix();
             name = source.getFullName().replaceFirst(prefix, "");
         }
+        if (name.startsWith("/")) {
+            name = name.replaceFirst("/", "");
+        }
         // Generate URI to the target
         URI targetUri =
                 new URI(m_connectionInformation.toURI().toString()
@@ -159,6 +162,7 @@ public class UploadNodeModel extends NodeModel {
         RemoteFile target =
                 RemoteFileFactory.createRemoteFile(targetUri,
                         m_connectionInformation);
+        target.mkDirs(false);
         if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
             // Policy overwrite:
             // Just write

@@ -66,8 +66,6 @@ import java.util.Arrays;
  */
 public class FileRemoteFile extends RemoteFile {
 
-    private URI m_uri;
-
     /**
      * Creates a file remote file for the given URI.
      * 
@@ -75,7 +73,7 @@ public class FileRemoteFile extends RemoteFile {
      * @param uri The URI
      */
     FileRemoteFile(final URI uri) {
-        m_uri = uri;
+        super(uri, null);
     }
 
     /**
@@ -99,14 +97,6 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public URI getURI() {
-        return m_uri;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public String getType() {
         return "file";
     }
@@ -116,7 +106,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public boolean exists() throws Exception {
-        return new File(m_uri).exists();
+        return new File(getURI()).exists();
     }
 
     /**
@@ -124,7 +114,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public boolean isDirectory() throws Exception {
-        return new File(m_uri).isDirectory();
+        return new File(getURI()).isDirectory();
     }
 
     /**
@@ -134,7 +124,8 @@ public class FileRemoteFile extends RemoteFile {
     public void move(final RemoteFile file) throws Exception {
         if (file instanceof FileRemoteFile) {
             FileRemoteFile source = (FileRemoteFile)file;
-            boolean success = new File(m_uri).renameTo(new File(source.m_uri));
+            boolean success =
+                    new File(getURI()).renameTo(new File(source.getURI()));
             if (!success) {
                 throw new Exception("Move operation failed");
             }
@@ -148,7 +139,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public InputStream openInputStream() throws Exception {
-        return new FileInputStream(new File(m_uri));
+        return new FileInputStream(new File(getURI()));
     }
 
     /**
@@ -156,7 +147,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public OutputStream openOutputStream() throws Exception {
-        return new FileOutputStream(new File(m_uri));
+        return new FileOutputStream(new File(getURI()));
     }
 
     /**
@@ -164,7 +155,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public long getSize() throws Exception {
-        return new File(m_uri).length();
+        return new File(getURI()).length();
     }
 
     /**
@@ -172,7 +163,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public long lastModified() throws Exception {
-        return new File(m_uri).lastModified() / 1000;
+        return new File(getURI()).lastModified() / 1000;
     }
 
     /**
@@ -180,7 +171,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public boolean delete() throws Exception {
-        return deleteRecursively(m_uri.getPath());
+        return deleteRecursively(getURI().getPath());
     }
 
     /**
@@ -191,7 +182,7 @@ public class FileRemoteFile extends RemoteFile {
         RemoteFile[] files;
         if (isDirectory()) {
             // Get files in directory
-            File[] f = new File(m_uri).listFiles();
+            File[] f = new File(getURI()).listFiles();
             files = new RemoteFile[f.length];
             // Create remote files from local files
             for (int i = 0; i < f.length; i++) {
@@ -211,15 +202,7 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public boolean mkDir() throws Exception {
-        return new File(m_uri).mkdir();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public RemoteFile getParent() throws Exception {
-        return new FileRemoteFile(new File(new File(m_uri).getParent()).toURI());
+        return new File(getURI()).mkdir();
     }
 
     /**

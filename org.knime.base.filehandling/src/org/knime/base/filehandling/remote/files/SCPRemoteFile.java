@@ -57,7 +57,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
@@ -75,10 +74,6 @@ public class SCPRemoteFile extends RemoteFile {
 
     private static final String EXCEPTION_FILE_NOT_FOUND = "File not found";
 
-    private URI m_uri;
-
-    private ConnectionInformation m_connectionInformation;
-
     /**
      * Creates a SCP remote file for the given URI.
      * 
@@ -88,13 +83,7 @@ public class SCPRemoteFile extends RemoteFile {
      */
     SCPRemoteFile(final URI uri,
             final ConnectionInformation connectionInformation) {
-        // Change protocol to general SSH
-        try {
-            m_uri = new URI(uri.toString().replaceFirst("scp", "ssh"));
-        } catch (URISyntaxException e) {
-            // Should not happen, since the syntax remains untouched
-        }
-        m_connectionInformation = connectionInformation;
+        super(uri, connectionInformation);
     }
 
     /**
@@ -111,15 +100,7 @@ public class SCPRemoteFile extends RemoteFile {
     @Override
     protected Connection createConnection() {
         // Use general SSH connection
-        return new SSHConnection(m_uri, m_connectionInformation);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public URI getURI() {
-        return m_uri;
+        return new SSHConnection(getURI(), getConnectionInformation());
     }
 
     /**
@@ -141,7 +122,7 @@ public class SCPRemoteFile extends RemoteFile {
         try {
             // Open file input will throw file not found exception if file does
             // not exist
-            scp.openFileInput(m_uri.getPath());
+            scp.openFileInput(getURI().getPath());
             scp.close();
             // If no exception was thrown up until this point the file does
             // exist
@@ -172,7 +153,7 @@ public class SCPRemoteFile extends RemoteFile {
         byte[] buffer = new byte[1024];
         SCPChannel scp = new SCPChannel();
         // Open direct output stream
-        scp.openFileOutput(m_uri.getPath(), file.getSize());
+        scp.openFileOutput(getURI().getPath(), file.getSize());
         InputStream in = file.openInputStream();
         OutputStream out = scp.getOutputStream();
         int length;
@@ -191,7 +172,7 @@ public class SCPRemoteFile extends RemoteFile {
     @Override
     public InputStream openInputStream() throws Exception {
         // Use wrapper that hides the SCP communication
-        return new SCPInputStream(m_uri.getPath());
+        return new SCPInputStream(getURI().getPath());
     }
 
     /**
@@ -202,7 +183,7 @@ public class SCPRemoteFile extends RemoteFile {
         // Use wrapper that hides the SCP communication and buffers the bytes
         // into a temporary file, since SCP needs to know the expected size up
         // front
-        return new SCPOutputStream(m_uri.getPath());
+        return new SCPOutputStream(getURI().getPath());
     }
 
     /**
@@ -215,7 +196,7 @@ public class SCPRemoteFile extends RemoteFile {
         SCPChannel scp = new SCPChannel();
         try {
             // Opening the file input does deliver the size
-            size = scp.openFileInput(m_uri.getPath());
+            size = scp.openFileInput(getURI().getPath());
             scp.close();
         } catch (Exception e) {
             // Throw the exception if it was not the file not found exception
@@ -257,14 +238,6 @@ public class SCPRemoteFile extends RemoteFile {
     @Override
     public boolean mkDir() throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("mkDir"));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public RemoteFile getParent() throws Exception {
-        throw new UnsupportedOperationException(unsupportedMessage("getParent"));
     }
 
     /**

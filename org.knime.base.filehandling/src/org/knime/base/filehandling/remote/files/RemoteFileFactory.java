@@ -51,6 +51,7 @@
 package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 
@@ -90,11 +91,30 @@ public final class RemoteFileFactory {
         } else if (scheme.equals("ftp")) {
             remoteFile = new FTPRemoteFile(uri, connectionInformation);
         } else if (scheme.equals("sftp") || scheme.equals("ssh")) {
-            remoteFile = new SFTPRemoteFile(uri, connectionInformation);
+            URI sshUri = uri;
+            if (scheme.equals("sftp")) {
+                // Change protocol to general SSH
+                try {
+                    sshUri =
+                            new URI(uri.toString().replaceFirst("sftp", "ssh"));
+                } catch (URISyntaxException e) {
+                    // Should not happen, since the syntax remains untouched
+                }
+            }
+            remoteFile = new SFTPRemoteFile(sshUri, connectionInformation);
         } else if (scheme.equals("http") || scheme.equals("https")) {
             remoteFile = new HTTPRemoteFile(uri, connectionInformation);
         } else if (scheme.equals("scp")) {
-            remoteFile = new SCPRemoteFile(uri, connectionInformation);
+            URI sshUri = uri;
+            if (scheme.equals("scp")) {
+                // Change protocol to general SSH
+                try {
+                    sshUri = new URI(uri.toString().replaceFirst("scp", "ssh"));
+                } catch (URISyntaxException e) {
+                    // Should not happen, since the syntax remains untouched
+                }
+            }
+            remoteFile = new SCPRemoteFile(sshUri, connectionInformation);
         }
         if (remoteFile != null) {
             // Open connection of the remote file
