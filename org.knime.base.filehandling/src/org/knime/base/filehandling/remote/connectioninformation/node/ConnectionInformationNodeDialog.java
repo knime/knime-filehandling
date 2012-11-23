@@ -134,6 +134,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     private FlowVariableModelButton m_certificatefvm;
 
+    private JCheckBox m_testconnection;
+
     /**
      * New pane for configuring the node dialog.
      * 
@@ -205,6 +207,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
                         "certificate", FlowVariable.Type.STRING));
         m_certificatefvm.getFlowVariableModel().addChangeListener(
                 new UpdateListener());
+        // Test connection
+        m_testconnection = new JCheckBox("Test connection");
         addTab("Options", initLayout());
     }
 
@@ -310,6 +314,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             gbc.weightx = 1;
             panel.add(certificatePanel, gbc);
         }
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        panel.add(m_testconnection, gbc);
         return panel;
     }
 
@@ -403,6 +411,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             config.setUsecertificate(m_usecertificate.isSelected());
             config.setCertificate(m_certificate.getSelectedFile());
         }
+        config.setTestconnection(m_testconnection.isSelected());
         config.save(settings);
     }
 
@@ -414,7 +423,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             final PortObjectSpec[] specs) throws NotConfigurableException {
         ConnectionInformationConfiguration config =
                 new ConnectionInformationConfiguration(m_protocol);
-        config.loadInDialog(settings);
+        config.load(settings);
         m_user.setText(config.getUser());
         m_host.setText(config.getHost());
         m_port.setValue(config.getPort());
@@ -438,6 +447,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             m_usecertificate.setSelected(config.getUsecertificate());
             m_certificate.setSelectedFile(config.getCertificate());
         }
+        m_testconnection.setSelected(config.getTestconnection());
         updateEnabledState();
     }
 

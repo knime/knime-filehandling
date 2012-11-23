@@ -95,6 +95,8 @@ public class UploadNodeDialog extends NodeDialogPane {
 
     private ConnectionInformation m_connectionInformation;
 
+    private JLabel m_info;
+
     private ColumnSelectionComboxBox m_source;
 
     private RemoteFileChooserPanel m_target;
@@ -124,12 +126,14 @@ public class UploadNodeDialog extends NodeDialogPane {
      */
     @SuppressWarnings("unchecked")
     public UploadNodeDialog() {
+        // Info
+        m_info = new JLabel();
         // Source
         m_source =
                 new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
         // Target
         m_target =
-                new RemoteFileChooserPanel(getPanel(), "Remote folder", true,
+                new RemoteFileChooserPanel(getPanel(), "Target folder", true,
                         "targetHistory", RemoteFileChooser.SELECT_DIR,
                         createFlowVariableModel("target",
                                 FlowVariable.Type.STRING),
@@ -230,9 +234,11 @@ public class UploadNodeDialog extends NodeDialogPane {
         // Outer panel
         NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
-        panel.add(sourcePanel, gbc);
+        panel.add(m_info, gbc);
         gbc.gridy++;
         panel.add(m_target.getPanel(), gbc);
+        gbc.gridy++;
+        panel.add(sourcePanel, gbc);
         gbc.gridy++;
         gbc.fill = GridBagConstraints.NONE;
         panel.add(pathHandlingPanel, gbc);
@@ -296,6 +302,7 @@ public class UploadNodeDialog extends NodeDialogPane {
                     "No connection information available");
         }
         m_target.setConnectionInformation(m_connectionInformation);
+        m_info.setText("Upload to: " + m_connectionInformation.toURI());
         // Load configuration
         UploadConfiguration config = new UploadConfiguration();
         config.load(settings);

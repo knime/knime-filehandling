@@ -56,6 +56,8 @@ import java.io.IOException;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
+import org.knime.base.filehandling.remote.files.ConnectionMonitor;
+import org.knime.base.filehandling.remote.files.RemoteFileFactory;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -118,6 +120,17 @@ public class ConnectionInformationNodeModel extends NodeModel {
             connectionInformation.setCertificate(m_configuration
                     .getCertificate());
         }
+        // Test connection
+        if (m_configuration.getTestconnection()) {
+            try {
+                RemoteFileFactory.createRemoteFile(
+                        connectionInformation.toURI(), connectionInformation);
+                ConnectionMonitor.closeAll();
+            } catch (Exception e) {
+                throw new Exception("Connection to "
+                        + connectionInformation.toURI() + " failed");
+            }
+        }
         // Return port object with connection information
         return new PortObject[]{new ConnectionInformationPortObject(
                 connectionInformation)};
@@ -159,7 +172,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
             throws InvalidSettingsException {
         ConnectionInformationConfiguration config =
                 new ConnectionInformationConfiguration(m_protocol);
-        config.loadInModel(settings);
+        config.loadAndValidate(settings);
         m_configuration = config;
     }
 
@@ -170,7 +183,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         new ConnectionInformationConfiguration(m_protocol)
-                .loadInModel(settings);
+                .loadAndValidate(settings);
     }
 
     /**

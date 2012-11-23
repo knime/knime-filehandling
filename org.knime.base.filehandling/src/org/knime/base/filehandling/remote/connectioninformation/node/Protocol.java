@@ -66,7 +66,7 @@ public enum Protocol {
     HTTP("http", 80, true, false, false),
 
     /** HTTPS protocol. */
-    HTTPS("https", 443, true, false, true);
+    HTTPS("https", 443, true, false, false);
 
     private String m_name;
 

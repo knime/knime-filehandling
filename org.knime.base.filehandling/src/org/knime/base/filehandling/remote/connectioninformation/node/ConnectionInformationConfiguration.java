@@ -80,6 +80,8 @@ class ConnectionInformationConfiguration {
 
     private String m_certificate;
 
+    private boolean m_testconnection;
+
     /**
      * Create uninitialized configuration to a certain protocol.
      * 
@@ -203,6 +205,20 @@ class ConnectionInformationConfiguration {
     }
 
     /**
+     * @return the testconnection
+     */
+    public boolean getTestconnection() {
+        return m_testconnection;
+    }
+
+    /**
+     * @param testconnection the testconnection to set
+     */
+    public void setTestconnection(final boolean testconnection) {
+        m_testconnection = testconnection;
+    }
+
+    /**
      * Save this configuration into the settings.
      * 
      * 
@@ -223,6 +239,7 @@ class ConnectionInformationConfiguration {
             settings.addBoolean("usecertificate", m_usecertificate);
             settings.addString("certificate", m_certificate);
         }
+        settings.addBoolean("testconnection", m_testconnection);
     }
 
     /**
@@ -231,7 +248,7 @@ class ConnectionInformationConfiguration {
      * 
      * @param settings The <code>NodeSettings</code> to read from
      */
-    void loadInDialog(final NodeSettingsRO settings) {
+    void load(final NodeSettingsRO settings) {
         m_user = settings.getString("user", "");
         m_host = settings.getString("host", "");
         m_port = settings.getInt("port", m_protocol.getPort());
@@ -248,6 +265,7 @@ class ConnectionInformationConfiguration {
             m_usecertificate = settings.getBoolean("usecertificate", false);
             m_certificate = settings.getString("certificate", "");
         }
+        m_testconnection = settings.getBoolean("testconnection", true);
     }
 
     /**
@@ -257,7 +275,7 @@ class ConnectionInformationConfiguration {
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
-    void loadInModel(final NodeSettingsRO settings)
+    void loadAndValidate(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_user = settings.getString("user");
         m_host = settings.getString("host");
@@ -291,6 +309,7 @@ class ConnectionInformationConfiguration {
                 validate(m_certificate, "certificate");
             }
         }
+        m_testconnection = settings.getBoolean("testconnection");
     }
 
     /**
