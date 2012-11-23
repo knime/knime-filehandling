@@ -362,6 +362,9 @@ public class SFTPRemoteFile extends RemoteFile {
         // Check if channel is ready
         if (channel == null || !channel.getSession().isConnected()) {
             Session session = ((SSHConnection)getConnection()).getSession();
+            if (!session.isConnected()) {
+                session.connect();
+            }
             channel = (ChannelSftp)session.openChannel("sftp");
         }
         // Connect channel
