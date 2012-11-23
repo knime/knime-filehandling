@@ -59,6 +59,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URI;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -121,6 +123,8 @@ public final class RemoteFileChooser {
 
     private JProgressBar m_progress;
 
+    private List<RemoteFileTreeNodeWorker> m_workers;
+
     /**
      * Creates remote file chooser for the specified folder.
      * 
@@ -136,6 +140,7 @@ public final class RemoteFileChooser {
         m_connectionInformation = connectionInformation;
         m_selectionType = selectionType;
         m_selectedFile = null;
+        m_workers = new LinkedList<RemoteFileTreeNodeWorker>();
     }
 
     /**
@@ -172,7 +177,7 @@ public final class RemoteFileChooser {
             gbc.weighty = 1;
             gbc.insets = new Insets(0, 0, 0, 0);
             m_dialog.add(panel, gbc);
-            m_dialog.setTitle("Files on server");
+            m_dialog.setTitle("Files on " + m_connectionInformation.toURI());
             m_dialog.pack();
             m_dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
             m_dialog.setSize(400, 600);
@@ -370,8 +375,13 @@ public final class RemoteFileChooser {
                 // m_parent.add(m_nodes[i]);
                 m_treemodel.insertNodeInto(m_nodes[i], m_parent, i);
             }
-            m_progress.setVisible(false);
-            setDefaultMessage();
+            m_workers.remove(0);
+            if (m_workers.size() > 0) {
+                m_workers.get(0).execute();
+            } else {
+                m_progress.setVisible(false);
+                setDefaultMessage();
+            }
         }
 
     }
@@ -443,9 +453,12 @@ public final class RemoteFileChooser {
             m_loaded = true;
             RemoteFileTreeNodeWorker worker =
                     new RemoteFileTreeNodeWorker(this);
-            m_progress.setVisible(true);
-            m_info.setText("Loading");
-            worker.execute();
+            m_workers.add(worker);
+            if (m_workers.size() < 2) {
+                m_progress.setVisible(true);
+                m_info.setText("Loading");
+                worker.execute();
+            }
         }
 
         /**
