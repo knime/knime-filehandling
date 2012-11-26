@@ -404,7 +404,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * @return The parent file
      * @throws Exception If the operation could not be executed
      */
-    public final RemoteFile getParent() throws Exception {
+    public RemoteFile getParent() throws Exception {
         String path = getFullName();
         if (path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);

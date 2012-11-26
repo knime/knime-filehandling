@@ -46,100 +46,54 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remote.files;
-
-import java.net.URI;
-
-import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
-import org.knime.core.util.KnimeEncryption;
-
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
+package org.knime.base.filehandling.download;
 
 /**
- * Connection over SSH.
+ * Enums for overwrite policies.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class SSHConnection extends Connection {
-
-    private URI m_uri;
-
-    private Session m_session;
-
-    private ConnectionInformation m_connectionInformation;
+enum OverwritePolicy {
 
     /**
-     * Create a SSH connection to the given URI.
-     * 
-     * 
-     * @param uri The URI
-     * @param connectionInformation Connection information to the given URI
+     * Overwrite existing file.
      */
-    public SSHConnection(final URI uri,
-            final ConnectionInformation connectionInformation) {
-        m_uri = uri;
-        m_connectionInformation = connectionInformation;
+    OVERWRITE("Overwrite"),
+
+    /**
+     * Overwrite only if newer.
+     */
+    OVERWRITEIFNEWER("Overwrite if newer"),
+
+    /**
+     * Abort if file exists.
+     */
+    ABORT("Abort");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this policy
+     */
+    OverwritePolicy(final String name) {
+        m_name = name;
     }
 
     /**
-     * {@inheritDoc}
+     * @return Name of this policy
      */
-    @Override
-    public void open() throws Exception {
-        // Read attributes
-        String host = m_uri.getHost();
-        int port =
-                m_uri.getPort() >= 0 ? m_uri.getPort() : DefaultPortMap
-                        .getMap().get("ssh");
-        String user = m_uri.getUserInfo();
-        String password =
-                KnimeEncryption.decrypt(m_connectionInformation.getPassword());
-        // Open session
-        JSch jsch = new JSch();
-        // Use keyfile if available
-        String keyfile = m_connectionInformation.getKeyfile();
-        if (keyfile != null && keyfile.length() != 0) {
-            jsch.addIdentity(keyfile, password);
-        }
-        // Add custom certificate to known hosts if available
-        String certificate = m_connectionInformation.getCertificate();
-        if (certificate != null && certificate.length() != 0) {
-            jsch.setKnownHosts(certificate);
-        }
-        Session session = jsch.getSession(user, host, port);
-        session.setPassword(password);
-        session.connect();
-        m_session = session;
+    String getName() {
+        return m_name;
     }
 
     /**
-     * {@inheritDoc}
+     * @return Array of all overwrite policy settings
      */
-    @Override
-    public boolean isOpen() {
-        return m_session.isConnected();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws Exception {
-        m_session.disconnect();
-    }
-
-    /**
-     * Returns the Session of this connection.
-     * 
-     * 
-     * @return The session
-     */
-    public Session getSession() {
-        return m_session;
+    static String[] getAllSettings() {
+        return new String[]{OVERWRITE.getName(), ABORT.getName()};
     }
 
 }

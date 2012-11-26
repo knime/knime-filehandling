@@ -121,7 +121,7 @@ public class RemoteFileChooserPanel {
         m_combobox = new JComboBox(new String[0]);
         m_combobox.setEditable(true);
         // Browse button
-        m_button = new JButton("Browse");
+        m_button = new JButton("Browse...");
         m_button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {

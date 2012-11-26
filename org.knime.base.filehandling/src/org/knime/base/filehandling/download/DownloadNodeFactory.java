@@ -46,100 +46,60 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Nov 5, 2012 (Patrick Winter): created
+ *   Nov 13, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remote.files;
+package org.knime.base.filehandling.download;
 
-import java.net.URI;
-
-import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
-import org.knime.core.util.KnimeEncryption;
-
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
- * Connection over SSH.
+ * <code>NodeFactory</code> for node.
  * 
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class SSHConnection extends Connection {
-
-    private URI m_uri;
-
-    private Session m_session;
-
-    private ConnectionInformation m_connectionInformation;
+public class DownloadNodeFactory extends NodeFactory<DownloadNodeModel> {
 
     /**
-     * Create a SSH connection to the given URI.
-     * 
-     * 
-     * @param uri The URI
-     * @param connectionInformation Connection information to the given URI
+     * {@inheritDoc}
      */
-    public SSHConnection(final URI uri,
-            final ConnectionInformation connectionInformation) {
-        m_uri = uri;
-        m_connectionInformation = connectionInformation;
+    @Override
+    public DownloadNodeModel createNodeModel() {
+        return new DownloadNodeModel();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void open() throws Exception {
-        // Read attributes
-        String host = m_uri.getHost();
-        int port =
-                m_uri.getPort() >= 0 ? m_uri.getPort() : DefaultPortMap
-                        .getMap().get("ssh");
-        String user = m_uri.getUserInfo();
-        String password =
-                KnimeEncryption.decrypt(m_connectionInformation.getPassword());
-        // Open session
-        JSch jsch = new JSch();
-        // Use keyfile if available
-        String keyfile = m_connectionInformation.getKeyfile();
-        if (keyfile != null && keyfile.length() != 0) {
-            jsch.addIdentity(keyfile, password);
-        }
-        // Add custom certificate to known hosts if available
-        String certificate = m_connectionInformation.getCertificate();
-        if (certificate != null && certificate.length() != 0) {
-            jsch.setKnownHosts(certificate);
-        }
-        Session session = jsch.getSession(user, host, port);
-        session.setPassword(password);
-        session.connect();
-        m_session = session;
+    public int getNrNodeViews() {
+        return 0;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean isOpen() {
-        return m_session.isConnected();
+    public NodeView<DownloadNodeModel> createNodeView(final int viewIndex,
+            final DownloadNodeModel nodeModel) {
+        return null;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void close() throws Exception {
-        m_session.disconnect();
+    public boolean hasDialog() {
+        return true;
     }
 
     /**
-     * Returns the Session of this connection.
-     * 
-     * 
-     * @return The session
+     * {@inheritDoc}
      */
-    public Session getSession() {
-        return m_session;
+    @Override
+    public NodeDialogPane createNodeDialogPane() {
+        return new DownloadNodeDialog();
     }
-
 }

@@ -48,7 +48,7 @@
  * History
  *   Oct 30, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.upload;
+package org.knime.base.filehandling.download;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -61,7 +61,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -72,8 +71,6 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooser;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooserPanel;
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
@@ -81,7 +78,6 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.util.ColumnSelectionComboxBox;
 import org.knime.core.node.util.FilesHistoryPanel;
 import org.knime.core.node.workflow.FlowVariable;
 
@@ -91,15 +87,17 @@ import org.knime.core.node.workflow.FlowVariable;
  * 
  * @author Patrick Winter, University of Konstanz
  */
-public class UploadNodeDialog extends NodeDialogPane {
+public class DownloadNodeDialog extends NodeDialogPane {
 
     private ConnectionInformation m_connectionInformation;
 
     private JLabel m_info;
 
-    private ColumnSelectionComboxBox m_source;
+    private RemoteFileChooserPanel m_source;
 
-    private RemoteFileChooserPanel m_target;
+    private FilesHistoryPanel m_target;
+
+    private FlowVariableModelButton m_targetfvm;
 
     private ButtonGroup m_overwritePolicy;
 
@@ -117,25 +115,20 @@ public class UploadNodeDialog extends NodeDialogPane {
 
     private JRadioButton m_truncate;
 
-    private FilesHistoryPanel m_prefix;
-
-    private FlowVariableModelButton m_prefixfvm;
+    private RemoteFileChooserPanel m_prefix;
 
     /**
      * New pane for configuring the node dialog.
      */
-    @SuppressWarnings("unchecked")
-    public UploadNodeDialog() {
+    public DownloadNodeDialog() {
         // Info
         m_info = new JLabel();
         // Source
         m_source =
-                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
-        // Target
-        m_target =
-                new RemoteFileChooserPanel(getPanel(), "Target folder", true,
-                        "targetHistory", RemoteFileChooser.SELECT_DIR,
-                        createFlowVariableModel("target",
+                new RemoteFileChooserPanel(getPanel(), "Source file or folder",
+                        true, "sourceHistory",
+                        RemoteFileChooser.SELECT_FILE_OR_DIR,
+                        createFlowVariableModel("source",
                                 FlowVariable.Type.STRING),
                         m_connectionInformation);
         // Path handling
@@ -153,12 +146,19 @@ public class UploadNodeDialog extends NodeDialogPane {
         m_pathhandling.add(m_onlyfilename);
         m_pathhandling.add(m_truncate);
         // Truncate directory
-        m_prefix = new FilesHistoryPanel("prefixHistory", false);
-        m_prefix.setSelectMode(JFileChooser.DIRECTORIES_ONLY);
-        m_prefixfvm =
-                new FlowVariableModelButton(createFlowVariableModel(
-                        "truncatedirectory", FlowVariable.Type.STRING));
-        m_prefixfvm.getFlowVariableModel().addChangeListener(
+        m_prefix =
+                new RemoteFileChooserPanel(getPanel(), "Prefix", true,
+                        "prefixHistory", RemoteFileChooser.SELECT_DIR,
+                        createFlowVariableModel("prefix",
+                                FlowVariable.Type.STRING),
+                        m_connectionInformation);
+        // Target
+        m_target = new FilesHistoryPanel("targetHistory", false);
+        m_target.setSelectMode(JFileChooser.DIRECTORIES_ONLY);
+        m_targetfvm =
+                new FlowVariableModelButton(createFlowVariableModel("target",
+                        FlowVariable.Type.STRING));
+        m_targetfvm.getFlowVariableModel().addChangeListener(
                 new ChangeListener() {
                     @Override
                     public void stateChanged(final ChangeEvent e) {
@@ -192,14 +192,6 @@ public class UploadNodeDialog extends NodeDialogPane {
     private JPanel initLayout() {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        // Source column
-        NodeUtils.resetGBC(gbc);
-        JPanel sourcePanel = new JPanel(new GridBagLayout());
-        JLabel sourceLabel = new JLabel("Source");
-        sourcePanel.add(sourceLabel, gbc);
-        gbc.gridx++;
-        gbc.weightx = 1;
-        sourcePanel.add(m_source, gbc);
         // Path handling
         NodeUtils.resetGBC(gbc);
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -211,16 +203,17 @@ public class UploadNodeDialog extends NodeDialogPane {
         pathHandlingPanel.add(m_truncate, gbc);
         pathHandlingPanel.setBorder(new TitledBorder(new EtchedBorder(),
                 "Path handling"));
-        // Prefix
+        // Target
         NodeUtils.resetGBC(gbc);
-        JPanel prefixPanel = new JPanel(new GridBagLayout());
+        JPanel targetPanel = new JPanel(new GridBagLayout());
         gbc.weightx = 1;
-        prefixPanel.add(m_prefix, gbc);
+        targetPanel.add(m_target, gbc);
         gbc.weightx = 0;
         gbc.gridx++;
         gbc.insets = new Insets(5, 0, 5, 5);
-        prefixPanel.add(m_prefixfvm, gbc);
-        prefixPanel.setBorder(new TitledBorder(new EtchedBorder(), "Prefix"));
+        targetPanel.add(m_targetfvm, gbc);
+        targetPanel.setBorder(new TitledBorder(new EtchedBorder(),
+                "Target folder"));
         // Overwrite policy
         NodeUtils.resetGBC(gbc);
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -237,15 +230,15 @@ public class UploadNodeDialog extends NodeDialogPane {
         gbc.weightx = 1;
         panel.add(m_info, gbc);
         gbc.gridy++;
-        panel.add(m_target.getPanel(), gbc);
-        gbc.gridy++;
-        panel.add(sourcePanel, gbc);
+        panel.add(m_source.getPanel(), gbc);
         gbc.gridy++;
         gbc.fill = GridBagConstraints.NONE;
         panel.add(pathHandlingPanel, gbc);
         gbc.gridy++;
         gbc.fill = GridBagConstraints.BOTH;
-        panel.add(prefixPanel, gbc);
+        panel.add(m_prefix.getPanel(), gbc);
+        gbc.gridy++;
+        panel.add(targetPanel, gbc);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridy++;
         panel.add(overwritePolicyPanel, gbc);
@@ -277,10 +270,10 @@ public class UploadNodeDialog extends NodeDialogPane {
     private void enableComponents() {
         boolean usePrefix = m_truncate.isSelected();
         boolean replacement =
-                m_prefixfvm.getFlowVariableModel()
+                m_targetfvm.getFlowVariableModel()
                         .isVariableReplacementEnabled();
-        m_prefix.setEnabled(usePrefix && !replacement);
-        m_prefixfvm.setEnabled(usePrefix);
+        m_prefix.setEnabled(usePrefix);
+        m_target.setEnabled(!replacement);
     }
 
     /**
@@ -302,13 +295,14 @@ public class UploadNodeDialog extends NodeDialogPane {
             throw new NotConfigurableException(
                     "No connection information available");
         }
-        m_target.setConnectionInformation(m_connectionInformation);
-        m_info.setText("Upload to: " + m_connectionInformation.toURI());
+        m_source.setConnectionInformation(m_connectionInformation);
+        m_prefix.setConnectionInformation(m_connectionInformation);
+        m_info.setText("Download from: " + m_connectionInformation.toURI());
         // Load configuration
-        UploadConfiguration config = new UploadConfiguration();
+        DownloadConfiguration config = new DownloadConfiguration();
         config.load(settings);
-        m_target.setSelection(config.getTarget());
-        m_source.update((DataTableSpec)specs[1], config.getSource());
+        m_source.setSelection(config.getSource());
+        m_target.setSelectedFile(config.getTarget());
         String overwritePolicy = config.getOverwritePolicy();
         if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
             m_overwritePolicy.setSelected(m_overwrite.getModel(), true);
@@ -326,7 +320,7 @@ public class UploadNodeDialog extends NodeDialogPane {
         } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
             m_pathhandling.setSelected(m_truncate.getModel(), true);
         }
-        m_prefix.setSelectedFile(config.getPrefix());
+        m_prefix.setSelection(config.getPrefix());
         enableComponents();
     }
 
@@ -336,13 +330,13 @@ public class UploadNodeDialog extends NodeDialogPane {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
-        UploadConfiguration config = new UploadConfiguration();
-        config.setTarget(m_target.getSelection());
-        config.setSource(m_source.getSelectedColumn());
+        DownloadConfiguration config = new DownloadConfiguration();
+        config.setTarget(m_target.getSelectedFile());
+        config.setSource(m_source.getSelection());
         config.setOverwritePolicy(m_overwritePolicy.getSelection()
                 .getActionCommand());
         config.setPathHandling(m_pathhandling.getSelection().getActionCommand());
-        config.setPrefix(m_prefix.getSelectedFile());
+        config.setPrefix(m_prefix.getSelection());
         config.save(settings);
     }
 }

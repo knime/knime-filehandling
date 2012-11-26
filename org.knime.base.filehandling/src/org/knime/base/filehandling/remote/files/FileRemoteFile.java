@@ -58,6 +58,8 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
 
+import org.apache.commons.io.FilenameUtils;
+
 /**
  * Implementation of the file remote file.
  * 
@@ -203,6 +205,26 @@ public class FileRemoteFile extends RemoteFile {
     @Override
     public boolean mkDir() throws Exception {
         return new File(getURI()).mkdir();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public RemoteFile getParent() throws Exception {
+        String path = getFullName();
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 1);
+        }
+        path = FilenameUtils.getFullPath(path);
+        // Build URI
+        URI uri = new File(path).toURI();
+        // Create remote file and open it
+        RemoteFile file =
+                RemoteFileFactory.createRemoteFile(uri,
+                        getConnectionInformation());
+        file.open();
+        return file;
     }
 
     /**
