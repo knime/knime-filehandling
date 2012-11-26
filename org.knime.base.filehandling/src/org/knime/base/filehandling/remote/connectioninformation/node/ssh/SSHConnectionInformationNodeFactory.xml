@@ -4,22 +4,63 @@
     <name>SSH Connection</name>
 
     <shortDescription>
-        Configures the connection information used to connect to a
+        Configures the connection information used to
+        connect to a
         remote host.
     </shortDescription>
 
     <fullDescription>
         <intro>
-            This node configures the connection information that will be used to
+            This node configures the connection information that will
+            be used to
             connect to a remote host.
         </intro>
 
-
+        <option name="Host">
+            Address of the host.
+        </option>
+        <option name="Port">
+            Port of the service.
+        </option>
+        <option name="Authentication">
+            Method of authentication.
+            <br />
+            <b>Password</b>
+            <br />
+            Use username and password to authenticate.
+            <br />
+            <b>Keyfile</b>
+            <br />
+            Use keyfile to authenticate.
+        </option>
+        <option name="User">
+            Name of the user.
+        </option>
+        <option name="Password">
+            Password of the user or to the keyfile, if
+            authentication via keyfile is
+            selected.
+        </option>
+        <option name="Keyfile">
+            Location of the keyfile.
+        </option>
+        <option name="Use custom certificate">
+            Use a self signed certificate.
+        </option>
+        <option name="Certificate">
+            The certificates location.
+        </option>
+        <option name="Test connection">
+            Connects to the specified host on execution
+            and fails if the connection did
+            not work.
+        </option>
     </fullDescription>
 
     <ports>
         <outPort name="Connection information port" index="0">
-            Port object
+            Port
+            object
             containing the connection information.
         </outPort>
     </ports>

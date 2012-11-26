@@ -102,6 +102,7 @@ public class UploadNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
+        ConnectionMonitor monitor = new ConnectionMonitor();
         String source = m_configuration.getSource();
         // Get table with source URIs
         BufferedDataTable table = (BufferedDataTable)inObjects[1];
@@ -120,14 +121,14 @@ public class UploadNodeModel extends NodeModel {
                                 .getURI();
                 // Create source file (no connection information supported)
                 RemoteFile sourceFile =
-                        RemoteFileFactory.createRemoteFile(uri, null);
+                        RemoteFileFactory.createRemoteFile(uri, null, null);
                 // Upload file
-                upload(sourceFile);
+                upload(sourceFile, monitor);
                 i++;
             }
         }
         // Close connections
-        ConnectionMonitor.closeAll();
+        monitor.closeAll();
         return new PortObject[]{};
     }
 
@@ -136,16 +137,18 @@ public class UploadNodeModel extends NodeModel {
      * 
      * 
      * @param source The source file
+     * @param monitor The connection monitor
      * @throws Exception If the operation could not be processed
      */
-    private void upload(final RemoteFile source) throws Exception {
+    private void upload(final RemoteFile source, final ConnectionMonitor monitor)
+            throws Exception {
         // Get overwrite policy
         String overwritePolicy = m_configuration.getOverwritePolicy();
         // If the source is a directory upload inner files
         if (source.isDirectory()) {
             RemoteFile[] files = source.listFiles();
             for (int i = 0; i < files.length; i++) {
-                upload(files[i]);
+                upload(files[i], monitor);
             }
         } else {
             // Get filename
@@ -171,7 +174,7 @@ public class UploadNodeModel extends NodeModel {
             // Create target file
             RemoteFile target =
                     RemoteFileFactory.createRemoteFile(targetUri,
-                            m_connectionInformation);
+                            m_connectionInformation, monitor);
             target.mkDirs(false);
             if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                 // Policy overwrite:

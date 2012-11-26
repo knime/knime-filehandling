@@ -79,10 +79,12 @@ public class FTPRemoteFile extends RemoteFile {
      * 
      * @param uri The URI
      * @param connectionInformation Connection information to the given URI
+     * @param connectionMonitor Monitor for the connection
      */
     FTPRemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation) {
-        super(uri, connectionInformation);
+            final ConnectionInformation connectionInformation,
+            final ConnectionMonitor connectionMonitor) {
+        super(uri, connectionInformation, connectionMonitor);
     }
 
     /**
@@ -309,7 +311,9 @@ public class FTPRemoteFile extends RemoteFile {
                                 + getURI().getAuthority() + getPath()
                                 + ftpFiles[i].getName());
                 // Create remote file and open it
-                files[i] = new FTPRemoteFile(uri, getConnectionInformation());
+                files[i] =
+                        new FTPRemoteFile(uri, getConnectionInformation(),
+                                getConnectionMonitor());
                 files[i].open();
             }
         } else {

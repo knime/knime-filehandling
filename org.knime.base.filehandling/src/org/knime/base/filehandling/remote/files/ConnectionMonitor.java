@@ -62,12 +62,8 @@ import java.util.Set;
  */
 public final class ConnectionMonitor {
 
-    private static Map<String, Connection> connections =
+    private Map<String, Connection> m_connections =
             new HashMap<String, Connection>();
-
-    private ConnectionMonitor() {
-        // Disable default constructor
-    }
 
     /**
      * Register a connection.
@@ -76,9 +72,9 @@ public final class ConnectionMonitor {
      * @param identifier Identifier for the connection
      * @param connection Connection to register
      */
-    public static synchronized void registerConnection(final String identifier,
+    public synchronized void registerConnection(final String identifier,
             final Connection connection) {
-        connections.put(identifier, connection);
+        m_connections.put(identifier, connection);
     }
 
     /**
@@ -89,8 +85,8 @@ public final class ConnectionMonitor {
      * @return Already opened connection to the identifier or null if not
      *         available
      */
-    public static synchronized Connection findConnection(final String identifier) {
-        Connection connection = connections.get(identifier);
+    public synchronized Connection findConnection(final String identifier) {
+        Connection connection = m_connections.get(identifier);
         // Check if connection is open
         if (connection != null && !connection.isOpen()) {
             try {
@@ -98,7 +94,7 @@ public final class ConnectionMonitor {
                 connection.open();
             } catch (Exception e) {
                 // Remove in case of error
-                connections.remove(identifier);
+                m_connections.remove(identifier);
                 connection = null;
             }
         }
@@ -108,12 +104,12 @@ public final class ConnectionMonitor {
     /**
      * Close and remove all connections.
      */
-    public static synchronized void closeAll() {
-        Set<String> identifiers = connections.keySet();
+    public synchronized void closeAll() {
+        Set<String> identifiers = m_connections.keySet();
         for (String identifier : identifiers) {
             try {
-                connections.get(identifier).close();
-                connections.remove(identifier);
+                m_connections.get(identifier).close();
+                m_connections.remove(identifier);
             } catch (Exception e) {
                 // ignore and close next connection
             }

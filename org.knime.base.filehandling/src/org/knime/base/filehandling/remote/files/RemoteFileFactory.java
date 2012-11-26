@@ -73,12 +73,14 @@ public final class RemoteFileFactory {
      * 
      * @param uri The URI
      * @param connectionInformation Connection information to the given URI
+     * @param connectionMonitor Monitor for the connection
      * @return Remote file for the given URI
      * @throws Exception If creation of the remote file or opening of its
      *             connection failed
      */
     public static RemoteFile createRemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation) throws Exception {
+            final ConnectionInformation connectionInformation,
+            final ConnectionMonitor connectionMonitor) throws Exception {
         String scheme = uri.getScheme().toLowerCase();
         if (connectionInformation != null) {
             // Check if the connection information fit to the URI
@@ -89,7 +91,9 @@ public final class RemoteFileFactory {
         if (scheme.equals("file")) {
             remoteFile = new FileRemoteFile(uri);
         } else if (scheme.equals("ftp")) {
-            remoteFile = new FTPRemoteFile(uri, connectionInformation);
+            remoteFile =
+                    new FTPRemoteFile(uri, connectionInformation,
+                            connectionMonitor);
         } else if (scheme.equals("sftp") || scheme.equals("ssh")) {
             URI sshUri = uri;
             if (scheme.equals("sftp")) {
@@ -101,7 +105,9 @@ public final class RemoteFileFactory {
                     // Should not happen, since the syntax remains untouched
                 }
             }
-            remoteFile = new SFTPRemoteFile(sshUri, connectionInformation);
+            remoteFile =
+                    new SFTPRemoteFile(sshUri, connectionInformation,
+                            connectionMonitor);
         } else if (scheme.equals("http") || scheme.equals("https")) {
             remoteFile = new HTTPRemoteFile(uri, connectionInformation);
         } else if (scheme.equals("scp")) {
@@ -114,7 +120,9 @@ public final class RemoteFileFactory {
                     // Should not happen, since the syntax remains untouched
                 }
             }
-            remoteFile = new SCPRemoteFile(sshUri, connectionInformation);
+            remoteFile =
+                    new SCPRemoteFile(sshUri, connectionInformation,
+                            connectionMonitor);
         }
         if (remoteFile != null) {
             // Open connection of the remote file

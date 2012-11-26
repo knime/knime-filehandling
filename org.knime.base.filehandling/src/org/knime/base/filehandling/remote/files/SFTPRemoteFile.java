@@ -84,10 +84,12 @@ public class SFTPRemoteFile extends RemoteFile {
      * 
      * @param uri The URI
      * @param connectionInformation Connection information to the given URI
+     * @param connectionMonitor Monitor for the connection
      */
     SFTPRemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation) {
-        super(uri, connectionInformation);
+            final ConnectionInformation connectionInformation,
+            final ConnectionMonitor connectionMonitor) {
+        super(uri, connectionInformation, connectionMonitor);
     }
 
     /**
@@ -326,7 +328,8 @@ public class SFTPRemoteFile extends RemoteFile {
                         // Create remote file and open it
                         RemoteFile file =
                                 new SFTPRemoteFile(uri,
-                                        getConnectionInformation());
+                                        getConnectionInformation(),
+                                        getConnectionMonitor());
                         file.open();
                         // Add remote file to the result list
                         files.add(file);

@@ -14,11 +14,55 @@
         </intro>
 
 
+        <option name="Target folder">
+            Location on the server, where the files will
+            be put.
+        </option>
+        <option name="Source">
+            Column of the input table with the URIs to
+            the files.
+        </option>
+        <option name="Path handling">
+            How the path of the source files will be truncated.
+            <br />
+            <b>Use full path</b>
+            <br />
+            Use the full path without truncating anything.
+            <br />
+            <b>Use only filename</b>
+            <br />
+            Truncate the whole path and leave only the files name.
+            <br />
+            <b>Truncate prefix</b>
+            <br />
+            Truncate the selected prefix directory from the path.
+        </option>
+        <option name="Prefix">
+            Directory that will be truncated from the
+            sources path.
+        </option>
+        <option name="If exists...">
+            How to handle already existing files.
+            <br />
+            <b>Overwrite</b>
+            <br />
+            Overwrite the existing file.
+            <br />
+            <b>Overwrite if newer</b>
+            <br />
+            Overwrite the existing file only, if the local file is
+            newer.
+            <br />
+            <b>Abort</b>
+            <br />
+            Abort the execution of the node.
+        </option>
     </fullDescription>
 
     <ports>
         <inPort name="Connection information port" index="0">
-            Port object
+            Port
+            object
             containing the connection information to the server.
         </inPort>
         <inPort name="Filelist port" index="1">

@@ -80,7 +80,7 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     HTTPRemoteFile(final URI uri,
             final ConnectionInformation connectionInformation) {
-        super(uri, connectionInformation);
+        super(uri, connectionInformation, null);
     }
 
     /**

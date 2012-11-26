@@ -75,7 +75,7 @@ public class FileRemoteFile extends RemoteFile {
      * @param uri The URI
      */
     FileRemoteFile(final URI uri) {
-        super(uri, null);
+        super(uri, null, null);
     }
 
     /**
@@ -220,9 +220,7 @@ public class FileRemoteFile extends RemoteFile {
         // Build URI
         URI uri = new File(path).toURI();
         // Create remote file and open it
-        RemoteFile file =
-                RemoteFileFactory.createRemoteFile(uri,
-                        getConnectionInformation());
+        RemoteFile file = new FileRemoteFile(uri);
         file.open();
         return file;
     }

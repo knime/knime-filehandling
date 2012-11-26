@@ -71,17 +71,22 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     private ConnectionInformation m_connectionInformation = null;
 
+    private ConnectionMonitor m_connectionMonitor = null;
+
     /**
      * Create a remote file.
      * 
      * 
      * @param uri The uri pointing to the file
      * @param connectionInformation Connection information to the file
+     * @param connectionMonitor Monitor for the connection
      */
     protected RemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation) {
+            final ConnectionInformation connectionInformation,
+            final ConnectionMonitor connectionMonitor) {
         m_uri = uri;
         m_connectionInformation = connectionInformation;
+        m_connectionMonitor = connectionMonitor;
     }
 
     /**
@@ -104,12 +109,12 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
             // Look for existing connection
             String identifier = getIdentifier();
             Connection connection =
-                    ConnectionMonitor.findConnection(identifier);
+                    m_connectionMonitor.findConnection(identifier);
             // If no connection is available create a new one
             if (connection == null) {
                 connection = createConnection();
                 connection.open();
-                ConnectionMonitor.registerConnection(identifier, connection);
+                m_connectionMonitor.registerConnection(identifier, connection);
             }
             m_connection = connection;
         }
@@ -181,6 +186,16 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      */
     public final ConnectionInformation getConnectionInformation() {
         return m_connectionInformation;
+    }
+
+    /**
+     * Get the monitor handling the connection.
+     * 
+     * 
+     * @return the connectionMonitor
+     */
+    public final ConnectionMonitor getConnectionMonitor() {
+        return m_connectionMonitor;
     }
 
     /**
@@ -415,8 +430,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
                 new URI(m_uri.getScheme() + "://" + m_uri.getAuthority() + path);
         // Create remote file and open it
         RemoteFile file =
-                RemoteFileFactory
-                        .createRemoteFile(uri, m_connectionInformation);
+                RemoteFileFactory.createRemoteFile(uri,
+                        m_connectionInformation, m_connectionMonitor);
         file.open();
         return file;
     }

@@ -80,10 +80,12 @@ public class SCPRemoteFile extends RemoteFile {
      * 
      * @param uri The URI
      * @param connectionInformation Connection information to the given URI
+     * @param connectionMonitor Monitor for the connection
      */
     SCPRemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation) {
-        super(uri, connectionInformation);
+            final ConnectionInformation connectionInformation,
+            final ConnectionMonitor connectionMonitor) {
+        super(uri, connectionInformation, connectionMonitor);
     }
 
     /**

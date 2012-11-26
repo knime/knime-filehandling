@@ -123,9 +123,11 @@ public class ConnectionInformationNodeModel extends NodeModel {
         // Test connection
         if (m_configuration.getTestconnection()) {
             try {
+                ConnectionMonitor monitor = new ConnectionMonitor();
                 RemoteFileFactory.createRemoteFile(
-                        connectionInformation.toURI(), connectionInformation);
-                ConnectionMonitor.closeAll();
+                        connectionInformation.toURI(), connectionInformation,
+                        monitor);
+                monitor.closeAll();
             } catch (Exception e) {
                 throw new Exception("Connection to "
                         + connectionInformation.toURI() + " failed");

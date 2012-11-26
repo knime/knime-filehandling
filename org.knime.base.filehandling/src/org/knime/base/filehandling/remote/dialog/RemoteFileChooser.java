@@ -114,6 +114,8 @@ public final class RemoteFileChooser {
 
     private ConnectionInformation m_connectionInformation;
 
+    private ConnectionMonitor m_connectionMonitor;
+
     private Frame m_parent;
 
     private int m_selectionType;
@@ -145,6 +147,7 @@ public final class RemoteFileChooser {
             final int selectionType) {
         m_uri = uri;
         m_connectionInformation = connectionInformation;
+        m_connectionMonitor = new ConnectionMonitor();
         m_selectionType = selectionType;
         m_selectedFile = null;
         m_workers = new LinkedList<RemoteFileTreeNodeWorker>();
@@ -189,7 +192,7 @@ public final class RemoteFileChooser {
         // dialog
         m_dialog.dispose();
         // Close used connections
-        ConnectionMonitor.closeAll();
+        m_connectionMonitor.closeAll();
     }
 
     /**
@@ -313,7 +316,7 @@ public final class RemoteFileChooser {
             } else if (action.equals("cancel")) {
                 // Close dialog on cancel
                 m_dialog.dispose();
-                ConnectionMonitor.closeAll();
+                m_connectionMonitor.closeAll();
             }
         }
 
@@ -323,7 +326,7 @@ public final class RemoteFileChooser {
                 m_selectedFile = file.getFullName();
                 // Close dialog and connections
                 m_dialog.dispose();
-                ConnectionMonitor.closeAll();
+                m_connectionMonitor.closeAll();
             } catch (Exception e) {
                 // do not close in case of exception
             }
@@ -349,7 +352,7 @@ public final class RemoteFileChooser {
             // Create remote file to the root of the tree
             RemoteFile root =
                     RemoteFileFactory.createRemoteFile(m_uri,
-                            m_connectionInformation);
+                            m_connectionInformation, m_connectionMonitor);
             RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root);
             // Create tree model
             m_treemodel = new DefaultTreeModel(rootNode);
@@ -369,7 +372,7 @@ public final class RemoteFileChooser {
             } else {
                 // Close dialog and used connections
                 m_dialog.dispose();
-                ConnectionMonitor.closeAll();
+                m_connectionMonitor.closeAll();
                 // Show error about the connection problem
                 JOptionPane.showMessageDialog(m_parent, "Could not connect to "
                         + m_uri, "No connection", JOptionPane.ERROR_MESSAGE);
@@ -439,12 +442,11 @@ public final class RemoteFileChooser {
             } else {
                 // Close dialog and used connections
                 m_dialog.dispose();
-                ConnectionMonitor.closeAll();
+                m_connectionMonitor.closeAll();
                 // Show error about the connection problem
                 JOptionPane.showMessageDialog(m_parent, "Connection to "
                         + m_uri + " lost", "No connection",
                         JOptionPane.ERROR_MESSAGE);
-
             }
         }
 

@@ -107,6 +107,8 @@ public class DownloadNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
+        // Create connection monitor
+        ConnectionMonitor monitor = new ConnectionMonitor();
         // Create output spec and container
         DataTableSpec outSpec = createOutSpec();
         BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
@@ -117,12 +119,12 @@ public class DownloadNodeModel extends NodeModel {
         // Create remote file for source selection
         RemoteFile file =
                 RemoteFileFactory.createRemoteFile(sourceUri,
-                        m_connectionInformation);
-        // Download the selected directory
+                        m_connectionInformation, monitor);
+        // Download the selected directory or file
         download(file, outContainer, exec);
         outContainer.close();
         // Close connections
-        ConnectionMonitor.closeAll();
+        monitor.closeAll();
         return new PortObject[]{outContainer.getTable()};
     }
 
@@ -143,6 +145,7 @@ public class DownloadNodeModel extends NodeModel {
     private void download(final RemoteFile source,
             final BufferedDataContainer outContainer,
             final ExecutionContext exec) throws Exception {
+        // Check if the user canceled
         exec.checkCanceled();
         // If the source is a directory download inner files
         if (source.isDirectory()) {
@@ -171,15 +174,14 @@ public class DownloadNodeModel extends NodeModel {
                 name = name.replaceFirst("/", "");
             }
             RemoteFile targetFolder =
-                    RemoteFileFactory
-                            .createRemoteFile(
-                                    new File(m_configuration.getTarget())
-                                            .toURI(), null);
+                    RemoteFileFactory.createRemoteFile(
+                            new File(m_configuration.getTarget()).toURI(),
+                            null, null);
             // Generate URI to the target
             URI targetUri = new File(targetFolder.getFullName() + name).toURI();
             // Create target file
             RemoteFile target =
-                    RemoteFileFactory.createRemoteFile(targetUri, null);
+                    RemoteFileFactory.createRemoteFile(targetUri, null, null);
             target.mkDirs(false);
             if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                 // Policy overwrite:
@@ -213,11 +215,13 @@ public class DownloadNodeModel extends NodeModel {
                 target.write(source);
                 downloaded = true;
             }
-            // Add file information to the container
+            // URI to the created file
             String extension = FilenameUtils.getExtension(targetUri.getPath());
             URIContent content = new URIContent(targetUri, extension);
             URIDataCell uriCell = new URIDataCell(content);
+            // Has the file been downloaded or not?
             BooleanCell downloadedCell = BooleanCell.get(downloaded);
+            // Add file information to the container
             outContainer.addRowToTable(new DefaultRow("Row"
                     + outContainer.size(), uriCell, downloadedCell));
         }
