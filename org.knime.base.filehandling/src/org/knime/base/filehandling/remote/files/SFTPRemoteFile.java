@@ -53,6 +53,7 @@ package org.knime.base.filehandling.remote.files;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -368,19 +369,23 @@ public class SFTPRemoteFile extends RemoteFile {
                             FilenameUtils.normalize(entries.get(i)
                                     .getFilename());
                     if (filename != null && filename.length() > 0) {
-                        // Build URI
-                        URI uri =
-                                new URI(getURI().getScheme() + "://"
-                                        + getURI().getAuthority() + getPath()
-                                        + filename);
-                        // Create remote file and open it
-                        RemoteFile file =
-                                new SFTPRemoteFile(uri,
-                                        getConnectionInformation(),
-                                        getConnectionMonitor());
-                        file.open();
-                        // Add remote file to the result list
-                        files.add(file);
+                        try {
+                            // Build URI
+                            URI uri =
+                                    new URI(getURI().getScheme() + "://"
+                                            + getURI().getAuthority()
+                                            + getPath() + filename);
+                            // Create remote file and open it
+                            RemoteFile file =
+                                    new SFTPRemoteFile(uri,
+                                            getConnectionInformation(),
+                                            getConnectionMonitor());
+                            file.open();
+                            // Add remote file to the result list
+                            files.add(file);
+                        } catch (URISyntaxException e) {
+                            // ignore files that are not representable
+                        }
                     }
                 }
                 outFiles = files.toArray(new RemoteFile[files.size()]);
