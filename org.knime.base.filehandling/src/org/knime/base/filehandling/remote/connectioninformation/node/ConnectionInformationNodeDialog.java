@@ -69,14 +69,11 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
@@ -92,9 +89,6 @@ import org.knime.core.util.KnimeEncryption;
  * @author Patrick Winter, University of Konstanz
  */
 public class ConnectionInformationNodeDialog extends NodeDialogPane {
-
-    private static final NodeLogger LOGGER = NodeLogger
-            .getLogger(ConnectionInformationNodeDialog.class);
 
     private Protocol m_protocol;
 
@@ -117,8 +111,6 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
     private JLabel m_passwordLabel;
 
     private JPasswordField m_password;
-
-    private boolean m_passwordChanged;
 
     private JLabel m_keyfileLabel;
 
@@ -171,22 +163,6 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         // Password
         m_passwordLabel = new JLabel("Password:");
         m_password = new JPasswordField();
-        m_password.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void removeUpdate(final DocumentEvent e) {
-                m_passwordChanged = true;
-            }
-
-            @Override
-            public void insertUpdate(final DocumentEvent e) {
-                m_passwordChanged = true;
-            }
-
-            @Override
-            public void changedUpdate(final DocumentEvent e) {
-                m_passwordChanged = true;
-            }
-        });
         // Keyfile
         m_keyfileLabel = new JLabel("Keyfile:");
         m_keyfile = new FilesHistoryPanel("keyfileHistory", false);
@@ -389,18 +365,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         config.setPort((Integer)m_port.getValue());
         config.setAuthenticationmethod(m_authmethod.getSelection()
                 .getActionCommand());
-        // If password changed it has to be encrypted again
-        if (m_passwordChanged) {
-            try {
-                config.setPassword(KnimeEncryption.encrypt(m_password
-                        .getPassword()));
-            } catch (Throwable t) {
-                LOGGER.error(
-                        "Could not encrypt password, reason: " + t.getMessage(),
-                        t);
-            }
-        } else {
-            config.setPassword(new String(m_password.getPassword()));
+        try {
+            config.setPassword(KnimeEncryption.encrypt(m_password.getPassword()));
+        } catch (Exception e) {
+            // Do not change password
         }
         // Only save if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
@@ -436,8 +404,11 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         } else if (authmethod.equals(AuthenticationMethod.KEYFILE.getName())) {
             m_authmethod.setSelected(m_authkeyfile.getModel(), true);
         }
-        m_passwordChanged = false;
-        m_password.setText(config.getPassword());
+        try {
+            m_password.setText(KnimeEncryption.decrypt(config.getPassword()));
+        } catch (Exception e) {
+            // Leave empty
+        }
         // Only load if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             m_keyfile.setSelectedFile(config.getKeyfile());
