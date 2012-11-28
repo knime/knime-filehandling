@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./upload.gif" type="Sink">
+<knimeNode icon="./upload16x16.png" type="Sink">
     <name>Upload</name>
 
     <shortDescription>

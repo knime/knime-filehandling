@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./binaryobjectstostrings.gif" type="Manipulator">
+<knimeNode icon="./binaryobjectstostrings16x16.png" type="Manipulator">
     <name>Binary Objects to Strings</name>
 
     <shortDescription>
