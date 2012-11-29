@@ -359,7 +359,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
                 (usePassword || useKeyfile) && credentialsAvailable;
         // Check if the user and password have to be set manually
         boolean manualCredentials =
-                (usePassword || useKeyfile) && credentialsSelectable
+                (usePassword || useKeyfile)
                         && !m_useworkflowcredentials.isSelected();
         // Disable workflow credentials if auth method is none or no credentials
         // are available
@@ -507,8 +507,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         ConnectionInformationConfiguration config =
                 new ConnectionInformationConfiguration(m_protocol);
         config.load(settings);
-        m_useworkflowcredentials
-                .setSelected(config.getUseworkflowcredentials());
+        if (m_workflowcredentials.getItemCount() > 0) {
+            m_useworkflowcredentials.setSelected(config
+                    .getUseworkflowcredentials());
+        }
         m_workflowcredentials.setSelectedItem(config.getWorkflowcredentials());
         m_user.setText(config.getUser());
         m_host.setText(config.getHost());
