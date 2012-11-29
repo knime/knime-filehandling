@@ -56,8 +56,6 @@ import java.io.IOException;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
-import org.knime.base.filehandling.remote.files.ConnectionMonitor;
-import org.knime.base.filehandling.remote.files.RemoteFileFactory;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -100,39 +98,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
         // Create connection information object
         ConnectionInformation connectionInformation =
-                new ConnectionInformation();
-        // Put settings into object
-        connectionInformation.setProtocol(m_protocol.getName());
-        connectionInformation.setHost(m_configuration.getHost());
-        connectionInformation.setPort(m_configuration.getPort());
-        if (!m_configuration.getAuthenticationmethod().equals(
-                AuthenticationMethod.NONE.getName())) {
-            connectionInformation.setUser(m_configuration.getUser());
-            connectionInformation.setPassword(m_configuration.getPassword());
-        }
-        if (m_protocol.hasKeyfileSupport()
-                && m_configuration.getAuthenticationmethod().equals(
-                        AuthenticationMethod.KEYFILE.getName())) {
-            connectionInformation.setKeyfile(m_configuration.getKeyfile());
-        }
-        if (m_protocol.hasCertificateSupport()
-                && m_configuration.getUsecertificate()) {
-            connectionInformation.setCertificate(m_configuration
-                    .getCertificate());
-        }
-        // Test connection
-        if (m_configuration.getTestconnection()) {
-            try {
-                ConnectionMonitor monitor = new ConnectionMonitor();
-                RemoteFileFactory.createRemoteFile(
-                        connectionInformation.toURI(), connectionInformation,
-                        monitor);
-                monitor.closeAll();
-            } catch (Exception e) {
-                throw new Exception("Connection to "
-                        + connectionInformation.toURI() + " failed");
-            }
-        }
+                m_configuration.getConnectionInformation();
         // Return port object with connection information
         return new PortObject[]{new ConnectionInformationPortObject(
                 connectionInformation)};

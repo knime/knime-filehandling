@@ -57,16 +57,16 @@ package org.knime.base.filehandling.remote.connectioninformation.node;
 public enum Protocol {
 
     /** SSH protocol. */
-    SSH("ssh", 22, false, true, true),
+    SSH("ssh", 22, false, true, true, true),
 
     /** FTP protocol. */
-    FTP("ftp", 21, true, false, false),
+    FTP("ftp", 21, true, false, false, true),
 
     /** HTTP protocol. */
-    HTTP("http", 80, true, false, false),
+    HTTP("http", 80, true, false, false, false),
 
     /** HTTPS protocol. */
-    HTTPS("https", 443, true, false, false);
+    HTTPS("https", 443, true, false, false, false);
 
     private String m_name;
 
@@ -77,6 +77,8 @@ public enum Protocol {
     private boolean m_keyfilesupport;
 
     private boolean m_certificatesupport;
+    
+    private boolean m_testsupport;
 
     /**
      * Create a protocol.
@@ -87,15 +89,17 @@ public enum Protocol {
      * @param authNoneSupport If the authentication method none is supported
      * @param keyfileSupport If authentication via keyfile is supported
      * @param certificateSupport If adding of certificates is supported
+     * @param testSupport If the testing of the connection is supported
      */
     private Protocol(final String name, final int port,
             final boolean authNoneSupport, final boolean keyfileSupport,
-            final boolean certificateSupport) {
+            final boolean certificateSupport, final boolean testSupport) {
         m_name = name;
         m_port = port;
         m_authnonesupport = authNoneSupport;
         m_keyfilesupport = keyfileSupport;
         m_certificatesupport = certificateSupport;
+        m_testsupport = testSupport;
     }
 
     /**
@@ -131,6 +135,13 @@ public enum Protocol {
      */
     boolean hasCertificateSupport() {
         return m_certificatesupport;
+    }
+    
+    /**
+     * @return If this protocol has support for testing the connection
+     */
+    boolean hasTestSupport() {
+        return m_testsupport;
     }
 
     /**

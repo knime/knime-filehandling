@@ -50,11 +50,16 @@
  */
 package org.knime.base.filehandling.remote.connectioninformation.node;
 
+import java.awt.Container;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -71,6 +76,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.base.filehandling.NodeUtils;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
@@ -126,10 +132,11 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     private FlowVariableModelButton m_certificatefvm;
 
-    private JCheckBox m_testconnection;
+    private JButton m_testconnection;
 
     /**
      * New pane for configuring the node dialog.
+     * 
      * 
      * @param protocol The protocol of this connection information dialog
      */
@@ -184,10 +191,17 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_certificatefvm.getFlowVariableModel().addChangeListener(
                 new UpdateListener());
         // Test connection
-        m_testconnection = new JCheckBox("Test connection");
+        m_testconnection = new JButton("Test connection");
+        m_testconnection.addActionListener(new TestConnectionListener());
         addTab("Options", initLayout());
     }
 
+    /**
+     * Create and initialize the panel for this dialog.
+     * 
+     * 
+     * @return The initialized panel
+     */
     private JPanel initLayout() {
         GridBagConstraints gbc = new GridBagConstraints();
         // Host
@@ -290,13 +304,19 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             gbc.weightx = 1;
             panel.add(certificatePanel, gbc);
         }
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.gridwidth = 2;
-        panel.add(m_testconnection, gbc);
+        if (m_protocol.hasTestSupport()) {
+            gbc.gridx = 0;
+            gbc.gridy++;
+            gbc.gridwidth = 2;
+            gbc.fill = GridBagConstraints.NONE;
+            panel.add(m_testconnection, gbc);
+        }
         return panel;
     }
 
+    /**
+     * Update the enabled / disabled state of the UI elements.
+     */
     private void updateEnabledState() {
         // If a password should be used
         boolean usePassword =
@@ -340,6 +360,12 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         }
     }
 
+    /**
+     * Listener that updates the states of the UI elements.
+     * 
+     * 
+     * @author Patrick Winter, University of Konstanz
+     */
     private class UpdateListener implements ChangeListener {
 
         /**
@@ -353,11 +379,54 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
     }
 
     /**
+     * Listener that opens the test connection dialog.
+     * 
+     * 
+     * @author Patrick Winter, University of Konstanz
+     */
+    private class TestConnectionListener implements ActionListener {
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+            // Get frame
+            Frame frame = null;
+            Container container = getPanel().getParent();
+            while (container != null) {
+                if (container instanceof Frame) {
+                    frame = (Frame)container;
+                    break;
+                }
+                container = container.getParent();
+            }
+            // Get connection information to current settings
+            ConnectionInformation connectionInformation =
+                    createConfig().getConnectionInformation();
+            // Open dialog
+            new TestConnectionDialog(connectionInformation).open(frame);
+        }
+
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings)
             throws InvalidSettingsException {
+        ConnectionInformationConfiguration config = createConfig();
+        config.save(settings);
+    }
+
+    /**
+     * Create a configuration object with the currently set settings.
+     * 
+     * 
+     * @return The configuration object
+     */
+    private ConnectionInformationConfiguration createConfig() {
         ConnectionInformationConfiguration config =
                 new ConnectionInformationConfiguration(m_protocol);
         config.setUser(m_user.getText());
@@ -379,8 +448,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             config.setUsecertificate(m_usecertificate.isSelected());
             config.setCertificate(m_certificate.getSelectedFile());
         }
-        config.setTestconnection(m_testconnection.isSelected());
-        config.save(settings);
+        return config;
     }
 
     /**
@@ -418,7 +486,6 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             m_usecertificate.setSelected(config.getUsecertificate());
             m_certificate.setSelectedFile(config.getCertificate());
         }
-        m_testconnection.setSelected(config.getTestconnection());
         updateEnabledState();
     }
 

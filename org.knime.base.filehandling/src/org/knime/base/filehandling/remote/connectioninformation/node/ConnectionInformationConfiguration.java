@@ -50,6 +50,7 @@
  */
 package org.knime.base.filehandling.remote.connectioninformation.node;
 
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -79,8 +80,6 @@ class ConnectionInformationConfiguration {
     private boolean m_usecertificate;
 
     private String m_certificate;
-
-    private boolean m_testconnection;
 
     /**
      * Create uninitialized configuration to a certain protocol.
@@ -205,17 +204,33 @@ class ConnectionInformationConfiguration {
     }
 
     /**
-     * @return the testconnection
+     * Create a connection information object from this settings.
+     * 
+     * 
+     * @return The connection information object
      */
-    public boolean getTestconnection() {
-        return m_testconnection;
-    }
-
-    /**
-     * @param testconnection the testconnection to set
-     */
-    public void setTestconnection(final boolean testconnection) {
-        m_testconnection = testconnection;
+    ConnectionInformation getConnectionInformation() {
+        // Create connection information object
+        ConnectionInformation connectionInformation =
+                new ConnectionInformation();
+        // Put settings into object
+        connectionInformation.setProtocol(m_protocol.getName());
+        connectionInformation.setHost(getHost());
+        connectionInformation.setPort(getPort());
+        if (!getAuthenticationmethod().equals(
+                AuthenticationMethod.NONE.getName())) {
+            connectionInformation.setUser(getUser());
+            connectionInformation.setPassword(getPassword());
+        }
+        if (m_protocol.hasKeyfileSupport()
+                && getAuthenticationmethod().equals(
+                        AuthenticationMethod.KEYFILE.getName())) {
+            connectionInformation.setKeyfile(getKeyfile());
+        }
+        if (m_protocol.hasCertificateSupport() && getUsecertificate()) {
+            connectionInformation.setCertificate(getCertificate());
+        }
+        return connectionInformation;
     }
 
     /**
@@ -239,7 +254,6 @@ class ConnectionInformationConfiguration {
             settings.addBoolean("usecertificate", m_usecertificate);
             settings.addString("certificate", m_certificate);
         }
-        settings.addBoolean("testconnection", m_testconnection);
     }
 
     /**
@@ -265,7 +279,6 @@ class ConnectionInformationConfiguration {
             m_usecertificate = settings.getBoolean("usecertificate", false);
             m_certificate = settings.getString("certificate", "");
         }
-        m_testconnection = settings.getBoolean("testconnection", true);
     }
 
     /**
@@ -309,7 +322,6 @@ class ConnectionInformationConfiguration {
                 validate(m_certificate, "certificate");
             }
         }
-        m_testconnection = settings.getBoolean("testconnection");
     }
 
     /**
