@@ -57,10 +57,12 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -124,15 +126,21 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     private FlowVariableModelButton m_keyfilefvm;
 
-    private JCheckBox m_usecertificate;
+    private JCheckBox m_useknownhosts;
 
-    private JLabel m_certificateLabel;
+    private JLabel m_knownhostsLabel;
 
-    private FilesHistoryPanel m_certificate;
+    private FilesHistoryPanel m_knownhosts;
 
-    private FlowVariableModelButton m_certificatefvm;
+    private FlowVariableModelButton m_knownhostsfvm;
 
     private JButton m_testconnection;
+
+    private JCheckBox m_useworkflowcredentials;
+
+    private JComboBox m_workflowcredentials;
+
+    private JPanel m_workflowcredentialspanel;
 
     /**
      * New pane for configuring the node dialog.
@@ -164,6 +172,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_authmethod.add(m_authnone);
         m_authmethod.add(m_authpassword);
         m_authmethod.add(m_authkeyfile);
+        // Workflow credentials
+        m_useworkflowcredentials = new JCheckBox();
+        m_useworkflowcredentials.addChangeListener(new UpdateListener());
+        m_workflowcredentials = new JComboBox();
         // User
         m_userLabel = new JLabel("User:");
         m_user = new JTextField();
@@ -179,16 +191,16 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
                         FlowVariable.Type.STRING));
         m_keyfilefvm.getFlowVariableModel().addChangeListener(
                 new UpdateListener());
-        // Certificate
-        m_usecertificate = new JCheckBox("Use custom certificate");
-        m_usecertificate.addChangeListener(new UpdateListener());
-        m_certificateLabel = new JLabel("Certificate:");
-        m_certificate = new FilesHistoryPanel("certificateHistory", false);
-        m_certificate.setSelectMode(JFileChooser.FILES_ONLY);
-        m_certificatefvm =
+        // Known hosts
+        m_useknownhosts = new JCheckBox("Use known hosts");
+        m_useknownhosts.addChangeListener(new UpdateListener());
+        m_knownhostsLabel = new JLabel("Known hosts:");
+        m_knownhosts = new FilesHistoryPanel("knownhostsHistory", false);
+        m_knownhosts.setSelectMode(JFileChooser.FILES_ONLY);
+        m_knownhostsfvm =
                 new FlowVariableModelButton(createFlowVariableModel(
-                        "certificate", FlowVariable.Type.STRING));
-        m_certificatefvm.getFlowVariableModel().addChangeListener(
+                        "knownhosts", FlowVariable.Type.STRING));
+        m_knownhostsfvm.getFlowVariableModel().addChangeListener(
                 new UpdateListener());
         // Test connection
         m_testconnection = new JButton("Test connection");
@@ -222,6 +234,15 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             gbc.gridx++;
             authenticationPanel.add(m_authkeyfile);
         }
+        // Workflow credentials
+        NodeUtils.resetGBC(gbc);
+        m_workflowcredentialspanel = new JPanel(new GridBagLayout());
+        m_workflowcredentialspanel.add(m_useworkflowcredentials, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        m_workflowcredentialspanel.add(m_workflowcredentials, gbc);
+        m_workflowcredentialspanel.setBorder(new TitledBorder(
+                new EtchedBorder(), "Workflow credentials"));
         // Keyfile panel
         JPanel keyfilePanel = null;
         if (m_protocol.hasKeyfileSupport()) {
@@ -235,18 +256,18 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             gbc.insets = new Insets(0, 0, 0, 0);
             keyfilePanel.add(m_keyfilefvm, gbc);
         }
-        // Certificate panel
-        JPanel certificatePanel = null;
-        if (m_protocol.hasCertificateSupport()) {
+        // Known hosts panel
+        JPanel knownhostsPanel = null;
+        if (m_protocol.hasKnownhostsSupport()) {
             NodeUtils.resetGBC(gbc);
-            certificatePanel = new JPanel(new GridBagLayout());
+            knownhostsPanel = new JPanel(new GridBagLayout());
             gbc.weightx = 1;
             gbc.insets = new Insets(0, 0, 0, 5);
-            certificatePanel.add(m_certificate, gbc);
+            knownhostsPanel.add(m_knownhosts, gbc);
             gbc.weightx = 0;
             gbc.gridx++;
             gbc.insets = new Insets(0, 0, 0, 0);
-            certificatePanel.add(m_certificatefvm, gbc);
+            knownhostsPanel.add(m_knownhostsfvm, gbc);
         }
         // Outer Panel
         NodeUtils.resetGBC(gbc);
@@ -267,10 +288,12 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
         panel.add(authenticationPanel, gbc);
-        gbc.weightx = 0;
-        gbc.gridwidth = 1;
-        gbc.gridy++;
         gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridy++;
+        panel.add(m_workflowcredentialspanel, gbc);
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.gridy++;
         panel.add(m_userLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
@@ -291,18 +314,18 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             gbc.weightx = 1;
             panel.add(keyfilePanel, gbc);
         }
-        if (m_protocol.hasCertificateSupport()) {
+        if (m_protocol.hasKnownhostsSupport()) {
             gbc.gridx = 0;
             gbc.gridy++;
             gbc.gridwidth = 2;
-            panel.add(m_usecertificate, gbc);
+            panel.add(m_useknownhosts, gbc);
             gbc.gridwidth = 1;
             gbc.weightx = 0;
             gbc.gridy++;
-            panel.add(m_certificateLabel, gbc);
+            panel.add(m_knownhostsLabel, gbc);
             gbc.gridx++;
             gbc.weightx = 1;
-            panel.add(certificatePanel, gbc);
+            panel.add(knownhostsPanel, gbc);
         }
         if (m_protocol.hasTestSupport()) {
             gbc.gridx = 0;
@@ -329,12 +352,27 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
                 m_authmethod.getSelection() != null ? m_authmethod
                         .getSelection().getActionCommand()
                         .equals(AuthenticationMethod.KEYFILE.getName()) : false;
+        // Check if credentials are available
+        boolean credentialsAvailable = m_workflowcredentials.getItemCount() > 0;
+        // Check if credentials can be selected
+        boolean credentialsSelectable =
+                (usePassword || useKeyfile) && credentialsAvailable;
+        // Check if the user and password have to be set manually
+        boolean manualCredentials =
+                (usePassword || useKeyfile) && credentialsSelectable
+                        && !m_useworkflowcredentials.isSelected();
+        // Disable workflow credentials if auth method is none or no credentials
+        // are available
+        m_workflowcredentialspanel.setEnabled(credentialsSelectable);
+        m_useworkflowcredentials.setEnabled(credentialsSelectable);
+        m_workflowcredentials.setEnabled(credentialsSelectable
+                && m_useworkflowcredentials.isSelected());
         // Disable user if auth method is none
-        m_userLabel.setEnabled(usePassword || useKeyfile);
-        m_user.setEnabled(usePassword || useKeyfile);
+        m_userLabel.setEnabled(manualCredentials);
+        m_user.setEnabled(manualCredentials);
         // Password should be enabled if the password or the keyfile get used
-        m_passwordLabel.setEnabled(usePassword || useKeyfile);
-        m_password.setEnabled(usePassword || useKeyfile);
+        m_passwordLabel.setEnabled(manualCredentials);
+        m_password.setEnabled(manualCredentials);
         // Do this only if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             boolean keyfileReplacement =
@@ -346,17 +384,17 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             m_keyfile.setEnabled(useKeyfile && !keyfileReplacement);
             m_keyfilefvm.setEnabled(useKeyfile);
         }
-        // Do this only if the protocol supports certificates
-        if (m_protocol.hasCertificateSupport()) {
-            boolean usecertificate = m_usecertificate.isSelected();
-            boolean certificateReplacement =
-                    m_certificatefvm.getFlowVariableModel()
+        // Do this only if the protocol supports known hosts
+        if (m_protocol.hasKnownhostsSupport()) {
+            boolean useknownhosts = m_useknownhosts.isSelected();
+            boolean knownhostsReplacement =
+                    m_knownhostsfvm.getFlowVariableModel()
                             .isVariableReplacementEnabled();
-            m_certificateLabel.setEnabled(usecertificate);
+            m_knownhostsLabel.setEnabled(useknownhosts);
             // Enable file panel only if the flow variable replacement is not
             // active
-            m_certificate.setEnabled(usecertificate && !certificateReplacement);
-            m_certificatefvm.setEnabled(usecertificate);
+            m_knownhosts.setEnabled(useknownhosts && !knownhostsReplacement);
+            m_knownhostsfvm.setEnabled(useknownhosts);
         }
     }
 
@@ -403,7 +441,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             }
             // Get connection information to current settings
             ConnectionInformation connectionInformation =
-                    createConfig().getConnectionInformation();
+                    createConfig().getConnectionInformation(
+                            getCredentialsProvider());
             // Open dialog
             new TestConnectionDialog(connectionInformation).open(frame);
         }
@@ -429,6 +468,9 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
     private ConnectionInformationConfiguration createConfig() {
         ConnectionInformationConfiguration config =
                 new ConnectionInformationConfiguration(m_protocol);
+        config.setUseworkflowcredentials(m_useworkflowcredentials.isSelected());
+        config.setWorkflowcredentials((String)m_workflowcredentials
+                .getSelectedItem());
         config.setUser(m_user.getText());
         config.setHost(m_host.getText());
         config.setPort((Integer)m_port.getValue());
@@ -443,10 +485,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         if (m_protocol.hasKeyfileSupport()) {
             config.setKeyfile(m_keyfile.getSelectedFile());
         }
-        // Only save if the protocol supports certificates
-        if (m_protocol.hasCertificateSupport()) {
-            config.setUsecertificate(m_usecertificate.isSelected());
-            config.setCertificate(m_certificate.getSelectedFile());
+        // Only save if the protocol supports known hosts
+        if (m_protocol.hasKnownhostsSupport()) {
+            config.setUseknownhosts(m_useknownhosts.isSelected());
+            config.setKnownhosts(m_knownhosts.getSelectedFile());
         }
         return config;
     }
@@ -457,9 +499,17 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings,
             final PortObjectSpec[] specs) throws NotConfigurableException {
+        Collection<String> credentials = getCredentialsNames();
+        m_workflowcredentials.removeAllItems();
+        for (String credential : credentials) {
+            m_workflowcredentials.addItem(credential);
+        }
         ConnectionInformationConfiguration config =
                 new ConnectionInformationConfiguration(m_protocol);
         config.load(settings);
+        m_useworkflowcredentials
+                .setSelected(config.getUseworkflowcredentials());
+        m_workflowcredentials.setSelectedItem(config.getWorkflowcredentials());
         m_user.setText(config.getUser());
         m_host.setText(config.getHost());
         m_port.setValue(config.getPort());
@@ -481,10 +531,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         if (m_protocol.hasKeyfileSupport()) {
             m_keyfile.setSelectedFile(config.getKeyfile());
         }
-        // Only load if the protocol supports certificates
-        if (m_protocol.hasCertificateSupport()) {
-            m_usecertificate.setSelected(config.getUsecertificate());
-            m_certificate.setSelectedFile(config.getCertificate());
+        // Only load if the protocol supports known hosts
+        if (m_protocol.hasKnownhostsSupport()) {
+            m_useknownhosts.setSelected(config.getUseknownhosts());
+            m_knownhosts.setSelectedFile(config.getKnownhosts());
         }
         updateEnabledState();
     }

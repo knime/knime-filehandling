@@ -76,8 +76,8 @@ public enum Protocol {
 
     private boolean m_keyfilesupport;
 
-    private boolean m_certificatesupport;
-    
+    private boolean m_knownhostssupport;
+
     private boolean m_testsupport;
 
     /**
@@ -88,17 +88,17 @@ public enum Protocol {
      * @param port The default port
      * @param authNoneSupport If the authentication method none is supported
      * @param keyfileSupport If authentication via keyfile is supported
-     * @param certificateSupport If adding of certificates is supported
+     * @param knownhostsSupport If use of known hosts is supported
      * @param testSupport If the testing of the connection is supported
      */
     private Protocol(final String name, final int port,
             final boolean authNoneSupport, final boolean keyfileSupport,
-            final boolean certificateSupport, final boolean testSupport) {
+            final boolean knownhostsSupport, final boolean testSupport) {
         m_name = name;
         m_port = port;
         m_authnonesupport = authNoneSupport;
         m_keyfilesupport = keyfileSupport;
-        m_certificatesupport = certificateSupport;
+        m_knownhostssupport = knownhostsSupport;
         m_testsupport = testSupport;
     }
 
@@ -131,12 +131,12 @@ public enum Protocol {
     }
 
     /**
-     * @return If this protocol has support for certificates
+     * @return If this protocol has support for known hosts
      */
-    boolean hasCertificateSupport() {
-        return m_certificatesupport;
+    boolean hasKnownhostsSupport() {
+        return m_knownhostssupport;
     }
-    
+
     /**
      * @return If this protocol has support for testing the connection
      */

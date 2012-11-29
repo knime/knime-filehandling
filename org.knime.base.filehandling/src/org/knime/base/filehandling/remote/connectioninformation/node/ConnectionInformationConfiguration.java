@@ -54,6 +54,9 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.node.workflow.ICredentials;
+import org.knime.core.util.KnimeEncryption;
 
 /**
  * Configuration for the node.
@@ -77,9 +80,13 @@ class ConnectionInformationConfiguration {
 
     private String m_keyfile;
 
-    private boolean m_usecertificate;
+    private boolean m_useknownhosts;
 
-    private String m_certificate;
+    private String m_knownhosts;
+
+    private boolean m_useworkflowcredentials;
+
+    private String m_workflowcredentials;
 
     /**
      * Create uninitialized configuration to a certain protocol.
@@ -176,40 +183,70 @@ class ConnectionInformationConfiguration {
     }
 
     /**
-     * @return the usecertificate
+     * @return the useknownhosts
      */
-    boolean getUsecertificate() {
-        return m_usecertificate;
+    boolean getUseknownhosts() {
+        return m_useknownhosts;
     }
 
     /**
-     * @param usecertificate the usecertificate to set
+     * @param useknownhosts the useknownhosts to set
      */
-    void setUsecertificate(final boolean usecertificate) {
-        m_usecertificate = usecertificate;
+    void setUseknownhosts(final boolean useknownhosts) {
+        m_useknownhosts = useknownhosts;
     }
 
     /**
-     * @return the certificate
+     * @return the known hosts
      */
-    String getCertificate() {
-        return m_certificate;
+    String getKnownhosts() {
+        return m_knownhosts;
     }
 
     /**
-     * @param certificate the certificate to set
+     * @param knownhosts the knownhosts to set
      */
-    void setCertificate(final String certificate) {
-        m_certificate = certificate;
+    void setKnownhosts(final String knownhosts) {
+        m_knownhosts = knownhosts;
+    }
+
+    /**
+     * @return the useworkflowcredentials
+     */
+    public boolean getUseworkflowcredentials() {
+        return m_useworkflowcredentials;
+    }
+
+    /**
+     * @param useworkflowcredentials the useworkflowcredentials to set
+     */
+    public void setUseworkflowcredentials(final boolean useworkflowcredentials) {
+        m_useworkflowcredentials = useworkflowcredentials;
+    }
+
+    /**
+     * @return the workflowcredentials
+     */
+    public String getWorkflowcredentials() {
+        return m_workflowcredentials;
+    }
+
+    /**
+     * @param workflowcredentials the workflowcredentials to set
+     */
+    public void setWorkflowcredentials(final String workflowcredentials) {
+        m_workflowcredentials = workflowcredentials;
     }
 
     /**
      * Create a connection information object from this settings.
      * 
      * 
+     * @param credentialsProvider Provider for the credentials
      * @return The connection information object
      */
-    ConnectionInformation getConnectionInformation() {
+    ConnectionInformation getConnectionInformation(
+            final CredentialsProvider credentialsProvider) {
         // Create connection information object
         ConnectionInformation connectionInformation =
                 new ConnectionInformation();
@@ -219,16 +256,30 @@ class ConnectionInformationConfiguration {
         connectionInformation.setPort(getPort());
         if (!getAuthenticationmethod().equals(
                 AuthenticationMethod.NONE.getName())) {
-            connectionInformation.setUser(getUser());
-            connectionInformation.setPassword(getPassword());
+            if (m_useworkflowcredentials) {
+                // Use credentials
+                ICredentials credentials =
+                        credentialsProvider.get(m_workflowcredentials);
+                connectionInformation.setUser(credentials.getLogin());
+                try {
+                    connectionInformation.setPassword(KnimeEncryption
+                            .encrypt(credentials.getPassword().toCharArray()));
+                } catch (Exception e) {
+                    // Set no password
+                }
+            } else {
+                // Use direct settings
+                connectionInformation.setUser(getUser());
+                connectionInformation.setPassword(getPassword());
+            }
         }
         if (m_protocol.hasKeyfileSupport()
                 && getAuthenticationmethod().equals(
                         AuthenticationMethod.KEYFILE.getName())) {
             connectionInformation.setKeyfile(getKeyfile());
         }
-        if (m_protocol.hasCertificateSupport() && getUsecertificate()) {
-            connectionInformation.setCertificate(getCertificate());
+        if (m_protocol.hasKnownhostsSupport() && getUseknownhosts()) {
+            connectionInformation.setKnownHosts(getKnownhosts());
         }
         return connectionInformation;
     }
@@ -240,6 +291,8 @@ class ConnectionInformationConfiguration {
      * @param settings The <code>NodeSettings</code> to write to
      */
     void save(final NodeSettingsWO settings) {
+        settings.addBoolean("useworkflowcredentials", m_useworkflowcredentials);
+        settings.addString("workflowcredentials", m_workflowcredentials);
         settings.addString("user", m_user);
         settings.addString("host", m_host);
         settings.addInt("port", m_port);
@@ -249,10 +302,10 @@ class ConnectionInformationConfiguration {
         if (m_protocol.hasKeyfileSupport()) {
             settings.addString("keyfile", m_keyfile);
         }
-        // Only save if the protocol supports certificates
-        if (m_protocol.hasCertificateSupport()) {
-            settings.addBoolean("usecertificate", m_usecertificate);
-            settings.addString("certificate", m_certificate);
+        // Only save if the protocol supports known hosts
+        if (m_protocol.hasKnownhostsSupport()) {
+            settings.addBoolean("useknownhosts", m_useknownhosts);
+            settings.addString("knownhosts", m_knownhosts);
         }
     }
 
@@ -263,6 +316,9 @@ class ConnectionInformationConfiguration {
      * @param settings The <code>NodeSettings</code> to read from
      */
     void load(final NodeSettingsRO settings) {
+        m_useworkflowcredentials =
+                settings.getBoolean("useworkflowcredentials", false);
+        m_workflowcredentials = settings.getString("workflowcredentials", "");
         m_user = settings.getString("user", "");
         m_host = settings.getString("host", "");
         m_port = settings.getInt("port", m_protocol.getPort());
@@ -274,10 +330,10 @@ class ConnectionInformationConfiguration {
         if (m_protocol.hasKeyfileSupport()) {
             m_keyfile = settings.getString("keyfile", "");
         }
-        // Only load if the protocol supports certificates
-        if (m_protocol.hasCertificateSupport()) {
-            m_usecertificate = settings.getBoolean("usecertificate", false);
-            m_certificate = settings.getString("certificate", "");
+        // Only load if the protocol supports known hosts
+        if (m_protocol.hasKnownhostsSupport()) {
+            m_useknownhosts = settings.getBoolean("useknownhosts", false);
+            m_knownhosts = settings.getString("knownhosts", "");
         }
     }
 
@@ -290,6 +346,9 @@ class ConnectionInformationConfiguration {
      */
     void loadAndValidate(final NodeSettingsRO settings)
             throws InvalidSettingsException {
+        m_useworkflowcredentials =
+                settings.getBoolean("useworkflowcredentials");
+        m_workflowcredentials = settings.getString("workflowcredentials");
         m_user = settings.getString("user");
         m_host = settings.getString("host");
         validate(m_host, "host");
@@ -300,8 +359,12 @@ class ConnectionInformationConfiguration {
         // Only validate if the authentication method is set to password
         if (m_authenticationmethod.equals(AuthenticationMethod.PASSWORD
                 .getName())) {
-            validate(m_user, "user");
-            validate(m_password, "password");
+            if (m_useworkflowcredentials) {
+                validate(m_workflowcredentials, "workflowcredentials");
+            } else {
+                validate(m_user, "user");
+                validate(m_password, "password");
+            }
         }
         // Only load if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
@@ -309,17 +372,21 @@ class ConnectionInformationConfiguration {
             // Only validate if the authentication method is set to keyfile
             if (m_authenticationmethod.equals(AuthenticationMethod.KEYFILE
                     .getName())) {
-                validate(m_user, "user");
-                validate(m_password, "password");
+                if (m_useworkflowcredentials) {
+                    validate(m_workflowcredentials, "workflowcredentials");
+                } else {
+                    validate(m_user, "user");
+                    validate(m_password, "password");
+                }
                 validate(m_keyfile, "keyfile");
             }
         }
-        // Only load if the protocol supports certificates
-        if (m_protocol.hasCertificateSupport()) {
-            m_usecertificate = settings.getBoolean("usecertificate");
-            m_certificate = settings.getString("certificate");
-            if (m_usecertificate) {
-                validate(m_certificate, "certificate");
+        // Only load if the protocol supports known hosts
+        if (m_protocol.hasKnownhostsSupport()) {
+            m_useknownhosts = settings.getBoolean("useknownhosts");
+            m_knownhosts = settings.getString("knownhosts");
+            if (m_useknownhosts) {
+                validate(m_knownhosts, "knownhosts");
             }
         }
     }

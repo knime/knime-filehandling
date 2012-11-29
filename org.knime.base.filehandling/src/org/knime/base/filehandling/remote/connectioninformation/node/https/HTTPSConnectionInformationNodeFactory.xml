@@ -31,6 +31,10 @@
             <br />
             Use username and password to authenticate.
         </option>
+        <option name="Workflow credentials">
+            Use workflow credentials to determine user
+            and password.
+        </option>
         <option name="User">
             Name of the user.
         </option>
@@ -38,11 +42,6 @@
             Password of the user or to the keyfile, if
             authentication via keyfile is
             selected.
-        </option>
-        <option name="Test connection">
-            Connects to the specified host on execution
-            and fails if the connection did
-            not work.
         </option>
     </fullDescription>
 

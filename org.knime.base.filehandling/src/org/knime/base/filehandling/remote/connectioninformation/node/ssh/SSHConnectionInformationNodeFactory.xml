@@ -33,6 +33,10 @@
             <br />
             Use keyfile to authenticate.
         </option>
+        <option name="Workflow credentials">
+            Use workflow credentials to determine user
+            and password.
+        </option>
         <option name="User">
             Name of the user.
         </option>
@@ -44,16 +48,13 @@
         <option name="Keyfile">
             Location of the keyfile.
         </option>
-        <option name="Use custom certificate">
-            Use a self signed certificate.
-        </option>
-        <option name="Certificate">
-            The certificates location.
+        <option name="Use known hosts">
+            Only connect if this host is part of the set
+            known hosts file.
         </option>
         <option name="Test connection">
-            Connects to the specified host on execution
-            and fails if the connection did
-            not work.
+            Open dialog that test the current
+            connection.
         </option>
     </fullDescription>
 

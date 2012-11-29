@@ -98,7 +98,8 @@ public class ConnectionInformationNodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
         // Create connection information object
         ConnectionInformation connectionInformation =
-                m_configuration.getConnectionInformation();
+                m_configuration
+                        .getConnectionInformation(getCredentialsProvider());
         // Return port object with connection information
         return new PortObject[]{new ConnectionInformationPortObject(
                 connectionInformation)};

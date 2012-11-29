@@ -87,7 +87,7 @@ public class ConnectionInformation implements Serializable {
 
     private String m_keyfile = null;
 
-    private String m_certificate = null;
+    private String m_knownHosts = null;
 
     /**
      * Save the connection information in a model content object.
@@ -102,7 +102,7 @@ public class ConnectionInformation implements Serializable {
         model.addString("user", m_user);
         model.addString("password", m_password);
         model.addString("keyfile", m_keyfile);
-        model.addString("certificate", m_certificate);
+        model.addString("knownhosts", m_knownHosts);
     }
 
     /**
@@ -125,7 +125,7 @@ public class ConnectionInformation implements Serializable {
         connectionInformation.setUser(model.getString("user"));
         connectionInformation.setPassword(model.getString("password"));
         connectionInformation.setKeyfile(model.getString("keyfile"));
-        connectionInformation.setCertificate(model.getString("certificate"));
+        connectionInformation.setKnownHosts(model.getString("knownhosts"));
         return connectionInformation;
     }
 
@@ -144,7 +144,7 @@ public class ConnectionInformation implements Serializable {
         output.writeUTF(m_user);
         output.writeUTF(m_password);
         output.writeUTF(m_keyfile);
-        output.writeUTF(m_certificate);
+        output.writeUTF(m_knownHosts);
     }
 
     /**
@@ -165,7 +165,7 @@ public class ConnectionInformation implements Serializable {
         connectionInformation.setUser(input.readUTF());
         connectionInformation.setPassword(input.readUTF());
         connectionInformation.setKeyfile(input.readUTF());
-        connectionInformation.setCertificate(input.readUTF());
+        connectionInformation.setKnownHosts(input.readUTF());
         return connectionInformation;
     }
 
@@ -303,15 +303,15 @@ public class ConnectionInformation implements Serializable {
     }
 
     /**
-     * Set the certificate.
+     * Set the known hosts file.
      * 
      * 
-     * Certificate may be null to disable use of custom certificate.
+     * Known hosts may be null to disable use.
      * 
-     * @param certificate the certificate to set
+     * @param knownHosts the known hosts file to set
      */
-    public void setCertificate(final String certificate) {
-        m_certificate = certificate;
+    public void setKnownHosts(final String knownHosts) {
+        m_knownHosts = knownHosts;
     }
 
     /**
@@ -375,13 +375,13 @@ public class ConnectionInformation implements Serializable {
     }
 
     /**
-     * Get the certificate.
+     * Get the known hosts.
      * 
      * 
-     * @return the certificate
+     * @return the known hosts
      */
-    public String getCertificate() {
-        return m_certificate;
+    public String getKnownHosts() {
+        return m_knownHosts;
     }
 
 }
