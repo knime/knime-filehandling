@@ -223,7 +223,8 @@ public class HTTPRemoteFile extends RemoteFile {
         // Create request
         DefaultHttpClient client = new DefaultHttpClient();
         // If user info is given in the URI use HTTP basic authentication
-        if (getURI().getUserInfo().length() > 0) {
+        if (getURI().getUserInfo() != null
+                && getURI().getUserInfo().length() > 0) {
             // Decrypt password from the connection information
             String password =
                     KnimeEncryption.decrypt(getConnectionInformation()

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./downloaduploadfromlist16x16.png" type="Sink">
+    <name>Download / Upload from List</name>
+
+    <shortDescription>
+        Copy files contained in a list from one (remote)
+        location to another.
+    </shortDescription>
+
+    <fullDescription>
+        <intro>
+            This node copies files contained in the input table from
+            one location to another. The location may be a remote
+            location.
+        </intro>
+
+
+        <option name="Source">
+            Column of the input table with the URIs to
+            the files that should be copied.
+        </option>
+        <option name="Target">
+            Column of the input table with the URIs to
+            where the files should be copied.
+        </option>
+        <option name="If exists...">
+            How to handle already existing files.
+            <br />
+            <b>Overwrite</b>
+            <br />
+            Overwrite the existing file.
+            <br />
+            <b>Overwrite if newer</b>
+            <br />
+            Overwrite the existing file only, if the file to copy is
+            newer.
+            <br />
+            <b>Abort</b>
+            <br />
+            Abort the execution of the node.
+        </option>
+    </fullDescription>
+
+    <ports>
+        <inPort name="Connection information port" index="0">
+            Port
+            object
+            containing the connection information to the server.
+            (Optional)
+        </inPort>
+        <inPort name="Filelist port" index="1">
+            Table containing the
+            list of files that should be copied and where they should be
+            copied to.
+        </inPort>
+    </ports>
+</knimeNode>
