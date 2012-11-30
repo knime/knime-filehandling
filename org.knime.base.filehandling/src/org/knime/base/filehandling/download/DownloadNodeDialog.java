@@ -85,7 +85,7 @@ import org.knime.core.node.workflow.FlowVariable;
  * <code>NodeDialog</code> for the node.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class DownloadNodeDialog extends NodeDialogPane {
 
@@ -249,7 +249,7 @@ public class DownloadNodeDialog extends NodeDialogPane {
      * Listener that updates the enabled state of the components.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class PathHandlingListener implements ActionListener {
 

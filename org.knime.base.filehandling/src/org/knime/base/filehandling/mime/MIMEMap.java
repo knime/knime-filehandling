@@ -72,7 +72,7 @@ import org.knime.core.node.NodeLogger;
  * Utility class for a singleton <code>MimetypesFileTypeMap</code>.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class MIMEMap {
 

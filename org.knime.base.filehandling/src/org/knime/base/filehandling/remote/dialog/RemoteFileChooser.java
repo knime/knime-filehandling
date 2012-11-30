@@ -86,7 +86,7 @@ import org.knime.base.filehandling.remote.files.RemoteFileFactory;
  * Dialog that presents the file structure of a remote folder in a tree.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class RemoteFileChooser {
 
@@ -337,7 +337,7 @@ public final class RemoteFileChooser {
      * Worker that loads the root node and initializes the tree with it.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class InitWorker extends SwingWorker<Void, Void> {
 
@@ -386,7 +386,7 @@ public final class RemoteFileChooser {
      * background.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class RemoteFileTreeNodeWorker extends SwingWorker<Void, Void> {
 
@@ -456,7 +456,7 @@ public final class RemoteFileChooser {
      * Extended tree node that uses lazy loading.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class RemoteFileTreeNode extends DefaultMutableTreeNode {
 

@@ -67,7 +67,7 @@ import org.junit.Test;
  * <code>isNewFile()</code> and <code>rollback()</code> methods work correctly.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class CopyOrMoveMonitorTest {
 
@@ -199,7 +199,7 @@ public class CopyOrMoveMonitorTest {
      * time, so the same directory can differ over time.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class SimpleDirectoryComparer {
 

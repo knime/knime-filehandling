@@ -57,7 +57,7 @@ import java.util.List;
  * Represents a MIME-Type and its registered extensions.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class MIMETypeEntry {
 

@@ -64,7 +64,7 @@ import org.apache.commons.io.FilenameUtils;
  * Implementation of the file remote file.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class FileRemoteFile extends RemoteFile {
 

@@ -59,7 +59,7 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
  * Factory for remote files.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class RemoteFileFactory {
 

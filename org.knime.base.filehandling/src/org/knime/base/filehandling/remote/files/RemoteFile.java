@@ -61,7 +61,7 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
  * Remote file.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public abstract class RemoteFile implements Comparable<RemoteFile> {
 

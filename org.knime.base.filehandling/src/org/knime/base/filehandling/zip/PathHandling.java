@@ -54,7 +54,7 @@ package org.knime.base.filehandling.zip;
  * Enums for path handling.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 enum PathHandling {
 

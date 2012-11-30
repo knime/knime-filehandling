@@ -94,7 +94,7 @@ import org.knime.core.util.KnimeEncryption;
  * <code>NodeDialog</code> for the node.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
@@ -402,7 +402,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * Listener that updates the states of the UI elements.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class UpdateListener implements ChangeListener {
 
@@ -420,7 +420,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * Listener that opens the test connection dialog.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class TestConnectionListener implements ActionListener {
 

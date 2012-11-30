@@ -54,7 +54,7 @@ package org.knime.base.filehandling.binaryobjectstostrings;
  * Contains the available decodings.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class Decodings {
 

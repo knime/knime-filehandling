@@ -54,7 +54,7 @@ package org.knime.base.filehandling.stringstobinaryobjects;
  * Contains the available encodings.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class Encodings {
 

@@ -69,7 +69,7 @@ import org.knime.core.util.KnimeEncryption;
  * Implementation of the FTP remote file.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class FTPRemoteFile extends RemoteFile {
 
@@ -385,7 +385,7 @@ public class FTPRemoteFile extends RemoteFile {
      * Connection over FTP.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class FTPConnection extends Connection {
 

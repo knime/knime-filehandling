@@ -71,7 +71,7 @@ import com.jcraft.jsch.SftpException;
  * Implementation of the SFTP remote file.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class SFTPRemoteFile extends RemoteFile {
 

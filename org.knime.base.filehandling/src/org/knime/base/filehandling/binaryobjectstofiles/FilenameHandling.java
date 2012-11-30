@@ -54,7 +54,7 @@ package org.knime.base.filehandling.binaryobjectstofiles;
  * Enums for filename handling.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 enum FilenameHandling {
 

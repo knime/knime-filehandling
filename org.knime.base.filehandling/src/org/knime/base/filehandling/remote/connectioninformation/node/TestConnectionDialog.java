@@ -73,7 +73,7 @@ import org.knime.base.filehandling.remote.files.RemoteFileFactory;
 
 /**
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class TestConnectionDialog {
 
@@ -216,7 +216,7 @@ public class TestConnectionDialog {
      * Swing worker that tests the connection information.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class TestWorker extends SwingWorker<Void, Void> {
 

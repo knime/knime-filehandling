@@ -61,7 +61,7 @@ import org.knime.core.node.NodeView;
  * <code>NodeFactory</code> for node.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class HTTPConnectionInformationNodeFactory extends
         NodeFactory<ConnectionInformationNodeModel> {

@@ -63,7 +63,7 @@ import org.knime.core.node.port.PortType;
  * Port object containing connection information.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ConnectionInformationPortObject extends AbstractSimplePortObject {
 

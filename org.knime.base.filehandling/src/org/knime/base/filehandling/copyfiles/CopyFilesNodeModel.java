@@ -86,7 +86,7 @@ import org.knime.core.node.NodeSettingsWO;
  * This is the model implementation.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class CopyFilesNodeModel extends NodeModel {
 

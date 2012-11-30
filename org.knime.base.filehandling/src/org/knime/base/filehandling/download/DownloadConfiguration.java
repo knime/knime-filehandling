@@ -58,7 +58,7 @@ import org.knime.core.node.NodeSettingsWO;
  * Configuration for the node.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class DownloadConfiguration {
 

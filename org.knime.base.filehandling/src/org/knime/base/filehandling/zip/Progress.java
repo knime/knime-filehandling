@@ -54,7 +54,7 @@ package org.knime.base.filehandling.zip;
  * Convenience class for progress tracking.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class Progress {
 

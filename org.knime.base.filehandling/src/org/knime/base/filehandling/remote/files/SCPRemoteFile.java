@@ -68,7 +68,7 @@ import com.jcraft.jsch.Session;
  * Implementation of the SCP remote file.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class SCPRemoteFile extends RemoteFile {
 
@@ -246,7 +246,7 @@ public class SCPRemoteFile extends RemoteFile {
      * SCP channel to handle the start and closing of SCP data transfer.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class SCPChannel {
 
@@ -445,7 +445,7 @@ public class SCPRemoteFile extends RemoteFile {
      * Input stream wrapper for SCP.
      * 
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class SCPInputStream extends InputStream {
 
@@ -573,7 +573,7 @@ public class SCPRemoteFile extends RemoteFile {
      * the size. Will write the bytes to a temporary file and write the file to
      * SCP on <code>close()</code>.
      * 
-     * @author Patrick Winter, University of Konstanz
+     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class SCPOutputStream extends OutputStream {
 

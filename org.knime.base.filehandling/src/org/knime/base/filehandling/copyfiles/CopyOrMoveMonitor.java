@@ -60,7 +60,7 @@ import java.util.Set;
  * Monitors what files have been touched and provides a rollback.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class CopyOrMoveMonitor {
 

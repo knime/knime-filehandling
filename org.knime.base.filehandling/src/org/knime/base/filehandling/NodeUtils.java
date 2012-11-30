@@ -62,7 +62,7 @@ import org.knime.core.node.InvalidSettingsException;
  * Utility class for standard node implementation.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class NodeUtils {
 

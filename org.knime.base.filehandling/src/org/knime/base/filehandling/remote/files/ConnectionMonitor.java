@@ -58,7 +58,7 @@ import java.util.Set;
  * Monitors open connections.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class ConnectionMonitor {
 

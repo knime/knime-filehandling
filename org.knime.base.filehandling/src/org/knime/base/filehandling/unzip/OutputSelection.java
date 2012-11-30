@@ -54,7 +54,7 @@ package org.knime.base.filehandling.unzip;
  * Enums for output selection.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 enum OutputSelection {
 

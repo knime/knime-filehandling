@@ -67,7 +67,7 @@ import org.knime.core.util.KnimeEncryption;
  * Implementation of the HTTP and HTTPS remote file.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class HTTPRemoteFile extends RemoteFile {
 

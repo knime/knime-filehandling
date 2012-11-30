@@ -57,7 +57,7 @@ import java.util.Map;
  * Mapping for the default ports.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class DefaultPortMap {
 

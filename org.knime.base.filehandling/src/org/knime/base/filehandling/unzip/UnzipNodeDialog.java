@@ -62,7 +62,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * <code>NodeDialog</code> for the node.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class UnzipNodeDialog extends DefaultNodeSettingsPane {
 

@@ -54,7 +54,7 @@ package org.knime.base.filehandling.download;
  * Enums for overwrite policies.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 enum OverwritePolicy {
 

@@ -79,7 +79,7 @@ import org.knime.core.node.port.PortType;
  * This is the model implementation.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class PortToURINodeModel extends NodeModel {
 

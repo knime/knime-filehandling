@@ -85,7 +85,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * This is the model implementation.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class ExtractURIInfoNodeModel extends NodeModel {
 

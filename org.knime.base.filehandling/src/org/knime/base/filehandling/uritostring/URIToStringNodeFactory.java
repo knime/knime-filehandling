@@ -58,7 +58,7 @@ import org.knime.core.node.NodeView;
  * <code>NodeFactory</code> for the node.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class URIToStringNodeFactory extends NodeFactory<URIToStringNodeModel> {
 

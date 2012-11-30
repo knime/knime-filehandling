@@ -66,7 +66,7 @@ import org.knime.core.node.ModelContentWO;
  * Contains the connection information for a connection.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ConnectionInformation implements Serializable {
 

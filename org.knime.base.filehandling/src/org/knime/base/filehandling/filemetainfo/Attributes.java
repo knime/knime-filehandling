@@ -60,7 +60,7 @@ import org.knime.core.data.def.StringCell;
  * Enums for attributes.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 enum Attributes {
 

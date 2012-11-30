@@ -54,7 +54,7 @@ package org.knime.base.filehandling.copyfiles;
  * Enums for copy or move setting.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 enum CopyOrMove {
 

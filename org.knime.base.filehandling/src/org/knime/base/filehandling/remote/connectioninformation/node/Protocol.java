@@ -52,7 +52,7 @@ package org.knime.base.filehandling.remote.connectioninformation.node;
 
 /**
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public enum Protocol {
 

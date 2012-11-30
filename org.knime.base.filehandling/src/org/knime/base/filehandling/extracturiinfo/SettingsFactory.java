@@ -57,7 +57,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * Factory for SettingsModels.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 final class SettingsFactory {
 

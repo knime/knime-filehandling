@@ -61,7 +61,7 @@ import org.knime.core.node.port.AbstractSimplePortObjectSpec;
  * Spec for the connection information port object.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ConnectionInformationPortObjectSpec extends
         AbstractSimplePortObjectSpec {

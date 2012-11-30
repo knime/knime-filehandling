@@ -54,7 +54,7 @@ package org.knime.base.filehandling.remote.files;
  * Connection for a remote file.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public abstract class Connection {
 

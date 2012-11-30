@@ -62,7 +62,7 @@ import com.jcraft.jsch.Session;
  * Connection over SSH.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class SSHConnection extends Connection {
 

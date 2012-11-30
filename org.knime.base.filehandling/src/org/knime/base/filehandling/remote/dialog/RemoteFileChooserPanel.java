@@ -79,7 +79,7 @@ import org.knime.core.node.util.StringHistory;
  * Panel to choose a file from a remote location.
  * 
  * 
- * @author Patrick Winter, University of Konstanz
+ * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class RemoteFileChooserPanel {
 
