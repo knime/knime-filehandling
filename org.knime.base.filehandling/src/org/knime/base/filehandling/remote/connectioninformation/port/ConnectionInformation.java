@@ -202,7 +202,8 @@ public class ConnectionInformation implements Serializable {
         // User
         String user = uri.getUserInfo();
         // User might not be used
-        if (user != null && !user.equals(m_user.toLowerCase())) {
+        if ((user != null && !user.equals(m_user))
+                || (m_user != null && !m_user.equals(user))) {
             throw new Exception("User incompatible");
         }
     }
