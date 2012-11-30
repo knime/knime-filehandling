@@ -186,9 +186,9 @@ public class DownloadUploadFromListNodeDialog extends NodeDialogPane {
     protected void loadSettingsFrom(final NodeSettingsRO settings,
             final PortObjectSpec[] specs) throws NotConfigurableException {
         // Check if a port object is available
-        if (specs[1] != null) {
+        if (specs[0] != null) {
             ConnectionInformationPortObjectSpec object =
-                    (ConnectionInformationPortObjectSpec)specs[1];
+                    (ConnectionInformationPortObjectSpec)specs[0];
             m_connectionInformation = object.getConnectionInformation();
             // Check if the port object has connection information
             if (m_connectionInformation != null) {
@@ -199,8 +199,8 @@ public class DownloadUploadFromListNodeDialog extends NodeDialogPane {
         DownloadUploadFromListConfiguration config =
                 new DownloadUploadFromListConfiguration();
         config.load(settings);
-        m_target.update((DataTableSpec)specs[0], config.getTarget());
-        m_source.update((DataTableSpec)specs[0], config.getSource());
+        m_target.update((DataTableSpec)specs[1], config.getTarget());
+        m_source.update((DataTableSpec)specs[1], config.getSource());
         String overwritePolicy = config.getOverwritePolicy();
         if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
             m_overwritePolicy.setSelected(m_overwrite.getModel(), true);

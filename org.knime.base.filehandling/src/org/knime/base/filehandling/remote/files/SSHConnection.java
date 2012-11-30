@@ -90,6 +90,10 @@ public class SSHConnection extends Connection {
      */
     @Override
     public void open() throws Exception {
+        if (m_connectionInformation == null) {
+            throw new Exception("Missing the connection information for "
+                    + m_uri);
+        }
         // Read attributes
         String host = m_uri.getHost();
         int port =

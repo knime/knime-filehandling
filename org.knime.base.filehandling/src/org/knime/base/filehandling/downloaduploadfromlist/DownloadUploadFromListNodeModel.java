@@ -92,9 +92,9 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      * Constructor for the node model.
      */
     public DownloadUploadFromListNodeModel() {
-        super(new PortType[]{BufferedDataTable.TYPE,
-                new PortType(ConnectionInformationPortObject.class, true)},
-                new PortType[]{});
+        super(new PortType[]{
+                new PortType(ConnectionInformationPortObject.class, true),
+                BufferedDataTable.TYPE}, new PortType[]{});
     }
 
     /**
@@ -107,7 +107,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
         String source = m_configuration.getSource();
         String target = m_configuration.getTarget();
         // Get table with source URIs
-        BufferedDataTable table = (BufferedDataTable)inObjects[0];
+        BufferedDataTable table = (BufferedDataTable)inObjects[1];
         int sourceIndex = table.getDataTableSpec().findColumnIndex(source);
         int targetIndex = table.getDataTableSpec().findColumnIndex(target);
         int i = 0;
@@ -208,9 +208,9 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
         // Check if a port object is available
-        if (inSpecs[1] != null) {
+        if (inSpecs[0] != null) {
             ConnectionInformationPortObjectSpec object =
-                    (ConnectionInformationPortObjectSpec)inSpecs[1];
+                    (ConnectionInformationPortObjectSpec)inSpecs[0];
             m_connectionInformation = object.getConnectionInformation();
         }
         // Check if configuration has been loaded
@@ -219,11 +219,11 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
         }
         // Check that source configuration is correct
         String source = m_configuration.getSource();
-        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[0], "Source",
+        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Source",
                 source, URIDataValue.class);
         // Check that target configuration is correct
         String target = m_configuration.getTarget();
-        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[0], "Target",
+        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Target",
                 target, URIDataValue.class);
         if (m_configuration.getSource().equals(m_configuration.getTarget())) {
             throw new InvalidSettingsException("Source and target are the same");
