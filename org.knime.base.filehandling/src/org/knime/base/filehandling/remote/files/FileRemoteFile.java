@@ -107,6 +107,24 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
+    public String getPath() throws Exception {
+        String path = getURI().getPath();
+        if (path != null) {
+            if (isDirectory()) {
+                path = FilenameUtils.getFullPath(path);
+                if (!path.endsWith(File.separator)) {
+                    path += File.separator;
+                }
+            }
+            path = FilenameUtils.normalize(path);
+        }
+        return path;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean exists() throws Exception {
         return new File(getURI()).exists();
     }
@@ -212,13 +230,8 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public RemoteFile getParent() throws Exception {
-        String path = getFullName();
-        if (path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
-        }
-        path = FilenameUtils.getFullPath(path);
         // Build URI
-        URI uri = new File(path).toURI();
+        URI uri = new File(getURI()).getParentFile().toURI();
         // Create remote file and open it
         RemoteFile file = new FileRemoteFile(uri);
         file.open();
