@@ -52,6 +52,7 @@ package org.knime.base.filehandling.remote.connectioninformation.port;
 
 import javax.swing.JComponent;
 
+import org.apache.commons.lang.ObjectUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
 import org.knime.core.node.ModelContentWO;
@@ -112,9 +113,14 @@ public class ConnectionInformationPortObjectSpec extends
      */
     @Override
     public boolean equals(final Object ospec) {
-        return ospec != null
-                && ospec.getClass().equals(
-                        ConnectionInformationPortObjectSpec.class);
+        if (ospec == this) {
+            return true;
+        }
+        if (!(ospec instanceof ConnectionInformationPortObjectSpec)) {
+            return false;
+        }
+        ConnectionInformationPortObjectSpec oCIPOS = (ConnectionInformationPortObjectSpec)ospec;
+        return ObjectUtils.equals(m_connectionInformation, oCIPOS.m_connectionInformation);
     }
 
     /**
@@ -122,7 +128,7 @@ public class ConnectionInformationPortObjectSpec extends
      */
     @Override
     public int hashCode() {
-        return ConnectionInformationPortObjectSpec.class.hashCode();
+        return m_connectionInformation == null ? 0 : m_connectionInformation.hashCode();
     }
 
     /**

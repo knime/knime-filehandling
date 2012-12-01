@@ -318,7 +318,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      */
     public void write(final RemoteFile file) throws Exception {
         // Default implementation using just remote file methods
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[1024 * 1024]; // 1MB
         InputStream in = file.openInputStream();
         OutputStream out = openOutputStream();
         int length;

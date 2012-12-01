@@ -75,7 +75,7 @@ import org.knime.core.node.port.PortType;
  */
 public class ConnectionInformationNodeModel extends NodeModel {
 
-    private Protocol m_protocol;
+    private final Protocol m_protocol;
 
     private ConnectionInformationConfiguration m_configuration;
 
@@ -85,8 +85,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
      * @param protocol The protocol of this connection information model
      */
     public ConnectionInformationNodeModel(final Protocol protocol) {
-        super(new PortType[]{},
-                new PortType[]{ConnectionInformationPortObject.TYPE});
+        super(new PortType[]{}, new PortType[]{ConnectionInformationPortObject.TYPE});
         m_protocol = protocol;
     }
 
@@ -96,13 +95,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
-        // Create connection information object
-        ConnectionInformation connectionInformation =
-                m_configuration
-                        .getConnectionInformation(getCredentialsProvider());
-        // Return port object with connection information
-        return new PortObject[]{new ConnectionInformationPortObject(
-                connectionInformation)};
+        return new PortObject[]{new ConnectionInformationPortObject(createSpec())};
     }
 
     /**
@@ -119,8 +112,20 @@ public class ConnectionInformationNodeModel extends NodeModel {
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
-        // Return empty port object spec
-        return new PortObjectSpec[]{new ConnectionInformationPortObjectSpec()};
+        return new PortObjectSpec[]{createSpec()};
+    }
+
+    /** Create the spec, throw exception if no config available.
+     * @return ...
+     * @throws InvalidSettingsException ...
+     */
+    public ConnectionInformationPortObjectSpec createSpec() throws InvalidSettingsException {
+        if (m_configuration.getHost() == null) {
+            throw new InvalidSettingsException("No configuration available");
+        }
+        ConnectionInformation connectionInformation = 
+                m_configuration.getConnectionInformation(getCredentialsProvider());
+        return new ConnectionInformationPortObjectSpec(connectionInformation);
     }
 
     /**

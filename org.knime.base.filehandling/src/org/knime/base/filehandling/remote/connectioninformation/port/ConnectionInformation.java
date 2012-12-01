@@ -57,10 +57,13 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.knime.base.filehandling.remote.files.DefaultPortMap;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
 import org.knime.core.node.ModelContentWO;
+import org.knime.core.node.NodeLogger;
 
 /**
  * Contains the connection information for a connection.
@@ -216,15 +219,19 @@ public class ConnectionInformation implements Serializable {
      */
     public URI toURI() {
         URI uri = null;
-        // Add user only if available
-        String user = m_user != null ? m_user + "@" : "";
         try {
-            uri = new URI(m_protocol + "://" + user + m_host + ":" + m_port);
+            uri = new URI(toURIString());
         } catch (URISyntaxException e) {
             // Should not happen
+            NodeLogger.getLogger(getClass()).coding(e.getMessage(), e);
         }
         return uri;
-
+    }
+    
+    private String toURIString() {
+        // Add user only if available
+        String user = m_user != null ? m_user + "@" : "";
+        return m_protocol + "://" + user + m_host + ":" + m_port;
     }
 
     /**
@@ -383,6 +390,47 @@ public class ConnectionInformation implements Serializable {
      */
     public String getKnownHosts() {
         return m_knownHosts;
+    }
+    
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() {
+        HashCodeBuilder hcb = new HashCodeBuilder();
+        hcb.append(m_protocol);
+        hcb.append(m_host);
+        hcb.append(m_port);
+        hcb.append(m_user);
+        hcb.append(m_password);
+        hcb.append(m_keyfile);
+        hcb.append(m_knownHosts);
+        return hcb.hashCode();
+    }
+    
+    /** {@inheritDoc} */
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof ConnectionInformation)) {
+            return false;
+        }
+        ConnectionInformation ci = (ConnectionInformation) obj;
+        EqualsBuilder eqBuilder = new EqualsBuilder();
+        eqBuilder.append(m_protocol, ci.m_protocol);
+        eqBuilder.append(m_host, ci.m_host);
+        eqBuilder.append(m_port, ci.m_port);
+        eqBuilder.append(m_user, ci.m_user);
+        eqBuilder.append(m_password, ci.m_password);
+        eqBuilder.append(m_keyfile, ci.m_keyfile);
+        eqBuilder.append(m_knownHosts, ci.m_knownHosts);
+        return eqBuilder.isEquals();
+    }
+    
+    /** {@inheritDoc} */
+    @Override
+    public String toString() {
+        return toURIString();
     }
 
 }

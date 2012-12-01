@@ -50,6 +50,10 @@
  */
 package org.knime.base.filehandling.remote.connectioninformation.port;
 
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
@@ -58,6 +62,7 @@ import org.knime.core.node.ModelContentWO;
 import org.knime.core.node.port.AbstractSimplePortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.core.node.util.ViewUtils;
 
 /**
  * Port object containing connection information.
@@ -67,7 +72,7 @@ import org.knime.core.node.port.PortType;
  */
 public class ConnectionInformationPortObject extends AbstractSimplePortObject {
 
-    private ConnectionInformation m_connectionInformation;
+    private ConnectionInformationPortObjectSpec m_connectionInformationPOS;
 
     /**
      * Type of this port.
@@ -85,15 +90,18 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
     /**
      * Creates a port object with the given connection information.
      * 
-     * 
-     * @param connectionInformation The content of this port object
+     * @param connectionInformationPOS The spec wrapping the connection information.
      */
     public ConnectionInformationPortObject(
-            final ConnectionInformation connectionInformation) {
-        if (connectionInformation == null) {
-            throw new NullPointerException("List argument must not be null");
+            final ConnectionInformationPortObjectSpec connectionInformationPOS) {
+        if (connectionInformationPOS == null) {
+            throw new NullPointerException("Argument must not be null");
         }
-        m_connectionInformation = connectionInformation;
+        ConnectionInformation connInfo = connectionInformationPOS.getConnectionInformation();
+        if (connInfo == null) {
+            throw new NullPointerException("Connection information must be set (is null)");
+        }
+        m_connectionInformationPOS = connectionInformationPOS;
     }
 
     /**
@@ -103,7 +111,7 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
      * @return The content of this port object
      */
     public ConnectionInformation getConnectionInformation() {
-        return m_connectionInformation;
+        return m_connectionInformationPOS.getConnectionInformation();
     }
 
     /**
@@ -111,15 +119,22 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
      */
     @Override
     public String getSummary() {
-        return null;
+        return m_connectionInformationPOS.getConnectionInformation().toString();
     }
-
+    
+    @Override
+    public JComponent[] getViews() {
+        JPanel f = ViewUtils.getInFlowLayout(new JLabel(getSummary()));
+        f.setName("Connection");
+        return new JComponent[] {f};
+    }
+    
     /**
      * {@inheritDoc}
      */
     @Override
     public PortObjectSpec getSpec() {
-        return new ConnectionInformationPortObjectSpec(m_connectionInformation);
+        return m_connectionInformationPOS;
     }
 
     /**
@@ -128,7 +143,7 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
     @Override
     protected void save(final ModelContentWO model, final ExecutionMonitor exec)
             throws CanceledExecutionException {
-        m_connectionInformation.save(model);
+        // nothing to save; all done in spec, which is saved separately
     }
 
     /**
@@ -136,9 +151,8 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
      */
     @Override
     protected void load(final ModelContentRO model, final PortObjectSpec spec,
-            final ExecutionMonitor exec) throws InvalidSettingsException,
-            CanceledExecutionException {
-        m_connectionInformation = ConnectionInformation.load(model);
+            final ExecutionMonitor exec) throws InvalidSettingsException, CanceledExecutionException {
+        m_connectionInformationPOS = (ConnectionInformationPortObjectSpec) spec;
     }
 
 }

@@ -70,6 +70,7 @@ import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
+import org.knime.core.node.NodeLogger;
 
 /**
  * 
@@ -77,7 +78,7 @@ import org.knime.base.filehandling.remote.files.RemoteFileFactory;
  */
 public class TestConnectionDialog {
 
-    private ConnectionInformation m_connectionInformation;
+    private final ConnectionInformation m_connectionInformation;
 
     private JDialog m_dialog;
 
@@ -235,6 +236,7 @@ public class TestConnectionDialog {
                 monitor.closeAll();
                 m_success = true;
             } catch (Exception e) {
+                NodeLogger.getLogger(getClass()).warn("Couldn't connect", e);
                 m_success = false;
             }
 
