@@ -120,7 +120,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
      * @throws InvalidSettingsException ...
      */
     public ConnectionInformationPortObjectSpec createSpec() throws InvalidSettingsException {
-        if (m_configuration.getHost() == null) {
+        if (m_configuration == null || m_configuration.getHost() == null) {
             throw new InvalidSettingsException("No configuration available");
         }
         ConnectionInformation connectionInformation = 
