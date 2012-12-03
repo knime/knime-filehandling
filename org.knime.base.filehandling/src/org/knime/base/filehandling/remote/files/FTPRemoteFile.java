@@ -63,6 +63,7 @@ import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.node.ExecutionContext;
 import org.knime.core.util.KnimeEncryption;
 
 /**
@@ -72,6 +73,30 @@ import org.knime.core.util.KnimeEncryption;
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class FTPRemoteFile extends RemoteFile {
+
+    private String m_nameCache = null;
+
+    private String m_pathCache = null;
+
+    private Boolean m_existsCache = null;
+
+    private Boolean m_isdirCache = null;
+
+    private FTPFile m_ftpfileCache = null;
+
+    private Long m_sizeCache = null;
+
+    private Long m_modifiedCache = null;
+
+    private void resetCache() {
+        m_pathCache = null;
+        m_nameCache = null;
+        m_existsCache = null;
+        m_isdirCache = null;
+        m_ftpfileCache = null;
+        m_sizeCache = null;
+        m_modifiedCache = null;
+    }
 
     /**
      * Creates a FTP remote file for the given URI.
@@ -116,17 +141,20 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public String getName() throws Exception {
-        String name;
-        if (isDirectory()) {
-            // Remove '/' from path and separate name
-            name =
-                    FilenameUtils.getName(FilenameUtils
-                            .normalizeNoEndSeparator(getPath()));
-        } else {
-            // Use name from URI
-            name = FilenameUtils.getName(getURI().getPath());
+        if (m_nameCache == null) {
+            String name;
+            if (isDirectory()) {
+                // Remove '/' from path and separate name
+                name =
+                        FilenameUtils.getName(FilenameUtils
+                                .normalizeNoEndSeparator(getPath()));
+            } else {
+                // Use name from URI
+                name = FilenameUtils.getName(getURI().getPath());
+            }
+            m_nameCache = FilenameUtils.normalize(name);
         }
-        return FilenameUtils.normalize(name);
+        return m_nameCache;
     }
 
     /**
@@ -134,22 +162,29 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public String getPath() throws Exception {
-        FTPClient client = getClient();
-        String path = getURI().getPath();
-        // If path is empty use working directory
-        if (path == null || path.length() == 0) {
-            path = client.printWorkingDirectory();
+        if (m_pathCache == null) {
+            FTPClient client = getClient();
+            String path = getURI().getPath();
+            // If path is empty use working directory
+            if (path == null || path.length() == 0) {
+                path = client.printWorkingDirectory();
+            }
+            boolean changed = client.changeWorkingDirectory(path);
+            // If directory has not changed the path pointed to a file
+            if (!changed) {
+                path = FilenameUtils.getFullPath(path);
+            }
+            // Make sure that the path ends with a '/'
+            if (!path.endsWith("/")) {
+                path += "/";
+            }
+            // Make sure that the path starts with a '/'
+            if (!path.startsWith("/")) {
+                path = "/" + path;
+            }
+            m_pathCache = FilenameUtils.normalize(path);
         }
-        boolean changed = client.changeWorkingDirectory(path);
-        // If directory has not changed the path pointed to a file
-        if (!changed) {
-            path = FilenameUtils.getFullPath(path);
-        }
-        // Make sure that the path ends with a '/'
-        if (!path.endsWith("/")) {
-            path += "/";
-        }
-        return FilenameUtils.normalize(path);
+        return m_pathCache;
     }
 
     /**
@@ -157,9 +192,12 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean exists() throws Exception {
-        // In case of the root directory there is no FTP file available but
-        // isDirectory returns true
-        return getFTPFile() != null || isDirectory();
+        if (m_existsCache == null) {
+            // In case of the root directory there is no FTP file available but
+            // isDirectory returns true
+            m_existsCache = getFTPFile() != null || isDirectory();
+        }
+        return m_existsCache;
     }
 
     /**
@@ -167,26 +205,31 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean isDirectory() throws Exception {
-        boolean isDirectory = false;
-        FTPClient client = getClient();
-        // Use path from URI
-        String path = getURI().getPath();
-        if (path != null && path.length() > 0) {
-            // If path is not missing, try to change to it
-            isDirectory = client.changeWorkingDirectory(path);
-        } else {
-            // If path is missing, interpret this file as root directory, so it
-            // is always a directory
-            isDirectory = true;
+        if (m_isdirCache == null) {
+            boolean isDirectory = false;
+            FTPClient client = getClient();
+            // Use path from URI
+            String path = getURI().getPath();
+            if (path != null && path.length() > 0) {
+                // If path is not missing, try to change to it
+                isDirectory = client.changeWorkingDirectory(path);
+            } else {
+                // If path is missing, interpret this file as root directory, so
+                // it
+                // is always a directory
+                isDirectory = true;
+            }
+            m_isdirCache = isDirectory;
         }
-        return isDirectory;
+        return m_isdirCache;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void move(final RemoteFile file) throws Exception {
+    public void move(final RemoteFile file, final ExecutionContext exec)
+            throws Exception {
         // If the file is also an FTP remote file and over the same connection
         // it can be moved
         if (file instanceof FTPRemoteFile
@@ -195,11 +238,12 @@ public class FTPRemoteFile extends RemoteFile {
             FTPClient client = getClient();
             boolean success =
                     client.rename(source.getURI().getPath(), getURI().getPath());
+            resetCache();
             if (!success) {
                 throw new Exception("Move operation failed");
             }
         } else {
-            super.move(file);
+            super.move(file, exec);
         }
     }
 
@@ -230,6 +274,7 @@ public class FTPRemoteFile extends RemoteFile {
         if (stream == null) {
             throw new Exception("Path not reachable");
         }
+        resetCache();
         return stream;
     }
 
@@ -238,13 +283,16 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public long getSize() throws Exception {
-        // Assume missing
-        long size = 0;
-        FTPFile ftpFile = getFTPFile();
-        if (ftpFile != null && ftpFile.getSize() > 0) {
-            size = ftpFile.getSize();
+        if (m_sizeCache == null) {
+            // Assume missing
+            long size = 0;
+            FTPFile ftpFile = getFTPFile();
+            if (ftpFile != null && ftpFile.getSize() > 0) {
+                size = ftpFile.getSize();
+            }
+            m_sizeCache = size;
         }
-        return size;
+        return m_sizeCache;
     }
 
     /**
@@ -252,15 +300,18 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public long lastModified() throws Exception {
-        // Assume missing
-        long time = 0;
-        FTPFile ftpFile = getFTPFile();
-        if (ftpFile != null) {
-            Calendar calendar = ftpFile.getTimestamp();
-            calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
-            time = calendar.getTimeInMillis() / 1000;
+        if (m_modifiedCache == null) {
+            // Assume missing
+            long time = 0;
+            FTPFile ftpFile = getFTPFile();
+            if (ftpFile != null) {
+                Calendar calendar = ftpFile.getTimestamp();
+                calendar.setTimeZone(TimeZone.getTimeZone("GMT"));
+                time = calendar.getTimeInMillis() / 1000;
+            }
+            m_modifiedCache = time;
         }
-        return time;
+        return m_modifiedCache;
     }
 
     /**
@@ -281,10 +332,12 @@ public class FTPRemoteFile extends RemoteFile {
                 }
                 // Delete this directory
                 client.rmd(path);
+                resetCache();
                 result = result && !exists();
             } else {
                 // Delete this file
                 client.deleteFile(path);
+                resetCache();
                 result = result && !exists();
             }
         }
@@ -331,6 +384,7 @@ public class FTPRemoteFile extends RemoteFile {
     @Override
     public boolean mkDir() throws Exception {
         FTPClient client = getClient();
+        resetCache();
         return client.makeDirectory(getURI().getPath());
     }
 
@@ -357,28 +411,31 @@ public class FTPRemoteFile extends RemoteFile {
      * @throws Exception If the operation could not be executed
      */
     private FTPFile getFTPFile() throws Exception {
-        FTPFile file = null;
-        boolean isDirectory = isDirectory();
-        FTPClient client = getClient();
-        // Change to this files path
-        client.changeWorkingDirectory(getPath());
-        // If this file is a directory change to the parent directory
-        if (isDirectory) {
-            client.changeToParentDirectory();
-        }
-        // Get all files in working directory
-        FTPFile[] files = client.listFiles();
-        // Check all files by name
-        for (int i = 0; i < files.length; i++) {
-            FTPFile currentFile = files[i];
-            if (currentFile.getName().equals(
-                    FilenameUtils.getName(getURI().getPath()))) {
-                // File with the same name is the correct one
-                file = currentFile;
-                break;
+        if (m_ftpfileCache == null) {
+            FTPFile file = null;
+            boolean isDirectory = isDirectory();
+            FTPClient client = getClient();
+            // Change to this files path
+            client.changeWorkingDirectory(getPath());
+            // If this file is a directory change to the parent directory
+            if (isDirectory) {
+                client.changeToParentDirectory();
             }
+            // Get all files in working directory
+            FTPFile[] files = client.listFiles();
+            // Check all files by name
+            for (int i = 0; i < files.length; i++) {
+                FTPFile currentFile = files[i];
+                if (currentFile.getName().equals(
+                        FilenameUtils.getName(getURI().getPath()))) {
+                    // File with the same name is the correct one
+                    file = currentFile;
+                    break;
+                }
+            }
+            m_ftpfileCache = file;
         }
-        return file;
+        return m_ftpfileCache;
     }
 
     /**
@@ -406,18 +463,23 @@ public class FTPRemoteFile extends RemoteFile {
                     getURI().getPort() != -1 ? getURI().getPort()
                             : DefaultPortMap.getMap().get(getType());
             String user = getURI().getUserInfo();
+            if (user == null) {
+                user = "anonymous";
+            }
             String password = getConnectionInformation().getPassword();
             if (password != null) {
                 password = KnimeEncryption.decrypt(password);
+            } else {
+                password = "";
             }
             // Open connection
             m_client.connect(host, port);
+            m_client.enterLocalPassiveMode();
             // Login
             boolean loggedIn = m_client.login(user, password);
             if (!loggedIn) {
                 throw new IOException("Login failed");
             }
-            m_client.enterLocalPassiveMode();
             m_client.setFileType(FTP.BINARY_FILE_TYPE, FTP.BINARY_FILE_TYPE);
             m_client.setFileTransferMode(FTP.BINARY_FILE_TYPE);
             // Find root directory
@@ -446,7 +508,7 @@ public class FTPRemoteFile extends RemoteFile {
          */
         @Override
         public void close() throws Exception {
-            m_client.completePendingCommand();
+            // m_client.completePendingCommand();
             m_client.logout();
             m_client.disconnect();
         }

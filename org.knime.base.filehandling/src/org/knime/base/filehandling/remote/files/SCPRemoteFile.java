@@ -60,6 +60,7 @@ import java.net.URI;
 
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.node.ExecutionContext;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.Session;
@@ -151,7 +152,8 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void write(final RemoteFile file) throws Exception {
+    public void write(final RemoteFile file, final ExecutionContext exec)
+            throws Exception {
         byte[] buffer = new byte[1024];
         SCPChannel scp = new SCPChannel();
         // Open direct output stream

@@ -61,6 +61,7 @@ import java.util.Vector;
 
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.node.ExecutionContext;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
@@ -185,6 +186,10 @@ public class SFTPRemoteFile extends RemoteFile {
             if (!path.endsWith("/")) {
                 path += "/";
             }
+            // Make sure that the path starts with a '/'
+            if (!path.startsWith("/")) {
+                path = "/" + path;
+            }
             m_pathCache = FilenameUtils.normalize(path);
         }
         return m_pathCache;
@@ -231,7 +236,8 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void move(final RemoteFile file) throws Exception {
+    public void move(final RemoteFile file, final ExecutionContext exec)
+            throws Exception {
         // If the file is also an SFTP remote file and over the same connection
         // it can be moved
         if (file instanceof SFTPRemoteFile
@@ -250,7 +256,7 @@ public class SFTPRemoteFile extends RemoteFile {
                 throw new Exception("Move operation failed");
             }
         } else {
-            super.move(file);
+            super.move(file, exec);
         }
     }
 

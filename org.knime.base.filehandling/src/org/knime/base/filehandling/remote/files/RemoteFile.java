@@ -54,8 +54,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.node.ExecutionContext;
 
 /**
  * Remote file.
@@ -270,6 +272,9 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
                 if (!path.endsWith("/")) {
                     path += "/";
                 }
+                if (!path.startsWith("/")) {
+                    path = "/" + path;
+                }
             }
             path = FilenameUtils.normalize(path);
         }
@@ -299,11 +304,14 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * 
      * 
      * @param file The file to be moved
+     * @param exec Execution context for <code>checkCanceled()</code> and
+     *            <code>setProgress()</code>
      * @throws Exception If the operation could not be executed
      */
-    public void move(final RemoteFile file) throws Exception {
+    public void move(final RemoteFile file, final ExecutionContext exec)
+            throws Exception {
         // Default implementation using just remote file methods
-        write(file);
+        write(file, exec);
         file.delete();
     }
 
@@ -314,16 +322,26 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * This method will overwrite the old file if it exists.
      * 
      * @param file Source remote file
+     * @param exec Execution context for <code>checkCanceled()</code> and
+     *            <code>setProgress()</code>
      * @throws Exception If the operation could not be executed
      */
-    public void write(final RemoteFile file) throws Exception {
+    public void write(final RemoteFile file, final ExecutionContext exec)
+            throws Exception {
         // Default implementation using just remote file methods
         byte[] buffer = new byte[1024 * 1024]; // 1MB
         InputStream in = file.openInputStream();
         OutputStream out = openOutputStream();
+        long progress = 0;
         int length;
         while ((length = in.read(buffer)) > 0) {
             out.write(buffer, 0, length);
+            progress += length;
+            if (exec != null) {
+                exec.checkCanceled();
+                exec.setProgress("Downloaded: "
+                        + FileUtils.byteCountToDisplaySize(progress));
+            }
         }
         in.close();
         out.close();

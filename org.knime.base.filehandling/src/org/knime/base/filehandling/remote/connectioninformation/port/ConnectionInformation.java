@@ -227,7 +227,7 @@ public class ConnectionInformation implements Serializable {
         }
         return uri;
     }
-    
+
     private String toURIString() {
         // Add user only if available
         String user = m_user != null ? m_user + "@" : "";
@@ -391,7 +391,7 @@ public class ConnectionInformation implements Serializable {
     public String getKnownHosts() {
         return m_knownHosts;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
@@ -405,7 +405,7 @@ public class ConnectionInformation implements Serializable {
         hcb.append(m_knownHosts);
         return hcb.hashCode();
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public boolean equals(final Object obj) {
@@ -415,7 +415,7 @@ public class ConnectionInformation implements Serializable {
         if (!(obj instanceof ConnectionInformation)) {
             return false;
         }
-        ConnectionInformation ci = (ConnectionInformation) obj;
+        ConnectionInformation ci = (ConnectionInformation)obj;
         EqualsBuilder eqBuilder = new EqualsBuilder();
         eqBuilder.append(m_protocol, ci.m_protocol);
         eqBuilder.append(m_host, ci.m_host);
@@ -426,7 +426,7 @@ public class ConnectionInformation implements Serializable {
         eqBuilder.append(m_knownHosts, ci.m_knownHosts);
         return eqBuilder.isEquals();
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public String toString() {

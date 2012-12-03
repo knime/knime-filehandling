@@ -104,57 +104,60 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
         ConnectionMonitor monitor = new ConnectionMonitor();
-        String source = m_configuration.getSource();
-        String target = m_configuration.getTarget();
-        // Get table with source URIs
-        BufferedDataTable table = (BufferedDataTable)inObjects[1];
-        int sourceIndex = table.getDataTableSpec().findColumnIndex(source);
-        int targetIndex = table.getDataTableSpec().findColumnIndex(target);
-        int i = 0;
-        int rows = table.getRowCount();
-        // Process each row
-        for (DataRow row : table) {
-            exec.checkCanceled();
-            exec.setProgress((double)i / rows);
-            // Skip missing values
-            if (!row.getCell(sourceIndex).isMissing()
-                    && !row.getCell(targetIndex).isMissing()) {
-                ConnectionInformation connectionInformation;
-                // Get source URI
-                URI sourceUri =
-                        ((URIDataValue)row.getCell(sourceIndex))
-                                .getURIContent().getURI();
-                try {
-                    m_connectionInformation.fitsToURI(sourceUri);
-                    connectionInformation = m_connectionInformation;
-                } catch (Exception e) {
-                    connectionInformation = null;
+        try {
+            String source = m_configuration.getSource();
+            String target = m_configuration.getTarget();
+            // Get table with source URIs
+            BufferedDataTable table = (BufferedDataTable)inObjects[1];
+            int sourceIndex = table.getDataTableSpec().findColumnIndex(source);
+            int targetIndex = table.getDataTableSpec().findColumnIndex(target);
+            int i = 0;
+            int rows = table.getRowCount();
+            // Process each row
+            for (DataRow row : table) {
+                exec.checkCanceled();
+                exec.setProgress((double)i / rows);
+                // Skip missing values
+                if (!row.getCell(sourceIndex).isMissing()
+                        && !row.getCell(targetIndex).isMissing()) {
+                    ConnectionInformation connectionInformation;
+                    // Get source URI
+                    URI sourceUri =
+                            ((URIDataValue)row.getCell(sourceIndex))
+                                    .getURIContent().getURI();
+                    try {
+                        m_connectionInformation.fitsToURI(sourceUri);
+                        connectionInformation = m_connectionInformation;
+                    } catch (Exception e) {
+                        connectionInformation = null;
+                    }
+                    // Create source file
+                    RemoteFile sourceFile =
+                            RemoteFileFactory.createRemoteFile(sourceUri,
+                                    connectionInformation, monitor);
+                    // Get target URI
+                    URI targetUri =
+                            ((URIDataValue)row.getCell(targetIndex))
+                                    .getURIContent().getURI();
+                    try {
+                        m_connectionInformation.fitsToURI(targetUri);
+                        connectionInformation = m_connectionInformation;
+                    } catch (Exception e) {
+                        connectionInformation = null;
+                    }
+                    // Create target file
+                    RemoteFile targetFile =
+                            RemoteFileFactory.createRemoteFile(targetUri,
+                                    connectionInformation, monitor);
+                    // Copy file
+                    copy(sourceFile, targetFile, exec);
+                    i++;
                 }
-                // Create source file
-                RemoteFile sourceFile =
-                        RemoteFileFactory.createRemoteFile(sourceUri,
-                                connectionInformation, monitor);
-                // Get target URI
-                URI targetUri =
-                        ((URIDataValue)row.getCell(targetIndex))
-                                .getURIContent().getURI();
-                try {
-                    m_connectionInformation.fitsToURI(targetUri);
-                    connectionInformation = m_connectionInformation;
-                } catch (Exception e) {
-                    connectionInformation = null;
-                }
-                // Create target file
-                RemoteFile targetFile =
-                        RemoteFileFactory.createRemoteFile(targetUri,
-                                connectionInformation, monitor);
-                // Copy file
-                copy(sourceFile, targetFile);
-                i++;
             }
+        } finally {
+            // Close connections
+            monitor.closeAll();
         }
-        // Close connections
-        monitor.closeAll();
         return new PortObject[]{};
     }
 
@@ -166,14 +169,14 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      * @param target The target location
      * @throws Exception If the operation could not be processed
      */
-    private void copy(final RemoteFile source, final RemoteFile target)
-            throws Exception {
+    private void copy(final RemoteFile source, final RemoteFile target,
+            final ExecutionContext exec) throws Exception {
         // Get overwrite policy
         String overwritePolicy = m_configuration.getOverwritePolicy();
         if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
             // Policy overwrite:
             // Just write
-            target.write(source);
+            target.write(source, exec);
         } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
                 .getName())) {
             // Policy overwrite if newer:
@@ -184,10 +187,10 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
             if (sourceTime > 0 && targetTime > 0) {
                 // Check if the target is older then the source
                 if (target.lastModified() < source.lastModified()) {
-                    target.write(source);
+                    target.write(source, exec);
                 }
             } else {
-                target.write(source);
+                target.write(source, exec);
             }
         } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
             // Policy abort:
@@ -196,7 +199,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                 throw new Exception("File " + target.getFullName()
                         + " already exists.");
             }
-            target.write(source);
+            target.write(source, exec);
         }
     }
 

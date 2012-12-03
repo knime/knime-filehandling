@@ -119,8 +119,10 @@ public class ConnectionInformationPortObjectSpec extends
         if (!(ospec instanceof ConnectionInformationPortObjectSpec)) {
             return false;
         }
-        ConnectionInformationPortObjectSpec oCIPOS = (ConnectionInformationPortObjectSpec)ospec;
-        return ObjectUtils.equals(m_connectionInformation, oCIPOS.m_connectionInformation);
+        ConnectionInformationPortObjectSpec oCIPOS =
+                (ConnectionInformationPortObjectSpec)ospec;
+        return ObjectUtils.equals(m_connectionInformation,
+                oCIPOS.m_connectionInformation);
     }
 
     /**
@@ -128,7 +130,8 @@ public class ConnectionInformationPortObjectSpec extends
      */
     @Override
     public int hashCode() {
-        return m_connectionInformation == null ? 0 : m_connectionInformation.hashCode();
+        return m_connectionInformation == null ? 0 : m_connectionInformation
+                .hashCode();
     }
 
     /**

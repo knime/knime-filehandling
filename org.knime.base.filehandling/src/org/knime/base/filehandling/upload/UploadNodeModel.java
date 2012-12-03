@@ -103,32 +103,35 @@ public class UploadNodeModel extends NodeModel {
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
         ConnectionMonitor monitor = new ConnectionMonitor();
-        String source = m_configuration.getSource();
-        // Get table with source URIs
-        BufferedDataTable table = (BufferedDataTable)inObjects[1];
-        int index = table.getDataTableSpec().findColumnIndex(source);
-        int i = 0;
-        int rows = table.getRowCount();
-        // Process each row
-        for (DataRow row : table) {
-            // Skip missing values
-            if (!row.getCell(index).isMissing()) {
-                exec.checkCanceled();
-                exec.setProgress((double)i / rows);
-                // Get source URI
-                URI uri =
-                        ((URIDataValue)row.getCell(index)).getURIContent()
-                                .getURI();
-                // Create source file (no connection information supported)
-                RemoteFile sourceFile =
-                        RemoteFileFactory.createRemoteFile(uri, null, null);
-                // Upload file
-                upload(sourceFile, monitor);
-                i++;
+        try {
+            String source = m_configuration.getSource();
+            // Get table with source URIs
+            BufferedDataTable table = (BufferedDataTable)inObjects[1];
+            int index = table.getDataTableSpec().findColumnIndex(source);
+            int i = 0;
+            int rows = table.getRowCount();
+            // Process each row
+            for (DataRow row : table) {
+                // Skip missing values
+                if (!row.getCell(index).isMissing()) {
+                    exec.checkCanceled();
+                    exec.setProgress((double)i / rows);
+                    // Get source URI
+                    URI uri =
+                            ((URIDataValue)row.getCell(index)).getURIContent()
+                                    .getURI();
+                    // Create source file (no connection information supported)
+                    RemoteFile sourceFile =
+                            RemoteFileFactory.createRemoteFile(uri, null, null);
+                    // Upload file
+                    upload(sourceFile, monitor, exec);
+                    i++;
+                }
             }
+        } finally {
+            // Close connections
+            monitor.closeAll();
         }
-        // Close connections
-        monitor.closeAll();
         return new PortObject[]{};
     }
 
@@ -140,7 +143,8 @@ public class UploadNodeModel extends NodeModel {
      * @param monitor The connection monitor
      * @throws Exception If the operation could not be processed
      */
-    private void upload(final RemoteFile source, final ConnectionMonitor monitor)
+    private void upload(final RemoteFile source,
+            final ConnectionMonitor monitor, final ExecutionContext exec)
             throws Exception {
         // Get overwrite policy
         String overwritePolicy = m_configuration.getOverwritePolicy();
@@ -148,7 +152,7 @@ public class UploadNodeModel extends NodeModel {
         if (source.isDirectory()) {
             RemoteFile[] files = source.listFiles();
             for (int i = 0; i < files.length; i++) {
-                upload(files[i], monitor);
+                upload(files[i], monitor, exec);
             }
         } else {
             // Get filename
@@ -179,7 +183,7 @@ public class UploadNodeModel extends NodeModel {
             if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                 // Policy overwrite:
                 // Just write
-                target.write(source);
+                target.write(source, exec);
             } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
                     .getName())) {
                 // Policy overwrite if newer:
@@ -190,10 +194,10 @@ public class UploadNodeModel extends NodeModel {
                 if (sourceTime > 0 && targetTime > 0) {
                     // Check if the target is older then the source
                     if (target.lastModified() < source.lastModified()) {
-                        target.write(source);
+                        target.write(source, exec);
                     }
                 } else {
-                    target.write(source);
+                    target.write(source, exec);
                 }
             } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
                 // Policy abort:
@@ -202,7 +206,7 @@ public class UploadNodeModel extends NodeModel {
                     throw new Exception("File " + target.getFullName()
                             + " already exists.");
                 }
-                target.write(source);
+                target.write(source, exec);
             }
         }
     }

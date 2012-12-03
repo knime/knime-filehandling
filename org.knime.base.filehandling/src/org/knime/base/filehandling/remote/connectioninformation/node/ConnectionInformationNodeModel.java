@@ -85,7 +85,8 @@ public class ConnectionInformationNodeModel extends NodeModel {
      * @param protocol The protocol of this connection information model
      */
     public ConnectionInformationNodeModel(final Protocol protocol) {
-        super(new PortType[]{}, new PortType[]{ConnectionInformationPortObject.TYPE});
+        super(new PortType[]{},
+                new PortType[]{ConnectionInformationPortObject.TYPE});
         m_protocol = protocol;
     }
 
@@ -95,7 +96,8 @@ public class ConnectionInformationNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects,
             final ExecutionContext exec) throws Exception {
-        return new PortObject[]{new ConnectionInformationPortObject(createSpec())};
+        return new PortObject[]{new ConnectionInformationPortObject(
+                createSpec())};
     }
 
     /**
@@ -115,16 +117,20 @@ public class ConnectionInformationNodeModel extends NodeModel {
         return new PortObjectSpec[]{createSpec()};
     }
 
-    /** Create the spec, throw exception if no config available.
+    /**
+     * Create the spec, throw exception if no config available.
+     * 
      * @return ...
      * @throws InvalidSettingsException ...
      */
-    public ConnectionInformationPortObjectSpec createSpec() throws InvalidSettingsException {
+    public ConnectionInformationPortObjectSpec createSpec()
+            throws InvalidSettingsException {
         if (m_configuration == null || m_configuration.getHost() == null) {
             throw new InvalidSettingsException("No configuration available");
         }
-        ConnectionInformation connectionInformation = 
-                m_configuration.getConnectionInformation(getCredentialsProvider());
+        ConnectionInformation connectionInformation =
+                m_configuration
+                        .getConnectionInformation(getCredentialsProvider());
         return new ConnectionInformationPortObjectSpec(connectionInformation);
     }
 

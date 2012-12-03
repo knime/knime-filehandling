@@ -61,6 +61,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.node.ExecutionContext;
 import org.knime.core.util.KnimeEncryption;
 
 /**
@@ -135,7 +136,8 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void move(final RemoteFile file) throws Exception {
+    public void move(final RemoteFile file, final ExecutionContext exec)
+            throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("move"));
     }
 
@@ -143,7 +145,8 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void write(final RemoteFile file) throws Exception {
+    public void write(final RemoteFile file, final ExecutionContext exec)
+            throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("write"));
     }
 

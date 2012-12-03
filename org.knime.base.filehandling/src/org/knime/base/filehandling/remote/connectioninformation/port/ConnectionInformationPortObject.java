@@ -90,16 +90,19 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
     /**
      * Creates a port object with the given connection information.
      * 
-     * @param connectionInformationPOS The spec wrapping the connection information.
+     * @param connectionInformationPOS The spec wrapping the connection
+     *            information.
      */
     public ConnectionInformationPortObject(
             final ConnectionInformationPortObjectSpec connectionInformationPOS) {
         if (connectionInformationPOS == null) {
             throw new NullPointerException("Argument must not be null");
         }
-        ConnectionInformation connInfo = connectionInformationPOS.getConnectionInformation();
+        ConnectionInformation connInfo =
+                connectionInformationPOS.getConnectionInformation();
         if (connInfo == null) {
-            throw new NullPointerException("Connection information must be set (is null)");
+            throw new NullPointerException(
+                    "Connection information must be set (is null)");
         }
         m_connectionInformationPOS = connectionInformationPOS;
     }
@@ -121,14 +124,14 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
     public String getSummary() {
         return m_connectionInformationPOS.getConnectionInformation().toString();
     }
-    
+
     @Override
     public JComponent[] getViews() {
         JPanel f = ViewUtils.getInFlowLayout(new JLabel(getSummary()));
         f.setName("Connection");
-        return new JComponent[] {f};
+        return new JComponent[]{f};
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -151,8 +154,9 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
      */
     @Override
     protected void load(final ModelContentRO model, final PortObjectSpec spec,
-            final ExecutionMonitor exec) throws InvalidSettingsException, CanceledExecutionException {
-        m_connectionInformationPOS = (ConnectionInformationPortObjectSpec) spec;
+            final ExecutionMonitor exec) throws InvalidSettingsException,
+            CanceledExecutionException {
+        m_connectionInformationPOS = (ConnectionInformationPortObjectSpec)spec;
     }
 
 }

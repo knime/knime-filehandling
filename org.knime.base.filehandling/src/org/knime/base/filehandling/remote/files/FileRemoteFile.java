@@ -59,6 +59,7 @@ import java.net.URI;
 import java.util.Arrays;
 
 import org.apache.commons.io.FilenameUtils;
+import org.knime.core.node.ExecutionContext;
 
 /**
  * Implementation of the file remote file.
@@ -141,7 +142,8 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void move(final RemoteFile file) throws Exception {
+    public void move(final RemoteFile file, final ExecutionContext exec)
+            throws Exception {
         if (file instanceof FileRemoteFile) {
             FileRemoteFile source = (FileRemoteFile)file;
             boolean success =
@@ -150,7 +152,7 @@ public class FileRemoteFile extends RemoteFile {
                 throw new Exception("Move operation failed");
             }
         } else {
-            super.move(file);
+            super.move(file, exec);
         }
     }
 

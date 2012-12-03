@@ -112,19 +112,22 @@ public class DownloadNodeModel extends NodeModel {
         // Create output spec and container
         DataTableSpec outSpec = createOutSpec();
         BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
-        // Generate URI to the source
-        URI sourceUri =
-                new URI(m_connectionInformation.toURI().toString()
-                        + m_configuration.getSource());
-        // Create remote file for source selection
-        RemoteFile file =
-                RemoteFileFactory.createRemoteFile(sourceUri,
-                        m_connectionInformation, monitor);
-        // Download the selected directory or file
-        download(file, outContainer, exec);
-        outContainer.close();
-        // Close connections
-        monitor.closeAll();
+        try {
+            // Generate URI to the source
+            URI sourceUri =
+                    new URI(m_connectionInformation.toURI().toString()
+                            + m_configuration.getSource());
+            // Create remote file for source selection
+            RemoteFile file =
+                    RemoteFileFactory.createRemoteFile(sourceUri,
+                            m_connectionInformation, monitor);
+            // Download the selected directory or file
+            download(file, outContainer, exec);
+            outContainer.close();
+        } finally {
+            // Close connections
+            monitor.closeAll();
+        }
         return new PortObject[]{outContainer.getTable()};
     }
 
@@ -186,7 +189,7 @@ public class DownloadNodeModel extends NodeModel {
             if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                 // Policy overwrite:
                 // Just write
-                target.write(source);
+                target.write(source, exec);
                 downloaded = true;
             } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
                     .getName())) {
@@ -198,11 +201,11 @@ public class DownloadNodeModel extends NodeModel {
                 if (sourceTime > 0 && targetTime > 0) {
                     // Check if the target is older then the source
                     if (target.lastModified() < source.lastModified()) {
-                        target.write(source);
+                        target.write(source, exec);
                         downloaded = true;
                     }
                 } else {
-                    target.write(source);
+                    target.write(source, exec);
                     downloaded = true;
                 }
             } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
@@ -212,7 +215,7 @@ public class DownloadNodeModel extends NodeModel {
                     throw new Exception("File " + target.getFullName()
                             + " already exists.");
                 }
-                target.write(source);
+                target.write(source, exec);
                 downloaded = true;
             }
             // URI to the created file
