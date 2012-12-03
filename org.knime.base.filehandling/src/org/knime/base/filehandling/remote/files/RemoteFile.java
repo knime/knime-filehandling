@@ -329,6 +329,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
             throws Exception {
         // Default implementation using just remote file methods
         byte[] buffer = new byte[1024 * 1024]; // 1MB
+        String name = getFullName();
         InputStream in = file.openInputStream();
         OutputStream out = openOutputStream();
         long progress = 0;
@@ -338,8 +339,9 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
             progress += length;
             if (exec != null) {
                 exec.checkCanceled();
-                exec.setProgress("Downloaded: "
-                        + FileUtils.byteCountToDisplaySize(progress));
+                exec.setProgress("Written: "
+                        + FileUtils.byteCountToDisplaySize(progress)
+                        + " to file " + name);
             }
         }
         in.close();

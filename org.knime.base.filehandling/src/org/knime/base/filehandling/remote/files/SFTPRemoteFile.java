@@ -102,6 +102,7 @@ public class SFTPRemoteFile extends RemoteFile {
         m_entryCache = null;
         m_sizeCache = null;
         m_modifiedCache = null;
+        m_path = null;
     }
 
     /**

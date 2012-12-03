@@ -149,6 +149,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                     RemoteFile targetFile =
                             RemoteFileFactory.createRemoteFile(targetUri,
                                     connectionInformation, monitor);
+                    targetFile.mkDirs(false);
                     // Copy file
                     copy(sourceFile, targetFile, exec);
                     i++;

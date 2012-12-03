@@ -134,6 +134,8 @@ public final class RemoteFileChooser {
 
     private List<RemoteFileTreeNodeWorker> m_workers;
 
+    private boolean m_closed;
+
     /**
      * Creates remote file chooser for the specified folder.
      * 
@@ -151,6 +153,7 @@ public final class RemoteFileChooser {
         m_selectionType = selectionType;
         m_selectedFile = null;
         m_workers = new LinkedList<RemoteFileTreeNodeWorker>();
+        m_closed = false;
     }
 
     /**
@@ -193,6 +196,7 @@ public final class RemoteFileChooser {
         m_dialog.dispose();
         // Close used connections
         m_connectionMonitor.closeAll();
+        m_closed = true;
     }
 
     /**
@@ -317,6 +321,7 @@ public final class RemoteFileChooser {
                 // Close dialog on cancel
                 m_dialog.dispose();
                 m_connectionMonitor.closeAll();
+                m_closed = true;
             }
         }
 
@@ -327,6 +332,7 @@ public final class RemoteFileChooser {
                 // Close dialog and connections
                 m_dialog.dispose();
                 m_connectionMonitor.closeAll();
+                m_closed = true;
             } catch (Exception e) {
                 // do not close in case of exception
             }
@@ -373,9 +379,13 @@ public final class RemoteFileChooser {
                 // Close dialog and used connections
                 m_dialog.dispose();
                 m_connectionMonitor.closeAll();
-                // Show error about the connection problem
-                JOptionPane.showMessageDialog(m_parent, "Could not connect to "
-                        + m_uri, "No connection", JOptionPane.ERROR_MESSAGE);
+                if (!m_closed) {
+                    // Show error about the connection problem
+                    JOptionPane.showMessageDialog(m_parent,
+                            "Could not connect to " + m_uri, "No connection",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+                m_closed = true;
             }
         }
 
@@ -443,10 +453,13 @@ public final class RemoteFileChooser {
                 // Close dialog and used connections
                 m_dialog.dispose();
                 m_connectionMonitor.closeAll();
-                // Show error about the connection problem
-                JOptionPane.showMessageDialog(m_parent, "Connection to "
-                        + m_uri + " lost", "No connection",
-                        JOptionPane.ERROR_MESSAGE);
+                if (!m_closed) {
+                    // Show error about the connection problem
+                    JOptionPane.showMessageDialog(m_parent, "Connection to "
+                            + m_uri + " lost", "No connection",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+                m_closed = true;
             }
         }
 

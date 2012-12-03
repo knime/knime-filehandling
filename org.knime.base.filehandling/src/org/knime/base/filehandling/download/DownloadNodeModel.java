@@ -180,12 +180,12 @@ public class DownloadNodeModel extends NodeModel {
                     RemoteFileFactory.createRemoteFile(
                             new File(m_configuration.getTarget()).toURI(),
                             null, null);
+            targetFolder.mkDirs(true);
             // Generate URI to the target
             URI targetUri = new File(targetFolder.getFullName() + name).toURI();
             // Create target file
             RemoteFile target =
                     RemoteFileFactory.createRemoteFile(targetUri, null, null);
-            target.mkDirs(false);
             if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                 // Policy overwrite:
                 // Just write
