@@ -152,9 +152,9 @@ public class SFTPRemoteFile extends RemoteFile {
             String name;
             if (isDirectory()) {
                 // Remove '/' from path and separate name
-                name =
-                        FilenameUtils.getName(FilenameUtils
-                                .normalizeNoEndSeparator(getPath()));
+                String path = getPath();
+                path = path.substring(0, path.length() - 1);
+                name = FilenameUtils.getName(path);
             } else {
                 // Use name from URI
                 name = FilenameUtils.getName(getURI().getPath());
@@ -366,12 +366,16 @@ public class SFTPRemoteFile extends RemoteFile {
         openChannel();
         if (isDirectory()) {
             try {
+                cd(m_path);
                 // Get ls entries
                 Vector<LsEntry> entries = channel.ls(".");
                 // Generate remote file for each entry that is a file
                 for (int i = 0; i < entries.size(); i++) {
                     // . and .. will return null after normalization
                     String filename = entries.get(i).getFilename();
+                    if (filename.equals(".") || filename.equals("..")) {
+                        filename = "";
+                    }
                     if (filename != null && filename.length() > 0) {
                         try {
                             // Build URI
@@ -435,8 +439,7 @@ public class SFTPRemoteFile extends RemoteFile {
         // Check if path is initialized
         if (m_path == null) {
             boolean pathSet = false;
-            String path =
-                    FilenameUtils.normalizeNoEndSeparator(getURI().getPath());
+            String path = getURI().getPath();
             // If URI has path
             if (path != null && path.length() > 0) {
                 if (cd(path)) {

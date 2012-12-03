@@ -145,9 +145,9 @@ public class FTPRemoteFile extends RemoteFile {
             String name;
             if (isDirectory()) {
                 // Remove '/' from path and separate name
-                name =
-                        FilenameUtils.getName(FilenameUtils
-                                .normalizeNoEndSeparator(getPath()));
+                String path = getPath();
+                path = path.substring(0, path.length() - 1);
+                name = FilenameUtils.getName(path);
             } else {
                 // Use name from URI
                 name = FilenameUtils.getName(getURI().getPath());
