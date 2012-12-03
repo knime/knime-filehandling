@@ -152,7 +152,7 @@ public class FTPRemoteFile extends RemoteFile {
                 // Use name from URI
                 name = FilenameUtils.getName(getURI().getPath());
             }
-            m_nameCache = FilenameUtils.normalize(name);
+            m_nameCache = name;
         }
         return m_nameCache;
     }
@@ -182,7 +182,7 @@ public class FTPRemoteFile extends RemoteFile {
             if (!path.startsWith("/")) {
                 path = "/" + path;
             }
-            m_pathCache = FilenameUtils.normalize(path);
+            m_pathCache = path;
         }
         return m_pathCache;
     }

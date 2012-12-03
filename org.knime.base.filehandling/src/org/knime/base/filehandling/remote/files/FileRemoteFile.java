@@ -117,7 +117,6 @@ public class FileRemoteFile extends RemoteFile {
                     path += File.separator;
                 }
             }
-            path = FilenameUtils.normalize(path);
         }
         return path;
     }

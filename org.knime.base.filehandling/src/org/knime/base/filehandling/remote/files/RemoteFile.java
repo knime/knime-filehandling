@@ -229,7 +229,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
                     FilenameUtils.getName(FilenameUtils
                             .getFullPathNoEndSeparator(uri.getPath()));
         }
-        return FilenameUtils.normalize(name);
+        return name;
     }
 
     /**
@@ -249,7 +249,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
             // Append name to path
             fullname += getName();
         }
-        return FilenameUtils.normalize(fullname);
+        return fullname;
     }
 
     /**
@@ -276,7 +276,6 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
                     path = "/" + path;
                 }
             }
-            path = FilenameUtils.normalize(path);
         }
         return path;
     }

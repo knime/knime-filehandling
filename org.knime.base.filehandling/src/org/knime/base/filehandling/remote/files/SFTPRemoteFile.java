@@ -159,7 +159,7 @@ public class SFTPRemoteFile extends RemoteFile {
                 // Use name from URI
                 name = FilenameUtils.getName(getURI().getPath());
             }
-            m_nameCache = FilenameUtils.normalize(name);
+            m_nameCache = name;
         }
         return m_nameCache;
     }
@@ -190,7 +190,7 @@ public class SFTPRemoteFile extends RemoteFile {
             if (!path.startsWith("/")) {
                 path = "/" + path;
             }
-            m_pathCache = FilenameUtils.normalize(path);
+            m_pathCache = path;
         }
         return m_pathCache;
     }
@@ -217,7 +217,7 @@ public class SFTPRemoteFile extends RemoteFile {
             boolean isDirectory = false;
             openChannel();
             // Use path from URI
-            String path = FilenameUtils.normalize(getURI().getPath());
+            String path = getURI().getPath();
             if (path != null && path.length() > 0) {
                 // If path is not missing, try to cd to it
                 isDirectory = cd(path);
@@ -371,9 +371,7 @@ public class SFTPRemoteFile extends RemoteFile {
                 // Generate remote file for each entry that is a file
                 for (int i = 0; i < entries.size(); i++) {
                     // . and .. will return null after normalization
-                    String filename =
-                            FilenameUtils.normalize(entries.get(i)
-                                    .getFilename());
+                    String filename = entries.get(i).getFilename();
                     if (filename != null && filename.length() > 0) {
                         try {
                             // Build URI
