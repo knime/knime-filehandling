@@ -121,8 +121,14 @@ public class DownloadNodeModel extends NodeModel {
             RemoteFile file =
                     RemoteFileFactory.createRemoteFile(sourceUri,
                             m_connectionInformation, monitor);
+            // Create target folder
+            RemoteFile folder =
+                    RemoteFileFactory.createRemoteFile(
+                            new File(m_configuration.getTarget()).toURI(),
+                            null, null);
+            folder.mkDirs(true);
             // Download the selected directory or file
-            download(file, outContainer, exec);
+            download(file, folder, outContainer, exec);
             outContainer.close();
         } finally {
             // Close connections
@@ -145,47 +151,41 @@ public class DownloadNodeModel extends NodeModel {
      * @param exec Execution context to check if the execution has been canceled
      * @throws Exception If remote file operation did not succeed
      */
-    private void download(final RemoteFile source,
+    private void download(final RemoteFile source, final RemoteFile folder,
             final BufferedDataContainer outContainer,
             final ExecutionContext exec) throws Exception {
+        // Get filename
+        String pathHandling = m_configuration.getPathHandling();
+        String name = "";
+        if (pathHandling.equals(PathHandling.FULL_PATH.getName())) {
+            name = source.getFullName();
+        } else if (pathHandling.equals(PathHandling.ONLY_FILENAME.getName())) {
+            name = source.getName();
+        } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
+            String prefix = m_configuration.getPrefix();
+            name = source.getFullName().replaceFirst(prefix, "");
+        }
+        if (name.startsWith("/")) {
+            name = name.replaceFirst("/", "");
+        }
+        // Generate URI to the target
+        URI targetUri = new File(folder.getFullName() + name).toURI();
+        // Create target file
+        RemoteFile target =
+                RemoteFileFactory.createRemoteFile(targetUri, null, null);
         // Check if the user canceled
         exec.checkCanceled();
         // If the source is a directory download inner files
         if (source.isDirectory()) {
+            target.mkDirs(true);
             RemoteFile[] files = source.listFiles();
             for (int i = 0; i < files.length; i++) {
-                download(files[i], outContainer, exec);
+                download(files[i], folder, outContainer, exec);
             }
         } else {
             boolean downloaded = false;
             // Get overwrite policy
             String overwritePolicy = m_configuration.getOverwritePolicy();
-            // Get filename
-            String pathHandling = m_configuration.getPathHandling();
-            String name = "";
-            if (pathHandling.equals(PathHandling.FULL_PATH.getName())) {
-                name = source.getFullName();
-            } else if (pathHandling
-                    .equals(PathHandling.ONLY_FILENAME.getName())) {
-                name = source.getName();
-            } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX
-                    .getName())) {
-                String prefix = m_configuration.getPrefix();
-                name = source.getFullName().replaceFirst(prefix, "");
-            }
-            if (name.startsWith("/")) {
-                name = name.replaceFirst("/", "");
-            }
-            RemoteFile targetFolder =
-                    RemoteFileFactory.createRemoteFile(
-                            new File(m_configuration.getTarget()).toURI(),
-                            null, null);
-            targetFolder.mkDirs(true);
-            // Generate URI to the target
-            URI targetUri = new File(targetFolder.getFullName() + name).toURI();
-            // Create target file
-            RemoteFile target =
-                    RemoteFileFactory.createRemoteFile(targetUri, null, null);
             if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                 // Policy overwrite:
                 // Just write

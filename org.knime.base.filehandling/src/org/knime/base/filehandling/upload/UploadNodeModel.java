@@ -110,6 +110,18 @@ public class UploadNodeModel extends NodeModel {
             int index = table.getDataTableSpec().findColumnIndex(source);
             int i = 0;
             int rows = table.getRowCount();
+            // Create target folder
+            String targetFolder = m_configuration.getTarget();
+            if (!targetFolder.endsWith("/")) {
+                targetFolder += "/";
+            }
+            URI folderUri =
+                    new URI(m_connectionInformation.toURI().toString()
+                            + targetFolder);
+            RemoteFile folder =
+                    RemoteFileFactory.createRemoteFile(folderUri,
+                            m_connectionInformation, monitor);
+            folder.mkDirs(true);
             // Process each row
             for (DataRow row : table) {
                 // Skip missing values
@@ -124,7 +136,7 @@ public class UploadNodeModel extends NodeModel {
                     RemoteFile sourceFile =
                             RemoteFileFactory.createRemoteFile(uri, null, null);
                     // Upload file
-                    upload(sourceFile, monitor, exec);
+                    upload(sourceFile, folder, monitor, exec);
                     i++;
                 }
             }
@@ -143,42 +155,40 @@ public class UploadNodeModel extends NodeModel {
      * @param monitor The connection monitor
      * @throws Exception If the operation could not be processed
      */
-    private void upload(final RemoteFile source,
+    private void upload(final RemoteFile source, final RemoteFile folder,
             final ConnectionMonitor monitor, final ExecutionContext exec)
             throws Exception {
         // Get overwrite policy
         String overwritePolicy = m_configuration.getOverwritePolicy();
+        // Get filename
+        String pathHandling = m_configuration.getPathHandling();
+        String name = "";
+        if (pathHandling.equals(PathHandling.FULL_PATH.getName())) {
+            name = source.getFullName();
+        } else if (pathHandling.equals(PathHandling.ONLY_FILENAME.getName())) {
+            name = source.getName();
+        } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
+            String prefix = m_configuration.getPrefix();
+            name = source.getFullName().replaceFirst(prefix, "");
+        }
+        if (name.startsWith("/")) {
+            name = name.replaceFirst("/", "");
+        }
+
+        // Generate URI to the target
+        URI targetUri = new URI(folder.getURI() + name);
+        // Create target file
+        RemoteFile target =
+                RemoteFileFactory.createRemoteFile(targetUri,
+                        m_connectionInformation, monitor);
         // If the source is a directory upload inner files
         if (source.isDirectory()) {
+            target.mkDirs(true);
             RemoteFile[] files = source.listFiles();
             for (int i = 0; i < files.length; i++) {
-                upload(files[i], monitor, exec);
+                upload(files[i], folder, monitor, exec);
             }
         } else {
-            // Get filename
-            String pathHandling = m_configuration.getPathHandling();
-            String name = "";
-            if (pathHandling.equals(PathHandling.FULL_PATH.getName())) {
-                name = source.getFullName();
-            } else if (pathHandling
-                    .equals(PathHandling.ONLY_FILENAME.getName())) {
-                name = source.getName();
-            } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX
-                    .getName())) {
-                String prefix = m_configuration.getPrefix();
-                name = source.getFullName().replaceFirst(prefix, "");
-            }
-            if (name.startsWith("/")) {
-                name = name.replaceFirst("/", "");
-            }
-            // Generate URI to the target
-            URI targetUri =
-                    new URI(m_connectionInformation.toURI().toString()
-                            + m_configuration.getTarget() + name);
-            // Create target file
-            RemoteFile target =
-                    RemoteFileFactory.createRemoteFile(targetUri,
-                            m_connectionInformation, monitor);
             target.mkDirs(false);
             if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                 // Policy overwrite:
