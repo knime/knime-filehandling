@@ -104,6 +104,7 @@ public class UploadNodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
         ConnectionMonitor monitor = new ConnectionMonitor();
         try {
+            exec.setProgress("Connecting to " + m_connectionInformation.toURI());
             String source = m_configuration.getSource();
             // Get table with source URIs
             BufferedDataTable table = (BufferedDataTable)inObjects[1];

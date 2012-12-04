@@ -113,6 +113,7 @@ public class DownloadNodeModel extends NodeModel {
         DataTableSpec outSpec = createOutSpec();
         BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
         try {
+            exec.setProgress("Connecting to " + m_connectionInformation.toURI());
             // Generate URI to the source
             URI sourceUri =
                     new URI(m_connectionInformation.toURI().toString()
