@@ -375,6 +375,9 @@ public final class RemoteFileChooser {
                 // Initialize tree
                 m_tree.setModel(m_treemodel);
                 m_tree.setRootVisible(true);
+                // Remove loading message
+                m_progress.setVisible(false);
+                setDefaultMessage();
             } else {
                 // Close dialog and used connections
                 m_dialog.dispose();
