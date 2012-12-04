@@ -216,6 +216,8 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
             ConnectionInformationPortObjectSpec object =
                     (ConnectionInformationPortObjectSpec)inSpecs[0];
             m_connectionInformation = object.getConnectionInformation();
+        } else {
+            m_connectionInformation = null;
         }
         // Check if configuration has been loaded
         if (m_configuration == null) {
