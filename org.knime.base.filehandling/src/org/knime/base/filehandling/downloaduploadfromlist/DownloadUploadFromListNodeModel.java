@@ -151,7 +151,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                                     connectionInformation, monitor);
                     targetFile.mkDirs(false);
                     // Copy file
-                    copy(sourceFile, targetFile, exec);
+                    copy(sourceFile, targetFile, monitor, exec);
                     i++;
                 }
             }
@@ -168,39 +168,57 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      * 
      * @param source The source file
      * @param target The target location
+     * @param monitor The connection monitor
      * @throws Exception If the operation could not be processed
      */
     private void copy(final RemoteFile source, final RemoteFile target,
-            final ExecutionContext exec) throws Exception {
-        // Get overwrite policy
-        String overwritePolicy = m_configuration.getOverwritePolicy();
-        if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
-            // Policy overwrite:
-            // Just write
-            target.write(source, exec);
-        } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
-                .getName())) {
-            // Policy overwrite if newer:
-            // Get modification time
-            long sourceTime = source.lastModified();
-            long targetTime = target.lastModified();
-            // Check if both times could be retrieved, else do an overwrite
-            if (sourceTime > 0 && targetTime > 0) {
-                // Check if the target is older then the source
-                if (target.lastModified() < source.lastModified()) {
+            final ConnectionMonitor monitor, final ExecutionContext exec)
+            throws Exception {
+        if (source.isDirectory()) {
+            target.mkDir();
+            RemoteFile[] files = source.listFiles();
+            String targetUri = target.getURI().toString();
+            if (!targetUri.endsWith("/")) {
+                targetUri += "/";
+            }
+            for (int i = 0; i < files.length; i++) {
+                URI newTargetUri = new URI(targetUri + files[i].getName());
+                RemoteFile newTarget =
+                        RemoteFileFactory.createRemoteFile(newTargetUri,
+                                target.getConnectionInformation(), monitor);
+                copy(files[i], newTarget, monitor, exec);
+            }
+        } else {
+            // Get overwrite policy
+            String overwritePolicy = m_configuration.getOverwritePolicy();
+            if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
+                // Policy overwrite:
+                // Just write
+                target.write(source, exec);
+            } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
+                    .getName())) {
+                // Policy overwrite if newer:
+                // Get modification time
+                long sourceTime = source.lastModified();
+                long targetTime = target.lastModified();
+                // Check if both times could be retrieved, else do an overwrite
+                if (sourceTime > 0 && targetTime > 0) {
+                    // Check if the target is older then the source
+                    if (target.lastModified() < source.lastModified()) {
+                        target.write(source, exec);
+                    }
+                } else {
                     target.write(source, exec);
                 }
-            } else {
+            } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
+                // Policy abort:
+                // Throw exception if the target exists
+                if (target.exists()) {
+                    throw new Exception("File " + target.getFullName()
+                            + " already exists.");
+                }
                 target.write(source, exec);
             }
-        } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
-            // Policy abort:
-            // Throw exception if the target exists
-            if (target.exists()) {
-                throw new Exception("File " + target.getFullName()
-                        + " already exists.");
-            }
-            target.write(source, exec);
         }
     }
 

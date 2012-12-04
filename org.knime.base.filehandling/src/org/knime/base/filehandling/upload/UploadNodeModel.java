@@ -152,6 +152,7 @@ public class UploadNodeModel extends NodeModel {
      * 
      * 
      * @param source The source file
+     * @param folder Folder where the file goes into
      * @param monitor The connection monitor
      * @throws Exception If the operation could not be processed
      */

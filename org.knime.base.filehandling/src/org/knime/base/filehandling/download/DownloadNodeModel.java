@@ -146,6 +146,7 @@ public class DownloadNodeModel extends NodeModel {
      * recursively.
      * 
      * @param source The file or folder to be downloaded
+     * @param folder Folder where the file goes into
      * @param outContainer Container to write the reference of the downloaded
      *            file into
      * @param exec Execution context to check if the execution has been canceled
