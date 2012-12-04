@@ -466,7 +466,10 @@ public class FTPRemoteFile extends RemoteFile {
             if (user == null) {
                 user = "anonymous";
             }
-            String password = getConnectionInformation().getPassword();
+            String password = null;
+            if (getConnectionInformation() != null) {
+                password = getConnectionInformation().getPassword();
+            }
             if (password != null) {
                 password = KnimeEncryption.decrypt(password);
             } else {

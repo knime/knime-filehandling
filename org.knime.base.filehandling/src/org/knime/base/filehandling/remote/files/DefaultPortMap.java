@@ -74,7 +74,7 @@ public final class DefaultPortMap {
         m_map.put("ssh", 22);
         m_map.put("sftp", 22);
         m_map.put("scp", 22);
-        m_map.put("ftp", 22);
+        m_map.put("ftp", 21);
         m_map.put("http", 80);
         m_map.put("https", 443);
     }
