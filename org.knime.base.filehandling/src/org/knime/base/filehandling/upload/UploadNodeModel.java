@@ -169,6 +169,9 @@ public class UploadNodeModel extends NodeModel {
             name = source.getName();
         } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
             String prefix = m_configuration.getPrefix();
+            prefix =
+                    new File(prefix).toURI().toString()
+                            .replaceFirst("file:/", "");
             name = source.getFullName().replaceFirst(prefix, "");
         }
         if (name.startsWith("/")) {

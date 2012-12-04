@@ -58,7 +58,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
 
-import org.apache.commons.io.FilenameUtils;
 import org.knime.core.node.ExecutionContext;
 
 /**
@@ -102,23 +101,6 @@ public class FileRemoteFile extends RemoteFile {
     @Override
     public String getType() {
         return "file";
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getPath() throws Exception {
-        String path = getURI().getPath();
-        if (path != null) {
-            if (!isDirectory()) {
-                path = FilenameUtils.getFullPath(path);
-            }
-            if (!path.endsWith(File.separator)) {
-                path += File.separator;
-            }
-        }
-        return path;
     }
 
     /**
