@@ -412,10 +412,15 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean mkDir() throws Exception {
-        boolean existed = exists();
-        channel.mkdir(getFullName());
-        resetCache();
-        return !existed && exists();
+        boolean result = false;
+        try {
+            channel.mkdir(getFullName());
+            resetCache();
+            result = true;
+        } catch (Exception e) {
+            // result stays false
+        }
+        return result;
     }
 
     /**
