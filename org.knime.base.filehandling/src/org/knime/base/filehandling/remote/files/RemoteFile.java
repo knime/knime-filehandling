@@ -267,14 +267,14 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
         // Default implementation using just the URI
         String path = getURI().getPath();
         if (path != null) {
-            if (isDirectory()) {
+            if (!isDirectory()) {
                 path = FilenameUtils.getFullPath(path);
-                if (!path.endsWith("/")) {
-                    path += "/";
-                }
-                if (!path.startsWith("/")) {
-                    path = "/" + path;
-                }
+            }
+            if (!path.endsWith("/")) {
+                path += "/";
+            }
+            if (!path.startsWith("/")) {
+                path = "/" + path;
             }
         }
         return path;

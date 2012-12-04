@@ -111,11 +111,11 @@ public class FileRemoteFile extends RemoteFile {
     public String getPath() throws Exception {
         String path = getURI().getPath();
         if (path != null) {
-            if (isDirectory()) {
+            if (!isDirectory()) {
                 path = FilenameUtils.getFullPath(path);
-                if (!path.endsWith(File.separator)) {
-                    path += File.separator;
-                }
+            }
+            if (!path.endsWith(File.separator)) {
+                path += File.separator;
             }
         }
         return path;
