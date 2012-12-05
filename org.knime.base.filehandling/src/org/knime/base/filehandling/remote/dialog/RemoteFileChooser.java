@@ -349,6 +349,8 @@ public final class RemoteFileChooser {
 
         private boolean m_success;
 
+        private boolean m_dir;
+
         /**
          * {@inheritDoc}
          */
@@ -359,6 +361,7 @@ public final class RemoteFileChooser {
             RemoteFile root =
                     RemoteFileFactory.createRemoteFile(m_uri,
                             m_connectionInformation, m_connectionMonitor);
+            m_dir = root.isDirectory();
             RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root);
             // Create tree model
             m_treemodel = new DefaultTreeModel(rootNode);
@@ -371,7 +374,7 @@ public final class RemoteFileChooser {
          */
         @Override
         protected void done() {
-            if (m_success) {
+            if (m_success && m_dir) {
                 // Remove loading message
                 m_progress.setVisible(false);
                 setDefaultMessage();
@@ -383,9 +386,14 @@ public final class RemoteFileChooser {
                 m_dialog.dispose();
                 m_connectionMonitor.closeAll();
                 if (!m_closed) {
+                    String message;
+                    if (!m_success) {
+                        message = "Could not connect to " + m_uri;
+                    } else {
+                        message = m_uri + " is not browsable";
+                    }
                     // Show error about the connection problem
-                    JOptionPane.showMessageDialog(m_parent,
-                            "Could not connect to " + m_uri, "No connection",
+                    JOptionPane.showMessageDialog(m_parent, message, "Error",
                             JOptionPane.ERROR_MESSAGE);
                 }
                 m_closed = true;
