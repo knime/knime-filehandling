@@ -477,7 +477,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         config.setAuthenticationmethod(m_authmethod.getSelection()
                 .getActionCommand());
         try {
-            config.setPassword(KnimeEncryption.encrypt(m_password.getPassword()));
+            if (m_password.getPassword().length > 0) {
+                config.setPassword(KnimeEncryption.encrypt(m_password
+                        .getPassword()));
+            }
         } catch (Exception e) {
             // Do not change password
         }

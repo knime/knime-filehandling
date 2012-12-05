@@ -376,7 +376,6 @@ class ConnectionInformationConfiguration {
                     validate(m_workflowcredentials, "workflowcredentials");
                 } else {
                     validate(m_user, "user");
-                    validate(m_password, "password");
                 }
                 validate(m_keyfile, "keyfile");
             }
