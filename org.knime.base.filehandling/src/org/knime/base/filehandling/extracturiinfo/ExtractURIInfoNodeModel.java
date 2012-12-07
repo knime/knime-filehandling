@@ -235,41 +235,67 @@ class ExtractURIInfoNodeModel extends NodeModel {
             // Extract configured attributes
             if (m_authority.getBooleanValue()) {
                 String value = uri.getAuthority();
-                value = value == null ? "" : value;
-                cells.add(new StringCell(value));
+                if (value == null) {
+                    cells.add(DataType.getMissingCell());
+                } else {
+                    cells.add(new StringCell(value));
+                }
             }
             if (m_fragment.getBooleanValue()) {
                 String value = uri.getFragment();
-                value = value == null ? "" : value;
-                cells.add(new StringCell(value));
+                if (value == null) {
+                    cells.add(DataType.getMissingCell());
+                } else {
+                    cells.add(new StringCell(value));
+                }
             }
             if (m_host.getBooleanValue()) {
                 String value = uri.getHost();
-                value = value == null ? "" : value;
-                cells.add(new StringCell(value));
+                if (value == null) {
+                    cells.add(DataType.getMissingCell());
+                } else {
+                    cells.add(new StringCell(value));
+                }
             }
             if (m_path.getBooleanValue()) {
                 String value = uri.getPath();
-                value = value == null ? "" : value;
-                cells.add(new StringCell(value));
+                if (value == null) {
+                    cells.add(DataType.getMissingCell());
+                } else {
+                    cells.add(new StringCell(value));
+                }
             }
             if (m_port.getBooleanValue()) {
-                cells.add(new IntCell(uri.getPort()));
+                int value = uri.getPort();
+                if (value < 0) {
+                    cells.add(DataType.getMissingCell());
+                } else {
+                    cells.add(new IntCell(value));
+                }
             }
             if (m_query.getBooleanValue()) {
                 String value = uri.getQuery();
-                value = value == null ? "" : value;
-                cells.add(new StringCell(value));
+                if (value == null) {
+                    cells.add(DataType.getMissingCell());
+                } else {
+                    cells.add(new StringCell(value));
+                }
             }
             if (m_scheme.getBooleanValue()) {
                 String value = uri.getScheme();
-                value = value == null ? "" : value;
-                cells.add(new StringCell(value));
+                if (value == null) {
+                    cells.add(DataType.getMissingCell());
+                } else {
+                    cells.add(new StringCell(value));
+                }
             }
             if (m_userinfo.getBooleanValue()) {
                 String value = uri.getUserInfo();
-                value = value == null ? "" : value;
-                cells.add(new StringCell(value));
+                if (value == null) {
+                    cells.add(DataType.getMissingCell());
+                } else {
+                    cells.add(new StringCell(value));
+                }
             }
         }
         return cells.toArray(new DataCell[cells.size()]);
