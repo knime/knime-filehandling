@@ -57,10 +57,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
@@ -117,6 +119,20 @@ public class DownloadNodeDialog extends NodeDialogPane {
 
     private RemoteFileChooserPanel m_prefix;
 
+    private JCheckBox m_subfolders;
+
+    private ButtonGroup m_filterType;
+
+    private JCheckBox m_useFilter;
+
+    private JRadioButton m_regularExpression;
+
+    private JRadioButton m_wildcard;
+
+    private JLabel m_filterTypeLabel;
+
+    private JTextField m_filterPattern;
+
     /**
      * New pane for configuring the node dialog.
      */
@@ -135,13 +151,13 @@ public class DownloadNodeDialog extends NodeDialogPane {
         m_pathhandling = new ButtonGroup();
         m_fullpath = new JRadioButton(PathHandling.FULL_PATH.getName());
         m_fullpath.setActionCommand(PathHandling.FULL_PATH.getName());
-        m_fullpath.addActionListener(new PathHandlingListener());
+        m_fullpath.addActionListener(new UpdateListener());
         m_onlyfilename = new JRadioButton(PathHandling.ONLY_FILENAME.getName());
         m_onlyfilename.setActionCommand(PathHandling.ONLY_FILENAME.getName());
-        m_onlyfilename.addActionListener(new PathHandlingListener());
+        m_onlyfilename.addActionListener(new UpdateListener());
         m_truncate = new JRadioButton(PathHandling.TRUNCATE_PREFIX.getName());
         m_truncate.setActionCommand(PathHandling.TRUNCATE_PREFIX.getName());
-        m_truncate.addActionListener(new PathHandlingListener());
+        m_truncate.addActionListener(new UpdateListener());
         m_pathhandling.add(m_fullpath);
         m_pathhandling.add(m_onlyfilename);
         m_pathhandling.add(m_truncate);
@@ -165,6 +181,24 @@ public class DownloadNodeDialog extends NodeDialogPane {
                         enableComponents();
                     }
                 });
+        // Subfolders
+        m_subfolders = new JCheckBox("Download subfolders (if applicable)");
+        // File filter
+        m_useFilter = new JCheckBox("Only download files that match pattern");
+        m_useFilter.addActionListener(new UpdateListener());
+        m_filterType = new ButtonGroup();
+        m_regularExpression =
+                new JRadioButton(FilterType.REGULAREXPRESSION.getName());
+        m_regularExpression.setActionCommand(FilterType.REGULAREXPRESSION
+                .getName());
+        m_regularExpression.addActionListener(new UpdateListener());
+        m_wildcard = new JRadioButton(FilterType.WILDCARD.getName());
+        m_wildcard.setActionCommand(FilterType.WILDCARD.getName());
+        m_wildcard.addActionListener(new UpdateListener());
+        m_filterType.add(m_regularExpression);
+        m_filterType.add(m_wildcard);
+        m_filterTypeLabel = new JLabel("Pattern is:");
+        m_filterPattern = new JTextField();
         // Overwrite policy
         m_overwritePolicy = new ButtonGroup();
         m_overwrite = new JRadioButton(OverwritePolicy.OVERWRITE.getName());
@@ -214,6 +248,22 @@ public class DownloadNodeDialog extends NodeDialogPane {
         targetPanel.add(m_targetfvm, gbc);
         targetPanel.setBorder(new TitledBorder(new EtchedBorder(),
                 "Target folder"));
+        // Filter
+        NodeUtils.resetGBC(gbc);
+        JPanel filterPanel = new JPanel(new GridBagLayout());
+        gbc.insets = new Insets(0, 0, 0, 0);
+        filterPanel.add(m_useFilter, gbc);
+        gbc.insets = new Insets(1, 50, 0, 0);
+        gbc.gridy++;
+        gbc.weightx = 1;
+        filterPanel.add(m_filterPattern, gbc);
+        gbc.gridy++;
+        gbc.weightx = 0;
+        filterPanel.add(m_filterTypeLabel, gbc);
+        gbc.gridy++;
+        filterPanel.add(m_regularExpression, gbc);
+        gbc.gridy++;
+        filterPanel.add(m_wildcard, gbc);
         // Overwrite policy
         NodeUtils.resetGBC(gbc);
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -241,6 +291,12 @@ public class DownloadNodeDialog extends NodeDialogPane {
         panel.add(targetPanel, gbc);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridy++;
+        panel.add(m_subfolders, gbc);
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(filterPanel, gbc);
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
         panel.add(overwritePolicyPanel, gbc);
         return panel;
     }
@@ -251,7 +307,7 @@ public class DownloadNodeDialog extends NodeDialogPane {
      * 
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
-    private class PathHandlingListener implements ActionListener {
+    private class UpdateListener implements ActionListener {
 
         /**
          * {@inheritDoc}
@@ -272,8 +328,13 @@ public class DownloadNodeDialog extends NodeDialogPane {
         boolean replacement =
                 m_targetfvm.getFlowVariableModel()
                         .isVariableReplacementEnabled();
+        boolean useFilter = m_useFilter.isSelected();
         m_prefix.setEnabled(usePrefix);
         m_target.setEnabled(!replacement);
+        m_regularExpression.setEnabled(useFilter);
+        m_wildcard.setEnabled(useFilter);
+        m_filterTypeLabel.setEnabled(useFilter);
+        m_filterPattern.setEnabled(useFilter);
     }
 
     /**
@@ -321,6 +382,15 @@ public class DownloadNodeDialog extends NodeDialogPane {
             m_pathhandling.setSelected(m_truncate.getModel(), true);
         }
         m_prefix.setSelection(config.getPrefix());
+        m_subfolders.setSelected(config.getSubfolders());
+        m_useFilter.setSelected(config.getUseFilter());
+        String filterType = config.getFilterType();
+        if (filterType.equals(FilterType.REGULAREXPRESSION.getName())) {
+            m_filterType.setSelected(m_regularExpression.getModel(), true);
+        } else if (filterType.equals(FilterType.WILDCARD.getName())) {
+            m_filterType.setSelected(m_wildcard.getModel(), true);
+        }
+        m_filterPattern.setText(config.getFilterPattern());
         enableComponents();
     }
 
@@ -337,6 +407,10 @@ public class DownloadNodeDialog extends NodeDialogPane {
                 .getActionCommand());
         config.setPathHandling(m_pathhandling.getSelection().getActionCommand());
         config.setPrefix(m_prefix.getSelection());
+        config.setSubfolders(m_subfolders.isSelected());
+        config.setUseFilter(m_useFilter.isSelected());
+        config.setFilterType(m_filterType.getSelection().getActionCommand());
+        config.setFilterPattern(m_filterPattern.getText());
         config.save(settings);
     }
 }

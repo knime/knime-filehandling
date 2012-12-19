@@ -50,6 +50,10 @@
  */
 package org.knime.base.filehandling.download;
 
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
+import org.knime.base.util.WildcardMatcher;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -71,6 +75,14 @@ class DownloadConfiguration {
     private String m_pathHandling;
 
     private String m_prefix;
+
+    private boolean m_subfolders = true;
+
+    private boolean m_useFilter;
+
+    private String m_filterType;
+
+    private String m_filterPattern;
 
     /**
      * @return the source
@@ -143,6 +155,62 @@ class DownloadConfiguration {
     }
 
     /**
+     * @return the subfolders
+     */
+    public boolean getSubfolders() {
+        return m_subfolders;
+    }
+
+    /**
+     * @param subfolders the subfolders to set
+     */
+    public void setSubfolders(final boolean subfolders) {
+        m_subfolders = subfolders;
+    }
+
+    /**
+     * @return the useFilter
+     */
+    public boolean getUseFilter() {
+        return m_useFilter;
+    }
+
+    /**
+     * @param useFilter the useFilter to set
+     */
+    public void setUseFilter(final boolean useFilter) {
+        m_useFilter = useFilter;
+    }
+
+    /**
+     * @return the filterType
+     */
+    public String getFilterType() {
+        return m_filterType;
+    }
+
+    /**
+     * @param filterType the filterType to set
+     */
+    public void setFilterType(final String filterType) {
+        m_filterType = filterType;
+    }
+
+    /**
+     * @return the filterPattern
+     */
+    public String getFilterPattern() {
+        return m_filterPattern;
+    }
+
+    /**
+     * @param filterPattern the filterPattern to set
+     */
+    public void setFilterPattern(final String filterPattern) {
+        m_filterPattern = filterPattern;
+    }
+
+    /**
      * Save the configuration.
      * 
      * 
@@ -154,6 +222,10 @@ class DownloadConfiguration {
         settings.addString("overwritepolicy", m_overwritePolicy);
         settings.addString("pathhandling", m_pathHandling);
         settings.addString("prefix", m_prefix);
+        settings.addBoolean("subfolders", m_subfolders);
+        settings.addBoolean("usefilter", m_useFilter);
+        settings.addString("filtertype", m_filterType);
+        settings.addString("filterpattern", m_filterPattern);
     }
 
     /**
@@ -172,6 +244,12 @@ class DownloadConfiguration {
                 settings.getString("pathhandling",
                         PathHandling.ONLY_FILENAME.getName());
         m_prefix = settings.getString("prefix", "");
+        m_subfolders = settings.getBoolean("subfolders", true);
+        m_useFilter = settings.getBoolean("usefilter", false);
+        m_filterType =
+                settings.getString("filtertype",
+                        FilterType.REGULAREXPRESSION.getName());
+        m_filterPattern = settings.getString("filterpattern", "");
     }
 
     /**
@@ -184,29 +262,49 @@ class DownloadConfiguration {
     void loadAndValidate(final NodeSettingsRO settings)
             throws InvalidSettingsException {
         m_source = settings.getString("source");
-        validate(m_source);
+        validate("Source", m_source);
         m_target = settings.getString("target");
-        validate(m_target);
+        validate("Target", m_target);
         m_overwritePolicy = settings.getString("overwritepolicy");
-        validate(m_overwritePolicy);
+        validate("Overwrite policy", m_overwritePolicy);
         m_pathHandling = settings.getString("pathhandling");
-        validate(m_pathHandling);
+        validate("Path handling", m_pathHandling);
         m_prefix = settings.getString("prefix");
         if (m_pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
-            validate(m_prefix);
+            validate("Prefix", m_prefix);
+        }
+        m_subfolders = settings.getBoolean("subfolders", true);
+        m_useFilter = settings.getBoolean("usefilter", false);
+        m_filterType =
+                settings.getString("filtertype",
+                        FilterType.REGULAREXPRESSION.getName());
+        m_filterPattern = settings.getString("filterpattern", "");
+        if (m_useFilter) {
+            validate("Pattern", m_filterPattern);
+            String pattern = m_filterPattern;
+            if (m_filterType.equals(FilterType.WILDCARD.getName())) {
+                pattern = WildcardMatcher.wildcardToRegex(pattern);
+            }
+            try {
+                Pattern.compile(m_filterPattern);
+            } catch (PatternSyntaxException e) {
+                throw new InvalidSettingsException(e.getMessage());
+            }
         }
     }
 
     /**
-     * Checks if the string is not null or empty.
+     * Checks if the setting is not null or empty.
      * 
      * 
-     * @param string The string to check
+     * @param name The name that will be displayed in case of error
+     * @param setting The setting to check
      * @throws InvalidSettingsException If the string is null or empty
      */
-    private void validate(final String string) throws InvalidSettingsException {
-        if (string == null || string.length() == 0) {
-            throw new InvalidSettingsException("Invalid setting");
+    private void validate(final String name, final String setting)
+            throws InvalidSettingsException {
+        if (setting == null || setting.length() == 0) {
+            throw new InvalidSettingsException(name + " missing");
         }
     }
 

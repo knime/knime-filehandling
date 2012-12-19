@@ -51,50 +51,45 @@
 package org.knime.base.filehandling.download;
 
 /**
- * Enums for overwrite policies.
+ * Enums for filter types.
  * 
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-enum OverwritePolicy {
+enum FilterType {
 
     /**
-     * Overwrite existing file.
+     * Download files matching the regular expression.
      */
-    OVERWRITE("Overwrite"),
+    REGULAREXPRESSION("Regular expression"),
 
     /**
-     * Overwrite only if newer.
+     * Download files with the given name using wildcard for consecutive
+     * numbers.
      */
-    OVERWRITEIFNEWER("Overwrite if newer"),
-
-    /**
-     * Abort if file exists.
-     */
-    ABORT("Abort");
+    WILDCARD("Wildcard");
 
     private final String m_name;
 
     /**
-     * @param name Name of this policy
+     * @param name Name of this type
      */
-    OverwritePolicy(final String name) {
+    FilterType(final String name) {
         m_name = name;
     }
 
     /**
-     * @return Name of this policy
+     * @return Name of this type
      */
     String getName() {
         return m_name;
     }
 
     /**
-     * @return Array of all overwrite policy settings
+     * @return Array of all types
      */
-    static String[] getAllSettings() {
-        return new String[]{OVERWRITE.getName(), OVERWRITEIFNEWER.getName(),
-                ABORT.getName()};
+    static String[] getAllTypes() {
+        return new String[]{REGULAREXPRESSION.getName(), WILDCARD.getName()};
     }
 
 }

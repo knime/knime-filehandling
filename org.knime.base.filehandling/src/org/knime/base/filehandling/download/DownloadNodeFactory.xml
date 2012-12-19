@@ -43,6 +43,32 @@
         <option name="Target folder">
             Where the downloaded files will be put.
         </option>
+        <option name="Download subfolders (if applicable)">
+            If this is selected subfolders and there
+            contend will be downloaded, otherwise they will be ignored.
+        </option>
+        <option name="Only download files that match pattern">
+            Restrict downloaded files to those matching
+            the pattern.
+        </option>
+        <option name="Pattern">
+            The pattern that will be used for filename
+            matching.
+        </option>
+        <option name="Pattern is:">
+            What kind of pattern is used for matching.
+            <br />
+            <b>Regular expression</b>
+            <br />
+            Use regular expression.
+            <br />
+            <b>Wildcard</b>
+            <br />
+            Use wildcard pattern. The wildcard pattern can contain '?'
+            (representing any one character) and '*'
+            (representing any
+            sequence of characters).
+        </option>
         <option name="If exists...">
             How to handle already existing files.
             <br />
@@ -70,7 +96,7 @@
         <outPort name="Filelist port" index="0">
             Table containing the
             list of files that have been downloaded and if they have
-            benn downloaded or where already up to date.
+            been downloaded or where already up to date.
         </outPort>
     </ports>
 </knimeNode>

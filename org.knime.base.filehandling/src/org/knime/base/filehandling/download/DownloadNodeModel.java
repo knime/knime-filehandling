@@ -61,6 +61,7 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
+import org.knime.base.util.WildcardMatcher;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
@@ -129,8 +130,11 @@ public class DownloadNodeModel extends NodeModel {
                             null, null);
             folder.mkDirs(true);
             // Download the selected directory or file
-            download(file, folder, outContainer, exec);
+            download(file, folder, outContainer, true, exec);
             outContainer.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         } finally {
             // Close connections
             monitor.closeAll();
@@ -150,11 +154,12 @@ public class DownloadNodeModel extends NodeModel {
      * @param folder Folder where the file goes into
      * @param outContainer Container to write the reference of the downloaded
      *            file into
+     * @param root If this source is the root file / directory
      * @param exec Execution context to check if the execution has been canceled
      * @throws Exception If remote file operation did not succeed
      */
     private void download(final RemoteFile source, final RemoteFile folder,
-            final BufferedDataContainer outContainer,
+            final BufferedDataContainer outContainer, final boolean root,
             final ExecutionContext exec) throws Exception {
         // Get filename
         String pathHandling = m_configuration.getPathHandling();
@@ -179,12 +184,14 @@ public class DownloadNodeModel extends NodeModel {
         exec.checkCanceled();
         // If the source is a directory download inner files
         if (source.isDirectory()) {
-            target.mkDirs(true);
-            RemoteFile[] files = source.listFiles();
-            for (int i = 0; i < files.length; i++) {
-                download(files[i], folder, outContainer, exec);
+            if (root || m_configuration.getSubfolders()) {
+                target.mkDirs(true);
+                RemoteFile[] files = source.listFiles();
+                for (int i = 0; i < files.length; i++) {
+                    download(files[i], folder, outContainer, false, exec);
+                }
             }
-        } else {
+        } else if (fitsFilter(source.getName())) {
             boolean downloaded = false;
             // Get overwrite policy
             String overwritePolicy = m_configuration.getOverwritePolicy();
@@ -230,6 +237,28 @@ public class DownloadNodeModel extends NodeModel {
             outContainer.addRowToTable(new DefaultRow("Row"
                     + outContainer.size(), uriCell, downloadedCell));
         }
+    }
+
+    /**
+     * Check if the file fits the filter.
+     * 
+     * 
+     * @param name Name of the file
+     * @return true if it fits, false if it gets filtered out
+     */
+    private boolean fitsFilter(final String name) {
+        boolean result = false;
+        String filter = m_configuration.getFilterType();
+        String pattern = m_configuration.getFilterPattern();
+        if (!m_configuration.getUseFilter()) {
+            result = true;
+        } else {
+            if (filter.equals(FilterType.WILDCARD.getName())) {
+                pattern = WildcardMatcher.wildcardToRegex(pattern);
+            }
+            result = name.matches(pattern);
+        }
+        return result;
     }
 
     /**
