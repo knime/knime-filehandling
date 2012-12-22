@@ -53,7 +53,10 @@ package org.knime.base.filehandling.stringtouri;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.knime.core.data.DataColumnSpec;
+import org.knime.core.data.DataType;
 import org.knime.core.data.StringValue;
+import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
@@ -61,6 +64,7 @@ import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelectio
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.util.ColumnFilter;
 
 /**
  * <code>NodeDialog</code> for the node.
@@ -81,7 +85,6 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
     /**
      * New pane for configuring the node dialog.
      */
-    @SuppressWarnings("unchecked")
     protected StringToURINodeDialog() {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
@@ -99,7 +102,19 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
         });
         // Column selection
         addDialogComponent(new DialogComponentColumnNameSelection(
-                m_columnselection, "Column selection", 0, StringValue.class));
+                m_columnselection, "Column selection", 0, new ColumnFilter() {
+                    @Override
+                    public boolean includeColumn(final DataColumnSpec colSpec) {
+                        DataType type = colSpec.getType();
+                        return type.isCompatible(StringValue.class)
+                                && !type.isCompatible(URIDataValue.class);
+                    }
+
+                    @Override
+                    public String allFilteredMsg() {
+                        return "No applicable column available";
+                    }
+                }));
         // Missing file abort
         addDialogComponent(new DialogComponentBoolean(m_missingfileabort,
                 "Fail if file does not exist (only applies to local files)"));

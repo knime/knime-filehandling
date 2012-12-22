@@ -4,13 +4,14 @@
     <name>Download</name>
 
     <shortDescription>
-        Download files from a server.
+        Download file or folder from a server.
     </shortDescription>
 
     <fullDescription>
         <intro>
-            This node downloads the files from
-            the server specified by
+            This node downloads a file or folder from
+            the server
+            specified by
             the connection information and outputs a table
             with the
             references to the local files.

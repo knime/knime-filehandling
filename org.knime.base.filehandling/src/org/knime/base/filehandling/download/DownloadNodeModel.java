@@ -161,6 +161,7 @@ public class DownloadNodeModel extends NodeModel {
     private void download(final RemoteFile source, final RemoteFile folder,
             final BufferedDataContainer outContainer, final boolean root,
             final ExecutionContext exec) throws Exception {
+        boolean mkDirs = true;
         // Get filename
         String pathHandling = m_configuration.getPathHandling();
         String name = "";
@@ -168,6 +169,7 @@ public class DownloadNodeModel extends NodeModel {
             name = source.getFullName();
         } else if (pathHandling.equals(PathHandling.ONLY_FILENAME.getName())) {
             name = source.getName();
+            mkDirs = false;
         } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
             String prefix = m_configuration.getPrefix();
             name = source.getFullName().replaceFirst(prefix, "");
@@ -185,7 +187,9 @@ public class DownloadNodeModel extends NodeModel {
         // If the source is a directory download inner files
         if (source.isDirectory()) {
             if (root || m_configuration.getSubfolders()) {
-                target.mkDirs(true);
+                if (mkDirs) {
+                    target.mkDirs(true);
+                }
                 RemoteFile[] files = source.listFiles();
                 for (int i = 0; i < files.length; i++) {
                     download(files[i], folder, outContainer, false, exec);

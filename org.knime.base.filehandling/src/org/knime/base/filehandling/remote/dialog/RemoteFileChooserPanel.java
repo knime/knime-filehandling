@@ -213,7 +213,7 @@ public class RemoteFileChooserPanel {
      * @return The current selection
      */
     public String getSelection() {
-        return (String)m_combobox.getSelectedItem();
+        return m_combobox.getEditor().getItem().toString();
     }
 
     /**

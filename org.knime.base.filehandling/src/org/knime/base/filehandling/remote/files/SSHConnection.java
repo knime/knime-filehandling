@@ -100,13 +100,19 @@ public class SSHConnection extends Connection {
                 m_uri.getPort() >= 0 ? m_uri.getPort() : DefaultPortMap
                         .getMap().get("ssh");
         String user = m_uri.getUserInfo();
-        String password =
-                KnimeEncryption.decrypt(m_connectionInformation.getPassword());
+        String password = m_connectionInformation.getPassword();
+        if (password != null) {
+            password = KnimeEncryption.decrypt(password);
+        }
         JSch jsch = new JSch();
         // Use keyfile if available
         String keyfile = m_connectionInformation.getKeyfile();
         if (keyfile != null && keyfile.length() != 0) {
-            jsch.addIdentity(keyfile, password);
+            if (password == null) {
+                jsch.addIdentity(keyfile);
+            } else {
+                jsch.addIdentity(keyfile, password);
+            }
         }
         // Set known hosts if available
         String knownHosts = m_connectionInformation.getKnownHosts();

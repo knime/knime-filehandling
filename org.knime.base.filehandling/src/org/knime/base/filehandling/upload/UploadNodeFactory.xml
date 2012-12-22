@@ -4,12 +4,13 @@
     <name>Upload</name>
 
     <shortDescription>
-        Uploads files to a server.
+        Uploads files and folders to a server.
     </shortDescription>
 
     <fullDescription>
         <intro>
-            This node uploads the files referenced by the table to
+            This node uploads the files and folders referenced by the
+            table to
             the server specified by the connection information.
         </intro>
 

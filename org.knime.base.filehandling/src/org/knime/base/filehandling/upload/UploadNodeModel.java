@@ -160,6 +160,7 @@ public class UploadNodeModel extends NodeModel {
     private void upload(final RemoteFile source, final RemoteFile folder,
             final ConnectionMonitor monitor, final ExecutionContext exec)
             throws Exception {
+        boolean mkDirs = true;
         // Get overwrite policy
         String overwritePolicy = m_configuration.getOverwritePolicy();
         // Get filename
@@ -169,6 +170,7 @@ public class UploadNodeModel extends NodeModel {
             name = source.getFullName();
         } else if (pathHandling.equals(PathHandling.ONLY_FILENAME.getName())) {
             name = source.getName();
+            mkDirs = false;
         } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
             String prefix = m_configuration.getPrefix();
             prefix =
@@ -188,13 +190,17 @@ public class UploadNodeModel extends NodeModel {
                         m_connectionInformation, monitor);
         // If the source is a directory upload inner files
         if (source.isDirectory()) {
-            target.mkDirs(true);
+            if (mkDirs) {
+                target.mkDirs(true);
+            }
             RemoteFile[] files = source.listFiles();
             for (int i = 0; i < files.length; i++) {
                 upload(files[i], folder, monitor, exec);
             }
         } else {
-            target.mkDirs(false);
+            if (mkDirs) {
+                target.mkDirs(false);
+            }
             if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                 // Policy overwrite:
                 // Just write
