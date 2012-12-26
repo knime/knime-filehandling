@@ -10,7 +10,7 @@
     <fullDescription>
         <intro>
             This node writes files from a table with binary objects. It
-            will append the URIs to the files to the output table.
+            will append the URIs of the files to the output table.
         </intro>
 
 
