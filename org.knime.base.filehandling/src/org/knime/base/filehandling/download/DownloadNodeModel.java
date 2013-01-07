@@ -189,6 +189,7 @@ public class DownloadNodeModel extends NodeModel {
                 download(files[i], folder, outContainer, exec);
             }
         } else {
+            target.mkDirs(false);
             boolean downloaded = false;
             // Get overwrite policy
             String overwritePolicy = m_configuration.getOverwritePolicy();
