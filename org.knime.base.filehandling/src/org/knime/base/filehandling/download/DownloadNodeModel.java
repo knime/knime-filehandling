@@ -196,6 +196,7 @@ public class DownloadNodeModel extends NodeModel {
                 }
             }
         } else if (fitsFilter(source.getName())) {
+            target.mkDirs(false);
             boolean downloaded = false;
             // Get overwrite policy
             String overwritePolicy = m_configuration.getOverwritePolicy();
