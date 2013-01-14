@@ -28,6 +28,7 @@
    <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.upload.UploadNodeFactory" id="org.knime.base.filehandling.upload.UploadNodeFactory" />
    <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.download.DownloadNodeFactory" id="org.knime.base.filehandling.download.DownloadNodeFactory" />
    <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.downloaduploadfromlist.DownloadUploadFromListNodeFactory" id="org.knime.base.filehandling.downloaduploadfromlist.DownloadUploadFromListNodeFactory" />
+   <node category-path="/labs/filehandling/uri" factory-class="org.knime.base.filehandling.uriporttovariable.URIPortToVariableNodeFactory" id="org.knime.base.filehandling.uriporttovariable.URIPortToVariableNodeFactory" />
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category description="Nodes to handle files" icon="icons/cfilehandling16x16.png" level-id="filehandling" name="File Handling" path="/labs" />

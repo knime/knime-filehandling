@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./uriporttovariable16x16.png" type="Manipulator">
+    <name>URI Port to Variable</name>
+
+    <shortDescription>
+        Output the URIs from an URI port object to variables.
+    </shortDescription>
+
+    <fullDescription>
+        <intro>
+            This node collects the URIs from an URI port object and puts
+            them into variables.
+        </intro>
+
+
+    </fullDescription>
+
+    <ports>
+        <inPort name="URI Port" index="0">
+            URI port object containing URIs.
+        </inPort>
+        <outPort name="Variable Port" index="0">
+            The collected URIs in variables.
+        </outPort>
+    </ports>
+</knimeNode>
