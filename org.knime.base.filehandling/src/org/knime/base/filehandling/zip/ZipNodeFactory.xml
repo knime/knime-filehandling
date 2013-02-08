@@ -45,7 +45,7 @@
             <br />
             <b>Truncate prefix</b>
             <br />
-            The given prefix will be cut off the files path inside the
+            The given prefix will be cut off of the file paths inside the
             zip file.
             To locate the files, the full path is still required in the input
             table.
