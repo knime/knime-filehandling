@@ -126,7 +126,7 @@ public class TestConnectionDialog {
         m_dialog.setTitle("Test connection");
         m_dialog.pack();
         m_dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
-        m_dialog.setSize(600, 100);
+        m_dialog.setSize(600, 110);
         tryConnection();
         m_dialog.setVisible(true);
         // Stops here as long as the dialog is open, then disposes of the
@@ -223,6 +223,8 @@ public class TestConnectionDialog {
 
         private boolean m_success;
 
+        private String m_error;
+
         /**
          * {@inheritDoc}
          */
@@ -237,9 +239,9 @@ public class TestConnectionDialog {
                 m_success = true;
             } catch (Exception e) {
                 NodeLogger.getLogger(getClass()).warn("Couldn't connect", e);
+                m_error = e.getMessage();
                 m_success = false;
             }
-
             return null;
         }
 
@@ -254,8 +256,9 @@ public class TestConnectionDialog {
                 m_info.setText("Connection to "
                         + m_connectionInformation.toURI() + " succeeded");
             } else {
-                m_info.setText("Connection to "
-                        + m_connectionInformation.toURI() + " failed");
+                m_info.setText("<html>Connection to "
+                        + m_connectionInformation.toURI() + " failed<br />"
+                        + m_error + "</html>");
                 m_button1.setText("Try again");
                 m_button1.setPreferredSize(m_buttonSize);
                 m_button1.setActionCommand("tryagain");
