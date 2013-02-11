@@ -57,16 +57,16 @@ package org.knime.base.filehandling.remote.connectioninformation.node;
 public enum Protocol {
 
     /** SSH protocol. */
-    SSH("ssh", 22, false, true, true, true),
+    SSH("ssh", 22, false, true, true, true, true),
 
     /** FTP protocol. */
-    FTP("ftp", 21, true, false, false, true),
+    FTP("ftp", 21, true, false, false, true, true),
 
     /** HTTP protocol. */
-    HTTP("http", 80, true, false, false, false),
+    HTTP("http", 80, true, false, false, false, false),
 
     /** HTTPS protocol. */
-    HTTPS("https", 443, true, false, false, false);
+    HTTPS("https", 443, true, false, false, false, false);
 
     private String m_name;
 
@@ -80,6 +80,8 @@ public enum Protocol {
 
     private boolean m_testsupport;
 
+    private boolean m_browseSupport;
+
     /**
      * Create a protocol.
      * 
@@ -90,58 +92,68 @@ public enum Protocol {
      * @param keyfileSupport If authentication via keyfile is supported
      * @param knownhostsSupport If use of known hosts is supported
      * @param testSupport If the testing of the connection is supported
+     * @param browseSupport If this protocol supports browsing
      */
     private Protocol(final String name, final int port,
             final boolean authNoneSupport, final boolean keyfileSupport,
-            final boolean knownhostsSupport, final boolean testSupport) {
+            final boolean knownhostsSupport, final boolean testSupport,
+            final boolean browseSupport) {
         m_name = name;
         m_port = port;
         m_authnonesupport = authNoneSupport;
         m_keyfilesupport = keyfileSupport;
         m_knownhostssupport = knownhostsSupport;
         m_testsupport = testSupport;
+        m_browseSupport = browseSupport;
     }
 
     /**
      * @return the name
      */
-    String getName() {
+    public String getName() {
         return m_name;
     }
 
     /**
      * @return the port
      */
-    int getPort() {
+    public int getPort() {
         return m_port;
     }
 
     /**
      * @return If this protocol supports the authentication method none
      */
-    boolean hasAuthNoneSupport() {
+    public boolean hasAuthNoneSupport() {
         return m_authnonesupport;
     }
 
     /**
      * @return If this protocol has support for key files
      */
-    boolean hasKeyfileSupport() {
+    public boolean hasKeyfileSupport() {
         return m_keyfilesupport;
     }
 
     /**
      * @return If this protocol has support for known hosts
      */
-    boolean hasKnownhostsSupport() {
+    public boolean hasKnownhostsSupport() {
         return m_knownhostssupport;
     }
 
     /**
      * @return If this protocol has support for testing the connection
      */
-    boolean hasTestSupport() {
+    public boolean hasTestSupport() {
         return m_testsupport;
+    }
+
+    /**
+     * @return If this protocol supports browsing
+     */
+    public boolean hasBrowseSupport() {
+        return m_browseSupport;
     }
 
     /**
@@ -151,7 +163,7 @@ public enum Protocol {
      * @param protocolName The name of the protocol
      * @return Protocol to the name
      */
-    static Protocol getProtocol(final String protocolName) {
+    public static Protocol getProtocol(final String protocolName) {
         Protocol protocol = null;
         if (protocolName.equals(SSH.getName())) {
             protocol = SSH;
@@ -168,7 +180,7 @@ public enum Protocol {
     /**
      * @return Array with all protocol names
      */
-    static String[] getAllProtocols() {
+    public static String[] getAllProtocols() {
         return new String[]{SSH.getName(), FTP.getName(), HTTP.getName(),
                 HTTPS.getName()};
     }
