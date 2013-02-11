@@ -31,7 +31,7 @@
             <br />
             <b>Use only filename</b>
             <br />
-            Truncate the whole path and leave only the files name.
+            Truncate the whole path and leave only the file's name.
             <br />
             <b>Truncate prefix</b>
             <br />
@@ -71,7 +71,7 @@
         <outPort name="Filelist port" index="0">
             Table containing the
             list of files that have been downloaded and if they have
-            benn downloaded or where already up to date.
+            been downloaded or were already up to date.
         </outPort>
     </ports>
 </knimeNode>
