@@ -103,7 +103,7 @@ public final class MIMEMap {
      * 
      * @return MIME-Types in mime.types format
      */
-    public static MIMETypeEntry[] getTypesFromExtensions() {
+    private static MIMETypeEntry[] getTypesFromExtensions() {
         // Get extensions
         IExtensionRegistry registry = Platform.getExtensionRegistry();
         IExtensionPoint point = registry.getExtensionPoint(EXTENSIONPOINT_ID);
@@ -137,7 +137,9 @@ public final class MIMEMap {
     /**
      * @return The MIME-Types contained in the <code>mime.types</code> file
      */
-    public static MIMETypeEntry[] getTypesFromFile() {
+    private static MIMETypeEntry[] getTypesFromFile() {
+        // (duplicated java code as the MimetypesFileTypeMap class doesn't give
+        // us all the information we need).
         List<MIMETypeEntry> entries = new LinkedList<MIMETypeEntry>();
         try {
             BufferedReader reader =
@@ -162,6 +164,7 @@ public final class MIMEMap {
                 }
             }
         } catch (Exception e) {
+            LOGGER.error("Failed to parse mime.types config file", e);
             // If file is not readable return nothing
         }
         return entries.toArray(new MIMETypeEntry[entries.size()]);
@@ -192,6 +195,7 @@ public final class MIMEMap {
                         new MimetypesFileTypeMap(FilehandlingPlugin
                                 .getDefault().getMIMETypeStream());
             } catch (IOException e) {
+                LOGGER.error("Failed to parse mime.types config file", e);
                 // If the file is not readable use default MIME-Types
                 mimeMap = new MimetypesFileTypeMap();
             }

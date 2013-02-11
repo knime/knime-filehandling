@@ -59,7 +59,7 @@ import java.util.List;
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class MIMETypeEntry {
+public final class MIMETypeEntry {
 
     private String m_type;
 
@@ -68,7 +68,7 @@ public class MIMETypeEntry {
     /**
      * @param type Name of this MIME-Type
      */
-    public MIMETypeEntry(final String type) {
+    MIMETypeEntry(final String type) {
         m_type = type;
         m_extensions = new LinkedList<String>();
     }
@@ -90,7 +90,7 @@ public class MIMETypeEntry {
     /**
      * @param extension Extension to register with this type
      */
-    public void addExtension(final String extension) {
+    void addExtension(final String extension) {
         m_extensions.add(extension);
     }
 
