@@ -64,7 +64,9 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
@@ -439,12 +441,17 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
                 }
                 container = container.getParent();
             }
-            // Get connection information to current settings
-            ConnectionInformation connectionInformation =
-                    createConfig().getConnectionInformation(
-                            getCredentialsProvider());
-            // Open dialog
-            new TestConnectionDialog(connectionInformation).open(frame);
+            try {
+                // Get connection information to current settings
+                ConnectionInformation connectionInformation =
+                        createConfig().getConnectionInformation(
+                                getCredentialsProvider());
+                // Open dialog
+                new TestConnectionDialog(connectionInformation).open(frame);
+            } catch (InvalidSettingsException e2) {
+                JOptionPane.showMessageDialog(new JFrame(), e2.getMessage(),
+                        "Invalid settings", JOptionPane.ERROR_MESSAGE);
+            }
         }
 
     }
@@ -464,15 +471,22 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * 
      * 
      * @return The configuration object
+     * @throws InvalidSettingsException
      */
-    private ConnectionInformationConfiguration createConfig() {
+    private ConnectionInformationConfiguration createConfig()
+            throws InvalidSettingsException {
         ConnectionInformationConfiguration config =
                 new ConnectionInformationConfiguration(m_protocol);
         config.setUseworkflowcredentials(m_useworkflowcredentials.isSelected());
         config.setWorkflowcredentials((String)m_workflowcredentials
                 .getSelectedItem());
         config.setUser(m_user.getText());
-        config.setHost(m_host.getText());
+        String host = m_host.getText();
+        if (!DomainValidator.isValidDomain(host)) {
+            throw new InvalidSettingsException(
+                    "Host invalid. Host must not include scheme, user, port, path or query");
+        }
+        config.setHost(host);
         config.setPort((Integer)m_port.getValue());
         config.setAuthenticationmethod(m_authmethod.getSelection()
                 .getActionCommand());

@@ -70,6 +70,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.knime.base.filehandling.NodeUtils;
+import org.knime.base.filehandling.remote.connectioninformation.node.Protocol;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.FlowVariableModelButton;
@@ -194,6 +195,7 @@ public class RemoteFileChooserPanel {
                         + m_historyID;
         updateHistory();
         m_connectionInformation = connectionInformation;
+        setEnabled(m_panel.isEnabled());
     }
 
     /**
@@ -237,9 +239,15 @@ public class RemoteFileChooserPanel {
         boolean replacement =
                 m_fvmbutton.getFlowVariableModel()
                         .isVariableReplacementEnabled();
+        boolean browsable = false;
+        if (m_connectionInformation != null) {
+            browsable =
+                    Protocol.getProtocol(m_connectionInformation.getProtocol())
+                            .hasBrowseSupport();
+        }
         m_panel.setEnabled(enabled);
         m_combobox.setEnabled(enabled && !replacement);
-        m_button.setEnabled(enabled && !replacement);
+        m_button.setEnabled(enabled && !replacement && browsable);
         m_fvmbutton.setEnabled(enabled);
     }
 

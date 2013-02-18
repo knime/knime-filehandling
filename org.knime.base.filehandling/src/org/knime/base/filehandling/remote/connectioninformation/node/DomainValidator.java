@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright (C) 2003 - 2013
+ *  Copyright (C) 2003 - 2011
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -46,64 +46,59 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 16, 2012 (Patrick Winter): created
+ *   Feb 1, 2013 (Patrick Winter): created
  */
-package org.knime.base.filehandling.mime;
+package org.knime.base.filehandling.remote.connectioninformation.node;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.regex.Pattern;
 
 /**
- * Represents a MIME-Type and its registered extensions.
+ * Utility class to check domains.
  * 
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public final class MIMETypeEntry {
+final class DomainValidator {
 
-    private String m_type;
-
-    private List<String> m_extensions;
-
-    /**
-     * @param type Name of this MIME-Type
-     */
-    MIMETypeEntry(final String type) {
-        m_type = type;
-        m_extensions = new LinkedList<String>();
+    private DomainValidator() {
+        // Disable default constructor
     }
 
-    /**
-     * @return The MIME-Types name
-     */
-    public String getType() {
-        return m_type;
-    }
+    // Define valid outer characters
+    // alphanumeric
+    // Examples: 0; a; B; u; z
+    private static final String OUTER = "[a-zA-Z0-9]";
+
+    // Define valid inner characters
+    // outer and '-'
+    // Examples: 0; a; B; -
+    private static final String INNER = OUTER + "|[\\-]";
+
+    // Define valid label
+    // single outer or outer then 0-* inner then outer
+    // Examples: a; aa; a-a; a--a; a-a-a; uni-konstanz
+    private static final String LABEL = OUTER + "|" + OUTER + INNER + "*"
+            + OUTER;
+
+    // Define multiple labels
+    // label '.' label...
+    // Examples: a.a; a.a-a; www.uni-konstanz.de
+    private static final String MULTILABEL = LABEL + "([.]" + LABEL + ")*";
+
+    private static Pattern pattern = null;
 
     /**
-     * @return The extensions of this MIME-Type
+     * Checks if a string is a valid domain.
+     * 
+     * 
+     * @param string The string to check
+     * @return true if the string is a valid domain, false otherwise
      */
-    public List<String> getExtensions() {
-        return m_extensions;
-    }
-
-    /**
-     * @param extension Extension to register with this type
-     */
-    void addExtension(final String extension) {
-        m_extensions.add(extension);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String toString() {
-        String result = m_type;
-        for (int i = 0; i < m_extensions.size(); i++) {
-            result += " " + m_extensions.get(i);
+    public static boolean isValidDomain(final String string) {
+        if (pattern == null) {
+            pattern = Pattern.compile(MULTILABEL);
         }
-        return result;
+        return pattern.matcher(string).matches();
     }
 
 }
