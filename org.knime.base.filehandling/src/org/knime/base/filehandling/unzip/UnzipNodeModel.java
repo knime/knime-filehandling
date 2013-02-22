@@ -54,7 +54,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,6 +66,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -143,23 +148,45 @@ class UnzipNodeModel extends NodeModel {
      */
     private void extractZip(final BufferedDataContainer outContainer,
             final ExecutionContext exec) throws Exception {
+        boolean localFile = true;
         int rowID = 0;
         List<String> filenames = new LinkedList<String>();
-        File source = new File(m_source.getStringValue());
+        String rawSource = m_source.getStringValue();
+        InputStream in = null;
+        Progress progress = null;
+        try {
+            URL sourceURL = new URL(rawSource);
+            if (!sourceURL.getProtocol().equals("file")) {
+                in = new URL(rawSource).openStream();
+                progress = new Progress();
+                localFile = false;
+            }
+        } catch (MalformedURLException e) {
+            // sourceStream is still null
+        }
+        if (in == null) {
+            File sourceFile = new File(textToPath(rawSource));
+            in = new FileInputStream(sourceFile);
+            progress = new Progress(checkFiles(exec));
+        }
         File directory = new File(m_targetdirectory.getStringValue());
-        FileInputStream in = null;
         ZipInputStream zin = null;
         FileOutputStream out = null;
         try {
-            byte[] buffer = new byte[1024];
-            // Check for abort condition and get total size of files
-            Progress progress = new Progress(checkFiles(exec));
-            in = new FileInputStream(source);
+            byte[] buffer = new byte[8*1024];
             zin = new ZipInputStream(in);
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
                 // Generate full path to file
                 File file = new File(directory, entry.getName());
+                // If file exists and policy is abort throw an exception
+                String ifExists = m_ifexists.getStringValue();
+                if (file.exists()
+                        && ifExists.equals(OverwritePolicy.ABORT.getName())) {
+                    throw new IOException("File \"" + file.getAbsolutePath()
+                            + "\" exists, overwrite policy: \"" + ifExists
+                            + "\"");
+                }
                 filenames.add(file.getAbsolutePath());
                 // Remove old file if it exists
                 if (file.exists()) {
@@ -175,7 +202,13 @@ class UnzipNodeModel extends NodeModel {
                 // Copy content into new file
                 while ((length = zin.read(buffer)) > 0) {
                     exec.checkCanceled();
-                    exec.setProgress(progress.getProgressInPercent());
+                    if (localFile) {
+                        exec.setProgress(progress.getProgressInPercent());
+                    } else {
+                        exec.setMessage("Unziped "
+                                + FileUtils.byteCountToDisplaySize(progress
+                                        .getProgress()));
+                    }
                     out.write(buffer, 0, length);
                     progress.advance(length);
                 }
@@ -225,7 +258,7 @@ class UnzipNodeModel extends NodeModel {
      */
     private long checkFiles(final ExecutionContext exec) throws Exception {
         long size = 0;
-        File source = new File(m_source.getStringValue());
+        File source = new File(textToPath(m_source.getStringValue()));
         File directory = new File(m_targetdirectory.getStringValue());
         String ifExists = m_ifexists.getStringValue();
         ZipFile zipFile = new ZipFile(source);
@@ -260,6 +293,32 @@ class UnzipNodeModel extends NodeModel {
             File file = new File(filenames.get(i));
             file.delete();
         }
+    }
+
+    /**
+     * Tries to create a path from the passed string.
+     * 
+     * @param text the string to transform into a path
+     * @return Path if entered value could be properly transformed
+     */
+    private static String textToPath(final String text) {
+        String path;
+        try {
+            URL url = new URL(text);
+            try {
+                URI uri = url.toURI();
+                path = uri.getPath();
+            } catch (URISyntaxException e) {
+                path = url.getPath();
+            }
+        } catch (MalformedURLException e) {
+            // see if they specified a file without giving the protocol
+            File tmp = new File(text);
+
+            // if that blows off we let the exception go up the stack.
+            path = tmp.getAbsolutePath();
+        }
+        return path;
     }
 
     /**
