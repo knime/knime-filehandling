@@ -63,6 +63,13 @@ public class Progress {
     private long m_progress;
 
     /**
+     */
+    Progress() {
+        m_goal = 0;
+        m_progress = 0;
+    }
+
+    /**
      * @param goal The goal
      */
     Progress(final long goal) {
@@ -98,7 +105,7 @@ public class Progress {
      * @return The progress in percent
      */
     double getProgressInPercent() {
-        return (double)m_progress / m_goal;
+        return m_goal == 0 ? 0 : (double)m_progress / m_goal;
     }
 
 }
