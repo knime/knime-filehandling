@@ -185,12 +185,15 @@ class StringToURINodeModel extends NodeModel {
             try {
                 // Get URI and extension
                 String value = ((StringValue)oldCell).getStringValue();
-                // Check if value has no scheme
-                if (new URI(value).getScheme() == null) {
+                URI uri = null;
+                // Check if value has a scheme but is no windows path
+                if (value.matches("[a-zA-Z]+:.*") && value.charAt(1) != ':') {
+                    uri = new URI(value);
+                } else {
                     // Convert file path to URI
-                    value = new File(value).toURI().toURL().toString();
+                    File file = new File(value);
+                    uri = file.toURI();
                 }
-                URI uri = new URI(value);
                 if (uri.getScheme().equals("file")
                         && m_missingfileabort.getBooleanValue()) {
                     // Check for existing file
@@ -199,8 +202,11 @@ class StringToURINodeModel extends NodeModel {
                                 + uri.toString() + "\" does not exist");
                     }
                 }
-                // Extract extension
-                String extension = FilenameUtils.getExtension(value);
+                String extension = "";
+                if (uri.getPath() != null) {
+                    // Extract extension
+                    extension = FilenameUtils.getExtension(uri.getPath());
+                }
                 cell = new URIDataCell(new URIContent(uri, extension));
             } catch (Exception e) {
                 throw new RuntimeException(e);

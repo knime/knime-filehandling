@@ -105,6 +105,18 @@ class CopyFilesNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
+        // Check settings only if filename handling is generate
+        if (m_configuration.getFilenamehandling().equals(
+                FilenameHandling.SOURCENAME.getName())) {
+            // Does the output directory exist?
+            File outputdirectory =
+                    new File(m_configuration.getOutputdirectory());
+            if (!outputdirectory.isDirectory()) {
+                throw new InvalidSettingsException("Output directory \""
+                        + outputdirectory.getAbsoluteFile()
+                        + "\" does not exist");
+            }
+        }
         BufferedDataTable out = null;
         // Monitor for duplicate checking and rollback
         CopyOrMoveMonitor monitor =
@@ -255,7 +267,7 @@ class CopyFilesNodeModel extends NodeModel {
         String sourceColumn = m_configuration.getSourcecolumn();
         int sourceIndex = inSpec.findColumnIndex(sourceColumn);
         String filenameHandling = m_configuration.getFilenamehandling();
-        String outputDirectory = m_configuration.getOutputdirectory();
+        File outputDirectory = null;
         String fromColumn = FilenameHandling.FROMCOLUMN.getName();
         String generate = FilenameHandling.SOURCENAME.getName();
         String ifExists = m_configuration.getIfexists();
@@ -288,10 +300,11 @@ class CopyFilesNodeModel extends NodeModel {
                 }
                 // Absolute path in filename, no preceding directory
                 filename = targetUri.getPath();
-                outputDirectory = "";
             }
             if (filenameHandling.equals(generate)) {
                 filename = FilenameUtils.getName(sourceUri.getPath());
+                outputDirectory =
+                        new File(m_configuration.getOutputdirectory());
             }
             try {
                 String sourcePath = sourceUri.getPath();

@@ -133,6 +133,17 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
             final ExecutionContext exec) throws Exception {
+        // Check settings only if filename handling is generate
+        if (m_filenamehandling.getStringValue().equals(
+                FilenameHandling.GENERATE.getName())) {
+            // Does the output directory exist?
+            File outputdirectory = new File(m_outputdirectory.getStringValue());
+            if (!outputdirectory.isDirectory()) {
+                throw new InvalidSettingsException("Output directory \""
+                        + outputdirectory.getAbsoluteFile()
+                        + "\" does not exist");
+            }
+        }
         BufferedDataTable out = null;
         // HashSet for duplicate checking and cleanup
         Set<String> filenames = new HashSet<String>();
@@ -309,7 +320,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         String boColumn = m_bocolumn.getStringValue();
         int boIndex = inSpec.findColumnIndex(boColumn);
         String filenameHandling = m_filenamehandling.getStringValue();
-        String outputDirectory = m_outputdirectory.getStringValue();
+        File outputDirectory = null;
         String fromColumn = FilenameHandling.FROMCOLUMN.getName();
         String generate = FilenameHandling.GENERATE.getName();
         String ifExists = m_ifexists.getStringValue();
@@ -334,13 +345,13 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                 }
                 // Absolute path in filename, no preceding directory
                 filename = targetUri.getPath();
-                outputDirectory = "";
             }
             if (filenameHandling.equals(generate)) {
                 // Generate filename using pattern, by replacing the ? with the
                 // row number
                 filename =
                         m_namepattern.getStringValue().replace("?", "" + rowNr);
+                outputDirectory = new File(m_outputdirectory.getStringValue());
             }
             try {
                 File file = new File(outputDirectory, filename);
