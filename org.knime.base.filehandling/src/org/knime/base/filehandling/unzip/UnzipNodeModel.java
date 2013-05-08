@@ -173,7 +173,7 @@ class UnzipNodeModel extends NodeModel {
         ZipInputStream zin = null;
         FileOutputStream out = null;
         try {
-            byte[] buffer = new byte[8*1024];
+            byte[] buffer = new byte[8 * 1024];
             zin = new ZipInputStream(in);
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
@@ -187,47 +187,61 @@ class UnzipNodeModel extends NodeModel {
                             + "\" exists, overwrite policy: \"" + ifExists
                             + "\"");
                 }
-                filenames.add(file.getAbsolutePath());
-                // Remove old file if it exists
-                if (file.exists()) {
-                    file.delete();
-                    LOGGER.info("Replacing existing file \""
-                            + file.getAbsolutePath() + "\"");
-                }
-                // Create directories if necessary
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-                out = new FileOutputStream(file);
-                int length;
-                // Copy content into new file
-                while ((length = zin.read(buffer)) > 0) {
-                    exec.checkCanceled();
-                    if (localFile) {
-                        exec.setProgress(progress.getProgressInPercent());
-                    } else {
-                        exec.setMessage("Unziped "
-                                + FileUtils.byteCountToDisplaySize(progress
-                                        .getProgress()));
+                // It depends on the zip file if the contained directories get
+                // listed as entries or not
+                if (entry.isDirectory()) {
+                    // In case of a directory entry create the directory if not
+                    // present
+                    if (!file.exists()) {
+                        filenames.add(file.getAbsolutePath());
+                        file.mkdirs();
                     }
-                    out.write(buffer, 0, length);
-                    progress.advance(length);
+                } else {
+                    filenames.add(file.getAbsolutePath());
+                    // Remove old file if it exists
+                    if (file.exists()) {
+                        file.delete();
+                        LOGGER.info("Replacing existing file \""
+                                + file.getAbsolutePath() + "\"");
+                    }
+                    // Create directories if necessary (directories may not get
+                    // listed as entries and therefore have to be created here)
+                    file.getAbsoluteFile().getParentFile().mkdirs();
+                    file.createNewFile();
+                    out = new FileOutputStream(file);
+                    int length;
+                    // Copy content into new file
+                    while ((length = zin.read(buffer)) > 0) {
+                        exec.checkCanceled();
+                        if (localFile) {
+                            exec.setProgress(progress.getProgressInPercent());
+                        } else {
+                            exec.setMessage("Unziped "
+                                    + FileUtils.byteCountToDisplaySize(progress
+                                            .getProgress()));
+                        }
+                        out.write(buffer, 0, length);
+                        progress.advance(length);
+                    }
+                    out.close();
+                    // Create row with path or URI
+                    DataCell cell = null;
+                    String outputSelection = m_output.getStringValue();
+                    if (outputSelection.equals(OutputSelection.LOCATION
+                            .getName())) {
+                        cell = new StringCell(file.getAbsolutePath());
+                    }
+                    if (outputSelection.equals(OutputSelection.URI.getName())) {
+                        URI uri = file.getAbsoluteFile().toURI();
+                        String extension =
+                                FilenameUtils.getExtension(uri.getPath());
+                        URIContent content = new URIContent(uri, extension);
+                        cell = new URIDataCell(content);
+                    }
+                    outContainer.addRowToTable(new DefaultRow("Row" + rowID,
+                            cell));
+                    rowID++;
                 }
-                out.close();
-                // Create row with path or URI
-                DataCell cell = null;
-                String outputSelection = m_output.getStringValue();
-                if (outputSelection.equals(OutputSelection.LOCATION.getName())) {
-                    cell = new StringCell(file.getAbsolutePath());
-                }
-                if (outputSelection.equals(OutputSelection.URI.getName())) {
-                    URI uri = file.getAbsoluteFile().toURI();
-                    String extension =
-                            FilenameUtils.getExtension(uri.getPath());
-                    URIContent content = new URIContent(uri, extension);
-                    cell = new URIDataCell(content);
-                }
-                outContainer.addRowToTable(new DefaultRow("Row" + rowID, cell));
-                rowID++;
                 entry = zin.getNextEntry();
             }
         } catch (Exception e) {
@@ -289,7 +303,7 @@ class UnzipNodeModel extends NodeModel {
      * @param filenames List of the files to remove
      */
     private void removeFiles(final List<String> filenames) {
-        for (int i = 0; i < filenames.size(); i++) {
+        for (int i = filenames.size() - 1; i >= 0; i--) {
             File file = new File(filenames.get(i));
             file.delete();
         }

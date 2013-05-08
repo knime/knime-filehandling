@@ -192,8 +192,8 @@ class ZipNodeModel extends NodeModel {
             final ExecutionContext exec) throws Exception {
         Set<String> newfiles = new HashSet<String>();
         ZipOutputStream zout = null;
-        File newFile = new File(target);
-        File oldFile = new File(target + ".old");
+        File newFile = new File(target).getAbsoluteFile();
+        File oldFile = new File(target + ".old").getAbsoluteFile();
         boolean fileExists = newFile.exists();
         // Create files for each filename
         File[] files = new File[filenames.length];
@@ -512,6 +512,12 @@ class ZipNodeModel extends NodeModel {
     @Override
     protected void validateSettings(final NodeSettingsRO settings)
             throws InvalidSettingsException {
+        SettingsModelString cloneLocation = 
+                m_locationcolumn.createCloneWithValidatedValue(settings);
+        String location = cloneLocation.getStringValue();
+        if (location == null || location.length() == 0) {
+            throw new InvalidSettingsException("No location specified");
+        }
         m_locationcolumn.validateSettings(settings);
         m_target.validateSettings(settings);
         m_compressionlevel.validateSettings(settings);
