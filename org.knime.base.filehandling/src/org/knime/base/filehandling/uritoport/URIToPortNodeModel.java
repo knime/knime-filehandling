@@ -90,8 +90,7 @@ class URIToPortNodeModel extends NodeModel {
      */
     protected URIToPortNodeModel() {
         // Table input, URI port output
-        super(new PortType[]{BufferedDataTable.TYPE},
-                new PortType[]{URIPortObject.TYPE});
+        super(new PortType[]{BufferedDataTable.TYPE}, new PortType[]{URIPortObject.TYPE});
         m_uricolumn = SettingsFactory.createURIColumnSettings();
     }
 
@@ -99,11 +98,9 @@ class URIToPortNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected PortObject[] execute(final PortObject[] inData,
-            final ExecutionContext exec) throws Exception {
+    protected PortObject[] execute(final PortObject[] inData, final ExecutionContext exec) throws Exception {
         BufferedDataTable data = (BufferedDataTable)inData[0];
-        int index =
-                data.getSpec().findColumnIndex(m_uricolumn.getStringValue());
+        int index = data.getSpec().findColumnIndex(m_uricolumn.getStringValue());
         // Create list of uris
         List<URIContent> uris = new ArrayList<URIContent>(data.getRowCount());
         for (DataRow row : data) {
@@ -125,11 +122,9 @@ class URIToPortNodeModel extends NodeModel {
      * @throws InvalidSettingsException If the settings are incorrect
      */
     @SuppressWarnings("unchecked")
-    private void checkSettings(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private void checkSettings(final DataTableSpec inSpec) throws InvalidSettingsException {
         String selectedColumn = m_uricolumn.getStringValue();
-        NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn,
-                URIDataValue.class);
+        NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn, URIDataValue.class);
     }
 
     /**
@@ -144,8 +139,7 @@ class URIToPortNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         // Validate settings
         checkSettings((DataTableSpec)inSpecs[0]);
         return new PortObjectSpec[]{null};
@@ -163,8 +157,7 @@ class URIToPortNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_uricolumn.loadSettingsFrom(settings);
     }
 
@@ -172,8 +165,7 @@ class URIToPortNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_uricolumn.validateSettings(settings);
     }
 
@@ -181,8 +173,7 @@ class URIToPortNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -191,8 +182,7 @@ class URIToPortNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

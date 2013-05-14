@@ -180,16 +180,12 @@ class CopyFilesConfiguration {
      * @param settings The <code>NodeSettings</code> to read from
      */
     void load(final NodeSettingsRO settings) {
-        m_copyormove =
-                settings.getString("copyormove", CopyOrMove.COPY.getName());
+        m_copyormove = settings.getString("copyormove", CopyOrMove.COPY.getName());
         m_sourcecolumn = settings.getString("sourcecolumn", "");
-        m_filenamehandling =
-                settings.getString("filenamehandling",
-                        FilenameHandling.FROMCOLUMN.getName());
+        m_filenamehandling = settings.getString("filenamehandling", FilenameHandling.FROMCOLUMN.getName());
         m_targetcolumn = settings.getString("targetcolumn", "");
         m_outputdirectory = settings.getString("outputdirectory", "");
-        m_ifexists =
-                settings.getString("ifexists", OverwritePolicy.ABORT.getName());
+        m_ifexists = settings.getString("ifexists", OverwritePolicy.ABORT.getName());
     }
 
     /**
@@ -199,8 +195,7 @@ class CopyFilesConfiguration {
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
-    void loadAndValidate(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    void loadAndValidate(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_copyormove = settings.getString("copyormove");
         validate(m_copyormove);
         m_sourcecolumn = settings.getString("sourcecolumn");

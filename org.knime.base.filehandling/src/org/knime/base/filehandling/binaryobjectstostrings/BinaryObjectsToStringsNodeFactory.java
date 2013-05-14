@@ -60,8 +60,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class BinaryObjectsToStringsNodeFactory extends
-        NodeFactory<BinaryObjectsToStringsNodeModel> {
+public class BinaryObjectsToStringsNodeFactory extends NodeFactory<BinaryObjectsToStringsNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -83,8 +82,8 @@ public class BinaryObjectsToStringsNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<BinaryObjectsToStringsNodeModel> createNodeView(
-            final int viewIndex, final BinaryObjectsToStringsNodeModel nodeModel) {
+    public NodeView<BinaryObjectsToStringsNodeModel> createNodeView(final int viewIndex,
+            final BinaryObjectsToStringsNodeModel nodeModel) {
         return null;
     }
 

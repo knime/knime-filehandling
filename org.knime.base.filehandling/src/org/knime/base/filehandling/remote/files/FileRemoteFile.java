@@ -123,12 +123,10 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void move(final RemoteFile file, final ExecutionContext exec)
-            throws Exception {
+    public void move(final RemoteFile file, final ExecutionContext exec) throws Exception {
         if (file instanceof FileRemoteFile) {
             FileRemoteFile source = (FileRemoteFile)file;
-            boolean success =
-                    new File(getURI()).renameTo(new File(source.getURI()));
+            boolean success = new File(getURI()).renameTo(new File(source.getURI()));
             if (!success) {
                 throw new Exception("Move operation failed");
             }

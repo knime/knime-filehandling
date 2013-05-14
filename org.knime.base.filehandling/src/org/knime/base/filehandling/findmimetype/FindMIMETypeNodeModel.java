@@ -98,12 +98,10 @@ class FindMIMETypeNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-            final ExecutionContext exec) throws Exception {
-        ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec());
-        BufferedDataTable out =
-                exec.createColumnRearrangeTable(inData[0], rearranger, exec);
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+            throws Exception {
+        ColumnRearranger rearranger = createColumnRearranger(inData[0].getDataTableSpec());
+        BufferedDataTable out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
@@ -116,24 +114,17 @@ class FindMIMETypeNodeModel extends NodeModel {
      * @return Rearranger that will append the columns
      * @throws InvalidSettingsException If the settings are incorrect
      */
-    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec) throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec[] colSpecs = new DataColumnSpec[2];
         // Extension column
-        String columnName0 =
-                DataTableSpec.getUniqueColumnName(inSpec, "Extension");
-        colSpecs[0] =
-                new DataColumnSpecCreator(columnName0, StringCell.TYPE)
-                        .createSpec();
+        String columnName0 = DataTableSpec.getUniqueColumnName(inSpec, "Extension");
+        colSpecs[0] = new DataColumnSpecCreator(columnName0, StringCell.TYPE).createSpec();
         // MIME-Type column
-        String columnName1 =
-                DataTableSpec.getUniqueColumnName(inSpec, "MIME-Type");
-        colSpecs[1] =
-                new DataColumnSpecCreator(columnName1, StringCell.TYPE)
-                        .createSpec();
+        String columnName1 = DataTableSpec.getUniqueColumnName(inSpec, "MIME-Type");
+        colSpecs[1] = new DataColumnSpecCreator(columnName1, StringCell.TYPE).createSpec();
         // Factory that creates two columns with extension and MIME-Type
         CellFactory factory = new AbstractCellFactory(colSpecs) {
             @Override
@@ -164,8 +155,7 @@ class FindMIMETypeNodeModel extends NodeModel {
         // Is the cell missing?
         if (!uriCell.isMissing()) {
             // Get extension from URI cell
-            String extension =
-                    ((URIDataValue)uriCell).getURIContent().getExtension();
+            String extension = ((URIDataValue)uriCell).getURIContent().getExtension();
             extCell = new StringCell(extension);
             // Find correspondent MIME-Type
             mimeCell = new StringCell(MIMEMap.getMIMEType(extension));
@@ -181,11 +171,9 @@ class FindMIMETypeNodeModel extends NodeModel {
      * @throws InvalidSettingsException If the settings are incorrect
      */
     @SuppressWarnings("unchecked")
-    private void checkSettings(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private void checkSettings(final DataTableSpec inSpec) throws InvalidSettingsException {
         String selectedColumn = m_columnselection.getStringValue();
-        NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn,
-                URIDataValue.class);
+        NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn, URIDataValue.class);
     }
 
     /**
@@ -200,8 +188,7 @@ class FindMIMETypeNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
         // createColumnRearranger will check the settings
         DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};
@@ -219,8 +206,7 @@ class FindMIMETypeNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_columnselection.loadSettingsFrom(settings);
     }
 
@@ -228,8 +214,7 @@ class FindMIMETypeNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_columnselection.validateSettings(settings);
     }
 
@@ -237,8 +222,7 @@ class FindMIMETypeNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -247,8 +231,7 @@ class FindMIMETypeNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

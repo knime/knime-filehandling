@@ -78,8 +78,7 @@ class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_abortifnotlocal = SettingsFactory.createAbortIfNotLocalSettings();
         // URI column
-        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
-                "URI column", 0, URIDataValue.class));
+        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn, "URI column", 0, URIDataValue.class));
         // Abort if not local
         addDialogComponent(new DialogComponentBoolean(m_abortifnotlocal,
                 "Fail execution if URI does not point to local file"));

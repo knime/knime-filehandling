@@ -92,16 +92,14 @@ public class UploadNodeModel extends NodeModel {
      * Constructor for the node model.
      */
     public UploadNodeModel() {
-        super(new PortType[]{ConnectionInformationPortObject.TYPE,
-                BufferedDataTable.TYPE}, new PortType[]{});
+        super(new PortType[]{ConnectionInformationPortObject.TYPE, BufferedDataTable.TYPE}, new PortType[]{});
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects,
-            final ExecutionContext exec) throws Exception {
+    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         ConnectionMonitor monitor = new ConnectionMonitor();
         try {
             exec.setProgress("Connecting to " + m_connectionInformation.toURI());
@@ -116,12 +114,8 @@ public class UploadNodeModel extends NodeModel {
             if (!targetFolder.endsWith("/")) {
                 targetFolder += "/";
             }
-            URI folderUri =
-                    new URI(m_connectionInformation.toURI().toString()
-                            + targetFolder);
-            RemoteFile folder =
-                    RemoteFileFactory.createRemoteFile(folderUri,
-                            m_connectionInformation, monitor);
+            URI folderUri = new URI(m_connectionInformation.toURI().toString() + targetFolder);
+            RemoteFile folder = RemoteFileFactory.createRemoteFile(folderUri, m_connectionInformation, monitor);
             folder.mkDirs(true);
             // Process each row
             for (DataRow row : table) {
@@ -130,12 +124,9 @@ public class UploadNodeModel extends NodeModel {
                     exec.checkCanceled();
                     exec.setProgress((double)i / rows);
                     // Get source URI
-                    URI uri =
-                            ((URIDataValue)row.getCell(index)).getURIContent()
-                                    .getURI();
+                    URI uri = ((URIDataValue)row.getCell(index)).getURIContent().getURI();
                     // Create source file (no connection information supported)
-                    RemoteFile sourceFile =
-                            RemoteFileFactory.createRemoteFile(uri, null, null);
+                    RemoteFile sourceFile = RemoteFileFactory.createRemoteFile(uri, null, null);
                     // Upload file
                     upload(sourceFile, folder, monitor, exec);
                     i++;
@@ -157,9 +148,8 @@ public class UploadNodeModel extends NodeModel {
      * @param monitor The connection monitor
      * @throws Exception If the operation could not be processed
      */
-    private void upload(final RemoteFile source, final RemoteFile folder,
-            final ConnectionMonitor monitor, final ExecutionContext exec)
-            throws Exception {
+    private void upload(final RemoteFile source, final RemoteFile folder, final ConnectionMonitor monitor,
+            final ExecutionContext exec) throws Exception {
         boolean mkDirs = true;
         // Get overwrite policy
         String overwritePolicy = m_configuration.getOverwritePolicy();
@@ -173,9 +163,7 @@ public class UploadNodeModel extends NodeModel {
             mkDirs = false;
         } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
             String prefix = m_configuration.getPrefix();
-            prefix =
-                    new File(prefix).toURI().toString()
-                            .replaceFirst("file:/", "");
+            prefix = new File(prefix).toURI().toString().replaceFirst("file:/", "");
             name = source.getFullName().replaceFirst(prefix, "");
         }
         if (name.startsWith("/")) {
@@ -185,9 +173,7 @@ public class UploadNodeModel extends NodeModel {
         // Generate URI to the target
         URI targetUri = new URI(folder.getURI() + name);
         // Create target file
-        RemoteFile target =
-                RemoteFileFactory.createRemoteFile(targetUri,
-                        m_connectionInformation, monitor);
+        RemoteFile target = RemoteFileFactory.createRemoteFile(targetUri, m_connectionInformation, monitor);
         // If the source is a directory upload inner files
         if (source.isDirectory()) {
             if (mkDirs) {
@@ -205,8 +191,7 @@ public class UploadNodeModel extends NodeModel {
                 // Policy overwrite:
                 // Just write
                 target.write(source, exec);
-            } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
-                    .getName())) {
+            } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER.getName())) {
                 // Policy overwrite if newer:
                 // Get modification time
                 long sourceTime = source.lastModified();
@@ -224,8 +209,7 @@ public class UploadNodeModel extends NodeModel {
                 // Policy abort:
                 // Throw exception if the target exists
                 if (target.exists()) {
-                    throw new Exception("File " + target.getFullName()
-                            + " already exists.");
+                    throw new Exception("File " + target.getFullName() + " already exists.");
                 }
                 target.write(source, exec);
             }
@@ -237,20 +221,16 @@ public class UploadNodeModel extends NodeModel {
      */
     @SuppressWarnings("unchecked")
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         // Check if a port object is available
         if (inSpecs[0] == null) {
-            throw new InvalidSettingsException(
-                    "No connection information available");
+            throw new InvalidSettingsException("No connection information available");
         }
-        ConnectionInformationPortObjectSpec object =
-                (ConnectionInformationPortObjectSpec)inSpecs[0];
+        ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
         m_connectionInformation = object.getConnectionInformation();
         // Check if the port object has connection information
         if (m_connectionInformation == null) {
-            throw new InvalidSettingsException(
-                    "No connection information available");
+            throw new InvalidSettingsException("No connection information available");
         }
         // Check if configuration has been loaded
         if (m_configuration == null) {
@@ -258,8 +238,7 @@ public class UploadNodeModel extends NodeModel {
         }
         // Check that source configuration is correct
         String source = m_configuration.getSource();
-        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Source",
-                source, URIDataValue.class);
+        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Source", source, URIDataValue.class);
         return new PortObjectSpec[]{};
     }
 
@@ -267,8 +246,7 @@ public class UploadNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File nodeInternDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // not used
     }
@@ -277,8 +255,7 @@ public class UploadNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File nodeInternDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // not used
     }
@@ -297,8 +274,7 @@ public class UploadNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         new UploadConfiguration().loadAndValidate(settings);
     }
 
@@ -306,8 +282,7 @@ public class UploadNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         UploadConfiguration config = new UploadConfiguration();
         config.loadAndValidate(settings);
         m_configuration = config;

@@ -82,8 +82,7 @@ public class UploadNodeFactory extends NodeFactory<UploadNodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public NodeView<UploadNodeModel> createNodeView(final int viewIndex,
-            final UploadNodeModel nodeModel) {
+    public NodeView<UploadNodeModel> createNodeView(final int viewIndex, final UploadNodeModel nodeModel) {
         return null;
     }
 

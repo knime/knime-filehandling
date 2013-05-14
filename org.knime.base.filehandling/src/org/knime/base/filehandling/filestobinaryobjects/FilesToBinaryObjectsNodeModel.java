@@ -88,8 +88,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
-    private static final NodeLogger LOGGER = NodeLogger
-            .getLogger(FilesToBinaryObjectsNodeModel.class);
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(FilesToBinaryObjectsNodeModel.class);
 
     private final SettingsModelString m_uricolumn;
 
@@ -104,20 +103,17 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
         super(1, 1);
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
-        m_bocolumnname =
-                SettingsFactory.createBinaryObjectColumnNameSettings(m_replace);
+        m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings(m_replace);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-            final ExecutionContext exec) throws Exception {
-        ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec(), exec);
-        BufferedDataTable out =
-                exec.createColumnRearrangeTable(inData[0], rearranger, exec);
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+            throws Exception {
+        ColumnRearranger rearranger = createColumnRearranger(inData[0].getDataTableSpec(), exec);
+        BufferedDataTable out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
@@ -131,16 +127,13 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      *         URI column
      * @throws InvalidSettingsException If the settings are incorrect
      */
-    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final ExecutionContext exec) throws InvalidSettingsException {
-        boolean replace =
-                m_replace.getStringValue().equals(
-                        ReplacePolicy.REPLACE.getName());
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec, final ExecutionContext exec)
+            throws InvalidSettingsException {
+        boolean replace = m_replace.getStringValue().equals(ReplacePolicy.REPLACE.getName());
         // Check settings for correctness
         checkSettings(inSpec);
         // Create binary object factory -- only assign during execution
-        final BinaryObjectCellFactory bocellfactory =
-                exec == null ? null : new BinaryObjectCellFactory(exec);
+        final BinaryObjectCellFactory bocellfactory = exec == null ? null : new BinaryObjectCellFactory(exec);
         String uricolumn = m_uricolumn.getStringValue();
         String bocolumnname;
         if (replace) {
@@ -150,13 +143,10 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
         }
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         // Create column of the binary objects
-        DataColumnSpec colSpec =
-                new DataColumnSpecCreator(bocolumnname,
-                        BinaryObjectDataCell.TYPE).createSpec();
+        DataColumnSpec colSpec = new DataColumnSpecCreator(bocolumnname, BinaryObjectDataCell.TYPE).createSpec();
         int inColIndex = inSpec.findColumnIndex(uricolumn);
         // Factory that creates the binary objects
-        FilesToBinaryCellFactory factory =
-                new FilesToBinaryCellFactory(colSpec, bocellfactory, inColIndex);
+        FilesToBinaryCellFactory factory = new FilesToBinaryCellFactory(colSpec, bocellfactory, inColIndex);
         if (replace) {
             // Replace URI column with the binary object column
             rearranger.replace(factory, inColIndex);
@@ -175,23 +165,17 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * @throws InvalidSettingsException If the settings are incorrect
      */
     @SuppressWarnings("unchecked")
-    private void checkSettings(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private void checkSettings(final DataTableSpec inSpec) throws InvalidSettingsException {
         String uricolumn = m_uricolumn.getStringValue();
-        NodeUtils.checkColumnSelection(inSpec, "URI", uricolumn,
-                URIDataValue.class);
-        boolean append =
-                m_replace.getStringValue().equals(
-                        ReplacePolicy.APPEND.getName());
+        NodeUtils.checkColumnSelection(inSpec, "URI", uricolumn, URIDataValue.class);
+        boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
         if (append) {
             // Is the binary object column name empty?
             if (m_bocolumnname.getStringValue().equals("")) {
-                throw new InvalidSettingsException(
-                        "Binary object column name can not be empty");
+                throw new InvalidSettingsException("Binary object column name can not be empty");
             }
             if (inSpec.findColumnIndex(m_bocolumnname.getStringValue()) != -1) {
-                throw new InvalidSettingsException(
-                        "Binary object column name already taken");
+                throw new InvalidSettingsException("Binary object column name already taken");
             }
         }
     }
@@ -208,11 +192,9 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
         // createColumnRearranger will check the settings
-        DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0], null).createSpec();
+        DataTableSpec outSpec = createColumnRearranger(inSpecs[0], null).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 
@@ -230,8 +212,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_uricolumn.loadSettingsFrom(settings);
         m_bocolumnname.loadSettingsFrom(settings);
         m_replace.loadSettingsFrom(settings);
@@ -241,8 +222,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_uricolumn.validateSettings(settings);
         m_bocolumnname.validateSettings(settings);
         m_replace.validateSettings(settings);
@@ -252,8 +232,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -262,8 +241,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -279,8 +257,8 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
         private final AtomicInteger m_totalCount = new AtomicInteger();
 
-        private FilesToBinaryCellFactory(final DataColumnSpec newColSpec,
-                final BinaryObjectCellFactory bocellfactory, final int colIndex) {
+        private FilesToBinaryCellFactory(final DataColumnSpec newColSpec, final BinaryObjectCellFactory bocellfactory,
+                final int colIndex) {
             super(newColSpec);
             m_bocellfactory = bocellfactory;
             m_colIndex = colIndex;
@@ -326,9 +304,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
             int error = m_errorCount.get();
             if (error != 0) {
                 int total = m_totalCount.get();
-                setWarningMessage(String.format(
-                        "Failed to read %d/%d files (see log for details)",
-                        error, total));
+                setWarningMessage(String.format("Failed to read %d/%d files (see log for details)", error, total));
             }
         }
     }

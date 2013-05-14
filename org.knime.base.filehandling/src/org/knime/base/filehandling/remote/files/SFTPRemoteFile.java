@@ -57,7 +57,6 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
@@ -113,8 +112,7 @@ public class SFTPRemoteFile extends RemoteFile {
      * @param connectionInformation Connection information to the given URI
      * @param connectionMonitor Monitor for the connection
      */
-    SFTPRemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation,
+    SFTPRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
             final ConnectionMonitor connectionMonitor) {
         super(uri, connectionInformation, connectionMonitor);
     }
@@ -237,12 +235,10 @@ public class SFTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void move(final RemoteFile file, final ExecutionContext exec)
-            throws Exception {
+    public void move(final RemoteFile file, final ExecutionContext exec) throws Exception {
         // If the file is also an SFTP remote file and over the same connection
         // it can be moved
-        if (file instanceof SFTPRemoteFile
-                && getIdentifier().equals(file.getIdentifier())) {
+        if (file instanceof SFTPRemoteFile && getIdentifier().equals(file.getIdentifier())) {
             SFTPRemoteFile source = (SFTPRemoteFile)file;
             openChannel();
             // Remember if file existed before
@@ -369,7 +365,7 @@ public class SFTPRemoteFile extends RemoteFile {
             try {
                 cd(m_path);
                 // Get ls entries
-                Vector<LsEntry> entries = channel.ls(".");
+                List<LsEntry> entries = channel.ls(".");
                 // Generate remote file for each entry that is a file
                 for (int i = 0; i < entries.size(); i++) {
                     // . and .. will return null after normalization
@@ -381,14 +377,11 @@ public class SFTPRemoteFile extends RemoteFile {
                         try {
                             // Build URI
                             URI uri =
-                                    new URI(getURI().getScheme() + "://"
-                                            + getURI().getAuthority()
-                                            + getPath() + filename);
+                                    new URI(getURI().getScheme() + "://" + getURI().getAuthority() + getPath()
+                                            + filename);
                             // Create remote file and open it
                             RemoteFile file =
-                                    new SFTPRemoteFile(uri,
-                                            getConnectionInformation(),
-                                            getConnectionMonitor());
+                                    new SFTPRemoteFile(uri, getConnectionInformation(), getConnectionMonitor());
                             file.open();
                             // Add remote file to the result list
                             files.add(file);
@@ -497,7 +490,7 @@ public class SFTPRemoteFile extends RemoteFile {
                 channel.cd("..");
             }
             // Get all entries in working directory
-            Vector<LsEntry> entries = channel.ls(".");
+            List<LsEntry> entries = channel.ls(".");
             // Check all entries by name
             for (int i = 0; i < entries.size(); i++) {
                 LsEntry currentEntry = entries.get(i);

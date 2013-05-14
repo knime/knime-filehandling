@@ -82,8 +82,7 @@ public class UnzipNodeFactory extends NodeFactory<UnzipNodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public NodeView<UnzipNodeModel> createNodeView(final int viewIndex,
-            final UnzipNodeModel nodeModel) {
+    public NodeView<UnzipNodeModel> createNodeView(final int viewIndex, final UnzipNodeModel nodeModel) {
         return null;
     }
 

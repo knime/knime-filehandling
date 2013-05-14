@@ -60,8 +60,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class ExtractURIInfoNodeFactory extends
-        NodeFactory<ExtractURIInfoNodeModel> {
+public class ExtractURIInfoNodeFactory extends NodeFactory<ExtractURIInfoNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -83,8 +82,7 @@ public class ExtractURIInfoNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<ExtractURIInfoNodeModel> createNodeView(
-            final int viewIndex, final ExtractURIInfoNodeModel nodeModel) {
+    public NodeView<ExtractURIInfoNodeModel> createNodeView(final int viewIndex, final ExtractURIInfoNodeModel nodeModel) {
         return null;
     }
 

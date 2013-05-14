@@ -131,9 +131,7 @@ class DownloadUploadFromListConfiguration {
     void load(final NodeSettingsRO settings) {
         m_source = settings.getString("source", "");
         m_target = settings.getString("target", "");
-        m_overwritePolicy =
-                settings.getString("overwritepolicy",
-                        OverwritePolicy.OVERWRITE.getName());
+        m_overwritePolicy = settings.getString("overwritepolicy", OverwritePolicy.OVERWRITE.getName());
     }
 
     /**
@@ -143,8 +141,7 @@ class DownloadUploadFromListConfiguration {
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
-    void loadAndValidate(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    void loadAndValidate(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_source = settings.getString("source");
         validate(m_source);
         m_target = settings.getString("target");

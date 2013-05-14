@@ -130,38 +130,31 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         m_copyormove.add(m_copy);
         m_copyormove.add(m_move);
         // Source column
-        m_sourcecolumn =
-                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
+        m_sourcecolumn = new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
         m_sourcecolumnlabel = new JLabel("Source");
         // Target filenames
         m_fromseparatecolumn = new JRadioButton("Use path from target column");
-        m_fromseparatecolumn.setActionCommand(FilenameHandling.FROMCOLUMN
-                .getName());
+        m_fromseparatecolumn.setActionCommand(FilenameHandling.FROMCOLUMN.getName());
         m_fromseparatecolumn.addActionListener(new FilenamehandlingListener());
-        m_fromsourcename =
-                new JRadioButton("Use source name and output directory");
-        m_fromsourcename
-                .setActionCommand(FilenameHandling.SOURCENAME.getName());
+        m_fromsourcename = new JRadioButton("Use source name and output directory");
+        m_fromsourcename.setActionCommand(FilenameHandling.SOURCENAME.getName());
         m_fromsourcename.addActionListener(new FilenamehandlingListener());
         m_filenamehandling = new ButtonGroup();
         m_filenamehandling.add(m_fromseparatecolumn);
         m_filenamehandling.add(m_fromsourcename);
         // Target column
-        m_targetcolumn =
-                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
+        m_targetcolumn = new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
         // Output directory
         m_outputdirectory = new FilesHistoryPanel("copymoveFiles", false);
         m_outputdirectory.setSelectMode(JFileChooser.DIRECTORIES_ONLY);
         m_outputdirectoryfvm =
-                new FlowVariableModelButton(createFlowVariableModel(
-                        "outputdirectory", FlowVariable.Type.STRING));
-        m_outputdirectoryfvm.getFlowVariableModel().addChangeListener(
-                new ChangeListener() {
-                    @Override
-                    public void stateChanged(final ChangeEvent e) {
-                        enableFilenamehandlingComponents();
-                    }
-                });
+                new FlowVariableModelButton(createFlowVariableModel("outputdirectory", FlowVariable.Type.STRING));
+        m_outputdirectoryfvm.getFlowVariableModel().addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                enableFilenamehandlingComponents();
+            }
+        });
         // If exists
         m_overwrite = new JRadioButton(OverwritePolicy.OVERWRITE.getName());
         m_overwrite.setActionCommand(OverwritePolicy.OVERWRITE.getName());
@@ -225,8 +218,7 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         NodeUtils.resetGBC(gbc);
         gbc.insets = new Insets(0, 0, 0, 0);
         JPanel ifExistsPanel = new JPanel(new GridBagLayout());
-        ifExistsPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "If a file exists..."));
+        ifExistsPanel.setBorder(new TitledBorder(new EtchedBorder(), "If a file exists..."));
         ifExistsPanel.add(m_overwrite, gbc);
         gbc.gridx++;
         ifExistsPanel.add(m_abort, gbc);
@@ -252,9 +244,7 @@ class CopyFilesNodeDialog extends NodeDialogPane {
      */
     private void enableFilenamehandlingComponents() {
         boolean separateColumn = m_fromseparatecolumn.isSelected();
-        boolean replacement =
-                m_outputdirectoryfvm.getFlowVariableModel()
-                        .isVariableReplacementEnabled();
+        boolean replacement = m_outputdirectoryfvm.getFlowVariableModel().isVariableReplacementEnabled();
         m_targetcolumn.setEnabled(separateColumn);
         m_outputdirectory.setEnabled(!separateColumn && !replacement);
         m_outputdirectoryfvm.setEnabled(!separateColumn);
@@ -282,8 +272,8 @@ class CopyFilesNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final DataTableSpec[] specs) throws NotConfigurableException {
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final DataTableSpec[] specs)
+            throws NotConfigurableException {
         CopyFilesConfiguration config = new CopyFilesConfiguration();
         config.load(settings);
         m_sourcecolumn.update(specs[0], config.getSourcecolumn());
@@ -298,8 +288,7 @@ class CopyFilesNodeDialog extends NodeDialogPane {
         }
         String filenamehandling = config.getFilenamehandling();
         if (filenamehandling.equals(m_fromseparatecolumn.getActionCommand())) {
-            m_filenamehandling.setSelected(m_fromseparatecolumn.getModel(),
-                    true);
+            m_filenamehandling.setSelected(m_fromseparatecolumn.getModel(), true);
         } else if (filenamehandling.equals(m_fromsourcename.getActionCommand())) {
             m_filenamehandling.setSelected(m_fromsourcename.getModel(), true);
         }
@@ -316,15 +305,13 @@ class CopyFilesNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
         CopyFilesConfiguration config = new CopyFilesConfiguration();
         config.setCopyormove(m_copyormove.getSelection().getActionCommand());
         config.setSourcecolumn(m_sourcecolumn.getSelectedColumn());
         config.setTargetcolumn(m_targetcolumn.getSelectedColumn());
         config.setOutputdirectory(m_outputdirectory.getSelectedFile());
-        config.setFilenamehandling(m_filenamehandling.getSelection()
-                .getActionCommand());
+        config.setFilenamehandling(m_filenamehandling.getSelection().getActionCommand());
         config.setIfexists(m_ifexists.getSelection().getActionCommand());
         config.save(settings);
     }

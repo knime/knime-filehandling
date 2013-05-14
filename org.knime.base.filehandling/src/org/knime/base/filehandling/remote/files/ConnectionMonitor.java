@@ -62,8 +62,7 @@ import java.util.Set;
  */
 public final class ConnectionMonitor {
 
-    private Map<String, Connection> m_connections =
-            new HashMap<String, Connection>();
+    private Map<String, Connection> m_connections = new HashMap<String, Connection>();
 
     /**
      * Register a connection.
@@ -72,8 +71,7 @@ public final class ConnectionMonitor {
      * @param identifier Identifier for the connection
      * @param connection Connection to register
      */
-    public synchronized void registerConnection(final String identifier,
-            final Connection connection) {
+    public synchronized void registerConnection(final String identifier, final Connection connection) {
         m_connections.put(identifier, connection);
     }
 

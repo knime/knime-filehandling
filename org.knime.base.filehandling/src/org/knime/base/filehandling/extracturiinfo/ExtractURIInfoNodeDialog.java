@@ -101,24 +101,15 @@ public class ExtractURIInfoNodeDialog extends NodeDialogPane {
     @SuppressWarnings("unchecked")
     public ExtractURIInfoNodeDialog() {
         // Get settings models
-        SettingsModelString columnselectionsettings =
-                SettingsFactory.createColumnSelectionSettings();
-        SettingsModelBoolean authoritysettings =
-                SettingsFactory.createAuthoritySettings();
-        SettingsModelBoolean fragmentsettings =
-                SettingsFactory.createFragmentSettings();
-        SettingsModelBoolean hostsettings =
-                SettingsFactory.createHostSettings();
-        SettingsModelBoolean pathsettings =
-                SettingsFactory.createPathSettings();
-        SettingsModelBoolean portsettings =
-                SettingsFactory.createPortSettings();
-        SettingsModelBoolean querysettings =
-                SettingsFactory.createQuerySettings();
-        SettingsModelBoolean schemesettings =
-                SettingsFactory.createSchemeSettings();
-        SettingsModelBoolean userinfosettings =
-                SettingsFactory.createUserInfoSettings();
+        SettingsModelString columnselectionsettings = SettingsFactory.createColumnSelectionSettings();
+        SettingsModelBoolean authoritysettings = SettingsFactory.createAuthoritySettings();
+        SettingsModelBoolean fragmentsettings = SettingsFactory.createFragmentSettings();
+        SettingsModelBoolean hostsettings = SettingsFactory.createHostSettings();
+        SettingsModelBoolean pathsettings = SettingsFactory.createPathSettings();
+        SettingsModelBoolean portsettings = SettingsFactory.createPortSettings();
+        SettingsModelBoolean querysettings = SettingsFactory.createQuerySettings();
+        SettingsModelBoolean schemesettings = SettingsFactory.createSchemeSettings();
+        SettingsModelBoolean userinfosettings = SettingsFactory.createUserInfoSettings();
         // Outer panel
         JPanel panel = new JPanel(new GridBagLayout());
         // Inner panel
@@ -128,12 +119,11 @@ public class ExtractURIInfoNodeDialog extends NodeDialogPane {
         gbc.gridy = 0;
         // Column selection
         m_columnselection =
-                new DialogComponentColumnNameSelection(columnselectionsettings,
-                        "Column selection", 0, URIDataValue.class);
+                new DialogComponentColumnNameSelection(columnselectionsettings, "Column selection", 0,
+                        URIDataValue.class);
         panel.add(m_columnselection.getComponentPanel(), gbc);
         // Authority
-        m_authority =
-                new DialogComponentBoolean(authoritysettings, "Authority");
+        m_authority = new DialogComponentBoolean(authoritysettings, "Authority");
         innerPanel.add(m_authority.getComponentPanel(), gbc);
         // Fragment
         gbc.gridy += 1;
@@ -166,8 +156,7 @@ public class ExtractURIInfoNodeDialog extends NodeDialogPane {
         // Inner panel
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridy = 1;
-        innerPanel
-                .setBorder(new TitledBorder(new EtchedBorder(), "Extract..."));
+        innerPanel.setBorder(new TitledBorder(new EtchedBorder(), "Extract..."));
         panel.add(innerPanel, gbc);
         addTab("Options", panel);
     }
@@ -176,8 +165,8 @@ public class ExtractURIInfoNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final PortObjectSpec[] specs) throws NotConfigurableException {
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
+            throws NotConfigurableException {
         m_columnselection.loadSettingsFrom(settings, specs);
         m_authority.loadSettingsFrom(settings, specs);
         m_fragment.loadSettingsFrom(settings, specs);
@@ -193,8 +182,7 @@ public class ExtractURIInfoNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
         m_columnselection.saveSettingsTo(settings);
         m_authority.saveSettingsTo(settings);
         m_fragment.saveSettingsTo(settings);

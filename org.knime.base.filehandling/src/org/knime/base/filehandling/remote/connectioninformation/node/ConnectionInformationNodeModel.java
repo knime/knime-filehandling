@@ -85,8 +85,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
      * @param protocol The protocol of this connection information model
      */
     public ConnectionInformationNodeModel(final Protocol protocol) {
-        super(new PortType[]{},
-                new PortType[]{ConnectionInformationPortObject.TYPE});
+        super(new PortType[]{}, new PortType[]{ConnectionInformationPortObject.TYPE});
         m_protocol = protocol;
     }
 
@@ -94,10 +93,8 @@ public class ConnectionInformationNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects,
-            final ExecutionContext exec) throws Exception {
-        return new PortObject[]{new ConnectionInformationPortObject(
-                createSpec())};
+    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
+        return new PortObject[]{new ConnectionInformationPortObject(createSpec())};
     }
 
     /**
@@ -112,8 +109,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         return new PortObjectSpec[]{createSpec()};
     }
 
@@ -123,14 +119,12 @@ public class ConnectionInformationNodeModel extends NodeModel {
      * @return ...
      * @throws InvalidSettingsException ...
      */
-    public ConnectionInformationPortObjectSpec createSpec()
-            throws InvalidSettingsException {
+    public ConnectionInformationPortObjectSpec createSpec() throws InvalidSettingsException {
         if (m_configuration == null || m_configuration.getHost() == null) {
             throw new InvalidSettingsException("No configuration available");
         }
         ConnectionInformation connectionInformation =
-                m_configuration
-                        .getConnectionInformation(getCredentialsProvider());
+                m_configuration.getConnectionInformation(getCredentialsProvider());
         return new ConnectionInformationPortObjectSpec(connectionInformation);
     }
 
@@ -148,10 +142,8 @@ public class ConnectionInformationNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        ConnectionInformationConfiguration config =
-                new ConnectionInformationConfiguration(m_protocol);
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
+        ConnectionInformationConfiguration config = new ConnectionInformationConfiguration(m_protocol);
         config.loadAndValidate(settings);
         m_configuration = config;
     }
@@ -160,18 +152,15 @@ public class ConnectionInformationNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        new ConnectionInformationConfiguration(m_protocol)
-                .loadAndValidate(settings);
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
+        new ConnectionInformationConfiguration(m_protocol).loadAndValidate(settings);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -180,8 +169,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

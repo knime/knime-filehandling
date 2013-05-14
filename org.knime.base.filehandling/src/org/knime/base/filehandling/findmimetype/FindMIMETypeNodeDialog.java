@@ -73,7 +73,7 @@ class FindMIMETypeNodeDialog extends DefaultNodeSettingsPane {
         super();
         m_columnselection = SettingsFactory.createColumnSelectionSettings();
         // Column selection
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_columnselection, "Column selection", 0, URIDataValue.class));
+        addDialogComponent(new DialogComponentColumnNameSelection(m_columnselection, "Column selection", 0,
+                URIDataValue.class));
     }
 }

@@ -82,8 +82,7 @@ public class FileMetaInfoNodeFactory extends NodeFactory<FileMetaInfoNodeModel> 
      * {@inheritDoc}
      */
     @Override
-    public NodeView<FileMetaInfoNodeModel> createNodeView(final int viewIndex,
-            final FileMetaInfoNodeModel nodeModel) {
+    public NodeView<FileMetaInfoNodeModel> createNodeView(final int viewIndex, final FileMetaInfoNodeModel nodeModel) {
         return null;
     }
 

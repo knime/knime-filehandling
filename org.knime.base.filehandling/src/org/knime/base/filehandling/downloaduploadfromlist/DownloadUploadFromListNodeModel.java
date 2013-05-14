@@ -92,17 +92,15 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      * Constructor for the node model.
      */
     public DownloadUploadFromListNodeModel() {
-        super(new PortType[]{
-                new PortType(ConnectionInformationPortObject.class, true),
-                BufferedDataTable.TYPE}, new PortType[]{});
+        super(new PortType[]{new PortType(ConnectionInformationPortObject.class, true), BufferedDataTable.TYPE},
+                new PortType[]{});
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects,
-            final ExecutionContext exec) throws Exception {
+    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         ConnectionMonitor monitor = new ConnectionMonitor();
         try {
             String source = m_configuration.getSource();
@@ -118,13 +116,10 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                 exec.checkCanceled();
                 exec.setProgress((double)i / rows);
                 // Skip missing values
-                if (!row.getCell(sourceIndex).isMissing()
-                        && !row.getCell(targetIndex).isMissing()) {
+                if (!row.getCell(sourceIndex).isMissing() && !row.getCell(targetIndex).isMissing()) {
                     ConnectionInformation connectionInformation;
                     // Get source URI
-                    URI sourceUri =
-                            ((URIDataValue)row.getCell(sourceIndex))
-                                    .getURIContent().getURI();
+                    URI sourceUri = ((URIDataValue)row.getCell(sourceIndex)).getURIContent().getURI();
                     try {
                         m_connectionInformation.fitsToURI(sourceUri);
                         connectionInformation = m_connectionInformation;
@@ -133,12 +128,9 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                     }
                     // Create source file
                     RemoteFile sourceFile =
-                            RemoteFileFactory.createRemoteFile(sourceUri,
-                                    connectionInformation, monitor);
+                            RemoteFileFactory.createRemoteFile(sourceUri, connectionInformation, monitor);
                     // Get target URI
-                    URI targetUri =
-                            ((URIDataValue)row.getCell(targetIndex))
-                                    .getURIContent().getURI();
+                    URI targetUri = ((URIDataValue)row.getCell(targetIndex)).getURIContent().getURI();
                     try {
                         m_connectionInformation.fitsToURI(targetUri);
                         connectionInformation = m_connectionInformation;
@@ -147,8 +139,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                     }
                     // Create target file
                     RemoteFile targetFile =
-                            RemoteFileFactory.createRemoteFile(targetUri,
-                                    connectionInformation, monitor);
+                            RemoteFileFactory.createRemoteFile(targetUri, connectionInformation, monitor);
                     targetFile.mkDirs(false);
                     // Copy file
                     copy(sourceFile, targetFile, monitor, exec);
@@ -171,9 +162,8 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      * @param monitor The connection monitor
      * @throws Exception If the operation could not be processed
      */
-    private void copy(final RemoteFile source, final RemoteFile target,
-            final ConnectionMonitor monitor, final ExecutionContext exec)
-            throws Exception {
+    private void copy(final RemoteFile source, final RemoteFile target, final ConnectionMonitor monitor,
+            final ExecutionContext exec) throws Exception {
         if (source.isDirectory()) {
             target.mkDir();
             RemoteFile[] files = source.listFiles();
@@ -184,8 +174,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
             for (int i = 0; i < files.length; i++) {
                 URI newTargetUri = new URI(targetUri + files[i].getName());
                 RemoteFile newTarget =
-                        RemoteFileFactory.createRemoteFile(newTargetUri,
-                                target.getConnectionInformation(), monitor);
+                        RemoteFileFactory.createRemoteFile(newTargetUri, target.getConnectionInformation(), monitor);
                 copy(files[i], newTarget, monitor, exec);
             }
         } else {
@@ -195,8 +184,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                 // Policy overwrite:
                 // Just write
                 target.write(source, exec);
-            } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
-                    .getName())) {
+            } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER.getName())) {
                 // Policy overwrite if newer:
                 // Get modification time
                 long sourceTime = source.lastModified();
@@ -214,8 +202,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                 // Policy abort:
                 // Throw exception if the target exists
                 if (target.exists()) {
-                    throw new Exception("File " + target.getFullName()
-                            + " already exists.");
+                    throw new Exception("File " + target.getFullName() + " already exists.");
                 }
                 target.write(source, exec);
             }
@@ -227,12 +214,10 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      */
     @SuppressWarnings("unchecked")
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         // Check if a port object is available
         if (inSpecs[0] != null) {
-            ConnectionInformationPortObjectSpec object =
-                    (ConnectionInformationPortObjectSpec)inSpecs[0];
+            ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
             m_connectionInformation = object.getConnectionInformation();
         } else {
             m_connectionInformation = null;
@@ -243,12 +228,10 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
         }
         // Check that source configuration is correct
         String source = m_configuration.getSource();
-        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Source",
-                source, URIDataValue.class);
+        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Source", source, URIDataValue.class);
         // Check that target configuration is correct
         String target = m_configuration.getTarget();
-        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Target",
-                target, URIDataValue.class);
+        NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Target", target, URIDataValue.class);
         if (m_configuration.getSource().equals(m_configuration.getTarget())) {
             throw new InvalidSettingsException("Source and target are the same");
         }
@@ -259,8 +242,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File nodeInternDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // not used
     }
@@ -269,8 +251,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File nodeInternDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // not used
     }
@@ -289,8 +270,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         new DownloadUploadFromListConfiguration().loadAndValidate(settings);
     }
 
@@ -298,10 +278,8 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        DownloadUploadFromListConfiguration config =
-                new DownloadUploadFromListConfiguration();
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
+        DownloadUploadFromListConfiguration config = new DownloadUploadFromListConfiguration();
         config.loadAndValidate(settings);
         m_configuration = config;
     }

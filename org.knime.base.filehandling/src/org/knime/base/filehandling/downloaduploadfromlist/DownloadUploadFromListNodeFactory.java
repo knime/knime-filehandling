@@ -60,8 +60,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class DownloadUploadFromListNodeFactory extends
-        NodeFactory<DownloadUploadFromListNodeModel> {
+public class DownloadUploadFromListNodeFactory extends NodeFactory<DownloadUploadFromListNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -83,8 +82,8 @@ public class DownloadUploadFromListNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<DownloadUploadFromListNodeModel> createNodeView(
-            final int viewIndex, final DownloadUploadFromListNodeModel nodeModel) {
+    public NodeView<DownloadUploadFromListNodeModel> createNodeView(final int viewIndex,
+            final DownloadUploadFromListNodeModel nodeModel) {
         return null;
     }
 

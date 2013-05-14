@@ -144,9 +144,7 @@ public final class RemoteFileChooser {
      * @param connectionInformation Connection information to the URI
      * @param selectionType Whether a file or a directory should be selected
      */
-    public RemoteFileChooser(final URI uri,
-            final ConnectionInformation connectionInformation,
-            final int selectionType) {
+    public RemoteFileChooser(final URI uri, final ConnectionInformation connectionInformation, final int selectionType) {
         m_uri = uri;
         m_connectionInformation = connectionInformation;
         m_connectionMonitor = new ConnectionMonitor();
@@ -223,8 +221,7 @@ public final class RemoteFileChooser {
         // Create tree that does not display anything
         m_tree = new JTree(new DefaultMutableTreeNode());
         m_tree.setRootVisible(false);
-        m_tree.getSelectionModel().setSelectionMode(
-                TreeSelectionModel.SINGLE_TREE_SELECTION);
+        m_tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         // Init worker will load the root of the tree
         new InitWorker().execute();
         // Buttons
@@ -273,6 +270,9 @@ public final class RemoteFileChooser {
         case SELECT_FILE_OR_DIR:
             message += "file or directory";
             break;
+        default:
+            message += "file or directory";
+            break;
         }
         m_info.setText(message);
     }
@@ -288,13 +288,10 @@ public final class RemoteFileChooser {
             String action = e.getActionCommand();
             if (action.equals("ok")) {
                 // Get selected nodes
-                TreePath[] paths =
-                        m_tree.getSelectionModel().getSelectionPaths();
+                TreePath[] paths = m_tree.getSelectionModel().getSelectionPaths();
                 if (paths.length > 0) {
                     // Get file from selected node (single selection)
-                    RemoteFile file =
-                            (RemoteFile)((RemoteFileTreeNode)paths[0]
-                                    .getLastPathComponent()).getUserObject();
+                    RemoteFile file = (RemoteFile)((RemoteFileTreeNode)paths[0].getLastPathComponent()).getUserObject();
                     try {
                         // Check if the selection has the correct type
                         boolean typeOk = false;
@@ -306,6 +303,9 @@ public final class RemoteFileChooser {
                             typeOk = !file.isDirectory();
                             break;
                         case SELECT_FILE_OR_DIR:
+                            typeOk = true;
+                            break;
+                        default:
                             typeOk = true;
                             break;
                         }
@@ -358,9 +358,7 @@ public final class RemoteFileChooser {
         protected Void doInBackground() throws Exception {
             m_success = false;
             // Create remote file to the root of the tree
-            RemoteFile root =
-                    RemoteFileFactory.createRemoteFile(m_uri,
-                            m_connectionInformation, m_connectionMonitor);
+            RemoteFile root = RemoteFileFactory.createRemoteFile(m_uri, m_connectionInformation, m_connectionMonitor);
             m_dir = root.isDirectory();
             RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root);
             // Create tree model
@@ -393,8 +391,7 @@ public final class RemoteFileChooser {
                         message = m_uri + " is not browsable";
                     }
                     // Show error about the connection problem
-                    JOptionPane.showMessageDialog(m_parent, message, "Error",
-                            JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(m_parent, message, "Error", JOptionPane.ERROR_MESSAGE);
                 }
                 m_closed = true;
             }
@@ -428,8 +425,7 @@ public final class RemoteFileChooser {
         protected Void doInBackground() throws Exception {
             m_success = false;
             // List files in directory
-            RemoteFile[] files =
-                    ((RemoteFile)m_parentNode.getUserObject()).listFiles();
+            RemoteFile[] files = ((RemoteFile)m_parentNode.getUserObject()).listFiles();
             m_nodes = new RemoteFileTreeNode[files.length];
             // Create node for each file
             for (int i = 0; i < files.length; i++) {
@@ -466,8 +462,7 @@ public final class RemoteFileChooser {
                 m_connectionMonitor.closeAll();
                 if (!m_closed) {
                     // Show error about the connection problem
-                    JOptionPane.showMessageDialog(m_parent, "Connection to "
-                            + m_uri + " lost", "No connection",
+                    JOptionPane.showMessageDialog(m_parent, "Connection to " + m_uri + " lost", "No connection",
                             JOptionPane.ERROR_MESSAGE);
                 }
                 m_closed = true;
@@ -538,8 +533,7 @@ public final class RemoteFileChooser {
         private void loadChildren() {
             m_loaded = true;
             // Create worker to load the children
-            RemoteFileTreeNodeWorker worker =
-                    new RemoteFileTreeNodeWorker(this);
+            RemoteFileTreeNodeWorker worker = new RemoteFileTreeNodeWorker(this);
             // Add worker to list
             m_workers.add(worker);
             // If list does not hold more than this worker, start it

@@ -77,15 +77,14 @@ final class DomainValidator {
     // Define valid label
     // single outer or outer then 0-* inner then outer
     // Examples: a; aa; a-a; a--a; a-a-a; uni-konstanz
-    private static final String LABEL = OUTER + "|" + OUTER + INNER + "*"
-            + OUTER;
+    private static final String LABEL = OUTER + "|" + OUTER + INNER + "*" + OUTER;
 
     // Define multiple labels
     // label '.' label...
     // Examples: a.a; a.a-a; www.uni-konstanz.de
     private static final String MULTILABEL = LABEL + "([.]" + LABEL + ")*";
 
-    private static Pattern pattern = null;
+    private static Pattern pattern = Pattern.compile(MULTILABEL);
 
     /**
      * Checks if a string is a valid domain.
@@ -95,9 +94,6 @@ final class DomainValidator {
      * @return true if the string is a valid domain, false otherwise
      */
     public static boolean isValidDomain(final String string) {
-        if (pattern == null) {
-            pattern = Pattern.compile(MULTILABEL);
-        }
         return pattern.matcher(string).matches();
     }
 

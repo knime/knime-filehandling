@@ -78,8 +78,7 @@ public final class RemoteFileFactory {
      * @throws Exception If creation of the remote file or opening of its
      *             connection failed
      */
-    public static RemoteFile createRemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation,
+    public static RemoteFile createRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
             final ConnectionMonitor connectionMonitor) throws Exception {
         String scheme = uri.getScheme().toLowerCase();
         if (connectionInformation != null) {
@@ -91,23 +90,18 @@ public final class RemoteFileFactory {
         if (scheme.equals("file")) {
             remoteFile = new FileRemoteFile(uri);
         } else if (scheme.equals("ftp")) {
-            remoteFile =
-                    new FTPRemoteFile(uri, connectionInformation,
-                            connectionMonitor);
+            remoteFile = new FTPRemoteFile(uri, connectionInformation, connectionMonitor);
         } else if (scheme.equals("sftp") || scheme.equals("ssh")) {
             URI sshUri = uri;
             if (scheme.equals("sftp")) {
                 // Change protocol to general SSH
                 try {
-                    sshUri =
-                            new URI(uri.toString().replaceFirst("sftp", "ssh"));
+                    sshUri = new URI(uri.toString().replaceFirst("sftp", "ssh"));
                 } catch (URISyntaxException e) {
                     // Should not happen, since the syntax remains untouched
                 }
             }
-            remoteFile =
-                    new SFTPRemoteFile(sshUri, connectionInformation,
-                            connectionMonitor);
+            remoteFile = new SFTPRemoteFile(sshUri, connectionInformation, connectionMonitor);
         } else if (scheme.equals("http") || scheme.equals("https")) {
             remoteFile = new HTTPRemoteFile(uri, connectionInformation);
         } else if (scheme.equals("scp")) {
@@ -120,9 +114,7 @@ public final class RemoteFileFactory {
                     // Should not happen, since the syntax remains untouched
                 }
             }
-            remoteFile =
-                    new SCPRemoteFile(sshUri, connectionInformation,
-                            connectionMonitor);
+            remoteFile = new SCPRemoteFile(sshUri, connectionInformation, connectionMonitor);
         }
         if (remoteFile != null) {
             // Open connection of the remote file

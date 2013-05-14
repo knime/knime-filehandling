@@ -106,8 +106,7 @@ public class FTPRemoteFile extends RemoteFile {
      * @param connectionInformation Connection information to the given URI
      * @param connectionMonitor Monitor for the connection
      */
-    FTPRemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation,
+    FTPRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
             final ConnectionMonitor connectionMonitor) {
         super(uri, connectionInformation, connectionMonitor);
     }
@@ -228,16 +227,13 @@ public class FTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void move(final RemoteFile file, final ExecutionContext exec)
-            throws Exception {
+    public void move(final RemoteFile file, final ExecutionContext exec) throws Exception {
         // If the file is also an FTP remote file and over the same connection
         // it can be moved
-        if (file instanceof FTPRemoteFile
-                && getIdentifier().equals(file.getIdentifier())) {
+        if (file instanceof FTPRemoteFile && getIdentifier().equals(file.getIdentifier())) {
             FTPRemoteFile source = (FTPRemoteFile)file;
             FTPClient client = getClient();
-            boolean success =
-                    client.rename(source.getURI().getPath(), getURI().getPath());
+            boolean success = client.rename(source.getURI().getPath(), getURI().getPath());
             resetCache();
             if (!success) {
                 throw new Exception("Move operation failed");
@@ -360,13 +356,10 @@ public class FTPRemoteFile extends RemoteFile {
             for (int i = 0; i < ftpFiles.length; i++) {
                 // Build URI
                 URI uri =
-                        new URI(getURI().getScheme() + "://"
-                                + getURI().getAuthority() + getPath()
+                        new URI(getURI().getScheme() + "://" + getURI().getAuthority() + getPath()
                                 + ftpFiles[i].getName());
                 // Create remote file and open it
-                files[i] =
-                        new FTPRemoteFile(uri, getConnectionInformation(),
-                                getConnectionMonitor());
+                files[i] = new FTPRemoteFile(uri, getConnectionInformation(), getConnectionMonitor());
                 files[i].open();
             }
         } else {
@@ -426,8 +419,7 @@ public class FTPRemoteFile extends RemoteFile {
             // Check all files by name
             for (int i = 0; i < files.length; i++) {
                 FTPFile currentFile = files[i];
-                if (currentFile.getName().equals(
-                        FilenameUtils.getName(getURI().getPath()))) {
+                if (currentFile.getName().equals(FilenameUtils.getName(getURI().getPath()))) {
                     // File with the same name is the correct one
                     file = currentFile;
                     break;
@@ -459,9 +451,7 @@ public class FTPRemoteFile extends RemoteFile {
             m_client = new FTPClient();
             // Read attributes
             String host = getURI().getHost();
-            int port =
-                    getURI().getPort() != -1 ? getURI().getPort()
-                            : DefaultPortMap.getMap().get(getType());
+            int port = getURI().getPort() != -1 ? getURI().getPort() : DefaultPortMap.getMap().get(getType());
             String user = getURI().getUserInfo();
             if (user == null) {
                 user = "anonymous";
@@ -511,7 +501,6 @@ public class FTPRemoteFile extends RemoteFile {
          */
         @Override
         public void close() throws Exception {
-            // m_client.completePendingCommand();
             m_client.logout();
             m_client.disconnect();
         }

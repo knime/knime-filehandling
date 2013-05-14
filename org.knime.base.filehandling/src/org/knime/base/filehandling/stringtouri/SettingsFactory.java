@@ -93,12 +93,9 @@ final class SettingsFactory {
      *            setting
      * @return Column name <code>SettingsModel</code>
      */
-    static SettingsModelString createColumnNameSettings(
-            final SettingsModelString replacePolicy) {
-        SettingsModelString columnName =
-                new SettingsModelString("columnname", "URI");
-        columnName.setEnabled(replacePolicy.getStringValue().equals(
-                ReplacePolicy.APPEND.getName()));
+    static SettingsModelString createColumnNameSettings(final SettingsModelString replacePolicy) {
+        SettingsModelString columnName = new SettingsModelString("columnname", "URI");
+        columnName.setEnabled(replacePolicy.getStringValue().equals(ReplacePolicy.APPEND.getName()));
         return columnName;
     }
 
@@ -109,8 +106,7 @@ final class SettingsFactory {
      * @return Replace <code>SettingsModel</code>
      */
     static SettingsModelString createReplacePolicySettings() {
-        return new SettingsModelString("replace",
-                ReplacePolicy.APPEND.getName());
+        return new SettingsModelString("replace", ReplacePolicy.APPEND.getName());
     }
 
 }

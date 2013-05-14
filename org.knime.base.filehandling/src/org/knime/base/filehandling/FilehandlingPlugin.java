@@ -79,17 +79,6 @@ public final class FilehandlingPlugin extends Plugin {
     }
 
     /**
-     * This method is called upon plug-in activation.
-     * 
-     * @param context The bundle context.
-     * @throws Exception If cause by super class.
-     */
-    @Override
-    public void start(final BundleContext context) throws Exception {
-        super.start(context);
-    }
-
-    /**
      * This method is called when the plug-in is stopped.
      * 
      * @param context The bundle context.
@@ -119,9 +108,8 @@ public final class FilehandlingPlugin extends Plugin {
      */
     public InputStream getMIMETypeStream() throws IOException {
         final URL pluginURL =
-                FileLocator.resolve(FileLocator.find(plugin.getBundle(),
-                        new Path("resources" + File.separator + "mime.types"),
-                        null));
+                FileLocator.resolve(FileLocator.find(plugin.getBundle(), new Path("resources" + File.separator
+                        + "mime.types"), null));
         return pluginURL.openStream();
     }
 }

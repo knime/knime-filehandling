@@ -53,7 +53,7 @@ package org.knime.base.filehandling;
 import org.knime.testing.core.AbstractTestcaseCollector;
 
 /**
- *
+ * 
  * @author Thorsten Meinl, University of Konstanz
  */
 public class BaseTestcaseCollector extends AbstractTestcaseCollector {

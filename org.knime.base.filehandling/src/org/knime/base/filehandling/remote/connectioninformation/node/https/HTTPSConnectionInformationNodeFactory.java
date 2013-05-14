@@ -63,8 +63,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class HTTPSConnectionInformationNodeFactory extends
-        NodeFactory<ConnectionInformationNodeModel> {
+public class HTTPSConnectionInformationNodeFactory extends NodeFactory<ConnectionInformationNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -86,8 +85,8 @@ public class HTTPSConnectionInformationNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<ConnectionInformationNodeModel> createNodeView(
-            final int viewIndex, final ConnectionInformationNodeModel nodeModel) {
+    public NodeView<ConnectionInformationNodeModel> createNodeView(final int viewIndex,
+            final ConnectionInformationNodeModel nodeModel) {
         return null;
     }
 

@@ -237,18 +237,12 @@ class DownloadConfiguration {
     void load(final NodeSettingsRO settings) {
         m_source = settings.getString("source", "");
         m_target = settings.getString("target", "");
-        m_overwritePolicy =
-                settings.getString("overwritepolicy",
-                        OverwritePolicy.OVERWRITE.getName());
-        m_pathHandling =
-                settings.getString("pathhandling",
-                        PathHandling.ONLY_FILENAME.getName());
+        m_overwritePolicy = settings.getString("overwritepolicy", OverwritePolicy.OVERWRITE.getName());
+        m_pathHandling = settings.getString("pathhandling", PathHandling.ONLY_FILENAME.getName());
         m_prefix = settings.getString("prefix", "");
         m_subfolders = settings.getBoolean("subfolders", true);
         m_useFilter = settings.getBoolean("usefilter", false);
-        m_filterType =
-                settings.getString("filtertype",
-                        FilterType.REGULAREXPRESSION.getName());
+        m_filterType = settings.getString("filtertype", FilterType.REGULAREXPRESSION.getName());
         m_filterPattern = settings.getString("filterpattern", "");
     }
 
@@ -259,8 +253,7 @@ class DownloadConfiguration {
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
-    void loadAndValidate(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    void loadAndValidate(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_source = settings.getString("source");
         validate("Source", m_source);
         m_target = settings.getString("target");
@@ -275,9 +268,7 @@ class DownloadConfiguration {
         }
         m_subfolders = settings.getBoolean("subfolders", true);
         m_useFilter = settings.getBoolean("usefilter", false);
-        m_filterType =
-                settings.getString("filtertype",
-                        FilterType.REGULAREXPRESSION.getName());
+        m_filterType = settings.getString("filtertype", FilterType.REGULAREXPRESSION.getName());
         m_filterPattern = settings.getString("filterpattern", "");
         if (m_useFilter) {
             validate("Pattern", m_filterPattern);
@@ -286,9 +277,9 @@ class DownloadConfiguration {
                 pattern = WildcardMatcher.wildcardToRegex(pattern);
             }
             try {
-                Pattern.compile(m_filterPattern);
+                Pattern.compile(pattern);
             } catch (PatternSyntaxException e) {
-                throw new InvalidSettingsException(e.getMessage());
+                throw new InvalidSettingsException(e);
             }
         }
     }
@@ -301,8 +292,7 @@ class DownloadConfiguration {
      * @param setting The setting to check
      * @throws InvalidSettingsException If the string is null or empty
      */
-    private void validate(final String name, final String setting)
-            throws InvalidSettingsException {
+    private void validate(final String name, final String setting) throws InvalidSettingsException {
         if (setting == null || setting.length() == 0) {
             throw new InvalidSettingsException(name + " missing");
         }

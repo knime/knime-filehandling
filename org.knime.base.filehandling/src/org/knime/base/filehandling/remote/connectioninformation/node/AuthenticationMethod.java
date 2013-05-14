@@ -93,8 +93,7 @@ enum AuthenticationMethod {
      * @return Array of all authentication method settings
      */
     static String[] getAllSettings() {
-        return new String[]{NONE.getName(), PASSWORD.getName(),
-                KEYFILE.getName()};
+        return new String[]{NONE.getName(), PASSWORD.getName(), KEYFILE.getName()};
     }
 
 }

@@ -136,8 +136,7 @@ enum Attributes {
      * @return Array of all attributes
      */
     static Attributes[] getAllAttributes() {
-        return new Attributes[]{DIRECTORY, HIDDEN, SIZE, HUMANSIZE, MODIFIED,
-                PERMISSIONS};
+        return new Attributes[]{DIRECTORY, HIDDEN, SIZE, HUMANSIZE, MODIFIED, PERMISSIONS};
     }
 
 }

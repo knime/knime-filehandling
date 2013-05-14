@@ -72,7 +72,6 @@ class URIToPortNodeDialog extends DefaultNodeSettingsPane {
     protected URIToPortNodeDialog() {
         super();
         m_uricolumn = SettingsFactory.createURIColumnSettings();
-        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
-                "URI column", 0, URIDataValue.class));
+        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn, "URI column", 0, URIDataValue.class));
     }
 }

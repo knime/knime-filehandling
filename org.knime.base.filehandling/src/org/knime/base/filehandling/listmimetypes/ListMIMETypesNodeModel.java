@@ -91,8 +91,8 @@ class ListMIMETypesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-            final ExecutionContext exec) throws Exception {
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+            throws Exception {
         int rowNr = 0;
         // Create output spec and container
         DataTableSpec outSpec = createOutSpec();
@@ -108,8 +108,7 @@ class ListMIMETypesNodeModel extends NodeModel {
                 DataCell[] cells = new DataCell[2];
                 cells[0] = new StringCell(extensions.get(j));
                 cells[1] = new StringCell(type);
-                outContainer.addRowToTable(new DefaultRow("Row" + rowNr++,
-                        cells));
+                outContainer.addRowToTable(new DefaultRow("Row" + rowNr++, cells));
             }
         }
         outContainer.close();
@@ -124,12 +123,8 @@ class ListMIMETypesNodeModel extends NodeModel {
      */
     private DataTableSpec createOutSpec() {
         DataColumnSpec[] columnSpecs = new DataColumnSpec[2];
-        columnSpecs[0] =
-                new DataColumnSpecCreator("File extension", StringCell.TYPE)
-                        .createSpec();
-        columnSpecs[1] =
-                new DataColumnSpecCreator("MIME-Type", StringCell.TYPE)
-                        .createSpec();
+        columnSpecs[0] = new DataColumnSpecCreator("File extension", StringCell.TYPE).createSpec();
+        columnSpecs[1] = new DataColumnSpecCreator("MIME-Type", StringCell.TYPE).createSpec();
         return new DataTableSpec(columnSpecs);
     }
 
@@ -145,8 +140,7 @@ class ListMIMETypesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
         return new DataTableSpec[]{createOutSpec()};
     }
 
@@ -162,8 +156,7 @@ class ListMIMETypesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         // Not used
     }
 
@@ -171,8 +164,7 @@ class ListMIMETypesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         // Not used
     }
 
@@ -180,8 +172,7 @@ class ListMIMETypesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -190,8 +181,7 @@ class ListMIMETypesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

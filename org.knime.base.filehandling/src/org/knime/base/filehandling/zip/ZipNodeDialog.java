@@ -101,36 +101,26 @@ public class ZipNodeDialog extends NodeDialogPane {
      */
     @SuppressWarnings("unchecked")
     public ZipNodeDialog() {
-        final SettingsModelString locationcolumnsettings =
-                SettingsFactory.createLocationColumnSettings();
-        final SettingsModelString targetsettings =
-                SettingsFactory.createTargetSettings();
-        final SettingsModelIntegerBounded compressionlevelsettings =
-                SettingsFactory.createCompressionLevelSettings();
-        final SettingsModelString pathhandlingsettings =
-                SettingsFactory.createPathHandlingSettings();
-        final SettingsModelString prefixsettings =
-                SettingsFactory.createPrefixSettings(pathhandlingsettings);
-        final SettingsModelString ifexistssettings =
-                SettingsFactory.createIfExistsSettings();
-        final FlowVariableModel targetFvm =
-                super.createFlowVariableModel(targetsettings);
-        final FlowVariableModel prefixFvm =
-                super.createFlowVariableModel(prefixsettings);
+        final SettingsModelString locationcolumnsettings = SettingsFactory.createLocationColumnSettings();
+        final SettingsModelString targetsettings = SettingsFactory.createTargetSettings();
+        final SettingsModelIntegerBounded compressionlevelsettings = SettingsFactory.createCompressionLevelSettings();
+        final SettingsModelString pathhandlingsettings = SettingsFactory.createPathHandlingSettings();
+        final SettingsModelString prefixsettings = SettingsFactory.createPrefixSettings(pathhandlingsettings);
+        final SettingsModelString ifexistssettings = SettingsFactory.createIfExistsSettings();
+        final FlowVariableModel targetFvm = super.createFlowVariableModel(targetsettings);
+        final FlowVariableModel prefixFvm = super.createFlowVariableModel(prefixsettings);
         // Enable/disable prefix setting based on the path handling
         pathhandlingsettings.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                prefixsettings.setEnabled(isPrefixEnabled(pathhandlingsettings,
-                        prefixFvm));
+                prefixsettings.setEnabled(isPrefixEnabled(pathhandlingsettings, prefixFvm));
             }
         });
         // Enable/disable prefix setting based on the flow variable model
         prefixsettings.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                prefixsettings.setEnabled(isPrefixEnabled(pathhandlingsettings,
-                        prefixFvm));
+                prefixsettings.setEnabled(isPrefixEnabled(pathhandlingsettings, prefixFvm));
             }
         });
         // Outer panel
@@ -146,9 +136,8 @@ public class ZipNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         m_locationcolumn =
-                new DialogComponentColumnNameSelection(locationcolumnsettings,
-                        "Location column", 0, false, StringValue.class,
-                        URIDataValue.class);
+                new DialogComponentColumnNameSelection(locationcolumnsettings, "Location column", 0, false,
+                        StringValue.class, URIDataValue.class);
         panel.add(m_locationcolumn.getComponentPanel(), gbc);
         // Compression level
         gbc.anchor = GridBagConstraints.EAST;
@@ -156,9 +145,7 @@ public class ZipNodeDialog extends NodeDialogPane {
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        m_compressionlevel =
-                new DialogComponentNumber(compressionlevelsettings,
-                        "Compression level", 1, 1);
+        m_compressionlevel = new DialogComponentNumber(compressionlevelsettings, "Compression level", 1, 1);
         panel.add(m_compressionlevel.getComponentPanel(), gbc);
         // Target zip file
         gbc.anchor = GridBagConstraints.WEST;
@@ -167,8 +154,8 @@ public class ZipNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         m_target =
-                new DialogComponentFileChooser(targetsettings, "targetHistory",
-                        JFileChooser.SAVE_DIALOG, false, targetFvm);
+                new DialogComponentFileChooser(targetsettings, "targetHistory", JFileChooser.SAVE_DIALOG, false,
+                        targetFvm);
         m_target.setBorderTitle("Zip output file:");
         panel.add(m_target.getComponentPanel(), gbc);
         // Path handling
@@ -177,9 +164,7 @@ public class ZipNodeDialog extends NodeDialogPane {
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        m_pathhandling =
-                new DialogComponentButtonGroup(pathhandlingsettings, false, "",
-                        PathHandling.getAllSettings());
+        m_pathhandling = new DialogComponentButtonGroup(pathhandlingsettings, false, "", PathHandling.getAllSettings());
         innerPanel.add(m_pathhandling.getComponentPanel(), gbc);
         // Prefix
         gbc.anchor = GridBagConstraints.WEST;
@@ -188,8 +173,8 @@ public class ZipNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         m_prefix =
-                new DialogComponentFileChooser(prefixsettings, "prefixHistory",
-                        JFileChooser.OPEN_DIALOG, true, prefixFvm);
+                new DialogComponentFileChooser(prefixsettings, "prefixHistory", JFileChooser.OPEN_DIALOG, true,
+                        prefixFvm);
         m_prefix.setBorderTitle("Prefix directory:");
         innerPanel.add(m_prefix.getComponentPanel(), gbc);
         // Inner panel
@@ -198,8 +183,7 @@ public class ZipNodeDialog extends NodeDialogPane {
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        innerPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "Path handling"));
+        innerPanel.setBorder(new TitledBorder(new EtchedBorder(), "Path handling"));
         panel.add(innerPanel, gbc);
         // Overwrite policy
         gbc.anchor = GridBagConstraints.WEST;
@@ -208,8 +192,7 @@ public class ZipNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         m_ifexists =
-                new DialogComponentButtonGroup(ifexistssettings, false,
-                        "If zip file exists...",
+                new DialogComponentButtonGroup(ifexistssettings, false, "If zip file exists...",
                         OverwritePolicy.getAllSettings());
         panel.add(m_ifexists.getComponentPanel(), gbc);
         addTab("Options", panel);
@@ -221,10 +204,8 @@ public class ZipNodeDialog extends NodeDialogPane {
      * 
      * @return true if the prefix component should be enabled
      */
-    private boolean isPrefixEnabled(final SettingsModelString pathhandling,
-            final FlowVariableModel prefixFvm) {
-        return pathhandling.getStringValue().equals(
-                PathHandling.TRUNCATE_PREFIX.getName())
+    private boolean isPrefixEnabled(final SettingsModelString pathhandling, final FlowVariableModel prefixFvm) {
+        return pathhandling.getStringValue().equals(PathHandling.TRUNCATE_PREFIX.getName())
                 && !prefixFvm.isVariableReplacementEnabled();
     }
 
@@ -232,8 +213,8 @@ public class ZipNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final PortObjectSpec[] specs) throws NotConfigurableException {
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
+            throws NotConfigurableException {
         m_locationcolumn.loadSettingsFrom(settings, specs);
         m_target.loadSettingsFrom(settings, specs);
         m_compressionlevel.loadSettingsFrom(settings, specs);
@@ -246,8 +227,7 @@ public class ZipNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
         m_locationcolumn.saveSettingsTo(settings);
         m_target.saveSettingsTo(settings);
         m_compressionlevel.saveSettingsTo(settings);

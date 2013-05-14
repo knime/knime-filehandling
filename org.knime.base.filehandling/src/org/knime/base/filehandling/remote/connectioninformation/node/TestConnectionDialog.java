@@ -100,8 +100,7 @@ public class TestConnectionDialog {
      * 
      * @param connectionInformation The connection information to test
      */
-    public TestConnectionDialog(
-            final ConnectionInformation connectionInformation) {
+    public TestConnectionDialog(final ConnectionInformation connectionInformation) {
         m_connectionInformation = connectionInformation;
     }
 
@@ -187,8 +186,7 @@ public class TestConnectionDialog {
         m_button1.setPreferredSize(m_buttonSize);
         m_button1.setActionCommand("ok");
         m_button1.setEnabled(false);
-        m_info.setText("Testing connection to "
-                + m_connectionInformation.toURI());
+        m_info.setText("Testing connection to " + m_connectionInformation.toURI());
         m_progress.setVisible(true);
         new TestWorker().execute();
     }
@@ -232,9 +230,7 @@ public class TestConnectionDialog {
         protected Void doInBackground() throws Exception {
             try {
                 ConnectionMonitor monitor = new ConnectionMonitor();
-                RemoteFileFactory.createRemoteFile(
-                        m_connectionInformation.toURI(),
-                        m_connectionInformation, monitor);
+                RemoteFileFactory.createRemoteFile(m_connectionInformation.toURI(), m_connectionInformation, monitor);
                 monitor.closeAll();
                 m_success = true;
             } catch (Exception e) {
@@ -253,12 +249,10 @@ public class TestConnectionDialog {
             m_progress.setVisible(false);
             m_button1.setEnabled(true);
             if (m_success) {
-                m_info.setText("Connection to "
-                        + m_connectionInformation.toURI() + " succeeded");
+                m_info.setText("Connection to " + m_connectionInformation.toURI() + " succeeded");
             } else {
-                m_info.setText("<html>Connection to "
-                        + m_connectionInformation.toURI() + " failed<br />"
-                        + m_error + "</html>");
+                m_info.setText("<html>Connection to " + m_connectionInformation.toURI() + " failed<br />" + m_error
+                        + "</html>");
                 m_button1.setText("Try again");
                 m_button1.setPreferredSize(m_buttonSize);
                 m_button1.setActionCommand("tryagain");

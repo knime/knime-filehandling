@@ -98,16 +98,14 @@ public class DownloadNodeModel extends NodeModel {
      * Constructor for the node model.
      */
     public DownloadNodeModel() {
-        super(new PortType[]{ConnectionInformationPortObject.TYPE},
-                new PortType[]{BufferedDataTable.TYPE});
+        super(new PortType[]{ConnectionInformationPortObject.TYPE}, new PortType[]{BufferedDataTable.TYPE});
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects,
-            final ExecutionContext exec) throws Exception {
+    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         // Create connection monitor
         ConnectionMonitor monitor = new ConnectionMonitor();
         // Create output spec and container
@@ -116,25 +114,16 @@ public class DownloadNodeModel extends NodeModel {
         try {
             exec.setProgress("Connecting to " + m_connectionInformation.toURI());
             // Generate URI to the source
-            URI sourceUri =
-                    new URI(m_connectionInformation.toURI().toString()
-                            + m_configuration.getSource());
+            URI sourceUri = new URI(m_connectionInformation.toURI().toString() + m_configuration.getSource());
             // Create remote file for source selection
-            RemoteFile file =
-                    RemoteFileFactory.createRemoteFile(sourceUri,
-                            m_connectionInformation, monitor);
+            RemoteFile file = RemoteFileFactory.createRemoteFile(sourceUri, m_connectionInformation, monitor);
             // Create target folder
             RemoteFile folder =
-                    RemoteFileFactory.createRemoteFile(
-                            new File(m_configuration.getTarget()).toURI(),
-                            null, null);
+                    RemoteFileFactory.createRemoteFile(new File(m_configuration.getTarget()).toURI(), null, null);
             folder.mkDirs(true);
             // Download the selected directory or file
             download(file, folder, outContainer, true, exec);
             outContainer.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
         } finally {
             // Close connections
             monitor.closeAll();
@@ -158,9 +147,8 @@ public class DownloadNodeModel extends NodeModel {
      * @param exec Execution context to check if the execution has been canceled
      * @throws Exception If remote file operation did not succeed
      */
-    private void download(final RemoteFile source, final RemoteFile folder,
-            final BufferedDataContainer outContainer, final boolean root,
-            final ExecutionContext exec) throws Exception {
+    private void download(final RemoteFile source, final RemoteFile folder, final BufferedDataContainer outContainer,
+            final boolean root, final ExecutionContext exec) throws Exception {
         boolean mkDirs = true;
         // Get filename
         String pathHandling = m_configuration.getPathHandling();
@@ -180,8 +168,7 @@ public class DownloadNodeModel extends NodeModel {
         // Generate URI to the target
         URI targetUri = new File(folder.getFullName() + name).toURI();
         // Create target file
-        RemoteFile target =
-                RemoteFileFactory.createRemoteFile(targetUri, null, null);
+        RemoteFile target = RemoteFileFactory.createRemoteFile(targetUri, null, null);
         // Check if the user canceled
         exec.checkCanceled();
         // If the source is a directory download inner files
@@ -205,8 +192,7 @@ public class DownloadNodeModel extends NodeModel {
                 // Just write
                 target.write(source, exec);
                 downloaded = true;
-            } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
-                    .getName())) {
+            } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER.getName())) {
                 // Policy overwrite if newer:
                 // Get modification time
                 long sourceTime = source.lastModified();
@@ -226,8 +212,7 @@ public class DownloadNodeModel extends NodeModel {
                 // Policy abort:
                 // Throw exception if the target exists
                 if (target.exists()) {
-                    throw new Exception("File " + target.getFullName()
-                            + " already exists.");
+                    throw new Exception("File " + target.getFullName() + " already exists.");
                 }
                 target.write(source, exec);
                 downloaded = true;
@@ -239,8 +224,7 @@ public class DownloadNodeModel extends NodeModel {
             // Has the file been downloaded or not?
             BooleanCell downloadedCell = BooleanCell.get(downloaded);
             // Add file information to the container
-            outContainer.addRowToTable(new DefaultRow("Row"
-                    + outContainer.size(), uriCell, downloadedCell));
+            outContainer.addRowToTable(new DefaultRow("Row" + outContainer.size(), uriCell, downloadedCell));
         }
     }
 
@@ -274,11 +258,8 @@ public class DownloadNodeModel extends NodeModel {
      */
     private DataTableSpec createOutSpec() {
         DataColumnSpec[] columnSpecs = new DataColumnSpec[2];
-        columnSpecs[0] =
-                new DataColumnSpecCreator("URI", URIDataCell.TYPE).createSpec();
-        columnSpecs[1] =
-                new DataColumnSpecCreator("Downloaded", BooleanCell.TYPE)
-                        .createSpec();
+        columnSpecs[0] = new DataColumnSpecCreator("URI", URIDataCell.TYPE).createSpec();
+        columnSpecs[1] = new DataColumnSpecCreator("Downloaded", BooleanCell.TYPE).createSpec();
         return new DataTableSpec(columnSpecs);
     }
 
@@ -286,20 +267,16 @@ public class DownloadNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         // Check if a port object is available
         if (inSpecs[0] == null) {
-            throw new InvalidSettingsException(
-                    "No connection information available");
+            throw new InvalidSettingsException("No connection information available");
         }
-        ConnectionInformationPortObjectSpec object =
-                (ConnectionInformationPortObjectSpec)inSpecs[0];
+        ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
         m_connectionInformation = object.getConnectionInformation();
         // Check if the port object has connection information
         if (m_connectionInformation == null) {
-            throw new InvalidSettingsException(
-                    "No connection information available");
+            throw new InvalidSettingsException("No connection information available");
         }
         // Check if configuration has been loaded
         if (m_configuration == null) {
@@ -312,8 +289,7 @@ public class DownloadNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File nodeInternDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // not used
     }
@@ -322,8 +298,7 @@ public class DownloadNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File nodeInternDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // not used
     }
@@ -342,8 +317,7 @@ public class DownloadNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         new DownloadConfiguration().loadAndValidate(settings);
     }
 
@@ -351,8 +325,7 @@ public class DownloadNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         DownloadConfiguration config = new DownloadConfiguration();
         config.loadAndValidate(settings);
         m_configuration = config;

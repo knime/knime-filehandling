@@ -161,13 +161,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_authnone = new JRadioButton(AuthenticationMethod.NONE.getName());
         m_authnone.setActionCommand(AuthenticationMethod.NONE.getName());
         m_authnone.addChangeListener(new UpdateListener());
-        m_authpassword =
-                new JRadioButton(AuthenticationMethod.PASSWORD.getName());
-        m_authpassword
-                .setActionCommand(AuthenticationMethod.PASSWORD.getName());
+        m_authpassword = new JRadioButton(AuthenticationMethod.PASSWORD.getName());
+        m_authpassword.setActionCommand(AuthenticationMethod.PASSWORD.getName());
         m_authpassword.addChangeListener(new UpdateListener());
-        m_authkeyfile =
-                new JRadioButton(AuthenticationMethod.KEYFILE.getName());
+        m_authkeyfile = new JRadioButton(AuthenticationMethod.KEYFILE.getName());
         m_authkeyfile.setActionCommand(AuthenticationMethod.KEYFILE.getName());
         m_authkeyfile.addChangeListener(new UpdateListener());
         m_authmethod = new ButtonGroup();
@@ -188,22 +185,16 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_keyfileLabel = new JLabel("Keyfile:");
         m_keyfile = new FilesHistoryPanel("keyfileHistory", false);
         m_keyfile.setSelectMode(JFileChooser.FILES_ONLY);
-        m_keyfilefvm =
-                new FlowVariableModelButton(createFlowVariableModel("keyfile",
-                        FlowVariable.Type.STRING));
-        m_keyfilefvm.getFlowVariableModel().addChangeListener(
-                new UpdateListener());
+        m_keyfilefvm = new FlowVariableModelButton(createFlowVariableModel("keyfile", FlowVariable.Type.STRING));
+        m_keyfilefvm.getFlowVariableModel().addChangeListener(new UpdateListener());
         // Known hosts
         m_useknownhosts = new JCheckBox("Use known hosts");
         m_useknownhosts.addChangeListener(new UpdateListener());
         m_knownhostsLabel = new JLabel("Known hosts:");
         m_knownhosts = new FilesHistoryPanel("knownhostsHistory", false);
         m_knownhosts.setSelectMode(JFileChooser.FILES_ONLY);
-        m_knownhostsfvm =
-                new FlowVariableModelButton(createFlowVariableModel(
-                        "knownhosts", FlowVariable.Type.STRING));
-        m_knownhostsfvm.getFlowVariableModel().addChangeListener(
-                new UpdateListener());
+        m_knownhostsfvm = new FlowVariableModelButton(createFlowVariableModel("knownhosts", FlowVariable.Type.STRING));
+        m_knownhostsfvm.getFlowVariableModel().addChangeListener(new UpdateListener());
         // Test connection
         m_testconnection = new JButton("Test connection");
         m_testconnection.addActionListener(new TestConnectionListener());
@@ -225,8 +216,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         // Authentication panel
         NodeUtils.resetGBC(gbc);
         JPanel authenticationPanel = new JPanel(new GridBagLayout());
-        authenticationPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "Authentication"));
+        authenticationPanel.setBorder(new TitledBorder(new EtchedBorder(), "Authentication"));
         if (m_protocol.hasAuthNoneSupport()) {
             authenticationPanel.add(m_authnone);
             gbc.gridx++;
@@ -243,8 +233,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         gbc.gridx++;
         gbc.weightx = 1;
         m_workflowcredentialspanel.add(m_workflowcredentials, gbc);
-        m_workflowcredentialspanel.setBorder(new TitledBorder(
-                new EtchedBorder(), "Workflow credentials"));
+        m_workflowcredentialspanel.setBorder(new TitledBorder(new EtchedBorder(), "Workflow credentials"));
         // Keyfile panel
         JPanel keyfilePanel = null;
         if (m_protocol.hasKeyfileSupport()) {
@@ -345,30 +334,23 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
     private void updateEnabledState() {
         // If a password should be used
         boolean usePassword =
-                m_authmethod.getSelection() != null ? m_authmethod
-                        .getSelection().getActionCommand()
-                        .equals(AuthenticationMethod.PASSWORD.getName())
-                        : false;
+                m_authmethod.getSelection() != null ? m_authmethod.getSelection().getActionCommand()
+                        .equals(AuthenticationMethod.PASSWORD.getName()) : false;
         // If a keyfile should be used
         boolean useKeyfile =
-                m_authmethod.getSelection() != null ? m_authmethod
-                        .getSelection().getActionCommand()
+                m_authmethod.getSelection() != null ? m_authmethod.getSelection().getActionCommand()
                         .equals(AuthenticationMethod.KEYFILE.getName()) : false;
         // Check if credentials are available
         boolean credentialsAvailable = m_workflowcredentials.getItemCount() > 0;
         // Check if credentials can be selected
-        boolean credentialsSelectable =
-                (usePassword || useKeyfile) && credentialsAvailable;
+        boolean credentialsSelectable = (usePassword || useKeyfile) && credentialsAvailable;
         // Check if the user and password have to be set manually
-        boolean manualCredentials =
-                (usePassword || useKeyfile)
-                        && !m_useworkflowcredentials.isSelected();
+        boolean manualCredentials = (usePassword || useKeyfile) && !m_useworkflowcredentials.isSelected();
         // Disable workflow credentials if auth method is none or no credentials
         // are available
         m_workflowcredentialspanel.setEnabled(credentialsSelectable);
         m_useworkflowcredentials.setEnabled(credentialsSelectable);
-        m_workflowcredentials.setEnabled(credentialsSelectable
-                && m_useworkflowcredentials.isSelected());
+        m_workflowcredentials.setEnabled(credentialsSelectable && m_useworkflowcredentials.isSelected());
         // Disable user if auth method is none
         m_userLabel.setEnabled(manualCredentials);
         m_user.setEnabled(manualCredentials);
@@ -377,9 +359,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_password.setEnabled(manualCredentials);
         // Do this only if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
-            boolean keyfileReplacement =
-                    m_keyfilefvm.getFlowVariableModel()
-                            .isVariableReplacementEnabled();
+            boolean keyfileReplacement = m_keyfilefvm.getFlowVariableModel().isVariableReplacementEnabled();
             m_keyfileLabel.setEnabled(useKeyfile);
             // Enable file panel only if the flow variable replacement is not
             // active
@@ -389,9 +369,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         // Do this only if the protocol supports known hosts
         if (m_protocol.hasKnownhostsSupport()) {
             boolean useknownhosts = m_useknownhosts.isSelected();
-            boolean knownhostsReplacement =
-                    m_knownhostsfvm.getFlowVariableModel()
-                            .isVariableReplacementEnabled();
+            boolean knownhostsReplacement = m_knownhostsfvm.getFlowVariableModel().isVariableReplacementEnabled();
             m_knownhostsLabel.setEnabled(useknownhosts);
             // Enable file panel only if the flow variable replacement is not
             // active
@@ -444,13 +422,12 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             try {
                 // Get connection information to current settings
                 ConnectionInformation connectionInformation =
-                        createConfig().getConnectionInformation(
-                                getCredentialsProvider());
+                        createConfig().getConnectionInformation(getCredentialsProvider());
                 // Open dialog
                 new TestConnectionDialog(connectionInformation).open(frame);
             } catch (InvalidSettingsException e2) {
-                JOptionPane.showMessageDialog(new JFrame(), e2.getMessage(),
-                        "Invalid settings", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(new JFrame(), e2.getMessage(), "Invalid settings",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -460,8 +437,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
         ConnectionInformationConfiguration config = createConfig();
         config.save(settings);
     }
@@ -473,27 +449,21 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * @return The configuration object
      * @throws InvalidSettingsException
      */
-    private ConnectionInformationConfiguration createConfig()
-            throws InvalidSettingsException {
-        ConnectionInformationConfiguration config =
-                new ConnectionInformationConfiguration(m_protocol);
+    private ConnectionInformationConfiguration createConfig() throws InvalidSettingsException {
+        ConnectionInformationConfiguration config = new ConnectionInformationConfiguration(m_protocol);
         config.setUseworkflowcredentials(m_useworkflowcredentials.isSelected());
-        config.setWorkflowcredentials((String)m_workflowcredentials
-                .getSelectedItem());
+        config.setWorkflowcredentials((String)m_workflowcredentials.getSelectedItem());
         config.setUser(m_user.getText());
         String host = m_host.getText();
         if (!DomainValidator.isValidDomain(host)) {
-            throw new InvalidSettingsException(
-                    "Host invalid. Host must not include scheme, user, port, path or query");
+            throw new InvalidSettingsException("Host invalid. Host must not include scheme, user, port, path or query");
         }
         config.setHost(host);
         config.setPort((Integer)m_port.getValue());
-        config.setAuthenticationmethod(m_authmethod.getSelection()
-                .getActionCommand());
+        config.setAuthenticationmethod(m_authmethod.getSelection().getActionCommand());
         try {
             if (m_password.getPassword().length > 0) {
-                config.setPassword(KnimeEncryption.encrypt(m_password
-                        .getPassword()));
+                config.setPassword(KnimeEncryption.encrypt(m_password.getPassword()));
             }
         } catch (Exception e) {
             // Do not change password
@@ -514,19 +484,17 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final PortObjectSpec[] specs) throws NotConfigurableException {
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
+            throws NotConfigurableException {
         Collection<String> credentials = getCredentialsNames();
         m_workflowcredentials.removeAllItems();
         for (String credential : credentials) {
             m_workflowcredentials.addItem(credential);
         }
-        ConnectionInformationConfiguration config =
-                new ConnectionInformationConfiguration(m_protocol);
+        ConnectionInformationConfiguration config = new ConnectionInformationConfiguration(m_protocol);
         config.load(settings);
         if (m_workflowcredentials.getItemCount() > 0) {
-            m_useworkflowcredentials.setSelected(config
-                    .getUseworkflowcredentials());
+            m_useworkflowcredentials.setSelected(config.getUseworkflowcredentials());
         }
         m_workflowcredentials.setSelectedItem(config.getWorkflowcredentials());
         m_user.setText(config.getUser());

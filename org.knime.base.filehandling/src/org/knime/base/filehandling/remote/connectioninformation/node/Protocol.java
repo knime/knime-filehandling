@@ -94,10 +94,8 @@ public enum Protocol {
      * @param testSupport If the testing of the connection is supported
      * @param browseSupport If this protocol supports browsing
      */
-    private Protocol(final String name, final int port,
-            final boolean authNoneSupport, final boolean keyfileSupport,
-            final boolean knownhostsSupport, final boolean testSupport,
-            final boolean browseSupport) {
+    private Protocol(final String name, final int port, final boolean authNoneSupport, final boolean keyfileSupport,
+            final boolean knownhostsSupport, final boolean testSupport, final boolean browseSupport) {
         m_name = name;
         m_port = port;
         m_authnonesupport = authNoneSupport;
@@ -181,8 +179,7 @@ public enum Protocol {
      * @return Array with all protocol names
      */
     public static String[] getAllProtocols() {
-        return new String[]{SSH.getName(), FTP.getName(), HTTP.getName(),
-                HTTPS.getName()};
+        return new String[]{SSH.getName(), FTP.getName(), HTTP.getName(), HTTPS.getName()};
     }
 
 }

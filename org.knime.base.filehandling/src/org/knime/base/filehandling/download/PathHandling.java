@@ -93,8 +93,7 @@ enum PathHandling {
      * @return Array of all path handling settings
      */
     static String[] getAllSettings() {
-        return new String[]{FULL_PATH.getName(), ONLY_FILENAME.getName(),
-                TRUNCATE_PREFIX.getName()};
+        return new String[]{FULL_PATH.getName(), ONLY_FILENAME.getName(), TRUNCATE_PREFIX.getName()};
     }
 
 }

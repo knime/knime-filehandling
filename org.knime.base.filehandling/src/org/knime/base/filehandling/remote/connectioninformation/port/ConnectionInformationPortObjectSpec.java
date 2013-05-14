@@ -64,8 +64,7 @@ import org.knime.core.node.port.AbstractSimplePortObjectSpec;
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class ConnectionInformationPortObjectSpec extends
-        AbstractSimplePortObjectSpec {
+public class ConnectionInformationPortObjectSpec extends AbstractSimplePortObjectSpec {
 
     private ConnectionInformation m_connectionInformation;
 
@@ -82,8 +81,7 @@ public class ConnectionInformationPortObjectSpec extends
      * 
      * @param connectionInformation The content of this port object
      */
-    public ConnectionInformationPortObjectSpec(
-            final ConnectionInformation connectionInformation) {
+    public ConnectionInformationPortObjectSpec(final ConnectionInformation connectionInformation) {
         if (connectionInformation == null) {
             throw new NullPointerException("List argument must not be null");
         }
@@ -119,10 +117,8 @@ public class ConnectionInformationPortObjectSpec extends
         if (!(ospec instanceof ConnectionInformationPortObjectSpec)) {
             return false;
         }
-        ConnectionInformationPortObjectSpec oCIPOS =
-                (ConnectionInformationPortObjectSpec)ospec;
-        return ObjectUtils.equals(m_connectionInformation,
-                oCIPOS.m_connectionInformation);
+        ConnectionInformationPortObjectSpec oCIPOS = (ConnectionInformationPortObjectSpec)ospec;
+        return ObjectUtils.equals(m_connectionInformation, oCIPOS.m_connectionInformation);
     }
 
     /**
@@ -130,8 +126,7 @@ public class ConnectionInformationPortObjectSpec extends
      */
     @Override
     public int hashCode() {
-        return m_connectionInformation == null ? 0 : m_connectionInformation
-                .hashCode();
+        return m_connectionInformation == null ? 0 : m_connectionInformation.hashCode();
     }
 
     /**
@@ -146,8 +141,7 @@ public class ConnectionInformationPortObjectSpec extends
      * {@inheritDoc}
      */
     @Override
-    protected void load(final ModelContentRO model)
-            throws InvalidSettingsException {
+    protected void load(final ModelContentRO model) throws InvalidSettingsException {
         m_connectionInformation = ConnectionInformation.load(model);
     }
 

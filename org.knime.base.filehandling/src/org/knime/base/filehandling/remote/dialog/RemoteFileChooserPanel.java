@@ -82,7 +82,7 @@ import org.knime.core.node.util.StringHistory;
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class RemoteFileChooserPanel {
+public final class RemoteFileChooserPanel {
 
     private ConnectionInformation m_connectionInformation;
 
@@ -111,9 +111,8 @@ public class RemoteFileChooserPanel {
      * @param connectionInformation Connection information for the remote
      *            connection
      */
-    public RemoteFileChooserPanel(final JPanel parentPanel, final String label,
-            final boolean border, final String historyID,
-            final int selectionMode, final FlowVariableModel fvm,
+    public RemoteFileChooserPanel(final JPanel parentPanel, final String label, final boolean border,
+            final String historyID, final int selectionMode, final FlowVariableModel fvm,
             final ConnectionInformation connectionInformation) {
         m_connectionInformation = connectionInformation;
         m_hostSpecificID = historyID;
@@ -136,8 +135,7 @@ public class RemoteFileChooserPanel {
                     container = container.getParent();
                 }
                 RemoteFileChooser dialog =
-                        new RemoteFileChooser(m_connectionInformation.toURI(),
-                                m_connectionInformation, selectionMode);
+                        new RemoteFileChooser(m_connectionInformation.toURI(), m_connectionInformation, selectionMode);
                 dialog.open(frame);
                 String selected = dialog.getSelectedFile();
                 if (selected != null) {
@@ -185,14 +183,10 @@ public class RemoteFileChooserPanel {
      * @param connectionInformation The connection information for the
      *            connection.
      */
-    public void setConnectionInformation(
-            final ConnectionInformation connectionInformation) {
+    public void setConnectionInformation(final ConnectionInformation connectionInformation) {
         // Build specific history id by using the host information and the
         // history id
-        m_hostSpecificID =
-                connectionInformation.toURI().toString()
-                        .replaceAll("[/@:?&#]", "")
-                        + m_historyID;
+        m_hostSpecificID = connectionInformation.toURI().toString().replaceAll("[/@:?&#]", "") + m_historyID;
         updateHistory();
         m_connectionInformation = connectionInformation;
         setEnabled(m_panel.isEnabled());
@@ -236,14 +230,10 @@ public class RemoteFileChooserPanel {
      */
     public void setEnabled(final boolean enabled) {
         // Some components will only be enabled if replacement is not enabled
-        boolean replacement =
-                m_fvmbutton.getFlowVariableModel()
-                        .isVariableReplacementEnabled();
+        boolean replacement = m_fvmbutton.getFlowVariableModel().isVariableReplacementEnabled();
         boolean browsable = false;
         if (m_connectionInformation != null) {
-            browsable =
-                    Protocol.getProtocol(m_connectionInformation.getProtocol())
-                            .hasBrowseSupport();
+            browsable = Protocol.getProtocol(m_connectionInformation.getProtocol()).hasBrowseSupport();
         }
         m_panel.setEnabled(enabled);
         m_combobox.setEnabled(enabled && !replacement);
@@ -265,8 +255,7 @@ public class RemoteFileChooserPanel {
             set.add(strings[i]);
         }
         // Remove old elements
-        DefaultComboBoxModel model =
-                (DefaultComboBoxModel)m_combobox.getModel();
+        DefaultComboBoxModel model = (DefaultComboBoxModel)m_combobox.getModel();
         model.removeAllElements();
         // Add new elements
         for (String string : set) {

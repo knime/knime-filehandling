@@ -82,8 +82,7 @@ final class SettingsFactory {
      * @return Filename handling <code>SettingsModel</code>
      */
     static SettingsModelString createFilenameHandlingSettings() {
-        return new SettingsModelString("filenamehandling",
-                FilenameHandling.GENERATE.getName());
+        return new SettingsModelString("filenamehandling", FilenameHandling.GENERATE.getName());
     }
 
     /**
@@ -95,13 +94,10 @@ final class SettingsFactory {
      * 
      * @return Target column <code>SettingsModel</code>
      */
-    static SettingsModelString createTargetColumnSettings(
-            final SettingsModelString filenamehandling) {
-        SettingsModelString namecolumn =
-                new SettingsModelString("targetcolumn", "");
+    static SettingsModelString createTargetColumnSettings(final SettingsModelString filenamehandling) {
+        SettingsModelString namecolumn = new SettingsModelString("targetcolumn", "");
         String handling = filenamehandling.getStringValue();
-        namecolumn.setEnabled(handling.equals(FilenameHandling.FROMCOLUMN
-                .getName()));
+        namecolumn.setEnabled(handling.equals(FilenameHandling.FROMCOLUMN.getName()));
         return namecolumn;
     }
 
@@ -114,13 +110,10 @@ final class SettingsFactory {
      * 
      * @return Output directory <code>SettingsModel</code>
      */
-    static SettingsModelString createOutputDirectorySettings(
-            final SettingsModelString filenamehandling) {
-        SettingsModelString directory =
-                new SettingsModelString("outputdirectory", "");
+    static SettingsModelString createOutputDirectorySettings(final SettingsModelString filenamehandling) {
+        SettingsModelString directory = new SettingsModelString("outputdirectory", "");
         String handling = filenamehandling.getStringValue();
-        directory.setEnabled(handling.equals(FilenameHandling.GENERATE
-                .getName()));
+        directory.setEnabled(handling.equals(FilenameHandling.GENERATE.getName()));
         return directory;
     }
 
@@ -133,13 +126,10 @@ final class SettingsFactory {
      * 
      * @return Name pattern <code>SettingsModel</code>
      */
-    static SettingsModelString createNamePatternSettings(
-            final SettingsModelString filenamehandling) {
-        SettingsModelString namepattern =
-                new SettingsModelString("namepattern", "file_?.dat");
+    static SettingsModelString createNamePatternSettings(final SettingsModelString filenamehandling) {
+        SettingsModelString namepattern = new SettingsModelString("namepattern", "file_?.dat");
         String handling = filenamehandling.getStringValue();
-        namepattern.setEnabled(handling.equals(FilenameHandling.GENERATE
-                .getName()));
+        namepattern.setEnabled(handling.equals(FilenameHandling.GENERATE.getName()));
         return namepattern;
     }
 
@@ -160,8 +150,7 @@ final class SettingsFactory {
      * @return If exists <code>SettingsModel</code>
      */
     static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+        return new SettingsModelString("ifexists", OverwritePolicy.ABORT.getName());
     }
 
 }

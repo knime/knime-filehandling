@@ -98,8 +98,7 @@ enum OverwritePolicy {
      * @return Array of all overwrite policy settings
      */
     static String[] getAllSettings() {
-        return new String[]{OVERWRITE.getName(), APPEND_OVERWRITE.getName(),
-                APPEND_ABORT.getName(), ABORT.getName()};
+        return new String[]{OVERWRITE.getName(), APPEND_OVERWRITE.getName(), APPEND_ABORT.getName(), ABORT.getName()};
     }
 
 }

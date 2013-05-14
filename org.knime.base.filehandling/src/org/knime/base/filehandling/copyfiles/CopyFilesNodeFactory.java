@@ -82,8 +82,7 @@ public class CopyFilesNodeFactory extends NodeFactory<CopyFilesNodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public NodeView<CopyFilesNodeModel> createNodeView(final int viewIndex,
-            final CopyFilesNodeModel nodeModel) {
+    public NodeView<CopyFilesNodeModel> createNodeView(final int viewIndex, final CopyFilesNodeModel nodeModel) {
         return null;
     }
 

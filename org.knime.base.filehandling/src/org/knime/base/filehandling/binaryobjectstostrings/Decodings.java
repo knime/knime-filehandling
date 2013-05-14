@@ -93,8 +93,7 @@ public final class Decodings {
      * @return Array with all available decodings
      */
     public static String[] getAllDecodings() {
-        return new String[]{US_ASCII, ISO_8859_1, UTF_8, UTF_16BE, UTF_16LE,
-                UTF_16};
+        return new String[]{US_ASCII, ISO_8859_1, UTF_8, UTF_16BE, UTF_16LE, UTF_16};
     }
 
 }

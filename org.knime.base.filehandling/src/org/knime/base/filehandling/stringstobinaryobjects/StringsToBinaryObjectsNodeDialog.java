@@ -90,25 +90,20 @@ public class StringsToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
         m_replace.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                boolean append =
-                        m_replace.getStringValue().equals(
-                                ReplacePolicy.APPEND.getName());
+                boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
                 m_columnname.setEnabled(append);
             }
         });
         // Column selection
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_columnselection, "Column selection", 0, StringValue.class));
+        addDialogComponent(new DialogComponentColumnNameSelection(m_columnselection, "Column selection", 0,
+                StringValue.class));
         // Encoding
-        addDialogComponent(new DialogComponentStringSelection(m_encoding,
-                "Encoding", Encodings.getAllEncodings()));
+        addDialogComponent(new DialogComponentStringSelection(m_encoding, "Encoding", Encodings.getAllEncodings()));
         createNewGroup("New column...");
         // Replace
-        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "",
-                ReplacePolicy.getAllSettings()));
+        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "", ReplacePolicy.getAllSettings()));
         // Column name
-        addDialogComponent(new DialogComponentString(m_columnname, "Name",
-                true, 20));
+        addDialogComponent(new DialogComponentString(m_columnname, "Name", true, 20));
         closeCurrentGroup();
     }
 

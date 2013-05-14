@@ -127,12 +127,10 @@ class ExtractURIInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-            final ExecutionContext exec) throws Exception {
-        ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec());
-        BufferedDataTable out =
-                exec.createColumnRearrangeTable(inData[0], rearranger, exec);
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+            throws Exception {
+        ColumnRearranger rearranger = createColumnRearranger(inData[0].getDataTableSpec());
+        BufferedDataTable out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
@@ -144,8 +142,7 @@ class ExtractURIInfoNodeModel extends NodeModel {
      * @return Rearranger that will append the selected columns
      * @throws InvalidSettingsException If the settings are incorrect
      */
-    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec) throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
         String columnName;
@@ -154,55 +151,45 @@ class ExtractURIInfoNodeModel extends NodeModel {
         // Add columns depending on configuration
         if (m_authority.getBooleanValue()) {
             columnName = DataTableSpec.getUniqueColumnName(inSpec, "Authority");
-            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE)
-                    .createSpec());
+            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE).createSpec());
         }
         if (m_fragment.getBooleanValue()) {
             columnName = DataTableSpec.getUniqueColumnName(inSpec, "Fragment");
-            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE)
-                    .createSpec());
+            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE).createSpec());
         }
         if (m_host.getBooleanValue()) {
             columnName = DataTableSpec.getUniqueColumnName(inSpec, "Host");
-            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE)
-                    .createSpec());
+            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE).createSpec());
         }
         if (m_path.getBooleanValue()) {
             columnName = DataTableSpec.getUniqueColumnName(inSpec, "Path");
-            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE)
-                    .createSpec());
+            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE).createSpec());
         }
         if (m_port.getBooleanValue()) {
             columnName = DataTableSpec.getUniqueColumnName(inSpec, "Port");
-            colSpecs.add(new DataColumnSpecCreator(columnName, IntCell.TYPE)
-                    .createSpec());
+            colSpecs.add(new DataColumnSpecCreator(columnName, IntCell.TYPE).createSpec());
         }
         if (m_query.getBooleanValue()) {
             columnName = DataTableSpec.getUniqueColumnName(inSpec, "Query");
-            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE)
-                    .createSpec());
+            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE).createSpec());
         }
         if (m_scheme.getBooleanValue()) {
             columnName = DataTableSpec.getUniqueColumnName(inSpec, "Scheme");
-            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE)
-                    .createSpec());
+            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE).createSpec());
         }
         if (m_userinfo.getBooleanValue()) {
             columnName = DataTableSpec.getUniqueColumnName(inSpec, "User info");
-            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE)
-                    .createSpec());
+            colSpecs.add(new DataColumnSpecCreator(columnName, StringCell.TYPE).createSpec());
         }
         // Number of added columns
         final int newCols = colSpecs.size();
         // Factory that creates the cells for the configured attributes
-        CellFactory factory =
-                new AbstractCellFactory(
-                        colSpecs.toArray(new DataColumnSpec[colSpecs.size()])) {
-                    @Override
-                    public DataCell[] getCells(final DataRow row) {
-                        return createStringCells(row, inSpec, newCols);
-                    }
-                };
+        CellFactory factory = new AbstractCellFactory(colSpecs.toArray(new DataColumnSpec[colSpecs.size()])) {
+            @Override
+            public DataCell[] getCells(final DataRow row) {
+                return createStringCells(row, inSpec, newCols);
+            }
+        };
         // Append new columns
         rearranger.append(factory);
         return rearranger;
@@ -217,8 +204,7 @@ class ExtractURIInfoNodeModel extends NodeModel {
      * @param newCols Number of new columns
      * @return String cell
      */
-    private DataCell[] createStringCells(final DataRow row,
-            final DataTableSpec spec, final int newCols) {
+    private DataCell[] createStringCells(final DataRow row, final DataTableSpec spec, final int newCols) {
         List<DataCell> cells = new ArrayList<DataCell>(newCols);
         // Get URI cell
         String column = m_columnselection.getStringValue();
@@ -309,11 +295,9 @@ class ExtractURIInfoNodeModel extends NodeModel {
      * @throws InvalidSettingsException If the settings are incorrect
      */
     @SuppressWarnings("unchecked")
-    private void checkSettings(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private void checkSettings(final DataTableSpec inSpec) throws InvalidSettingsException {
         String selectedColumn = m_columnselection.getStringValue();
-        NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn,
-                URIDataValue.class);
+        NodeUtils.checkColumnSelection(inSpec, "URI", selectedColumn, URIDataValue.class);
     }
 
     /**
@@ -328,8 +312,7 @@ class ExtractURIInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
         // createColumnRearranger will check the settings
         DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};
@@ -355,8 +338,7 @@ class ExtractURIInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_columnselection.loadSettingsFrom(settings);
         m_authority.loadSettingsFrom(settings);
         m_fragment.loadSettingsFrom(settings);
@@ -372,8 +354,7 @@ class ExtractURIInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_columnselection.validateSettings(settings);
         m_authority.validateSettings(settings);
         m_fragment.validateSettings(settings);
@@ -389,8 +370,7 @@ class ExtractURIInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -399,8 +379,7 @@ class ExtractURIInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

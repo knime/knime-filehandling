@@ -61,7 +61,7 @@ import java.util.Map;
  */
 public final class DefaultPortMap {
 
-    private static DefaultPortMap portMap = null;
+    private static DefaultPortMap portMap = new DefaultPortMap();
 
     private Map<String, Integer> m_map;
 
@@ -86,9 +86,6 @@ public final class DefaultPortMap {
      * @return Singleton instance of default port map
      */
     public static DefaultPortMap getMap() {
-        if (portMap == null) {
-            portMap = new DefaultPortMap();
-        }
         return portMap;
     }
 

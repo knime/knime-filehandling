@@ -79,8 +79,7 @@ public class SSHConnection extends Connection {
      * @param uri The URI
      * @param connectionInformation Connection information to the given URI
      */
-    public SSHConnection(final URI uri,
-            final ConnectionInformation connectionInformation) {
+    public SSHConnection(final URI uri, final ConnectionInformation connectionInformation) {
         m_uri = uri;
         m_connectionInformation = connectionInformation;
     }
@@ -91,14 +90,11 @@ public class SSHConnection extends Connection {
     @Override
     public void open() throws Exception {
         if (m_connectionInformation == null) {
-            throw new Exception("Missing the connection information for "
-                    + m_uri);
+            throw new Exception("Missing the connection information for " + m_uri);
         }
         // Read attributes
         String host = m_uri.getHost();
-        int port =
-                m_uri.getPort() >= 0 ? m_uri.getPort() : DefaultPortMap
-                        .getMap().get("ssh");
+        int port = m_uri.getPort() >= 0 ? m_uri.getPort() : DefaultPortMap.getMap().get("ssh");
         String user = m_uri.getUserInfo();
         String password = m_connectionInformation.getPassword();
         if (password != null) {

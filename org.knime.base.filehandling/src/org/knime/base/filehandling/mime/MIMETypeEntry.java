@@ -99,11 +99,11 @@ public final class MIMETypeEntry {
      */
     @Override
     public String toString() {
-        String result = m_type;
+        StringBuffer result = new StringBuffer(m_type);
         for (int i = 0; i < m_extensions.size(); i++) {
-            result += " " + m_extensions.get(i);
+            result.append(" " + m_extensions.get(i));
         }
-        return result;
+        return result.toString();
     }
 
 }

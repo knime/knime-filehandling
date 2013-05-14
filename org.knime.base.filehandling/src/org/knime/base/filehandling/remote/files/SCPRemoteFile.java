@@ -83,8 +83,7 @@ public class SCPRemoteFile extends RemoteFile {
      * @param connectionInformation Connection information to the given URI
      * @param connectionMonitor Monitor for the connection
      */
-    SCPRemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation,
+    SCPRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
             final ConnectionMonitor connectionMonitor) {
         super(uri, connectionInformation, connectionMonitor);
     }
@@ -152,8 +151,7 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void write(final RemoteFile file, final ExecutionContext exec)
-            throws Exception {
+    public void write(final RemoteFile file, final ExecutionContext exec) throws Exception {
         byte[] buffer = new byte[1024];
         SCPChannel scp = new SCPChannel();
         // Open direct output stream
@@ -216,8 +214,7 @@ public class SCPRemoteFile extends RemoteFile {
      */
     @Override
     public long lastModified() throws Exception {
-        throw new UnsupportedOperationException(
-                unsupportedMessage("lastModified"));
+        throw new UnsupportedOperationException(unsupportedMessage("lastModified"));
     }
 
     /**
@@ -335,8 +332,7 @@ public class SCPRemoteFile extends RemoteFile {
          * @param size Size of the file that should be written
          * @throws Exception If the opening was unsuccessful
          */
-        public void openFileOutput(final String path, final long size)
-                throws Exception {
+        public void openFileOutput(final String path, final long size) throws Exception {
             // Open execution channel
             Session session = ((SSHConnection)getConnection()).getSession();
             m_channel = (ChannelExec)session.openChannel("exec");
@@ -349,8 +345,7 @@ public class SCPRemoteFile extends RemoteFile {
             checkForConfirmation();
             // Send line with permissions (using default), file size and file
             // name
-            String command =
-                    "C0644 " + size + " " + FilenameUtils.getName(path) + "\n";
+            String command = "C0644 " + size + " " + FilenameUtils.getName(path) + "\n";
             m_out.write(command.getBytes());
             m_out.flush();
             checkForConfirmation();
@@ -389,7 +384,10 @@ public class SCPRemoteFile extends RemoteFile {
          */
         private void checkForConfirmation() throws IOException {
             byte[] buffer = new byte[1];
-            m_in.read(buffer);
+            if (m_in.read(buffer) == 0) {
+                // Stream does not have valid data
+                throw new IOException("SCP error");
+            }
             // 0 means positive confirmation
             if (buffer[0] != 0) {
                 throw new IOException("SCP error");
@@ -421,17 +419,14 @@ public class SCPRemoteFile extends RemoteFile {
          * @throws IOException If the input stream does not contain the given
          *             character
          */
-        private String skipTo(final InputStream streamIn, final char character)
-                throws IOException {
+        private String skipTo(final InputStream streamIn, final char character) throws IOException {
             StringBuffer result = new StringBuffer();
             byte[] buffer = new byte[1];
             // Read single byte until character appears
             do {
                 int length = streamIn.read(buffer, 0, 1);
                 if (length < 0) {
-                    throw new IOException(
-                            "Reached end of stream and found no '" + character
-                                    + "'");
+                    throw new IOException("Reached end of stream and found no '" + character + "'");
                 }
                 // Build string with found characters
                 result.append(new String(buffer));
@@ -474,7 +469,9 @@ public class SCPRemoteFile extends RemoteFile {
         public int read() throws IOException {
             byte[] b = new byte[1];
             // Pass to read(buffer)
-            read(b);
+            if (read(b) == 0) {
+                throw new IOException("Stream has no bytes left");
+            }
             return b[0];
         }
 
@@ -491,8 +488,7 @@ public class SCPRemoteFile extends RemoteFile {
          * {@inheritDoc}
          */
         @Override
-        public int read(final byte[] buffer, final int offset, final int length)
-                throws IOException {
+        public int read(final byte[] buffer, final int offset, final int length) throws IOException {
             // Get input stream of SCP channel
             InputStream in = m_scp.getInputStream();
             int result = -1;
@@ -605,13 +601,13 @@ public class SCPRemoteFile extends RemoteFile {
          */
         @Override
         public void close() throws IOException {
+            // Open file input stream
+            InputStream in = new FileInputStream(m_file);
             try {
                 byte[] buffer = new byte[1024];
                 int length;
                 // Close file output stream
                 m_stream.close();
-                // Open file input stream
-                InputStream in = new FileInputStream(m_file);
                 SCPChannel scp = new SCPChannel();
                 scp.openFileOutput(m_path, m_file.length());
                 // Get scp channel output stream
@@ -623,6 +619,9 @@ public class SCPRemoteFile extends RemoteFile {
                 in.close();
                 scp.closeFileOutput();
             } catch (Exception e) {
+                if (in != null) {
+                    in.close();
+                }
                 // Convert exception to IOException
                 throw new IOException(e);
             }
@@ -652,8 +651,7 @@ public class SCPRemoteFile extends RemoteFile {
          * {@inheritDoc}
          */
         @Override
-        public void write(final byte[] buffer, final int offset,
-                final int length) throws IOException {
+        public void write(final byte[] buffer, final int offset, final int length) throws IOException {
             // Write to file stream
             m_stream.write(buffer, offset, length);
         }

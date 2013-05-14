@@ -107,12 +107,10 @@ class FileMetaInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-            final ExecutionContext exec) throws Exception {
-        ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec(), exec);
-        BufferedDataTable out =
-                exec.createColumnRearrangeTable(inData[0], rearranger, exec);
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+            throws Exception {
+        ColumnRearranger rearranger = createColumnRearranger(inData[0].getDataTableSpec());
+        BufferedDataTable out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
@@ -121,16 +119,13 @@ class FileMetaInfoNodeModel extends NodeModel {
      * 
      * 
      * @param inSpec Specification of the input table
-     * @param exec Context of this execution
      * @return Rearranger that will add the meta information columns
      * @throws InvalidSettingsException If the settings are incorrect
      */
-    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final ExecutionContext exec) throws InvalidSettingsException {
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec) throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
-        final int uriIndex =
-                inSpec.findColumnIndex(m_uricolumn.getStringValue());
+        final int uriIndex = inSpec.findColumnIndex(m_uricolumn.getStringValue());
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         // Create columns for the meta information using the attributes array
         Attributes[] attributes = Attributes.getAllAttributes();
@@ -138,12 +133,9 @@ class FileMetaInfoNodeModel extends NodeModel {
         // Add each attribute with there name and type at there position
         for (int i = 0; i < attributes.length; i++) {
             int position = attributes[i].getPosition();
-            String name =
-                    DataTableSpec.getUniqueColumnName(inSpec,
-                            attributes[i].getName());
+            String name = DataTableSpec.getUniqueColumnName(inSpec, attributes[i].getName());
             DataType type = attributes[i].getType();
-            colSpecs[position] =
-                    new DataColumnSpecCreator(name, type).createSpec();
+            colSpecs[position] = new DataColumnSpecCreator(name, type).createSpec();
         }
         // Factory that checks the files for there meta information
         CellFactory factory = new AbstractCellFactory(colSpecs) {
@@ -182,45 +174,37 @@ class FileMetaInfoNodeModel extends NodeModel {
             String scheme = uri.getScheme();
             // Check scheme if selected
             if (abort && (scheme == null || !scheme.equals("file"))) {
-                throw new RuntimeException("The URI \"" + uri.toString()
-                        + "\" does have the scheme \"" + scheme
+                throw new RuntimeException("The URI \"" + uri.toString() + "\" does have the scheme \"" + scheme
                         + "\", expected \"file\"");
             }
             File file = new File(uri.getPath());
             if (file.exists()) {
                 try {
                     // Directory
-                    cells[Attributes.DIRECTORY.getPosition()] =
-                            BooleanCell.get(file.isDirectory());
+                    cells[Attributes.DIRECTORY.getPosition()] = BooleanCell.get(file.isDirectory());
                     // Hidden
-                    cells[Attributes.HIDDEN.getPosition()] =
-                            BooleanCell.get(file.isHidden());
+                    cells[Attributes.HIDDEN.getPosition()] = BooleanCell.get(file.isHidden());
                     // Size
                     long size = getFileSize(file);
                     cells[Attributes.SIZE.getPosition()] = new LongCell(size);
                     // Size (human readable)
                     String humansize = FileUtils.byteCountToDisplaySize(size);
-                    cells[Attributes.HUMANSIZE.getPosition()] =
-                            new StringCell(humansize);
+                    cells[Attributes.HUMANSIZE.getPosition()] = new StringCell(humansize);
                     // Last modified
                     long modifyDate = file.lastModified();
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTimeInMillis(modifyDate);
                     cells[Attributes.MODIFIED.getPosition()] =
-                            new DateAndTimeCell(calendar.get(Calendar.YEAR),
-                                    calendar.get(Calendar.MONTH),
-                                    calendar.get(Calendar.DAY_OF_MONTH),
-                                    calendar.get(Calendar.HOUR_OF_DAY),
-                                    calendar.get(Calendar.MINUTE),
-                                    calendar.get(Calendar.SECOND),
+                            new DateAndTimeCell(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
+                                    calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY),
+                                    calendar.get(Calendar.MINUTE), calendar.get(Calendar.SECOND),
                                     calendar.get(Calendar.MILLISECOND));
                     // Permissions
                     String permissions = "";
                     permissions += file.canRead() ? "r" : "";
                     permissions += file.canWrite() ? "w" : "";
                     permissions += file.canExecute() ? "x" : "";
-                    cells[Attributes.PERMISSIONS.getPosition()] =
-                            new StringCell(permissions);
+                    cells[Attributes.PERMISSIONS.getPosition()] = new StringCell(permissions);
                 } catch (Exception e) {
                     // If one file does not work, go on
                 }
@@ -260,11 +244,9 @@ class FileMetaInfoNodeModel extends NodeModel {
      * @throws InvalidSettingsException If the settings are incorrect
      */
     @SuppressWarnings("unchecked")
-    private void checkSettings(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private void checkSettings(final DataTableSpec inSpec) throws InvalidSettingsException {
         String uricolumn = m_uricolumn.getStringValue();
-        NodeUtils.checkColumnSelection(inSpec, "URI", uricolumn,
-                URIDataValue.class);
+        NodeUtils.checkColumnSelection(inSpec, "URI", uricolumn, URIDataValue.class);
     }
 
     /**
@@ -279,11 +261,9 @@ class FileMetaInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
         // createColumnRearranger() will check the settings
-        DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0], null).createSpec();
+        DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 
@@ -300,8 +280,7 @@ class FileMetaInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_uricolumn.loadSettingsFrom(settings);
         m_abortifnotlocal.loadSettingsFrom(settings);
     }
@@ -310,8 +289,7 @@ class FileMetaInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_uricolumn.validateSettings(settings);
         m_abortifnotlocal.validateSettings(settings);
     }
@@ -320,8 +298,7 @@ class FileMetaInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -330,8 +307,7 @@ class FileMetaInfoNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

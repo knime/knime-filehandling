@@ -60,8 +60,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class URIPortToVariableNodeFactory extends
-        NodeFactory<URIPortToVariableNodeModel> {
+public class URIPortToVariableNodeFactory extends NodeFactory<URIPortToVariableNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -83,8 +82,8 @@ public class URIPortToVariableNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<URIPortToVariableNodeModel> createNodeView(
-            final int viewIndex, final URIPortToVariableNodeModel nodeModel) {
+    public NodeView<URIPortToVariableNodeModel> createNodeView(final int viewIndex,
+            final URIPortToVariableNodeModel nodeModel) {
         return null;
     }
 

@@ -102,8 +102,7 @@ final class SettingsFactory {
      * @return Path handling <code>SettingsModel</code>
      */
     static SettingsModelString createPathHandlingSettings() {
-        return new SettingsModelString("pathhandling",
-                PathHandling.FULL_PATH.getName());
+        return new SettingsModelString("pathhandling", PathHandling.FULL_PATH.getName());
     }
 
     /**
@@ -115,11 +114,9 @@ final class SettingsFactory {
      * 
      * @return Prefix <code>SettingsModel</code>
      */
-    static SettingsModelString createPrefixSettings(
-            final SettingsModelString pathhandling) {
+    static SettingsModelString createPrefixSettings(final SettingsModelString pathhandling) {
         SettingsModelString prefix = new SettingsModelString("prefix", "");
-        prefix.setEnabled(pathhandling.getStringValue().equals(
-                PathHandling.TRUNCATE_PREFIX.getName()));
+        prefix.setEnabled(pathhandling.getStringValue().equals(PathHandling.TRUNCATE_PREFIX.getName()));
         return prefix;
     }
 
@@ -130,8 +127,7 @@ final class SettingsFactory {
      * @return If exists <code>SettingsModel</code>
      */
     static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+        return new SettingsModelString("ifexists", OverwritePolicy.ABORT.getName());
     }
 
 }

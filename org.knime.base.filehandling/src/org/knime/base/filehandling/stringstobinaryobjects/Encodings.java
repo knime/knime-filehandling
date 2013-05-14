@@ -93,8 +93,7 @@ public final class Encodings {
      * @return Array with all available encodings
      */
     public static String[] getAllEncodings() {
-        return new String[]{US_ASCII, ISO_8859_1, UTF_8, UTF_16BE, UTF_16LE,
-                UTF_16};
+        return new String[]{US_ASCII, ISO_8859_1, UTF_8, UTF_16BE, UTF_16LE, UTF_16};
     }
 
 }

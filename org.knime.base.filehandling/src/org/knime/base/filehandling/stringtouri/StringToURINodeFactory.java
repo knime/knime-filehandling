@@ -82,8 +82,7 @@ public class StringToURINodeFactory extends NodeFactory<StringToURINodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public NodeView<StringToURINodeModel> createNodeView(final int viewIndex,
-            final StringToURINodeModel nodeModel) {
+    public NodeView<StringToURINodeModel> createNodeView(final int viewIndex, final StringToURINodeModel nodeModel) {
         return null;
     }
 

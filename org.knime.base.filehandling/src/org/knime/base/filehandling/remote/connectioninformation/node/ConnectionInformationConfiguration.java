@@ -245,25 +245,20 @@ class ConnectionInformationConfiguration {
      * @param credentialsProvider Provider for the credentials
      * @return The connection information object
      */
-    ConnectionInformation getConnectionInformation(
-            final CredentialsProvider credentialsProvider) {
+    ConnectionInformation getConnectionInformation(final CredentialsProvider credentialsProvider) {
         // Create connection information object
-        ConnectionInformation connectionInformation =
-                new ConnectionInformation();
+        ConnectionInformation connectionInformation = new ConnectionInformation();
         // Put settings into object
         connectionInformation.setProtocol(m_protocol.getName());
         connectionInformation.setHost(getHost());
         connectionInformation.setPort(getPort());
-        if (!getAuthenticationmethod().equals(
-                AuthenticationMethod.NONE.getName())) {
+        if (!getAuthenticationmethod().equals(AuthenticationMethod.NONE.getName())) {
             if (m_useworkflowcredentials) {
                 // Use credentials
-                ICredentials credentials =
-                        credentialsProvider.get(m_workflowcredentials);
+                ICredentials credentials = credentialsProvider.get(m_workflowcredentials);
                 connectionInformation.setUser(credentials.getLogin());
                 try {
-                    connectionInformation.setPassword(KnimeEncryption
-                            .encrypt(credentials.getPassword().toCharArray()));
+                    connectionInformation.setPassword(KnimeEncryption.encrypt(credentials.getPassword().toCharArray()));
                 } catch (Exception e) {
                     // Set no password
                 }
@@ -273,9 +268,7 @@ class ConnectionInformationConfiguration {
                 connectionInformation.setPassword(getPassword());
             }
         }
-        if (m_protocol.hasKeyfileSupport()
-                && getAuthenticationmethod().equals(
-                        AuthenticationMethod.KEYFILE.getName())) {
+        if (m_protocol.hasKeyfileSupport() && getAuthenticationmethod().equals(AuthenticationMethod.KEYFILE.getName())) {
             connectionInformation.setKeyfile(getKeyfile());
         }
         if (m_protocol.hasKnownhostsSupport() && getUseknownhosts()) {
@@ -316,15 +309,12 @@ class ConnectionInformationConfiguration {
      * @param settings The <code>NodeSettings</code> to read from
      */
     void load(final NodeSettingsRO settings) {
-        m_useworkflowcredentials =
-                settings.getBoolean("useworkflowcredentials", false);
+        m_useworkflowcredentials = settings.getBoolean("useworkflowcredentials", false);
         m_workflowcredentials = settings.getString("workflowcredentials", "");
         m_user = settings.getString("user", "");
         m_host = settings.getString("host", "");
         m_port = settings.getInt("port", m_protocol.getPort());
-        m_authenticationmethod =
-                settings.getString("authenticationmethod",
-                        AuthenticationMethod.PASSWORD.getName());
+        m_authenticationmethod = settings.getString("authenticationmethod", AuthenticationMethod.PASSWORD.getName());
         m_password = settings.getString("password", "");
         // Only load if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
@@ -344,10 +334,8 @@ class ConnectionInformationConfiguration {
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
-    void loadAndValidate(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
-        m_useworkflowcredentials =
-                settings.getBoolean("useworkflowcredentials");
+    void loadAndValidate(final NodeSettingsRO settings) throws InvalidSettingsException {
+        m_useworkflowcredentials = settings.getBoolean("useworkflowcredentials");
         m_workflowcredentials = settings.getString("workflowcredentials");
         m_user = settings.getString("user");
         m_host = settings.getString("host");
@@ -357,8 +345,7 @@ class ConnectionInformationConfiguration {
         validate(m_authenticationmethod, "authenticationmethod");
         m_password = settings.getString("password");
         // Only validate if the authentication method is set to password
-        if (m_authenticationmethod.equals(AuthenticationMethod.PASSWORD
-                .getName())) {
+        if (m_authenticationmethod.equals(AuthenticationMethod.PASSWORD.getName())) {
             if (m_useworkflowcredentials) {
                 validate(m_workflowcredentials, "workflowcredentials");
             } else {
@@ -370,8 +357,7 @@ class ConnectionInformationConfiguration {
         if (m_protocol.hasKeyfileSupport()) {
             m_keyfile = settings.getString("keyfile");
             // Only validate if the authentication method is set to keyfile
-            if (m_authenticationmethod.equals(AuthenticationMethod.KEYFILE
-                    .getName())) {
+            if (m_authenticationmethod.equals(AuthenticationMethod.KEYFILE.getName())) {
                 if (m_useworkflowcredentials) {
                     validate(m_workflowcredentials, "workflowcredentials");
                 } else {
@@ -398,8 +384,7 @@ class ConnectionInformationConfiguration {
      * @param settingName The name of the setting
      * @throws InvalidSettingsException If the string is null or empty
      */
-    private void validate(final String string, final String settingName)
-            throws InvalidSettingsException {
+    private void validate(final String string, final String settingName) throws InvalidSettingsException {
         if (string == null || string.length() == 0) {
             throw new InvalidSettingsException(settingName + " missing");
         }

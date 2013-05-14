@@ -82,22 +82,19 @@ class URIPortToVariableNodeModel extends NodeModel {
      */
     protected URIPortToVariableNodeModel() {
         // URI port input, table output
-        super(new PortType[]{URIPortObject.TYPE},
-                new PortType[]{FlowVariablePortObject.TYPE});
+        super(new PortType[]{URIPortObject.TYPE}, new PortType[]{FlowVariablePortObject.TYPE});
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected PortObject[] execute(final PortObject[] inData,
-            final ExecutionContext exec) throws Exception {
+    protected PortObject[] execute(final PortObject[] inData, final ExecutionContext exec) throws Exception {
         // Get list of URIs
         List<URIContent> contents = ((URIPortObject)inData[0]).getURIContents();
         // Add URIs from list into table
         for (int i = 0; i < contents.size(); i++) {
-            pushFlowVariableString("URI-" + i, contents.get(i).getURI()
-                    .toString());
+            pushFlowVariableString("URI-" + i, contents.get(i).getURI().toString());
         }
         return new PortObject[]{FlowVariablePortObject.INSTANCE};
     }
@@ -114,8 +111,7 @@ class URIPortToVariableNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         return new PortObjectSpec[]{FlowVariablePortObjectSpec.INSTANCE};
     }
 
@@ -131,8 +127,7 @@ class URIPortToVariableNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         // Not used
     }
 
@@ -140,8 +135,7 @@ class URIPortToVariableNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         // Not used
     }
 
@@ -149,8 +143,7 @@ class URIPortToVariableNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -159,8 +152,7 @@ class URIPortToVariableNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

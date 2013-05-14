@@ -88,7 +88,9 @@ public class CopyOrMoveMonitorTest {
         m_files = new ArrayList<File>();
         for (int i = 0; i < filenames.length; i++) {
             File file = new File(m_tempDir.toFile(), filenames[i]);
-            file.createNewFile();
+            if (!file.createNewFile()) {
+                throw new IOException("File " + file + " could not be created");
+            }
             m_files.add(file);
         }
     }
@@ -113,8 +115,7 @@ public class CopyOrMoveMonitorTest {
     @Test
     public void copyRollback() throws Exception {
         String action = CopyOrMove.COPY.getName();
-        SimpleDirectoryComparer comparer =
-                new SimpleDirectoryComparer(m_tempDir);
+        SimpleDirectoryComparer comparer = new SimpleDirectoryComparer(m_tempDir);
         CopyOrMoveMonitor monitor = new CopyOrMoveMonitor(action);
         doToFiles(action, monitor);
         monitor.rollback();
@@ -133,8 +134,7 @@ public class CopyOrMoveMonitorTest {
     @Test
     public void moveRollback() throws Exception {
         String action = CopyOrMove.MOVE.getName();
-        SimpleDirectoryComparer comparer =
-                new SimpleDirectoryComparer(m_tempDir);
+        SimpleDirectoryComparer comparer = new SimpleDirectoryComparer(m_tempDir);
         CopyOrMoveMonitor monitor = new CopyOrMoveMonitor(action);
         doToFiles(action, monitor);
         monitor.rollback();
@@ -152,19 +152,16 @@ public class CopyOrMoveMonitorTest {
      */
     @Test
     public void touchedOrNot() throws Exception {
-        CopyOrMoveMonitor monitor =
-                new CopyOrMoveMonitor(CopyOrMove.COPY.getName());
+        CopyOrMoveMonitor monitor = new CopyOrMoveMonitor(CopyOrMove.COPY.getName());
         if (!monitor.isNewFile("file")) {
             throw new Exception("Untouched file has been identified as touched");
         }
         monitor.registerFiles("source", "target");
         if (monitor.isNewFile("source")) {
-            throw new Exception(
-                    "Touched source has not been identified as touched");
+            throw new Exception("Touched source has not been identified as touched");
         }
         if (monitor.isNewFile("target")) {
-            throw new Exception(
-                    "Touched target has not been identified as touched");
+            throw new Exception("Touched target has not been identified as touched");
         }
     }
 
@@ -177,8 +174,7 @@ public class CopyOrMoveMonitorTest {
      * @param monitor Where the files will be registered
      * @throws IOException If the file operation fails
      */
-    private void doToFiles(final String action, final CopyOrMoveMonitor monitor)
-            throws IOException {
+    private void doToFiles(final String action, final CopyOrMoveMonitor monitor) throws IOException {
         for (File file : m_files) {
             String source = file.getAbsolutePath();
             String target = source + ".new";
@@ -201,7 +197,7 @@ public class CopyOrMoveMonitorTest {
      * 
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
-    private class SimpleDirectoryComparer {
+    private static class SimpleDirectoryComparer {
 
         private File[] m_filelist;
 

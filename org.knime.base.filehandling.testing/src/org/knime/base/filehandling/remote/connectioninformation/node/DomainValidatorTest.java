@@ -79,12 +79,10 @@ public class DomainValidatorTest {
         testSingleDomain("AbCdE-f.-9-9A", false);
     }
 
-    private void testSingleDomain(final String domain, final boolean expected)
-            throws Exception {
+    private void testSingleDomain(final String domain, final boolean expected) throws Exception {
         boolean result = DomainValidator.isValidDomain(domain);
         if (result != expected) {
-            throw new Exception(domain + " has returned " + result
-                    + " should be " + expected);
+            throw new Exception(domain + " has returned " + result + " should be " + expected);
         }
     }
 

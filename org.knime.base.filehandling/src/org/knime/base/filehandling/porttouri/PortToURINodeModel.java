@@ -88,18 +88,15 @@ class PortToURINodeModel extends NodeModel {
      */
     protected PortToURINodeModel() {
         // URI port input, table output
-        super(new PortType[]{URIPortObject.TYPE},
-                new PortType[]{BufferedDataTable.TYPE});
+        super(new PortType[]{URIPortObject.TYPE}, new PortType[]{BufferedDataTable.TYPE});
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected PortObject[] execute(final PortObject[] inData,
-            final ExecutionContext exec) throws Exception {
-        BufferedDataContainer container =
-                exec.createDataContainer(createOutSpec());
+    protected PortObject[] execute(final PortObject[] inData, final ExecutionContext exec) throws Exception {
+        BufferedDataContainer container = exec.createDataContainer(createOutSpec());
         // Get list of URIs
         List<URIContent> contents = ((URIPortObject)inData[0]).getURIContents();
         // Add URIs from list into table
@@ -119,8 +116,7 @@ class PortToURINodeModel extends NodeModel {
      */
     private DataTableSpec createOutSpec() {
         DataColumnSpec[] columnSpec = new DataColumnSpec[1];
-        columnSpec[0] =
-                new DataColumnSpecCreator("URI", URIDataCell.TYPE).createSpec();
+        columnSpec[0] = new DataColumnSpecCreator("URI", URIDataCell.TYPE).createSpec();
         return new DataTableSpec(columnSpec);
     }
 
@@ -136,8 +132,7 @@ class PortToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         return new PortObjectSpec[]{createOutSpec()};
     }
 
@@ -153,8 +148,7 @@ class PortToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         // Not used
     }
 
@@ -162,8 +156,7 @@ class PortToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         // Not used
     }
 
@@ -171,8 +164,7 @@ class PortToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -181,8 +173,7 @@ class PortToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

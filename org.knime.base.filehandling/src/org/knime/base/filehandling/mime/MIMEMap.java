@@ -76,11 +76,9 @@ import org.knime.core.node.NodeLogger;
  */
 public final class MIMEMap {
 
-    private static final NodeLogger LOGGER = NodeLogger
-            .getLogger(MIMEMap.class);
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(MIMEMap.class);
 
-    private static final String EXTENSIONPOINT_ID =
-            "org.knime.base.filehandling.mimetypes";
+    private static final String EXTENSIONPOINT_ID = "org.knime.base.filehandling.mimetypes";
 
     private static MimetypesFileTypeMap mimeMap = null;
 
@@ -109,8 +107,7 @@ public final class MIMEMap {
         IExtensionPoint point = registry.getExtensionPoint(EXTENSIONPOINT_ID);
         IExtension[] extensions = point.getExtensions();
         // Add all configuration elements to one list
-        ArrayList<IConfigurationElement> allElements =
-                new ArrayList<IConfigurationElement>();
+        ArrayList<IConfigurationElement> allElements = new ArrayList<IConfigurationElement>();
         for (IExtension ext : extensions) {
             IConfigurationElement[] elements = ext.getConfigurationElements();
             allElements.addAll(Arrays.asList(elements));
@@ -124,11 +121,9 @@ public final class MIMEMap {
             IConfigurationElement[] children = allElements.get(i).getChildren();
             // Get file extensions
             for (int j = 0; j < children.length; j++) {
-                String fileextension =
-                        " " + children[j].getAttribute("name").toLowerCase();
+                String fileextension = " " + children[j].getAttribute("name").toLowerCase();
                 entries[i].addExtension(fileextension);
-                LOGGER.debug("Found MIME-Type \"" + type
-                        + "\" for file extension \"" + fileextension + "\"");
+                LOGGER.debug("Found MIME-Type \"" + type + "\" for file extension \"" + fileextension + "\"");
             }
         }
         return entries;
@@ -143,25 +138,29 @@ public final class MIMEMap {
         List<MIMETypeEntry> entries = new LinkedList<MIMETypeEntry>();
         try {
             BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(FilehandlingPlugin
-                            .getDefault().getMIMETypeStream()));
-            String line;
-            // Every line is a new MIME-Type
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (!line.startsWith("#")) {
-                    // Split on space or tab
-                    String[] tokens = line.split("[ \t]+");
-                    if (tokens.length > 0) {
-                        // Create MIME-Entry (first token is always the name)
-                        MIMETypeEntry entry = new MIMETypeEntry(tokens[0]);
-                        // All other tokens are extensions to this MIME-Type
-                        for (int i = 1; i < tokens.length; i++) {
-                            entry.addExtension(tokens[i]);
+                    new BufferedReader(new InputStreamReader(FilehandlingPlugin.getDefault().getMIMETypeStream()));
+            try {
+                String line;
+                // Every line is a new MIME-Type
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (!line.startsWith("#")) {
+                        // Split on space or tab
+                        String[] tokens = line.split("[ \t]+");
+                        if (tokens.length > 0) {
+                            // Create MIME-Entry (first token is always the
+                            // name)
+                            MIMETypeEntry entry = new MIMETypeEntry(tokens[0]);
+                            // All other tokens are extensions to this MIME-Type
+                            for (int i = 1; i < tokens.length; i++) {
+                                entry.addExtension(tokens[i]);
+                            }
+                            entries.add(entry);
                         }
-                        entries.add(entry);
                     }
                 }
+            } finally {
+                reader.close();
             }
         } catch (Exception e) {
             LOGGER.error("Failed to parse mime.types config file", e);
@@ -177,10 +176,8 @@ public final class MIMEMap {
         MIMETypeEntry[] fromFile = getTypesFromFile();
         MIMETypeEntry[] fromExtension = getTypesFromExtensions();
         // Append fromExtension to fromFile
-        MIMETypeEntry[] result =
-                Arrays.copyOf(fromFile, fromFile.length + fromExtension.length);
-        System.arraycopy(fromExtension, 0, result, fromFile.length,
-                fromExtension.length);
+        MIMETypeEntry[] result = Arrays.copyOf(fromFile, fromFile.length + fromExtension.length);
+        System.arraycopy(fromExtension, 0, result, fromFile.length, fromExtension.length);
         return result;
     }
 
@@ -188,12 +185,10 @@ public final class MIMEMap {
      * Initializes the mime map if it has not been initialized before. Should be
      * called before every operation on <code>mimeMap</code>.
      */
-    private static void init() {
+    private static synchronized void init() {
         if (mimeMap == null) {
             try {
-                mimeMap =
-                        new MimetypesFileTypeMap(FilehandlingPlugin
-                                .getDefault().getMIMETypeStream());
+                mimeMap = new MimetypesFileTypeMap(FilehandlingPlugin.getDefault().getMIMETypeStream());
             } catch (IOException e) {
                 LOGGER.error("Failed to parse mime.types config file", e);
                 // If the file is not readable use default MIME-Types

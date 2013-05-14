@@ -83,8 +83,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * @param connectionInformation Connection information to the file
      * @param connectionMonitor Monitor for the connection
      */
-    protected RemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation,
+    protected RemoteFile(final URI uri, final ConnectionInformation connectionInformation,
             final ConnectionMonitor connectionMonitor) {
         m_uri = uri;
         m_connectionInformation = connectionInformation;
@@ -110,8 +109,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
         if (usesConnection() && m_connection == null) {
             // Look for existing connection
             String identifier = getIdentifier();
-            Connection connection =
-                    m_connectionMonitor.findConnection(identifier);
+            Connection connection = m_connectionMonitor.findConnection(identifier);
             // If no connection is available create a new one
             if (connection == null) {
                 connection = createConnection();
@@ -154,8 +152,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
             port = DefaultPortMap.getMap().get(getType());
         }
         // Format: scheme://user@host:port
-        return uri.getScheme() + "://" + uri.getUserInfo() + "@"
-                + uri.getHost() + ":" + port;
+        return uri.getScheme() + "://" + uri.getUserInfo() + "@" + uri.getHost() + ":" + port;
     }
 
     /**
@@ -166,8 +163,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * @return Message for the unsupported operation exception
      */
     protected final String unsupportedMessage(final String operation) {
-        return "The operation " + operation + " is not supported by "
-                + getType();
+        return "The operation " + operation + " is not supported by " + getType();
     }
 
     /**
@@ -225,9 +221,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
         String name = FilenameUtils.getName(uri.getPath());
         if (name != null && name.length() == 0) {
             // If name is empty it might be a directory
-            name =
-                    FilenameUtils.getName(FilenameUtils
-                            .getFullPathNoEndSeparator(uri.getPath()));
+            name = FilenameUtils.getName(FilenameUtils.getFullPathNoEndSeparator(uri.getPath()));
         }
         return name;
     }
@@ -307,8 +301,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      *            <code>setProgress()</code>
      * @throws Exception If the operation could not be executed
      */
-    public void move(final RemoteFile file, final ExecutionContext exec)
-            throws Exception {
+    public void move(final RemoteFile file, final ExecutionContext exec) throws Exception {
         // Default implementation using just remote file methods
         write(file, exec);
         file.delete();
@@ -325,8 +318,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      *            <code>setProgress()</code>
      * @throws Exception If the operation could not be executed
      */
-    public void write(final RemoteFile file, final ExecutionContext exec)
-            throws Exception {
+    public void write(final RemoteFile file, final ExecutionContext exec) throws Exception {
         // Default implementation using just remote file methods
         byte[] buffer = new byte[1024 * 1024]; // 1MB
         String name = getFullName();
@@ -339,9 +331,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
             progress += length;
             if (exec != null) {
                 exec.checkCanceled();
-                exec.setProgress("Written: "
-                        + FileUtils.byteCountToDisplaySize(progress)
-                        + " to file " + name);
+                exec.setProgress("Written: " + FileUtils.byteCountToDisplaySize(progress) + " to file " + name);
             }
         }
         in.close();
@@ -446,12 +436,9 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
         }
         path = FilenameUtils.getFullPath(path);
         // Build URI
-        URI uri =
-                new URI(m_uri.getScheme() + "://" + m_uri.getAuthority() + path);
+        URI uri = new URI(m_uri.getScheme() + "://" + m_uri.getAuthority() + path);
         // Create remote file and open it
-        RemoteFile file =
-                RemoteFileFactory.createRemoteFile(uri,
-                        m_connectionInformation, m_connectionMonitor);
+        RemoteFile file = RemoteFileFactory.createRemoteFile(uri, m_connectionInformation, m_connectionMonitor);
         file.open();
         return file;
     }

@@ -60,8 +60,7 @@ import org.knime.core.node.NodeView;
  * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class BinaryObjectsToFilesNodeFactory extends
-        NodeFactory<BinaryObjectsToFilesNodeModel> {
+public class BinaryObjectsToFilesNodeFactory extends NodeFactory<BinaryObjectsToFilesNodeModel> {
 
     /**
      * {@inheritDoc}
@@ -83,8 +82,8 @@ public class BinaryObjectsToFilesNodeFactory extends
      * {@inheritDoc}
      */
     @Override
-    public NodeView<BinaryObjectsToFilesNodeModel> createNodeView(
-            final int viewIndex, final BinaryObjectsToFilesNodeModel nodeModel) {
+    public NodeView<BinaryObjectsToFilesNodeModel> createNodeView(final int viewIndex,
+            final BinaryObjectsToFilesNodeModel nodeModel) {
         return null;
     }
 

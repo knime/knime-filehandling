@@ -118,10 +118,8 @@ public class ConnectionInformation implements Serializable {
      *             information.
      * @noreference Not to be called by client
      */
-    public static ConnectionInformation load(final ModelContentRO model)
-            throws InvalidSettingsException {
-        ConnectionInformation connectionInformation =
-                new ConnectionInformation();
+    public static ConnectionInformation load(final ModelContentRO model) throws InvalidSettingsException {
+        ConnectionInformation connectionInformation = new ConnectionInformation();
         connectionInformation.setProtocol(model.getString("protocol"));
         connectionInformation.setHost(model.getString("host"));
         connectionInformation.setPort(model.getInt("port"));
@@ -158,10 +156,8 @@ public class ConnectionInformation implements Serializable {
      * @throws IOException If an error occurs
      * @noreference Not to be called by client
      */
-    public static ConnectionInformation load(final DataInput input)
-            throws IOException {
-        ConnectionInformation connectionInformation =
-                new ConnectionInformation();
+    public static ConnectionInformation load(final DataInput input) throws IOException {
+        ConnectionInformation connectionInformation = new ConnectionInformation();
         connectionInformation.setProtocol(input.readUTF());
         connectionInformation.setHost(input.readUTF());
         connectionInformation.setPort(input.readInt());
@@ -205,8 +201,7 @@ public class ConnectionInformation implements Serializable {
         // User
         String user = uri.getUserInfo();
         // User might not be used
-        if ((user != null && !user.equals(m_user))
-                || (m_user != null && !m_user.equals(user))) {
+        if ((user != null && !user.equals(m_user)) || (m_user != null && !m_user.equals(user))) {
             throw new Exception("User incompatible");
         }
     }

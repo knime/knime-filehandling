@@ -141,12 +141,9 @@ public class DownloadNodeDialog extends NodeDialogPane {
         m_info = new JLabel();
         // Source
         m_source =
-                new RemoteFileChooserPanel(getPanel(), "Source file or folder",
-                        true, "sourceHistory",
-                        RemoteFileChooser.SELECT_FILE_OR_DIR,
-                        createFlowVariableModel("source",
-                                FlowVariable.Type.STRING),
-                        m_connectionInformation);
+                new RemoteFileChooserPanel(getPanel(), "Source file or folder", true, "sourceHistory",
+                        RemoteFileChooser.SELECT_FILE_OR_DIR, createFlowVariableModel("source",
+                                FlowVariable.Type.STRING), m_connectionInformation);
         // Path handling
         m_pathhandling = new ButtonGroup();
         m_fullpath = new JRadioButton(PathHandling.FULL_PATH.getName());
@@ -163,34 +160,26 @@ public class DownloadNodeDialog extends NodeDialogPane {
         m_pathhandling.add(m_truncate);
         // Truncate directory
         m_prefix =
-                new RemoteFileChooserPanel(getPanel(), "Prefix", true,
-                        "prefixHistory", RemoteFileChooser.SELECT_DIR,
-                        createFlowVariableModel("prefix",
-                                FlowVariable.Type.STRING),
-                        m_connectionInformation);
+                new RemoteFileChooserPanel(getPanel(), "Prefix", true, "prefixHistory", RemoteFileChooser.SELECT_DIR,
+                        createFlowVariableModel("prefix", FlowVariable.Type.STRING), m_connectionInformation);
         // Target
         m_target = new FilesHistoryPanel("targetHistory", false);
         m_target.setSelectMode(JFileChooser.DIRECTORIES_ONLY);
-        m_targetfvm =
-                new FlowVariableModelButton(createFlowVariableModel("target",
-                        FlowVariable.Type.STRING));
-        m_targetfvm.getFlowVariableModel().addChangeListener(
-                new ChangeListener() {
-                    @Override
-                    public void stateChanged(final ChangeEvent e) {
-                        enableComponents();
-                    }
-                });
+        m_targetfvm = new FlowVariableModelButton(createFlowVariableModel("target", FlowVariable.Type.STRING));
+        m_targetfvm.getFlowVariableModel().addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                enableComponents();
+            }
+        });
         // Subfolders
         m_subfolders = new JCheckBox("Download subfolders (if applicable)");
         // File filter
         m_useFilter = new JCheckBox("Only download files that match pattern");
         m_useFilter.addActionListener(new UpdateListener());
         m_filterType = new ButtonGroup();
-        m_regularExpression =
-                new JRadioButton(FilterType.REGULAREXPRESSION.getName());
-        m_regularExpression.setActionCommand(FilterType.REGULAREXPRESSION
-                .getName());
+        m_regularExpression = new JRadioButton(FilterType.REGULAREXPRESSION.getName());
+        m_regularExpression.setActionCommand(FilterType.REGULAREXPRESSION.getName());
         m_regularExpression.addActionListener(new UpdateListener());
         m_wildcard = new JRadioButton(FilterType.WILDCARD.getName());
         m_wildcard.setActionCommand(FilterType.WILDCARD.getName());
@@ -203,10 +192,8 @@ public class DownloadNodeDialog extends NodeDialogPane {
         m_overwritePolicy = new ButtonGroup();
         m_overwrite = new JRadioButton(OverwritePolicy.OVERWRITE.getName());
         m_overwrite.setActionCommand(OverwritePolicy.OVERWRITE.getName());
-        m_overwriteIfNewer =
-                new JRadioButton(OverwritePolicy.OVERWRITEIFNEWER.getName());
-        m_overwriteIfNewer.setActionCommand(OverwritePolicy.OVERWRITEIFNEWER
-                .getName());
+        m_overwriteIfNewer = new JRadioButton(OverwritePolicy.OVERWRITEIFNEWER.getName());
+        m_overwriteIfNewer.setActionCommand(OverwritePolicy.OVERWRITEIFNEWER.getName());
         m_abort = new JRadioButton(OverwritePolicy.ABORT.getName());
         m_abort.setActionCommand(OverwritePolicy.ABORT.getName());
         m_overwritePolicy.add(m_overwrite);
@@ -235,8 +222,7 @@ public class DownloadNodeDialog extends NodeDialogPane {
         pathHandlingPanel.add(m_onlyfilename, gbc);
         gbc.gridx++;
         pathHandlingPanel.add(m_truncate, gbc);
-        pathHandlingPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "Path handling"));
+        pathHandlingPanel.setBorder(new TitledBorder(new EtchedBorder(), "Path handling"));
         // Target
         NodeUtils.resetGBC(gbc);
         JPanel targetPanel = new JPanel(new GridBagLayout());
@@ -246,8 +232,7 @@ public class DownloadNodeDialog extends NodeDialogPane {
         gbc.gridx++;
         gbc.insets = new Insets(5, 0, 5, 5);
         targetPanel.add(m_targetfvm, gbc);
-        targetPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "Target folder"));
+        targetPanel.setBorder(new TitledBorder(new EtchedBorder(), "Target folder"));
         // Filter
         NodeUtils.resetGBC(gbc);
         JPanel filterPanel = new JPanel(new GridBagLayout());
@@ -273,8 +258,7 @@ public class DownloadNodeDialog extends NodeDialogPane {
         overwritePolicyPanel.add(m_overwriteIfNewer, gbc);
         gbc.gridx++;
         overwritePolicyPanel.add(m_abort, gbc);
-        overwritePolicyPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "If exists..."));
+        overwritePolicyPanel.setBorder(new TitledBorder(new EtchedBorder(), "If exists..."));
         // Outer panel
         NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
@@ -325,9 +309,7 @@ public class DownloadNodeDialog extends NodeDialogPane {
      */
     private void enableComponents() {
         boolean usePrefix = m_truncate.isSelected();
-        boolean replacement =
-                m_targetfvm.getFlowVariableModel()
-                        .isVariableReplacementEnabled();
+        boolean replacement = m_targetfvm.getFlowVariableModel().isVariableReplacementEnabled();
         boolean useFilter = m_useFilter.isSelected();
         m_prefix.setEnabled(usePrefix);
         m_target.setEnabled(!replacement);
@@ -341,20 +323,17 @@ public class DownloadNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final PortObjectSpec[] specs) throws NotConfigurableException {
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
+            throws NotConfigurableException {
         // Check if a port object is available
         if (specs[0] == null) {
-            throw new NotConfigurableException(
-                    "No connection information available");
+            throw new NotConfigurableException("No connection information available");
         }
-        ConnectionInformationPortObjectSpec object =
-                (ConnectionInformationPortObjectSpec)specs[0];
+        ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)specs[0];
         m_connectionInformation = object.getConnectionInformation();
         // Check if the port object has connection information
         if (m_connectionInformation == null) {
-            throw new NotConfigurableException(
-                    "No connection information available");
+            throw new NotConfigurableException("No connection information available");
         }
         m_source.setConnectionInformation(m_connectionInformation);
         m_prefix.setConnectionInformation(m_connectionInformation);
@@ -367,8 +346,7 @@ public class DownloadNodeDialog extends NodeDialogPane {
         String overwritePolicy = config.getOverwritePolicy();
         if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
             m_overwritePolicy.setSelected(m_overwrite.getModel(), true);
-        } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
-                .getName())) {
+        } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER.getName())) {
             m_overwritePolicy.setSelected(m_overwriteIfNewer.getModel(), true);
         } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
             m_overwritePolicy.setSelected(m_abort.getModel(), true);
@@ -398,13 +376,11 @@ public class DownloadNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
         DownloadConfiguration config = new DownloadConfiguration();
         config.setTarget(m_target.getSelectedFile());
         config.setSource(m_source.getSelection());
-        config.setOverwritePolicy(m_overwritePolicy.getSelection()
-                .getActionCommand());
+        config.setOverwritePolicy(m_overwritePolicy.getSelection().getActionCommand());
         config.setPathHandling(m_pathhandling.getSelection().getActionCommand());
         config.setPrefix(m_prefix.getSelection());
         config.setSubfolders(m_subfolders.isSelected());

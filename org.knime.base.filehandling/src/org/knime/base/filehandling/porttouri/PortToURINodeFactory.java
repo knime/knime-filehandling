@@ -82,8 +82,7 @@ public class PortToURINodeFactory extends NodeFactory<PortToURINodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public NodeView<PortToURINodeModel> createNodeView(final int viewIndex,
-            final PortToURINodeModel nodeModel) {
+    public NodeView<PortToURINodeModel> createNodeView(final int viewIndex, final PortToURINodeModel nodeModel) {
         return null;
     }
 

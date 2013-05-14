@@ -110,12 +110,10 @@ class StringToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-            final ExecutionContext exec) throws Exception {
-        ColumnRearranger rearranger =
-                createColumnRearranger(inData[0].getDataTableSpec());
-        BufferedDataTable out =
-                exec.createColumnRearrangeTable(inData[0], rearranger, exec);
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+            throws Exception {
+        ColumnRearranger rearranger = createColumnRearranger(inData[0].getDataTableSpec());
+        BufferedDataTable out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
     }
 
@@ -129,27 +127,20 @@ class StringToURINodeModel extends NodeModel {
      *         column
      * @throws InvalidSettingsException If the settings are incorrect
      */
-    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec) throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
         // Get replace setting
-        boolean replace =
-                m_replace.getStringValue().equals(
-                        ReplacePolicy.REPLACE.getName());
+        boolean replace = m_replace.getStringValue().equals(ReplacePolicy.REPLACE.getName());
         // Set column name
         String columnName;
         if (replace) {
             columnName = m_columnselection.getStringValue();
         } else {
-            columnName =
-                    DataTableSpec.getUniqueColumnName(inSpec,
-                            m_columnname.getStringValue());
+            columnName = DataTableSpec.getUniqueColumnName(inSpec, m_columnname.getStringValue());
         }
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
-        DataColumnSpec colSpec =
-                new DataColumnSpecCreator(columnName, URIDataCell.TYPE)
-                        .createSpec();
+        DataColumnSpec colSpec = new DataColumnSpecCreator(columnName, URIDataCell.TYPE).createSpec();
         // Factory that creates a column with URIs
         CellFactory factory = new SingleCellFactory(colSpec) {
             @Override
@@ -194,12 +185,10 @@ class StringToURINodeModel extends NodeModel {
                     File file = new File(value);
                     uri = file.toURI();
                 }
-                if (uri.getScheme().equals("file")
-                        && m_missingfileabort.getBooleanValue()) {
+                if (uri.getScheme().equals("file") && m_missingfileabort.getBooleanValue()) {
                     // Check for existing file
                     if (!new File(uri.getPath()).exists()) {
-                        throw new RuntimeException("The file to the URI \""
-                                + uri.toString() + "\" does not exist");
+                        throw new RuntimeException("The file to the URI \"" + uri.toString() + "\" does not exist");
                     }
                 }
                 String extension = "";
@@ -223,19 +212,14 @@ class StringToURINodeModel extends NodeModel {
      * @throws InvalidSettingsException If the settings are incorrect
      */
     @SuppressWarnings("unchecked")
-    private void checkSettings(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private void checkSettings(final DataTableSpec inSpec) throws InvalidSettingsException {
         String selectedColumn = m_columnselection.getStringValue();
-        NodeUtils.checkColumnSelection(inSpec, "String", selectedColumn,
-                StringValue.class);
-        boolean append =
-                m_replace.getStringValue().equals(
-                        ReplacePolicy.APPEND.getName());
+        NodeUtils.checkColumnSelection(inSpec, "String", selectedColumn, StringValue.class);
+        boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
         if (append) {
             // Is column name empty?
             if (m_columnname.getStringValue().equals("")) {
-                throw new InvalidSettingsException(
-                        "Column name can not be empty");
+                throw new InvalidSettingsException("Column name can not be empty");
             }
             if (inSpec.findColumnIndex(m_columnname.getStringValue()) != -1) {
                 throw new InvalidSettingsException("Column name already taken");
@@ -255,8 +239,7 @@ class StringToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
         // createColumnRearranger will check the settings
         DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};
@@ -277,8 +260,7 @@ class StringToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_columnselection.loadSettingsFrom(settings);
         m_missingfileabort.loadSettingsFrom(settings);
         m_columnname.loadSettingsFrom(settings);
@@ -289,8 +271,7 @@ class StringToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_columnselection.validateSettings(settings);
         m_missingfileabort.validateSettings(settings);
         m_columnname.validateSettings(settings);
@@ -301,8 +282,7 @@ class StringToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -311,8 +291,7 @@ class StringToURINodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

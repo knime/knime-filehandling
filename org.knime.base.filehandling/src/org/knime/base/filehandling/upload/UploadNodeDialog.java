@@ -129,14 +129,11 @@ public class UploadNodeDialog extends NodeDialogPane {
         // Info
         m_info = new JLabel();
         // Source
-        m_source =
-                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
+        m_source = new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
         // Target
         m_target =
-                new RemoteFileChooserPanel(getPanel(), "Target folder", true,
-                        "targetHistory", RemoteFileChooser.SELECT_DIR,
-                        createFlowVariableModel("target",
-                                FlowVariable.Type.STRING),
+                new RemoteFileChooserPanel(getPanel(), "Target folder", true, "targetHistory",
+                        RemoteFileChooser.SELECT_DIR, createFlowVariableModel("target", FlowVariable.Type.STRING),
                         m_connectionInformation);
         // Path handling
         m_pathhandling = new ButtonGroup();
@@ -156,23 +153,19 @@ public class UploadNodeDialog extends NodeDialogPane {
         m_prefix = new FilesHistoryPanel("prefixHistory", false);
         m_prefix.setSelectMode(JFileChooser.DIRECTORIES_ONLY);
         m_prefixfvm =
-                new FlowVariableModelButton(createFlowVariableModel(
-                        "truncatedirectory", FlowVariable.Type.STRING));
-        m_prefixfvm.getFlowVariableModel().addChangeListener(
-                new ChangeListener() {
-                    @Override
-                    public void stateChanged(final ChangeEvent e) {
-                        enableComponents();
-                    }
-                });
+                new FlowVariableModelButton(createFlowVariableModel("truncatedirectory", FlowVariable.Type.STRING));
+        m_prefixfvm.getFlowVariableModel().addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                enableComponents();
+            }
+        });
         // Overwrite policy
         m_overwritePolicy = new ButtonGroup();
         m_overwrite = new JRadioButton(OverwritePolicy.OVERWRITE.getName());
         m_overwrite.setActionCommand(OverwritePolicy.OVERWRITE.getName());
-        m_overwriteIfNewer =
-                new JRadioButton(OverwritePolicy.OVERWRITEIFNEWER.getName());
-        m_overwriteIfNewer.setActionCommand(OverwritePolicy.OVERWRITEIFNEWER
-                .getName());
+        m_overwriteIfNewer = new JRadioButton(OverwritePolicy.OVERWRITEIFNEWER.getName());
+        m_overwriteIfNewer.setActionCommand(OverwritePolicy.OVERWRITEIFNEWER.getName());
         m_abort = new JRadioButton(OverwritePolicy.ABORT.getName());
         m_abort.setActionCommand(OverwritePolicy.ABORT.getName());
         m_overwritePolicy.add(m_overwrite);
@@ -209,8 +202,7 @@ public class UploadNodeDialog extends NodeDialogPane {
         pathHandlingPanel.add(m_onlyfilename, gbc);
         gbc.gridx++;
         pathHandlingPanel.add(m_truncate, gbc);
-        pathHandlingPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "Path handling"));
+        pathHandlingPanel.setBorder(new TitledBorder(new EtchedBorder(), "Path handling"));
         // Prefix
         NodeUtils.resetGBC(gbc);
         JPanel prefixPanel = new JPanel(new GridBagLayout());
@@ -230,8 +222,7 @@ public class UploadNodeDialog extends NodeDialogPane {
         overwritePolicyPanel.add(m_overwriteIfNewer, gbc);
         gbc.gridx++;
         overwritePolicyPanel.add(m_abort, gbc);
-        overwritePolicyPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "If exists..."));
+        overwritePolicyPanel.setBorder(new TitledBorder(new EtchedBorder(), "If exists..."));
         // Outer panel
         NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
@@ -276,9 +267,7 @@ public class UploadNodeDialog extends NodeDialogPane {
      */
     private void enableComponents() {
         boolean usePrefix = m_truncate.isSelected();
-        boolean replacement =
-                m_prefixfvm.getFlowVariableModel()
-                        .isVariableReplacementEnabled();
+        boolean replacement = m_prefixfvm.getFlowVariableModel().isVariableReplacementEnabled();
         m_prefix.setEnabled(usePrefix && !replacement);
         m_prefixfvm.setEnabled(usePrefix);
     }
@@ -287,20 +276,17 @@ public class UploadNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final PortObjectSpec[] specs) throws NotConfigurableException {
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
+            throws NotConfigurableException {
         // Check if a port object is available
         if (specs[0] == null) {
-            throw new NotConfigurableException(
-                    "No connection information available");
+            throw new NotConfigurableException("No connection information available");
         }
-        ConnectionInformationPortObjectSpec object =
-                (ConnectionInformationPortObjectSpec)specs[0];
+        ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)specs[0];
         m_connectionInformation = object.getConnectionInformation();
         // Check if the port object has connection information
         if (m_connectionInformation == null) {
-            throw new NotConfigurableException(
-                    "No connection information available");
+            throw new NotConfigurableException("No connection information available");
         }
         m_target.setConnectionInformation(m_connectionInformation);
         m_info.setText("Upload to: " + m_connectionInformation.toURI());
@@ -312,8 +298,7 @@ public class UploadNodeDialog extends NodeDialogPane {
         String overwritePolicy = config.getOverwritePolicy();
         if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
             m_overwritePolicy.setSelected(m_overwrite.getModel(), true);
-        } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
-                .getName())) {
+        } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER.getName())) {
             m_overwritePolicy.setSelected(m_overwriteIfNewer.getModel(), true);
         } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
             m_overwritePolicy.setSelected(m_abort.getModel(), true);
@@ -334,13 +319,11 @@ public class UploadNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
         UploadConfiguration config = new UploadConfiguration();
         config.setTarget(m_target.getSelection());
         config.setSource(m_source.getSelectedColumn());
-        config.setOverwritePolicy(m_overwritePolicy.getSelection()
-                .getActionCommand());
+        config.setOverwritePolicy(m_overwritePolicy.getSelection().getActionCommand());
         config.setPathHandling(m_pathhandling.getSelection().getActionCommand());
         config.setPrefix(m_prefix.getSelectedFile());
         config.save(settings);

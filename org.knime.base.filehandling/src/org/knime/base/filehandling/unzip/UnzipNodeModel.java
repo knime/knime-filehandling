@@ -96,8 +96,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 class UnzipNodeModel extends NodeModel {
 
-    private static final NodeLogger LOGGER = NodeLogger
-            .getLogger(UnzipNodeModel.class);
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(UnzipNodeModel.class);
 
     private SettingsModelString m_source;
 
@@ -122,8 +121,8 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-            final ExecutionContext exec) throws Exception {
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+            throws Exception {
         // Create output spec and container
         DataTableSpec outSpec = createOutSpec();
         BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
@@ -146,33 +145,32 @@ class UnzipNodeModel extends NodeModel {
      *            <code>setProgress()</code>
      * @throws Exception When abort condition is met or user canceled
      */
-    private void extractZip(final BufferedDataContainer outContainer,
-            final ExecutionContext exec) throws Exception {
+    private void extractZip(final BufferedDataContainer outContainer, final ExecutionContext exec) throws Exception {
         boolean localFile = true;
         int rowID = 0;
         List<String> filenames = new LinkedList<String>();
         String rawSource = m_source.getStringValue();
         InputStream in = null;
-        Progress progress = null;
-        try {
-            URL sourceURL = new URL(rawSource);
-            if (!sourceURL.getProtocol().equals("file")) {
-                in = new URL(rawSource).openStream();
-                progress = new Progress();
-                localFile = false;
-            }
-        } catch (MalformedURLException e) {
-            // sourceStream is still null
-        }
-        if (in == null) {
-            File sourceFile = new File(textToPath(rawSource));
-            in = new FileInputStream(sourceFile);
-            progress = new Progress(checkFiles(exec));
-        }
-        File directory = new File(m_targetdirectory.getStringValue());
         ZipInputStream zin = null;
         FileOutputStream out = null;
+        Progress progress = null;
         try {
+            try {
+                URL sourceURL = new URL(rawSource);
+                if (!sourceURL.getProtocol().equals("file")) {
+                    in = new URL(rawSource).openStream();
+                    progress = new Progress();
+                    localFile = false;
+                }
+            } catch (MalformedURLException e) {
+                // sourceStream is still null
+            }
+            if (in == null) {
+                File sourceFile = new File(textToPath(rawSource));
+                in = new FileInputStream(sourceFile);
+                progress = new Progress(checkFiles(exec));
+            }
+            File directory = new File(m_targetdirectory.getStringValue());
             byte[] buffer = new byte[8 * 1024];
             zin = new ZipInputStream(in);
             ZipEntry entry = zin.getNextEntry();
@@ -181,11 +179,9 @@ class UnzipNodeModel extends NodeModel {
                 File file = new File(directory, entry.getName());
                 // If file exists and policy is abort throw an exception
                 String ifExists = m_ifexists.getStringValue();
-                if (file.exists()
-                        && ifExists.equals(OverwritePolicy.ABORT.getName())) {
-                    throw new IOException("File \"" + file.getAbsolutePath()
-                            + "\" exists, overwrite policy: \"" + ifExists
-                            + "\"");
+                if (file.exists() && ifExists.equals(OverwritePolicy.ABORT.getName())) {
+                    throw new IOException("File \"" + file.getAbsolutePath() + "\" exists, overwrite policy: \""
+                            + ifExists + "\"");
                 }
                 // It depends on the zip file if the contained directories get
                 // listed as entries or not
@@ -200,14 +196,17 @@ class UnzipNodeModel extends NodeModel {
                     filenames.add(file.getAbsolutePath());
                     // Remove old file if it exists
                     if (file.exists()) {
-                        file.delete();
-                        LOGGER.info("Replacing existing file \""
-                                + file.getAbsolutePath() + "\"");
+                        if (!file.delete()) {
+                            throw new IOException("Could not delete file " + file);
+                        }
+                        LOGGER.info("Replacing existing file \"" + file.getAbsolutePath() + "\"");
                     }
                     // Create directories if necessary (directories may not get
                     // listed as entries and therefore have to be created here)
                     file.getAbsoluteFile().getParentFile().mkdirs();
-                    file.createNewFile();
+                    if (!file.createNewFile()) {
+                        throw new IOException("Could not create file " + file);
+                    }
                     out = new FileOutputStream(file);
                     int length;
                     // Copy content into new file
@@ -216,9 +215,7 @@ class UnzipNodeModel extends NodeModel {
                         if (localFile) {
                             exec.setProgress(progress.getProgressInPercent());
                         } else {
-                            exec.setMessage("Unziped "
-                                    + FileUtils.byteCountToDisplaySize(progress
-                                            .getProgress()));
+                            exec.setMessage("Unziped " + FileUtils.byteCountToDisplaySize(progress.getProgress()));
                         }
                         out.write(buffer, 0, length);
                         progress.advance(length);
@@ -227,28 +224,23 @@ class UnzipNodeModel extends NodeModel {
                     // Create row with path or URI
                     DataCell cell = null;
                     String outputSelection = m_output.getStringValue();
-                    if (outputSelection.equals(OutputSelection.LOCATION
-                            .getName())) {
+                    if (outputSelection.equals(OutputSelection.LOCATION.getName())) {
                         cell = new StringCell(file.getAbsolutePath());
                     }
                     if (outputSelection.equals(OutputSelection.URI.getName())) {
                         URI uri = file.getAbsoluteFile().toURI();
-                        String extension =
-                                FilenameUtils.getExtension(uri.getPath());
+                        String extension = FilenameUtils.getExtension(uri.getPath());
                         URIContent content = new URIContent(uri, extension);
                         cell = new URIDataCell(content);
                     }
-                    outContainer.addRowToTable(new DefaultRow("Row" + rowID,
-                            cell));
+                    outContainer.addRowToTable(new DefaultRow("Row" + rowID, cell));
                     rowID++;
                 }
                 entry = zin.getNextEntry();
             }
-        } catch (Exception e) {
+        } finally {
             // Remove created files if node got aborted
             removeFiles(filenames);
-            throw e;
-        } finally {
             if (out != null) {
                 out.close();
             }
@@ -276,19 +268,22 @@ class UnzipNodeModel extends NodeModel {
         File directory = new File(m_targetdirectory.getStringValue());
         String ifExists = m_ifexists.getStringValue();
         ZipFile zipFile = new ZipFile(source);
-        Enumeration<? extends ZipEntry> entries = zipFile.entries();
-        // Get the file size of each entry and check for abort condition
-        while (entries.hasMoreElements()) {
-            exec.checkCanceled();
-            ZipEntry entry = entries.nextElement();
-            size += entry.getSize();
-            File file = new File(directory, entry.getName());
-            // If file exists and policy is abort throw an exception
-            if (file.exists()
-                    && ifExists.equals(OverwritePolicy.ABORT.getName())) {
-                throw new IOException("File \"" + file.getAbsolutePath()
-                        + "\" exists, overwrite policy: \"" + ifExists + "\"");
+        try {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            // Get the file size of each entry and check for abort condition
+            while (entries.hasMoreElements()) {
+                exec.checkCanceled();
+                ZipEntry entry = entries.nextElement();
+                size += entry.getSize();
+                File file = new File(directory, entry.getName());
+                // If file exists and policy is abort throw an exception
+                if (file.exists() && ifExists.equals(OverwritePolicy.ABORT.getName())) {
+                    throw new IOException("File \"" + file.getAbsolutePath() + "\" exists, overwrite policy: \""
+                            + ifExists + "\"");
+                }
             }
+        } finally {
+            zipFile.close();
         }
         return size;
     }
@@ -345,14 +340,10 @@ class UnzipNodeModel extends NodeModel {
         DataColumnSpec columnSpec = null;
         String output = m_output.getStringValue();
         if (output.equals(OutputSelection.LOCATION.getName())) {
-            columnSpec =
-                    new DataColumnSpecCreator("Location", StringCell.TYPE)
-                            .createSpec();
+            columnSpec = new DataColumnSpecCreator("Location", StringCell.TYPE).createSpec();
         }
         if (output.equals(OutputSelection.URI.getName())) {
-            columnSpec =
-                    new DataColumnSpecCreator("URI", URIDataCell.TYPE)
-                            .createSpec();
+            columnSpec = new DataColumnSpecCreator("URI", URIDataCell.TYPE).createSpec();
         }
         return new DataTableSpec(columnSpec);
     }
@@ -369,8 +360,7 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
         // Is the source set?
         if (m_source.getStringValue().equals("")) {
             throw new InvalidSettingsException("Source not set");
@@ -382,8 +372,7 @@ class UnzipNodeModel extends NodeModel {
         // Does the target directory exist?
         File targetdirectory = new File(m_targetdirectory.getStringValue());
         if (!targetdirectory.isDirectory()) {
-            throw new InvalidSettingsException(
-                    "Target directory does not exist");
+            throw new InvalidSettingsException("Target directory does not exist");
         }
         return new DataTableSpec[]{createOutSpec()};
     }
@@ -403,8 +392,7 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_source.loadSettingsFrom(settings);
         m_targetdirectory.loadSettingsFrom(settings);
         m_output.loadSettingsFrom(settings);
@@ -415,8 +403,7 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_source.validateSettings(settings);
         m_targetdirectory.validateSettings(settings);
         m_output.validateSettings(settings);
@@ -427,8 +414,7 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -437,8 +423,7 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

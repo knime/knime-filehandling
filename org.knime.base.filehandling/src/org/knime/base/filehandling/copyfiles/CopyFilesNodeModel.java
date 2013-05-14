@@ -66,7 +66,6 @@ import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
-import org.knime.core.data.RowKey;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.data.container.SingleCellFactory;
@@ -103,28 +102,22 @@ class CopyFilesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-            final ExecutionContext exec) throws Exception {
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
+            throws Exception {
         // Check settings only if filename handling is generate
-        if (m_configuration.getFilenamehandling().equals(
-                FilenameHandling.SOURCENAME.getName())) {
+        if (m_configuration.getFilenamehandling().equals(FilenameHandling.SOURCENAME.getName())) {
             // Does the output directory exist?
-            File outputdirectory =
-                    new File(m_configuration.getOutputdirectory());
+            File outputdirectory = new File(m_configuration.getOutputdirectory());
             if (!outputdirectory.isDirectory()) {
-                throw new InvalidSettingsException("Output directory \""
-                        + outputdirectory.getAbsoluteFile()
+                throw new InvalidSettingsException("Output directory \"" + outputdirectory.getAbsoluteFile()
                         + "\" does not exist");
             }
         }
         BufferedDataTable out = null;
         // Monitor for duplicate checking and rollback
-        CopyOrMoveMonitor monitor =
-                new CopyOrMoveMonitor(m_configuration.getCopyormove());
+        CopyOrMoveMonitor monitor = new CopyOrMoveMonitor(m_configuration.getCopyormove());
         // Append only if target column is not used
-        boolean appenduricolumn =
-                !m_configuration.getFilenamehandling().equals(
-                        FilenameHandling.FROMCOLUMN.getName());
+        boolean appenduricolumn = !m_configuration.getFilenamehandling().equals(FilenameHandling.FROMCOLUMN.getName());
         try {
             // If the columns do not get appended the create file method will
             // not be called so it has to happen manually
@@ -135,14 +128,11 @@ class CopyFilesNodeModel extends NodeModel {
                 for (DataRow row : inData[0]) {
                     exec.checkCanceled();
                     exec.setProgress((double)i / rows);
-                    doAction(row, i, monitor, inData[0].getDataTableSpec(),
-                            exec);
+                    doAction(row, monitor, inData[0].getDataTableSpec(), exec);
                     i++;
                 }
             }
-            ColumnRearranger rearranger =
-                    createColumnRearranger(inData[0].getDataTableSpec(),
-                            monitor, exec);
+            ColumnRearranger rearranger = createColumnRearranger(inData[0].getDataTableSpec(), monitor, exec);
             out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         } catch (Exception e) {
             // In case of exception, do a rollback
@@ -163,44 +153,25 @@ class CopyFilesNodeModel extends NodeModel {
      *         files (if necessary).
      * @throws InvalidSettingsException If the settings are incorrect
      */
-    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec,
-            final CopyOrMoveMonitor monitor, final ExecutionContext exec)
-            throws InvalidSettingsException {
+    private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec, final CopyOrMoveMonitor monitor,
+            final ExecutionContext exec) throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec colSpec;
         // Append only if target column is not used
-        boolean appenduricolumn =
-                !m_configuration.getFilenamehandling().equals(
-                        FilenameHandling.FROMCOLUMN.getName());
+        boolean appenduricolumn = !m_configuration.getFilenamehandling().equals(FilenameHandling.FROMCOLUMN.getName());
         // Append URI column if selected. This will also call the
         // create file method
         if (appenduricolumn) {
             // Create column for the URI of the files
-            String uriColName =
-                    DataTableSpec.getUniqueColumnName(inSpec, "URI");
-            colSpec =
-                    new DataColumnSpecCreator(uriColName, URIDataCell.TYPE)
-                            .createSpec();
+            String uriColName = DataTableSpec.getUniqueColumnName(inSpec, "URI");
+            colSpec = new DataColumnSpecCreator(uriColName, URIDataCell.TYPE).createSpec();
             // Factory that creates the files and the corresponding URI cell
             CellFactory factory = new SingleCellFactory(colSpec) {
-                private int m_rownr = 0;
-
                 @Override
                 public DataCell getCell(final DataRow row) {
-                    return doAction(row, m_rownr, monitor, inSpec, exec);
-                }
-
-                /**
-                 * {@inheritDoc}
-                 */
-                @Override
-                public void setProgress(final int curRowNr, final int rowCount,
-                        final RowKey lastKey, final ExecutionMonitor exec2) {
-                    super.setProgress(curRowNr, rowCount, lastKey, exec2);
-                    // Save the row for pattern creation
-                    m_rownr = curRowNr;
+                    return doAction(row, monitor, inSpec, exec);
                 }
             };
             rearranger.append(factory);
@@ -216,35 +187,27 @@ class CopyFilesNodeModel extends NodeModel {
      * @throws InvalidSettingsException If the settings are incorrect
      */
     @SuppressWarnings("unchecked")
-    private void checkSettings(final DataTableSpec inSpec)
-            throws InvalidSettingsException {
+    private void checkSettings(final DataTableSpec inSpec) throws InvalidSettingsException {
         if (m_configuration == null) {
             throw new InvalidSettingsException("No settings available");
         }
         String sourcecolumn = m_configuration.getSourcecolumn();
-        NodeUtils.checkColumnSelection(inSpec, "Source", sourcecolumn,
-                URIDataValue.class);
+        NodeUtils.checkColumnSelection(inSpec, "Source", sourcecolumn, URIDataValue.class);
         // Check settings only if filename handling is from column
-        if (m_configuration.getFilenamehandling().equals(
-                FilenameHandling.FROMCOLUMN.getName())) {
+        if (m_configuration.getFilenamehandling().equals(FilenameHandling.FROMCOLUMN.getName())) {
             String targetcolumn = m_configuration.getTargetcolumn();
-            NodeUtils.checkColumnSelection(inSpec, "Target", targetcolumn,
-                    URIDataValue.class);
+            NodeUtils.checkColumnSelection(inSpec, "Target", targetcolumn, URIDataValue.class);
             // Do the target and the source column differ
             if (sourcecolumn.equals(targetcolumn)) {
-                throw new InvalidSettingsException(
-                        "Source and target do not differ");
+                throw new InvalidSettingsException("Source and target do not differ");
             }
         }
         // Check settings only if filename handling is generate
-        if (m_configuration.getFilenamehandling().equals(
-                FilenameHandling.SOURCENAME.getName())) {
+        if (m_configuration.getFilenamehandling().equals(FilenameHandling.SOURCENAME.getName())) {
             // Does the output directory exist?
-            File outputdirectory =
-                    new File(m_configuration.getOutputdirectory());
+            File outputdirectory = new File(m_configuration.getOutputdirectory());
             if (!outputdirectory.isDirectory()) {
-                throw new InvalidSettingsException("Output directory \""
-                        + outputdirectory.getAbsoluteFile()
+                throw new InvalidSettingsException("Output directory \"" + outputdirectory.getAbsoluteFile()
                         + "\" does not exist");
             }
         }
@@ -261,8 +224,7 @@ class CopyFilesNodeModel extends NodeModel {
      * @param exec Context of this execution
      * @return Cell containing the URI to the created file
      */
-    private DataCell doAction(final DataRow row, final int rowNr,
-            final CopyOrMoveMonitor monitor, final DataTableSpec inSpec,
+    private DataCell doAction(final DataRow row, final CopyOrMoveMonitor monitor, final DataTableSpec inSpec,
             final ExecutionContext exec) {
         String sourceColumn = m_configuration.getSourcecolumn();
         int sourceIndex = inSpec.findColumnIndex(sourceColumn);
@@ -275,79 +237,66 @@ class CopyFilesNodeModel extends NodeModel {
         // Assume missing source URI
         DataCell uriCell = DataType.getMissingCell();
         if (!row.getCell(sourceIndex).isMissing()) {
-            URI sourceUri =
-                    ((URIDataValue)row.getCell(sourceIndex)).getURIContent()
-                            .getURI();
+            URI sourceUri = ((URIDataValue)row.getCell(sourceIndex)).getURIContent().getURI();
             if (!sourceUri.getScheme().equals("file")) {
-                throw new RuntimeException(
-                        "This node only supports the protocol \"file\"");
+                throw new RuntimeException("This node only supports the protocol \"file\"");
             }
             if (filenameHandling.equals(fromColumn)) {
                 // Get target URI from table
-                int targetIndex =
-                        inSpec.findColumnIndex(m_configuration
-                                .getTargetcolumn());
+                int targetIndex = inSpec.findColumnIndex(m_configuration.getTargetcolumn());
                 if (row.getCell(targetIndex).isMissing()) {
-                    throw new RuntimeException("Target URI in row \""
-                            + row.getKey() + "\" is missing");
+                    throw new RuntimeException("Target URI in row \"" + row.getKey() + "\" is missing");
                 }
-                URI targetUri =
-                        ((URIDataCell)(row.getCell(targetIndex)))
-                                .getURIContent().getURI();
+                URI targetUri = ((URIDataCell)(row.getCell(targetIndex))).getURIContent().getURI();
                 if (!targetUri.getScheme().equals("file")) {
-                    throw new RuntimeException(
-                            "This node only supports the protocol \"file\"");
+                    throw new RuntimeException("This node only supports the protocol \"file\"");
                 }
                 // Absolute path in filename, no preceding directory
                 filename = targetUri.getPath();
             }
             if (filenameHandling.equals(generate)) {
                 filename = FilenameUtils.getName(sourceUri.getPath());
-                outputDirectory =
-                        new File(m_configuration.getOutputdirectory());
+                outputDirectory = new File(m_configuration.getOutputdirectory());
             }
             try {
                 String sourcePath = sourceUri.getPath();
                 File sourceFile = new File(sourcePath);
                 // Check if the same file has already been touched
                 if (!monitor.isNewFile(sourcePath)) {
-                    throw new RuntimeException("Duplicate entry \""
-                            + sourcePath + "\"");
+                    throw new RuntimeException("Duplicate entry \"" + sourcePath + "\"");
                 }
                 // Abort if the source file does not exist
                 if (!sourceFile.exists()) {
-                    throw new RuntimeException("The file \""
-                            + sourceFile.getAbsolutePath() + "\" is missing");
+                    throw new RuntimeException("The file \"" + sourceFile.getAbsolutePath() + "\" is missing");
                 }
                 File targetFile = new File(outputDirectory, filename);
                 // Check if the same file has already been touched
                 if (!monitor.isNewFile(targetFile.getAbsolutePath())) {
-                    throw new RuntimeException("Duplicate entry \""
-                            + targetFile.getAbsolutePath() + "\"");
+                    throw new RuntimeException("Duplicate entry \"" + targetFile.getAbsolutePath() + "\"");
                 }
                 // Check if a file with the same name already exists
                 if (targetFile.exists()) {
                     // Abort if policy is abort
                     if (ifExists.equals(OverwritePolicy.ABORT.getName())) {
-                        throw new RuntimeException("File \""
-                                + targetFile.getAbsolutePath()
-                                + "\" exists, overwrite policy: \"" + ifExists
-                                + "\"");
+                        throw new RuntimeException("File \"" + targetFile.getAbsolutePath()
+                                + "\" exists, overwrite policy: \"" + ifExists + "\"");
                     }
                     // Remove if policy is overwrite
                     if (ifExists.equals(OverwritePolicy.OVERWRITE.getName())) {
-                        targetFile.delete();
+                        if (!targetFile.delete()) {
+                            throw new RuntimeException("Could not delete file " + targetFile);
+                        }
                     }
                 }
                 targetFile.getParentFile().mkdirs();
-                if (m_configuration.getCopyormove().equals(
-                        CopyOrMove.COPY.getName())) {
+                if (m_configuration.getCopyormove().equals(CopyOrMove.COPY.getName())) {
                     byte[] buffer = new byte[1024];
-                    targetFile.createNewFile();
+                    if (!targetFile.createNewFile()) {
+                        throw new RuntimeException("Could not delete file " + targetFile);
+                    }
                     // Register files as processed to enable rollback (in this
                     // case removal of the target file)
-                    monitor.registerFiles(sourcePath,
-                            targetFile.getAbsolutePath());
+                    monitor.registerFiles(sourcePath, targetFile.getAbsolutePath());
                     // Get input stream from the source file
                     InputStream input = new FileInputStream(sourcePath);
                     OutputStream output = new FileOutputStream(targetFile);
@@ -360,19 +309,21 @@ class CopyFilesNodeModel extends NodeModel {
                     input.close();
                     output.close();
                 }
-                if (m_configuration.getCopyormove().equals(
-                        CopyOrMove.MOVE.getName())) {
-                    sourceFile.renameTo(targetFile);
+                if (m_configuration.getCopyormove().equals(CopyOrMove.MOVE.getName())) {
+                    if (!sourceFile.renameTo(targetFile)) {
+                        throw new RuntimeException("Could not rename " + sourceFile + " to " + targetFile);
+                    }
                     // Register files as processed to enable rollback (in this
                     // case renaming the target back to the source)
-                    monitor.registerFiles(sourcePath,
-                            targetFile.getAbsolutePath());
+                    monitor.registerFiles(sourcePath, targetFile.getAbsolutePath());
                 }
                 // Create cell with the URI information
                 URI uri = targetFile.getAbsoluteFile().toURI();
                 String extension = FilenameUtils.getExtension(uri.getPath());
                 uriCell = new URIDataCell(new URIContent(uri, extension));
-            } catch (Exception e) {
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (CanceledExecutionException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -391,11 +342,9 @@ class CopyFilesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
-            throws InvalidSettingsException {
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
         // createColumnRearranger will check the settings
-        DataTableSpec outSpec =
-                createColumnRearranger(inSpecs[0], null, null).createSpec();
+        DataTableSpec outSpec = createColumnRearranger(inSpecs[0], null, null).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 
@@ -413,8 +362,7 @@ class CopyFilesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         CopyFilesConfiguration config = new CopyFilesConfiguration();
         config.loadAndValidate(settings);
         m_configuration = config;
@@ -424,8 +372,7 @@ class CopyFilesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings)
-            throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         new CopyFilesConfiguration().loadAndValidate(settings);
     }
 
@@ -433,8 +380,7 @@ class CopyFilesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -443,8 +389,7 @@ class CopyFilesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir,
-            final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }

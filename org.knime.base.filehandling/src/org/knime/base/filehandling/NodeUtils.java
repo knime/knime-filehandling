@@ -83,15 +83,12 @@ public final class NodeUtils {
      *            accepted
      * @throws InvalidSettingsException If the column is not set correctly
      */
-    public static void checkColumnSelection(final DataTableSpec inSpec,
-            final String selectionName, final String selectedColumn,
-            final Class<? extends DataValue>... types)
-            throws InvalidSettingsException {
+    public static void checkColumnSelection(final DataTableSpec inSpec, final String selectionName,
+            final String selectedColumn, final Class<? extends DataValue>... types) throws InvalidSettingsException {
         // Does the column setting reference to an existing column?
         int columnIndex = inSpec.findColumnIndex(selectedColumn);
         if (columnIndex < 0) {
-            throw new InvalidSettingsException(selectionName
-                    + " column not set");
+            throw new InvalidSettingsException(selectionName + " column not set");
         }
         // Check types if available
         if (types.length > 0) {
@@ -107,8 +104,7 @@ public final class NodeUtils {
             }
             // Has a correct type been found?
             if (!typeOk) {
-                throw new InvalidSettingsException(selectionName
-                        + " column not set");
+                throw new InvalidSettingsException(selectionName + " column not set");
             }
         }
     }

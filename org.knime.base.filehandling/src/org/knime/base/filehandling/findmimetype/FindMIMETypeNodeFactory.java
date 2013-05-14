@@ -82,8 +82,7 @@ public class FindMIMETypeNodeFactory extends NodeFactory<FindMIMETypeNodeModel> 
      * {@inheritDoc}
      */
     @Override
-    public NodeView<FindMIMETypeNodeModel> createNodeView(final int viewIndex,
-            final FindMIMETypeNodeModel nodeModel) {
+    public NodeView<FindMIMETypeNodeModel> createNodeView(final int viewIndex, final FindMIMETypeNodeModel nodeModel) {
         return null;
     }
 

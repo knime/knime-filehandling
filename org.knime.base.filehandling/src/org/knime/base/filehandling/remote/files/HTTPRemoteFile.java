@@ -79,8 +79,7 @@ public class HTTPRemoteFile extends RemoteFile {
      * @param uri The URI
      * @param connectionInformation Connection information to the given URI
      */
-    HTTPRemoteFile(final URI uri,
-            final ConnectionInformation connectionInformation) {
+    HTTPRemoteFile(final URI uri, final ConnectionInformation connectionInformation) {
         super(uri, connectionInformation, null);
     }
 
@@ -136,8 +135,7 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void move(final RemoteFile file, final ExecutionContext exec)
-            throws Exception {
+    public void move(final RemoteFile file, final ExecutionContext exec) throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("move"));
     }
 
@@ -145,8 +143,7 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void write(final RemoteFile file, final ExecutionContext exec)
-            throws Exception {
+    public void write(final RemoteFile file, final ExecutionContext exec) throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("write"));
     }
 
@@ -164,8 +161,7 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public OutputStream openOutputStream() throws Exception {
-        throw new UnsupportedOperationException(
-                unsupportedMessage("openOutputStream"));
+        throw new UnsupportedOperationException(unsupportedMessage("openOutputStream"));
     }
 
     /**
@@ -226,26 +222,20 @@ public class HTTPRemoteFile extends RemoteFile {
         // Create request
         DefaultHttpClient client = new DefaultHttpClient();
         // If user info is given in the URI use HTTP basic authentication
-        if (getURI().getUserInfo() != null
-                && getURI().getUserInfo().length() > 0) {
+        if (getURI().getUserInfo() != null && getURI().getUserInfo().length() > 0) {
             // Decrypt password from the connection information
-            String password =
-                    KnimeEncryption.decrypt(getConnectionInformation()
-                            .getPassword());
+            String password = KnimeEncryption.decrypt(getConnectionInformation().getPassword());
             // Get port (replacing it with the default port if necessary)
             int port = getURI().getPort();
             if (port < 0) {
                 port = DefaultPortMap.getMap().get(getType());
             }
-            Credentials credentials =
-                    new UsernamePasswordCredentials(getURI().getUserInfo(),
-                            password);
+            Credentials credentials = new UsernamePasswordCredentials(getURI().getUserInfo(), password);
             AuthScope scope = new AuthScope(getURI().getHost(), port);
             client.getCredentialsProvider().setCredentials(scope, credentials);
         }
         HttpGet request = new HttpGet(getURI());
-        // Get response
-        HttpResponse response = client.execute(request);
-        return response;
+        // Return response
+        return client.execute(request);
     }
 }

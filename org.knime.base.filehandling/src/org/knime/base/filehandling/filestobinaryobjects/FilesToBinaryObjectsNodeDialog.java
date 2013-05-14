@@ -82,27 +82,21 @@ class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
         super();
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_replace = SettingsFactory.createReplacePolicySettings();
-        m_bocolumnname =
-                SettingsFactory.createBinaryObjectColumnNameSettings(m_replace);
+        m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings(m_replace);
         m_replace.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                boolean append =
-                        m_replace.getStringValue().equals(
-                                ReplacePolicy.APPEND.getName());
+                boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
                 m_bocolumnname.setEnabled(append);
             }
         });
         // URI column
-        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn,
-                "URI column", 0, URIDataValue.class));
+        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn, "URI column", 0, URIDataValue.class));
         createNewGroup("New column...");
         // Replace setting
-        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "",
-                ReplacePolicy.getAllSettings()));
+        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "", ReplacePolicy.getAllSettings()));
         // Binary object column name
-        addDialogComponent(new DialogComponentString(m_bocolumnname, "Name",
-                true, 20));
+        addDialogComponent(new DialogComponentString(m_bocolumnname, "Name", true, 20));
         closeCurrentGroup();
     }
 }

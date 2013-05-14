@@ -94,20 +94,17 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
         m_replace.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
-                boolean append =
-                        m_replace.getStringValue().equals(
-                                ReplacePolicy.APPEND.getName());
+                boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
                 m_columnname.setEnabled(append);
             }
         });
         // Column selection
-        addDialogComponent(new DialogComponentColumnNameSelection(
-                m_columnselection, "Column selection", 0, new ColumnFilter() {
+        addDialogComponent(new DialogComponentColumnNameSelection(m_columnselection, "Column selection", 0,
+                new ColumnFilter() {
                     @Override
                     public boolean includeColumn(final DataColumnSpec colSpec) {
                         DataType type = colSpec.getType();
-                        return type.isCompatible(StringValue.class)
-                                && !type.isCompatible(URIDataValue.class);
+                        return type.isCompatible(StringValue.class) && !type.isCompatible(URIDataValue.class);
                     }
 
                     @Override
@@ -120,11 +117,9 @@ class StringToURINodeDialog extends DefaultNodeSettingsPane {
                 "Fail if file does not exist (only applies to local files)"));
         createNewGroup("New column...");
         // Replace
-        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "",
-                ReplacePolicy.getAllSettings()));
+        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "", ReplacePolicy.getAllSettings()));
         // Column name
-        addDialogComponent(new DialogComponentString(m_columnname, "Name",
-                true, 20));
+        addDialogComponent(new DialogComponentString(m_columnname, "Name", true, 20));
         closeCurrentGroup();
     }
 }

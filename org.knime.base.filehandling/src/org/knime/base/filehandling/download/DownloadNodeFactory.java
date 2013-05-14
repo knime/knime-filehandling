@@ -82,8 +82,7 @@ public class DownloadNodeFactory extends NodeFactory<DownloadNodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public NodeView<DownloadNodeModel> createNodeView(final int viewIndex,
-            final DownloadNodeModel nodeModel) {
+    public NodeView<DownloadNodeModel> createNodeView(final int viewIndex, final DownloadNodeModel nodeModel) {
         return null;
     }
 

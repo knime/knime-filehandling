@@ -101,8 +101,7 @@ final class SettingsFactory {
      * @return If exists <code>SettingsModel</code>
      */
     static SettingsModelString createIfExistsSettings() {
-        return new SettingsModelString("ifexists",
-                OverwritePolicy.ABORT.getName());
+        return new SettingsModelString("ifexists", OverwritePolicy.ABORT.getName());
     }
 
 }

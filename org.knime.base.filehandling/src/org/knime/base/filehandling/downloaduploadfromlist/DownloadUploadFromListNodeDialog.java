@@ -107,19 +107,15 @@ public class DownloadUploadFromListNodeDialog extends NodeDialogPane {
         // Info
         m_info = new JLabel();
         // Source
-        m_source =
-                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
+        m_source = new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
         // Target
-        m_target =
-                new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
+        m_target = new ColumnSelectionComboxBox((Border)null, URIDataValue.class);
         // Overwrite policy
         m_overwritePolicy = new ButtonGroup();
         m_overwrite = new JRadioButton(OverwritePolicy.OVERWRITE.getName());
         m_overwrite.setActionCommand(OverwritePolicy.OVERWRITE.getName());
-        m_overwriteIfNewer =
-                new JRadioButton(OverwritePolicy.OVERWRITEIFNEWER.getName());
-        m_overwriteIfNewer.setActionCommand(OverwritePolicy.OVERWRITEIFNEWER
-                .getName());
+        m_overwriteIfNewer = new JRadioButton(OverwritePolicy.OVERWRITEIFNEWER.getName());
+        m_overwriteIfNewer.setActionCommand(OverwritePolicy.OVERWRITEIFNEWER.getName());
         m_abort = new JRadioButton(OverwritePolicy.ABORT.getName());
         m_abort.setActionCommand(OverwritePolicy.ABORT.getName());
         m_overwritePolicy.add(m_overwrite);
@@ -163,8 +159,7 @@ public class DownloadUploadFromListNodeDialog extends NodeDialogPane {
         overwritePolicyPanel.add(m_overwriteIfNewer, gbc);
         gbc.gridx++;
         overwritePolicyPanel.add(m_abort, gbc);
-        overwritePolicyPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "If exists..."));
+        overwritePolicyPanel.setBorder(new TitledBorder(new EtchedBorder(), "If exists..."));
         // Outer panel
         NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
@@ -183,12 +178,11 @@ public class DownloadUploadFromListNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final PortObjectSpec[] specs) throws NotConfigurableException {
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
+            throws NotConfigurableException {
         // Check if a port object is available
         if (specs[0] != null) {
-            ConnectionInformationPortObjectSpec object =
-                    (ConnectionInformationPortObjectSpec)specs[0];
+            ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)specs[0];
             m_connectionInformation = object.getConnectionInformation();
             // Check if the port object has connection information
             if (m_connectionInformation != null) {
@@ -196,16 +190,14 @@ public class DownloadUploadFromListNodeDialog extends NodeDialogPane {
             }
         }
         // Load configuration
-        DownloadUploadFromListConfiguration config =
-                new DownloadUploadFromListConfiguration();
+        DownloadUploadFromListConfiguration config = new DownloadUploadFromListConfiguration();
         config.load(settings);
         m_target.update((DataTableSpec)specs[1], config.getTarget());
         m_source.update((DataTableSpec)specs[1], config.getSource());
         String overwritePolicy = config.getOverwritePolicy();
         if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
             m_overwritePolicy.setSelected(m_overwrite.getModel(), true);
-        } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER
-                .getName())) {
+        } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER.getName())) {
             m_overwritePolicy.setSelected(m_overwriteIfNewer.getModel(), true);
         } else if (overwritePolicy.equals(OverwritePolicy.ABORT.getName())) {
             m_overwritePolicy.setSelected(m_abort.getModel(), true);
@@ -216,14 +208,11 @@ public class DownloadUploadFromListNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
-        DownloadUploadFromListConfiguration config =
-                new DownloadUploadFromListConfiguration();
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
+        DownloadUploadFromListConfiguration config = new DownloadUploadFromListConfiguration();
         config.setTarget(m_target.getSelectedColumn());
         config.setSource(m_source.getSelectedColumn());
-        config.setOverwritePolicy(m_overwritePolicy.getSelection()
-                .getActionCommand());
+        config.setOverwritePolicy(m_overwritePolicy.getSelection().getActionCommand());
         config.save(settings);
     }
 }

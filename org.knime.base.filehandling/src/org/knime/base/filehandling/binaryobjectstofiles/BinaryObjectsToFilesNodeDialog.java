@@ -104,36 +104,26 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
      */
     @SuppressWarnings("unchecked")
     public BinaryObjectsToFilesNodeDialog() {
-        final SettingsModelString bocolumnsettings =
-                SettingsFactory.createBinaryObjectColumnSettings();
-        final SettingsModelString filenamehandlingsettings =
-                SettingsFactory.createFilenameHandlingSettings();
+        final SettingsModelString bocolumnsettings = SettingsFactory.createBinaryObjectColumnSettings();
+        final SettingsModelString filenamehandlingsettings = SettingsFactory.createFilenameHandlingSettings();
         final SettingsModelString targetcolumnsettings =
-                SettingsFactory
-                        .createTargetColumnSettings(filenamehandlingsettings);
+                SettingsFactory.createTargetColumnSettings(filenamehandlingsettings);
         final SettingsModelString outputdirectorysettings =
-                SettingsFactory
-                        .createOutputDirectorySettings(filenamehandlingsettings);
+                SettingsFactory.createOutputDirectorySettings(filenamehandlingsettings);
         final SettingsModelString namepatternsettings =
-                SettingsFactory
-                        .createNamePatternSettings(filenamehandlingsettings);
-        final SettingsModelBoolean removebocolumnsettings =
-                SettingsFactory.createRemoveBinaryObjectColumnSettings();
-        final SettingsModelString ifexistssettings =
-                SettingsFactory.createIfExistsSettings();
-        final FlowVariableModel outputdirectoryFvm =
-                super.createFlowVariableModel(outputdirectorysettings);
+                SettingsFactory.createNamePatternSettings(filenamehandlingsettings);
+        final SettingsModelBoolean removebocolumnsettings = SettingsFactory.createRemoveBinaryObjectColumnSettings();
+        final SettingsModelString ifexistssettings = SettingsFactory.createIfExistsSettings();
+        final FlowVariableModel outputdirectoryFvm = super.createFlowVariableModel(outputdirectorysettings);
         // Enable/disable settings according to filename handling
         filenamehandlingsettings.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
                 String handling = filenamehandlingsettings.getStringValue();
-                targetcolumnsettings.setEnabled(handling
-                        .equals(FilenameHandling.FROMCOLUMN.getName()));
-                outputdirectorysettings.setEnabled(isOutputDirectoryEnabled(
-                        filenamehandlingsettings, outputdirectoryFvm));
-                namepatternsettings.setEnabled(handling
-                        .equals(FilenameHandling.GENERATE.getName()));
+                targetcolumnsettings.setEnabled(handling.equals(FilenameHandling.FROMCOLUMN.getName()));
+                outputdirectorysettings.setEnabled(isOutputDirectoryEnabled(filenamehandlingsettings,
+                        outputdirectoryFvm));
+                namepatternsettings.setEnabled(handling.equals(FilenameHandling.GENERATE.getName()));
             }
         });
         // Outer panel
@@ -149,8 +139,8 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         m_bocolumn =
-                new DialogComponentColumnNameSelection(bocolumnsettings,
-                        "Binary object column", 0, BinaryObjectDataValue.class);
+                new DialogComponentColumnNameSelection(bocolumnsettings, "Binary object column", 0,
+                        BinaryObjectDataValue.class);
         panel.add(m_bocolumn.getComponentPanel(), gbc);
         // Remove binary object column
         gbc.anchor = GridBagConstraints.WEST;
@@ -158,9 +148,7 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
         gbc.gridy = 1;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        m_removebocolumn =
-                new DialogComponentBoolean(removebocolumnsettings,
-                        "Remove binary object column");
+        m_removebocolumn = new DialogComponentBoolean(removebocolumnsettings, "Remove binary object column");
         panel.add(m_removebocolumn.getComponentPanel(), gbc);
         // Filename handling
         gbc.anchor = GridBagConstraints.WEST;
@@ -169,8 +157,7 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 1;
         gbc.gridheight = 2;
         m_filenamehandling =
-                new DialogComponentButtonGroup(filenamehandlingsettings, true,
-                        "", FilenameHandling.getAllSettings());
+                new DialogComponentButtonGroup(filenamehandlingsettings, true, "", FilenameHandling.getAllSettings());
         innerPanel.add(m_filenamehandling.getComponentPanel(), gbc);
         // Target column
         gbc.anchor = GridBagConstraints.EAST;
@@ -179,8 +166,8 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         m_targetcolumn =
-                new DialogComponentColumnNameSelection(targetcolumnsettings,
-                        "Target column", 0, false, URIDataValue.class);
+                new DialogComponentColumnNameSelection(targetcolumnsettings, "Target column", 0, false,
+                        URIDataValue.class);
         innerPanel.add(m_targetcolumn.getComponentPanel(), gbc);
         // Name pattern
         gbc.anchor = GridBagConstraints.EAST;
@@ -188,8 +175,7 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        m_namepattern =
-                new DialogComponentString(namepatternsettings, "Name pattern");
+        m_namepattern = new DialogComponentString(namepatternsettings, "Name pattern");
         innerPanel.add(m_namepattern.getComponentPanel(), gbc);
         // Output directory
         gbc.anchor = GridBagConstraints.WEST;
@@ -198,9 +184,8 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         m_outputdirectory =
-                new DialogComponentFileChooser(outputdirectorysettings,
-                        "outputdirectoryHistory", JFileChooser.SAVE_DIALOG,
-                        true, outputdirectoryFvm);
+                new DialogComponentFileChooser(outputdirectorysettings, "outputdirectoryHistory",
+                        JFileChooser.SAVE_DIALOG, true, outputdirectoryFvm);
         m_outputdirectory.setBorderTitle("Output directory:");
         innerPanel.add(m_outputdirectory.getComponentPanel(), gbc);
         // Inner panel
@@ -209,8 +194,7 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        innerPanel.setBorder(new TitledBorder(new EtchedBorder(),
-                "Filenames..."));
+        innerPanel.setBorder(new TitledBorder(new EtchedBorder(), "Filenames..."));
         panel.add(innerPanel, gbc);
         // Overwrite policy
         gbc.anchor = GridBagConstraints.WEST;
@@ -219,8 +203,8 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         m_ifexists =
-                new DialogComponentButtonGroup(ifexistssettings, false,
-                        "If a file exists...", OverwritePolicy.getAllSettings());
+                new DialogComponentButtonGroup(ifexistssettings, false, "If a file exists...",
+                        OverwritePolicy.getAllSettings());
         panel.add(m_ifexists.getComponentPanel(), gbc);
         addTab("Options", panel);
     }
@@ -231,11 +215,9 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
      * 
      * @return true if the output directory component should be enabled
      */
-    private boolean isOutputDirectoryEnabled(
-            final SettingsModelString filenamehandling,
+    private boolean isOutputDirectoryEnabled(final SettingsModelString filenamehandling,
             final FlowVariableModel outputdirectoryFvm) {
-        return filenamehandling.getStringValue().equals(
-                FilenameHandling.GENERATE.getName())
+        return filenamehandling.getStringValue().equals(FilenameHandling.GENERATE.getName())
                 && !outputdirectoryFvm.isVariableReplacementEnabled();
     }
 
@@ -243,8 +225,8 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings,
-            final PortObjectSpec[] specs) throws NotConfigurableException {
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
+            throws NotConfigurableException {
         m_bocolumn.loadSettingsFrom(settings, specs);
         m_filenamehandling.loadSettingsFrom(settings, specs);
         m_targetcolumn.loadSettingsFrom(settings, specs);
@@ -258,8 +240,7 @@ public class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings)
-            throws InvalidSettingsException {
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
         m_bocolumn.saveSettingsTo(settings);
         m_filenamehandling.saveSettingsTo(settings);
         m_targetcolumn.saveSettingsTo(settings);

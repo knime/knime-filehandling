@@ -82,8 +82,7 @@ public class ZipNodeFactory extends NodeFactory<ZipNodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public NodeView<ZipNodeModel> createNodeView(final int viewIndex,
-            final ZipNodeModel nodeModel) {
+    public NodeView<ZipNodeModel> createNodeView(final int viewIndex, final ZipNodeModel nodeModel) {
         return null;
     }
 
