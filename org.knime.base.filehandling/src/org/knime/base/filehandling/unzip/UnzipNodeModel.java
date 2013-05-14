@@ -238,9 +238,11 @@ class UnzipNodeModel extends NodeModel {
                 }
                 entry = zin.getNextEntry();
             }
-        } finally {
+        } catch (Exception e) {
             // Remove created files if node got aborted
             removeFiles(filenames);
+            throw e;
+        } finally {
             if (out != null) {
                 out.close();
             }
