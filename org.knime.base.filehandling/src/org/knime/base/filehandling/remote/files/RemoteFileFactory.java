@@ -96,7 +96,9 @@ public final class RemoteFileFactory {
             if (scheme.equals("sftp")) {
                 // Change protocol to general SSH
                 try {
-                    sshUri = new URI(uri.toString().replaceFirst("sftp", "ssh"));
+                    sshUri =
+                            new URI(uri.getScheme().replaceFirst("sftp", "ssh"), uri.getSchemeSpecificPart(),
+                                    uri.getFragment());
                 } catch (URISyntaxException e) {
                     // Should not happen, since the syntax remains untouched
                 }
@@ -109,7 +111,9 @@ public final class RemoteFileFactory {
             if (scheme.equals("scp")) {
                 // Change protocol to general SSH
                 try {
-                    sshUri = new URI(uri.toString().replaceFirst("scp", "ssh"));
+                    sshUri =
+                            new URI(uri.getScheme().replaceFirst("scp", "ssh"), uri.getSchemeSpecificPart(),
+                                    uri.getFragment());
                 } catch (URISyntaxException e) {
                     // Should not happen, since the syntax remains untouched
                 }

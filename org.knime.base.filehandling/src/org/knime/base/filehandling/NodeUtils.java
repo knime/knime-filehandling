@@ -52,6 +52,8 @@ package org.knime.base.filehandling;
 
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
@@ -126,6 +128,17 @@ public final class NodeUtils {
         gbc.weighty = 0;
         gbc.gridx = 0;
         gbc.gridy = 0;
+    }
+
+    /**
+     * Encode a path to an URI conform encoding.
+     * 
+     * @param path The path to encode
+     * @return Encoded path
+     * @throws URISyntaxException
+     */
+    public static String encodePath(final String path) throws URISyntaxException {
+        return new URI(null, null, path, null).getRawPath();
     }
 
 }

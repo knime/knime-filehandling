@@ -57,6 +57,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -134,8 +136,13 @@ public final class RemoteFileChooserPanel {
                     }
                     container = container.getParent();
                 }
-                RemoteFileChooser dialog =
-                        new RemoteFileChooser(m_connectionInformation.toURI(), m_connectionInformation, selectionMode);
+                URI rootUri;
+                if (m_connectionInformation != null) {
+                    rootUri = m_connectionInformation.toURI();
+                } else {
+                    rootUri = new File("/").toURI();
+                }
+                RemoteFileChooser dialog = new RemoteFileChooser(rootUri, m_connectionInformation, selectionMode);
                 dialog.open(frame);
                 String selected = dialog.getSelectedFile();
                 if (selected != null) {
@@ -186,8 +193,10 @@ public final class RemoteFileChooserPanel {
     public void setConnectionInformation(final ConnectionInformation connectionInformation) {
         // Build specific history id by using the host information and the
         // history id
-        m_hostSpecificID = connectionInformation.toURI().toString().replaceAll("[/@:?&#]", "") + m_historyID;
-        updateHistory();
+        if (connectionInformation != null) {
+            m_hostSpecificID = connectionInformation.toURI().toString().replaceAll("[/@:?&#]", "") + m_historyID;
+            updateHistory();
+        }
         m_connectionInformation = connectionInformation;
         setEnabled(m_panel.isEnabled());
     }
@@ -231,7 +240,7 @@ public final class RemoteFileChooserPanel {
     public void setEnabled(final boolean enabled) {
         // Some components will only be enabled if replacement is not enabled
         boolean replacement = m_fvmbutton.getFlowVariableModel().isVariableReplacementEnabled();
-        boolean browsable = false;
+        boolean browsable = true;
         if (m_connectionInformation != null) {
             browsable = Protocol.getProtocol(m_connectionInformation.getProtocol()).hasBrowseSupport();
         }

@@ -233,7 +233,7 @@ public class FileRemoteFile extends RemoteFile {
             String[] files = file.list();
             for (int i = 0; i < files.length; i++) {
                 // Delete each file recursively
-                deleteRecursively(files[i]);
+                deleteRecursively(new File(file, files[i]).getAbsolutePath());
             }
         }
         // Delete this file

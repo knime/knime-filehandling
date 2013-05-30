@@ -184,7 +184,7 @@ public final class RemoteFileChooser {
         gbc.weighty = 1;
         gbc.insets = new Insets(0, 0, 0, 0);
         m_dialog.add(panel, gbc);
-        m_dialog.setTitle("Files on " + m_connectionInformation.toURI());
+        m_dialog.setTitle("Files on " + m_uri);
         m_dialog.pack();
         m_dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
         m_dialog.setSize(400, 600);

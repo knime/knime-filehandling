@@ -436,7 +436,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
         }
         path = FilenameUtils.getFullPath(path);
         // Build URI
-        URI uri = new URI(m_uri.getScheme() + "://" + m_uri.getAuthority() + path);
+        URI uri = new URI(m_uri.getScheme(), m_uri.getAuthority(), path, m_uri.getQuery(), m_uri.getFragment());
         // Create remote file and open it
         RemoteFile file = RemoteFileFactory.createRemoteFile(uri, m_connectionInformation, m_connectionMonitor);
         file.open();

@@ -366,6 +366,7 @@ public class SFTPRemoteFile extends RemoteFile {
                 cd(m_path);
                 // Get ls entries
                 List<LsEntry> entries = channel.ls(".");
+                URI thisUri = getURI();
                 // Generate remote file for each entry that is a file
                 for (int i = 0; i < entries.size(); i++) {
                     // . and .. will return null after normalization
@@ -377,8 +378,8 @@ public class SFTPRemoteFile extends RemoteFile {
                         try {
                             // Build URI
                             URI uri =
-                                    new URI(getURI().getScheme() + "://" + getURI().getAuthority() + getPath()
-                                            + filename);
+                                    new URI(thisUri.getScheme(), thisUri.getAuthority(), getPath() + filename,
+                                            thisUri.getQuery(), thisUri.getFragment());
                             // Create remote file and open it
                             RemoteFile file =
                                     new SFTPRemoteFile(uri, getConnectionInformation(), getConnectionMonitor());

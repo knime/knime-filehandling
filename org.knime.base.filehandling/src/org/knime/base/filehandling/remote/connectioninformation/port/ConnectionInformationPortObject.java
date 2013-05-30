@@ -121,6 +121,9 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
         return m_connectionInformationPOS.getConnectionInformation().toString();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public JComponent[] getViews() {
         JPanel f = ViewUtils.getInFlowLayout(new JLabel(getSummary()));

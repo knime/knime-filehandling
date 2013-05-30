@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./upload16x16.png" type="Sink">
+<knimeNode icon="./upload16x16.png" type="Other">
     <name>Upload</name>
 
     <shortDescription>
@@ -58,6 +58,12 @@
             <br />
             Abort the execution of the node.
         </option>
+        <option name="Abort if transfer fails">
+            If this is checked the node will abort if
+            one of the files could not be transferred. If it is unchecked
+            the output table will contain a column that indicates if the
+            file could be successfully transferred or not.
+        </option>
     </fullDescription>
 
     <ports>
@@ -70,5 +76,13 @@
             Table containing the
             list of files that should be uploaded.
         </inPort>
+        <outPort name="Filelist table" index="0">
+            Table containing
+            the
+            list of files that have been uploaded and if they have
+            been uploaded or were already up to date. If files are
+            allowed to fail there is an additional column, that will indicate
+            if the transfer was successful or did fail.
+        </outPort>
     </ports>
 </knimeNode>

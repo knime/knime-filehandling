@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./upload16x16.png" type="Sink" deprecated="true">
+    <name>Upload</name>
+
+    <shortDescription>
+        Uploads files and folders to a server.
+    </shortDescription>
+
+    <fullDescription>
+        <intro>
+            This node uploads the files and folders referenced by the
+            table to
+            the server specified by the connection information.
+        </intro>
+
+
+        <option name="Target folder">
+            Location on the server, where the files will
+            be put.
+        </option>
+        <option name="Source">
+            Column of the input table with the URIs to
+            the files.
+        </option>
+        <option name="Path handling">
+            How the path of the source files will be truncated.
+            <br />
+            <b>Use full path</b>
+            <br />
+            Use the full path without truncating anything.
+            <br />
+            <b>Use only filename</b>
+            <br />
+            Truncate the whole path and leave only the files name.
+            <br />
+            <b>Truncate prefix</b>
+            <br />
+            Truncate the selected prefix directory from the path.
+        </option>
+        <option name="Prefix">
+            Directory that will be truncated from the
+            sources path.
+        </option>
+        <option name="If exists...">
+            How to handle already existing files.
+            <br />
+            <b>Overwrite</b>
+            <br />
+            Overwrite the existing file.
+            <br />
+            <b>Overwrite if newer</b>
+            <br />
+            Overwrite the existing file only, if the local file is
+            newer.
+            <br />
+            <b>Abort</b>
+            <br />
+            Abort the execution of the node.
+        </option>
+    </fullDescription>
+
+    <ports>
+        <inPort name="Connection information port" index="0">
+            Port
+            object
+            containing the connection information to the server.
+        </inPort>
+        <inPort name="Filelist port" index="1">
+            Table containing the
+            list of files that should be uploaded.
+        </inPort>
+    </ports>
+</knimeNode>
