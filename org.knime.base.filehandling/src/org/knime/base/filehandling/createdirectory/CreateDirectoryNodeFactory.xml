@@ -33,6 +33,12 @@
     </fullDescription>
 
     <ports>
+        <inPort name="Connection information port" index="0">
+            Port
+            object
+            containing the connection information to the server.
+            (Optional)
+        </inPort>
         <outPort name="Variable Port" index="0">
             Variable port
             object, containing the URI to the created directory. The
