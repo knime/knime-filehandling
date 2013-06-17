@@ -67,6 +67,7 @@ import java.util.Arrays;
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
+import org.knime.core.util.FileUtil;
 import org.knime.core.util.KnimeEncryption;
 
 /**
@@ -268,7 +269,7 @@ public class FTPRemoteFile extends RemoteFile {
     public InputStream openInputStream() throws Exception {
         FTPClient client = getClient();
         String path = getURI().getPath();
-        File tempFile = File.createTempFile(getName(), "");
+        File tempFile = FileUtil.createTempFile(getName(), "");
         client.download(path, tempFile);
         InputStream stream = new FTPInputStream(tempFile);
         return stream;
@@ -279,7 +280,7 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public OutputStream openOutputStream() throws Exception {
-        File tempFile = File.createTempFile(getName(), "");
+        File tempFile = FileUtil.createTempFile(getName(), "");
         OutputStream stream = new FTPOutputStream(tempFile);
         resetCache();
         return stream;
@@ -452,7 +453,7 @@ public class FTPRemoteFile extends RemoteFile {
 
     private class FTPInputStream extends FileInputStream {
 
-        private File m_file;
+        private final File m_file;
 
         /**
          * @param file
@@ -476,7 +477,7 @@ public class FTPRemoteFile extends RemoteFile {
 
     private class FTPOutputStream extends FileOutputStream {
 
-        private File m_file;
+        private final File m_file;
 
         /**
          * @param file

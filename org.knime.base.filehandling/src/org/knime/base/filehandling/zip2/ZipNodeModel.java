@@ -87,6 +87,7 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.util.FileUtil;
 
 /**
  * This is the model implementation.
@@ -170,8 +171,7 @@ class ZipNodeModel extends NodeModel {
             type = ArchiveStreamFactory.TAR;
         }
         // Create temporary target file
-        File tmpFile = File.createTempFile(target.getName(), "tmp");
-        tmpFile.deleteOnExit();
+        File tmpFile = FileUtil.createTempFile(target.getName(), "tmp");
         // Create archive output stream
         final OutputStream out = openCompressStream(tmpFile);
         ArchiveOutputStream os = new ArchiveStreamFactory().createArchiveOutputStream(type, out);
