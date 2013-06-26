@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 13, 2012 (Patrick Winter): created
  */
@@ -70,7 +70,6 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
-import javax.swing.SwingWorker;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -81,11 +80,12 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
+import org.knime.core.util.SwingWorkerWithContext;
 
 /**
  * Dialog that presents the file structure of a remote folder in a tree.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class RemoteFileChooser {
@@ -138,8 +138,8 @@ public final class RemoteFileChooser {
 
     /**
      * Creates remote file chooser for the specified folder.
-     * 
-     * 
+     *
+     *
      * @param uri The URI
      * @param connectionInformation Connection information to the URI
      * @param selectionType Whether a file or a directory should be selected
@@ -156,10 +156,10 @@ public final class RemoteFileChooser {
 
     /**
      * Get the selected file.
-     * 
-     * 
+     *
+     *
      * Returns null if no selection has been made
-     * 
+     *
      * @return the selectedFile or null if no file has been selected
      */
     public String getSelectedFile() {
@@ -168,8 +168,8 @@ public final class RemoteFileChooser {
 
     /**
      * Opens the actual dialog window.
-     * 
-     * 
+     *
+     *
      * @param parent Parent of this dialog
      */
     public void open(final Frame parent) {
@@ -199,8 +199,8 @@ public final class RemoteFileChooser {
 
     /**
      * Initializes the panel of this dialog.
-     * 
-     * 
+     *
+     *
      * @return Panel with all components of this dialog
      */
     private JPanel initPanel() {
@@ -253,8 +253,8 @@ public final class RemoteFileChooser {
 
     /**
      * Will set the message to the default.
-     * 
-     * 
+     *
+     *
      * The default message will prompt the user to select the expected type of
      * file.
      */
@@ -341,11 +341,11 @@ public final class RemoteFileChooser {
 
     /**
      * Worker that loads the root node and initializes the tree with it.
-     * 
-     * 
+     *
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
-    private class InitWorker extends SwingWorker<Void, Void> {
+    private class InitWorker extends SwingWorkerWithContext<Void, Void> {
 
         private boolean m_success;
 
@@ -355,7 +355,7 @@ public final class RemoteFileChooser {
          * {@inheritDoc}
          */
         @Override
-        protected Void doInBackground() throws Exception {
+        protected Void doInBackgroundWithContext() throws Exception {
             m_success = false;
             // Create remote file to the root of the tree
             RemoteFile root = RemoteFileFactory.createRemoteFile(m_uri, m_connectionInformation, m_connectionMonitor);
@@ -371,7 +371,7 @@ public final class RemoteFileChooser {
          * {@inheritDoc}
          */
         @Override
-        protected void done() {
+        protected void doneWithContext() {
             if (m_success && m_dir) {
                 // Remove loading message
                 m_progress.setVisible(false);
@@ -402,11 +402,11 @@ public final class RemoteFileChooser {
     /**
      * Swing worker that loads the children of a remote file node in the
      * background.
-     * 
-     * 
+     *
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
-    private class RemoteFileTreeNodeWorker extends SwingWorker<Void, Void> {
+    private class RemoteFileTreeNodeWorker extends SwingWorkerWithContext<Void, Void> {
 
         private boolean m_success;
 
@@ -422,7 +422,7 @@ public final class RemoteFileChooser {
          * {@inheritDoc}
          */
         @Override
-        protected Void doInBackground() throws Exception {
+        protected Void doInBackgroundWithContext() throws Exception {
             m_success = false;
             // List files in directory
             RemoteFile[] files = ((RemoteFile)m_parentNode.getUserObject()).listFiles();
@@ -439,7 +439,7 @@ public final class RemoteFileChooser {
          * {@inheritDoc}
          */
         @Override
-        protected void done() {
+        protected void doneWithContext() {
             if (m_success) {
                 // Add all nodes to the parent
                 for (int i = 0; i < m_nodes.length; i++) {
@@ -473,8 +473,8 @@ public final class RemoteFileChooser {
 
     /**
      * Extended tree node that uses lazy loading.
-     * 
-     * 
+     *
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class RemoteFileTreeNode extends DefaultMutableTreeNode {
@@ -492,8 +492,8 @@ public final class RemoteFileChooser {
 
         /**
          * Create a tree node to a remote file.
-         * 
-         * 
+         *
+         *
          * @param file The remote file
          * @throws Exception If the file could not be accessed
          */

@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 28, 2012 (Patrick Winter): created
  */
@@ -64,16 +64,16 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.SwingWorker;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.util.SwingWorkerWithContext;
 
 /**
- * 
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class TestConnectionDialog {
@@ -96,8 +96,8 @@ public class TestConnectionDialog {
 
     /**
      * Create a test connection dialog.
-     * 
-     * 
+     *
+     *
      * @param connectionInformation The connection information to test
      */
     public TestConnectionDialog(final ConnectionInformation connectionInformation) {
@@ -106,8 +106,8 @@ public class TestConnectionDialog {
 
     /**
      * Open the dialog.
-     * 
-     * 
+     *
+     *
      * @param parent Parent frame of this dialog
      */
     public void open(final Frame parent) {
@@ -137,8 +137,8 @@ public class TestConnectionDialog {
 
     /**
      * Create and initialize the panel of this dialog.
-     * 
-     * 
+     *
+     *
      * @return The initialized panel
      */
     private JPanel initPanel() {
@@ -213,11 +213,11 @@ public class TestConnectionDialog {
 
     /**
      * Swing worker that tests the connection information.
-     * 
-     * 
+     *
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
-    private class TestWorker extends SwingWorker<Void, Void> {
+    private class TestWorker extends SwingWorkerWithContext<Void, Void> {
 
         private boolean m_success;
 
@@ -227,7 +227,7 @@ public class TestConnectionDialog {
          * {@inheritDoc}
          */
         @Override
-        protected Void doInBackground() throws Exception {
+        protected Void doInBackgroundWithContext() throws Exception {
             try {
                 ConnectionMonitor monitor = new ConnectionMonitor();
                 RemoteFileFactory.createRemoteFile(m_connectionInformation.toURI(), m_connectionInformation, monitor);
@@ -245,7 +245,7 @@ public class TestConnectionDialog {
          * {@inheritDoc}
          */
         @Override
-        protected void done() {
+        protected void doneWithContext() {
             m_progress.setVisible(false);
             m_button1.setEnabled(true);
             if (m_success) {
