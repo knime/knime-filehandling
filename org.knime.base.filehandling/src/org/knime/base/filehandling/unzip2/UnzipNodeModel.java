@@ -63,6 +63,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.compressors.CompressorException;
@@ -97,7 +98,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 class UnzipNodeModel extends NodeModel {
 
-    private static final NodeLogger LOGGER = NodeLogger.getLogger(UnzipNodeModel.class);
+    private static final NodeLogger LOGGER = NodeLogger
+            .getLogger(UnzipNodeModel.class);
 
     private SettingsModelString m_source;
 
@@ -122,8 +124,8 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
-            throws Exception {
+    protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
+            final ExecutionContext exec) throws Exception {
         // Create output spec and container
         DataTableSpec outSpec = createOutSpec();
         BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
@@ -144,62 +146,94 @@ class UnzipNodeModel extends NodeModel {
      * @param exec Execution context to check for cancellation
      * @throws Exception If an error occurs
      */
-    private void unarchive(final File source, final BufferedDataContainer outContainer, final ExecutionContext exec)
-            throws Exception {
+    private void unarchive(final File source,
+            final BufferedDataContainer outContainer,
+            final ExecutionContext exec) throws Exception {
         int rowID = 0;
-        boolean abort = m_ifexists.getStringValue().equals(OverwritePolicy.ABORT.getName());
         File targetDirectory = new File(m_targetdirectory.getStringValue());
         // Create input stream
         // Autodetection of type (needs buffered stream)
         InputStream in = new BufferedInputStream(openUncompressStream(source));
-        ArchiveInputStream input = new ArchiveStreamFactory().createArchiveInputStream(in);
-        ArchiveEntry entry;
-        // Process each archive entry
-        while ((entry = input.getNextEntry()) != null) {
-            exec.checkCanceled();
-            // Create target file for this entry
-            File target = new File(targetDirectory, entry.getName());
-            if (entry.isDirectory()) {
-                // Create directory if not there
-                // Only important if an empty directory is inside the archive
-                target.mkdirs();
+        try {
+            ArchiveInputStream input =
+                    new ArchiveStreamFactory().createArchiveInputStream(in);
+            ArchiveEntry entry;
+            // Process each archive entry
+            while ((entry = input.getNextEntry()) != null) {
+                exec.checkCanceled();
+                // Create target file for this entry
+                File target = new File(targetDirectory, entry.getName());
+                if (entry.isDirectory()) {
+                    // Create directory if not there
+                    // Only important if an empty directory is inside the
+                    // archive
+                    target.mkdirs();
+                } else {
+                    DataCell cell = writeToFile(input, target);
+                    outContainer.addRowToTable(new DefaultRow("Row" + rowID,
+                            cell));
+                    rowID++;
+                }
+            }
+            input.close();
+        } catch (ArchiveException e) {
+            // Uncompress single file
+            String name = source.getName();
+            File target =
+                    new File(targetDirectory, name.substring(0,
+                            name.lastIndexOf(".")));
+            DataCell cell = writeToFile(in, target);
+            outContainer.addRowToTable(new DefaultRow("Row" + rowID, cell));
+        }
+    }
+
+    /**
+     * Writes the data from the input stream into the target file.
+     * 
+     * @param input Input stream containing the data
+     * @param target The file to write into
+     * @return A cell with the URI to the file
+     * @throws Exception If an I/O operation fails or the file exists and the
+     *             policy is abort
+     */
+    private DataCell writeToFile(final InputStream input, final File target)
+            throws Exception {
+        boolean abort =
+                m_ifexists.getStringValue().equals(
+                        OverwritePolicy.ABORT.getName());
+        // If target exists either throw exception or inform user of
+        // replacement
+        if (target.exists()) {
+            if (abort) {
+                throw new Exception("File \"" + target.getAbsolutePath()
+                        + "\" exists, overwrite policy: \""
+                        + m_ifexists.getStringValue() + "\"");
             } else {
-                // If target exists either throw exception or inform user of
-                // replacement
-                if (target.exists()) {
-                    if (abort) {
-                        throw new Exception("File \"" + target.getAbsolutePath() + "\" exists, overwrite policy: \""
-                                + m_ifexists.getStringValue() + "\"");
-                    } else {
-                        LOGGER.info("Replacing file " + target.getAbsolutePath());
-                    }
-                }
-                // Create dirs if necessary
-                target.mkdirs();
-                // Delete old file if there is one and create new one
-                target.delete();
-                target.createNewFile();
-                OutputStream out = new FileOutputStream(target);
-                // Copy content of current entry to target file
-                IOUtils.copy(input, out);
-                out.close();
-                // Create row with path or URI
-                DataCell cell = null;
-                String outputSelection = m_output.getStringValue();
-                if (outputSelection.equals(OutputSelection.LOCATION.getName())) {
-                    cell = new StringCell(target.getAbsolutePath());
-                }
-                if (outputSelection.equals(OutputSelection.URI.getName())) {
-                    URI uri = target.getAbsoluteFile().toURI();
-                    String extension = FilenameUtils.getExtension(uri.getPath());
-                    URIContent content = new URIContent(uri, extension);
-                    cell = new URIDataCell(content);
-                }
-                outContainer.addRowToTable(new DefaultRow("Row" + rowID, cell));
-                rowID++;
+                LOGGER.info("Replacing file " + target.getAbsolutePath());
             }
         }
-        input.close();
+        // Create dirs if necessary
+        target.mkdirs();
+        // Delete old file if there is one and create new one
+        target.delete();
+        target.createNewFile();
+        OutputStream out = new FileOutputStream(target);
+        // Copy content of current entry to target file
+        IOUtils.copy(input, out);
+        out.close();
+        // Create row with path or URI
+        DataCell cell = null;
+        String outputSelection = m_output.getStringValue();
+        if (outputSelection.equals(OutputSelection.LOCATION.getName())) {
+            cell = new StringCell(target.getAbsolutePath());
+        }
+        if (outputSelection.equals(OutputSelection.URI.getName())) {
+            URI uri = target.getAbsoluteFile().toURI();
+            String extension = FilenameUtils.getExtension(uri.getPath());
+            URIContent content = new URIContent(uri, extension);
+            cell = new URIDataCell(content);
+        }
+        return cell;
     }
 
     /**
@@ -210,14 +244,17 @@ class UnzipNodeModel extends NodeModel {
      *         compressed
      * @throws Exception If IOException occurred
      */
-    private InputStream openUncompressStream(final File source) throws Exception {
+    private InputStream openUncompressStream(final File source)
+            throws Exception {
         InputStream uncompressStream;
         // Buffered stream needet for autodetection of type
         InputStream in = new BufferedInputStream(new FileInputStream(source));
         try {
             // Try to create a compressor for the source, throws exception if
             // source is not compressed
-            uncompressStream = new CompressorStreamFactory().createCompressorInputStream(in);
+            uncompressStream =
+                    new CompressorStreamFactory()
+                            .createCompressorInputStream(in);
         } catch (CompressorException e) {
             // Source is not compressed
             uncompressStream = in;
@@ -261,10 +298,14 @@ class UnzipNodeModel extends NodeModel {
         DataColumnSpec columnSpec = null;
         String output = m_output.getStringValue();
         if (output.equals(OutputSelection.LOCATION.getName())) {
-            columnSpec = new DataColumnSpecCreator("Location", StringCell.TYPE).createSpec();
+            columnSpec =
+                    new DataColumnSpecCreator("Location", StringCell.TYPE)
+                            .createSpec();
         }
         if (output.equals(OutputSelection.URI.getName())) {
-            columnSpec = new DataColumnSpecCreator("URI", URIDataCell.TYPE).createSpec();
+            columnSpec =
+                    new DataColumnSpecCreator("URI", URIDataCell.TYPE)
+                            .createSpec();
         }
         return new DataTableSpec(columnSpec);
     }
@@ -281,7 +322,8 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
+    protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
+            throws InvalidSettingsException {
         // Is the source set?
         if (m_source.getStringValue().equals("")) {
             throw new InvalidSettingsException("Source not set");
@@ -293,7 +335,8 @@ class UnzipNodeModel extends NodeModel {
         // Does the target directory exist?
         File targetdirectory = new File(m_targetdirectory.getStringValue());
         if (!targetdirectory.isDirectory()) {
-            throw new InvalidSettingsException("Target directory does not exist");
+            throw new InvalidSettingsException(
+                    "Target directory does not exist");
         }
         return new DataTableSpec[]{createOutSpec()};
     }
@@ -313,7 +356,8 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
+    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
         m_source.loadSettingsFrom(settings);
         m_targetdirectory.loadSettingsFrom(settings);
         m_output.loadSettingsFrom(settings);
@@ -324,7 +368,8 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
+    protected void validateSettings(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
         m_source.validateSettings(settings);
         m_targetdirectory.validateSettings(settings);
         m_output.validateSettings(settings);
@@ -335,7 +380,8 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
+    protected void loadInternals(final File internDir,
+            final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
@@ -344,7 +390,8 @@ class UnzipNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
+    protected void saveInternals(final File internDir,
+            final ExecutionMonitor exec) throws IOException,
             CanceledExecutionException {
         // Not used
     }
