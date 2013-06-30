@@ -154,7 +154,7 @@ public class ZipNodeDialog extends NodeDialogPane {
         m_target =
                 new DialogComponentFileChooser(targetsettings, "targetHistory", JFileChooser.SAVE_DIALOG, false,
                         targetFvm);
-        m_target.setBorderTitle("Zip output file:");
+        m_target.setBorderTitle("Output file:");
         panel.add(m_target.getComponentPanel(), gbc);
         // Path handling
         gbc.anchor = GridBagConstraints.WEST;
@@ -190,7 +190,7 @@ public class ZipNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         m_ifexists =
-                new DialogComponentButtonGroup(ifexistssettings, false, "If zip file exists...",
+                new DialogComponentButtonGroup(ifexistssettings, false, "If file exists...",
                         OverwritePolicy.getAllSettings());
         panel.add(m_ifexists.getComponentPanel(), gbc);
         addTab("Options", panel);

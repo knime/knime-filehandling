@@ -1,62 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
 <knimeNode icon="./unzip16x16.png" type="Other">
-    <name>Unzip Files</name>
+	<name>Unzip Files</name>
 
-    <shortDescription>
-        Unzips files from a zip file.
-    </shortDescription>
+	<shortDescription>
+		Unzips files from an archive.
+	</shortDescription>
 
-    <fullDescription>
-        <intro>This node unzips files from a zip file. The path to the
-            files
-            will
-            be contained in the output table.
-            <br /><br />
-            Supported formats are:
-            <ul>
-            <li>.zip</li>
-            <li>.jar</li>
-            <li>.tar</li>
-            <li>.tar.gz</li>
-            <li>.tar.bz2</li>
-            <li>.cpio</li>
-            <li>.ar</li>
-            </ul>
-        </intro>
+	<fullDescription>
+		<intro>
+			This node unzips files from an archive. The path to the
+			files
+			will
+			be contained in the output table.
+			<br />
+			<br />
+			Supported formats are:
+			<ul>
+				<li>.zip</li>
+				<li>.jar</li>
+				<li>.tar</li>
+				<li>.tar.gz</li>
+				<li>.tar.bz2</li>
+				<li>.cpio</li>
+				<li>.ar</li>
+			</ul>
+		</intro>
 
 
-        <option name="Zip input file">Path to the zip file.</option>
-        <option name="Output directory">Path to the output directory, where the
-            files will
-            be extracted to.
-        </option>
-        <option name="Output...">
-            Specifies the content of the output table.
-            <br />
-            <b>Location</b>
-            A string column with the path to the extracted files.
-            <br />
-            <b>URI</b>
-            An URI column with the URIs to the extracted files.
-        </option>
-        <option name="If a file exists...">
-            Specifies the behavior if a file with the same name already
-            exists.
-            <br />
-            <b>Overwrite</b>
-            <br />
-            Overwrites already existing files.
-            <br />
-            <b>Abort</b>
-            <br />
-            Will abort if a file already exists.
-        </option>
-    </fullDescription>
+		<option name="Input file">Path to the archive.</option>
+		<option name="Output directory">Path to the output directory, where the
+			files will
+			be extracted to.
+		</option>
+		<option name="Output...">
+			Specifies the content of the output table.
+			<br />
+			<b>Location</b>
+			A string column with the path to the extracted files.
+			<br />
+			<b>URI</b>
+			An URI column with the URIs to the extracted files.
+		</option>
+		<option name="If a file exists...">
+			Specifies the behavior if a file with the same name already
+			exists.
+			<br />
+			<b>Overwrite</b>
+			<br />
+			Overwrites already existing files.
+			<br />
+			<b>Abort</b>
+			<br />
+			Will abort if a file already exists.
+		</option>
+	</fullDescription>
 
-    <ports>
-        <outPort index="0" name="Output table">
-            Path to every extracted file.
-        </outPort>
-    </ports>
+	<ports>
+		<outPort index="0" name="Output table">
+			Path to every extracted file.
+		</outPort>
+	</ports>
 </knimeNode>

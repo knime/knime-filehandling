@@ -92,7 +92,7 @@ class UnzipNodeDialog extends DefaultNodeSettingsPane {
         // Source
         DialogComponentFileChooser source =
                 new DialogComponentFileChooser(m_source, "sourceHistory", JFileChooser.OPEN_DIALOG, false, m_sourceFvm);
-        source.setBorderTitle("Zip input file:");
+        source.setBorderTitle("Input file:");
         addDialogComponent(source);
         // Target directory
         DialogComponentFileChooser target =
