@@ -50,6 +50,7 @@
  */
 package org.knime.base.filehandling.remote.files;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
@@ -75,7 +76,7 @@ import com.jcraft.jsch.SftpException;
  */
 public class SFTPRemoteFile extends RemoteFile {
 
-    private static ChannelSftp channel = null;
+    private ChannelSftp m_channel = null;
 
     private String m_path = null;
 
@@ -94,6 +95,7 @@ public class SFTPRemoteFile extends RemoteFile {
     private Long m_modifiedCache = null;
 
     private void resetCache() {
+        // Empty cache
         m_pathCache = null;
         m_nameCache = null;
         m_existsCache = null;
@@ -101,7 +103,6 @@ public class SFTPRemoteFile extends RemoteFile {
         m_entryCache = null;
         m_sizeCache = null;
         m_modifiedCache = null;
-        m_path = null;
     }
 
     /**
@@ -148,10 +149,22 @@ public class SFTPRemoteFile extends RemoteFile {
     @Override
     public String getName() throws Exception {
         if (m_nameCache == null) {
+            try {
+                openChannel();
+                internalGetName();
+            } finally {
+                closeChannel();
+            }
+        }
+        return m_nameCache;
+    }
+
+    private String internalGetName() throws Exception {
+        if (m_nameCache == null) {
             String name;
-            if (isDirectory()) {
+            if (internalIsDirectory()) {
                 // Remove '/' from path and separate name
-                String path = getPath();
+                String path = internalGetPath();
                 path = path.substring(0, path.length() - 1);
                 name = FilenameUtils.getName(path);
             } else {
@@ -169,7 +182,19 @@ public class SFTPRemoteFile extends RemoteFile {
     @Override
     public String getPath() throws Exception {
         if (m_pathCache == null) {
-            openChannel();
+            try {
+                openChannel();
+                internalGetPath();
+            } finally {
+                closeChannel();
+            }
+        }
+        return m_pathCache;
+    }
+
+    private String internalGetPath() throws Exception {
+        if (m_pathCache == null) {
+            cd(m_path);
             String path = getURI().getPath();
             // If path is empty use working directory
             if (path == null || path.length() == 0) {
@@ -200,9 +225,21 @@ public class SFTPRemoteFile extends RemoteFile {
     @Override
     public boolean exists() throws Exception {
         if (m_existsCache == null) {
+            try {
+                openChannel();
+                internalExists();
+            } finally {
+                closeChannel();
+            }
+        }
+        return m_existsCache;
+    }
+
+    private boolean internalExists() throws Exception {
+        if (m_existsCache == null) {
             // In case of the root directory there is no ls entry available but
             // isDirectory returns true
-            m_existsCache = getLsEntry() != null || isDirectory();
+            m_existsCache = getLsEntry() != null || internalIsDirectory();
         }
         return m_existsCache;
     }
@@ -212,6 +249,18 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean isDirectory() throws Exception {
+        if (m_isdirCache == null) {
+            try {
+                openChannel();
+                internalIsDirectory();
+            } finally {
+                closeChannel();
+            }
+        }
+        return m_isdirCache;
+    }
+
+    private boolean internalIsDirectory() throws Exception {
         if (m_isdirCache == null) {
             boolean isDirectory = false;
             openChannel();
@@ -239,18 +288,22 @@ public class SFTPRemoteFile extends RemoteFile {
         // If the file is also an SFTP remote file and over the same connection
         // it can be moved
         if (file instanceof SFTPRemoteFile && getIdentifier().equals(file.getIdentifier())) {
-            SFTPRemoteFile source = (SFTPRemoteFile)file;
-            openChannel();
-            // Remember if file existed before
-            boolean existed = exists();
-            // Move file
-            channel.rename(source.getURI().getPath(), getURI().getPath());
-            resetCache();
-            // Success if target did not exist and now exists and the source
-            // does not exist anymore
-            boolean success = !existed && exists() && !source.exists();
-            if (!success) {
-                throw new Exception("Move operation failed");
+            try {
+                openChannel();
+                SFTPRemoteFile source = (SFTPRemoteFile)file;
+                // Remember if file existed before
+                boolean existed = internalExists();
+                // Move file
+                m_channel.rename(source.getURI().getPath(), getURI().getPath());
+                resetCache();
+                // Success if target did not exist and now exists and the source
+                // does not exist anymore
+                boolean success = !existed && internalExists() && !source.exists();
+                if (!success) {
+                    throw new Exception("Move operation failed");
+                }
+            } finally {
+                closeChannel();
             }
         } else {
             super.move(file, exec);
@@ -262,13 +315,19 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public InputStream openInputStream() throws Exception {
+        InputStream stream;
         openChannel();
         String path = getURI().getPath();
-        InputStream stream = channel.get(path);
+        stream = m_channel.get(path);
         // Open stream (null if stream could not be opened)
         if (stream == null) {
+            closeChannel();
             throw new Exception("Path not reachable");
         }
+        stream = new SFTPInputStream(stream, m_channel);
+        // Closing the channel is now the responsibility of the stream, this
+        // file should use a new channel for other operations
+        m_channel = null;
         return stream;
     }
 
@@ -277,14 +336,20 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public OutputStream openOutputStream() throws Exception {
+        OutputStream stream;
         openChannel();
         String path = getURI().getPath();
-        OutputStream stream = channel.put(path);
+        stream = m_channel.put(path);
         // Open stream (null if stream could not be opened)
         if (stream == null) {
+            closeChannel();
             throw new Exception("Path not reachable");
         }
         resetCache();
+        stream = new SFTPOutputStream(stream, m_channel);
+        // Closing the channel is now the responsibility of the stream, this
+        // file should use a new channel for other operations
+        m_channel = null;
         return stream;
     }
 
@@ -293,6 +358,18 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public long getSize() throws Exception {
+        if (m_sizeCache == null) {
+            try {
+                openChannel();
+                internalGetSize();
+            } finally {
+                closeChannel();
+            }
+        }
+        return m_sizeCache;
+    }
+
+    private long internalGetSize() throws Exception {
         if (m_sizeCache == null) {
             // Assume missing
             long size = 0;
@@ -311,6 +388,18 @@ public class SFTPRemoteFile extends RemoteFile {
     @Override
     public long lastModified() throws Exception {
         if (m_modifiedCache == null) {
+            try {
+                openChannel();
+                internalLastModified();
+            } finally {
+                closeChannel();
+            }
+        }
+        return m_modifiedCache;
+    }
+
+    private long internalLastModified() throws Exception {
+        if (m_modifiedCache == null) {
             // Assume missing
             long time = 0;
             LsEntry entry = getLsEntry();
@@ -327,27 +416,32 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     @Override
     public boolean delete() throws Exception {
-        // Delete can only be true if the file exists
-        boolean result = exists();
-        openChannel();
-        String path = getFullName();
-        if (exists()) {
-            if (isDirectory()) {
-                // Delete inner files first
-                RemoteFile[] files = listFiles();
-                for (int i = 0; i < files.length; i++) {
-                    files[i].delete();
+        boolean result;
+        try {
+            openChannel();
+            // Delete can only be true if the file exists
+            result = internalExists();
+            String path = getFullName();
+            if (internalExists()) {
+                if (internalIsDirectory()) {
+                    // Delete inner files first
+                    RemoteFile[] files = internalListFiles();
+                    for (int i = 0; i < files.length; i++) {
+                        files[i].delete();
+                    }
+                    // Delete this directory
+                    m_channel.rmdir(path);
+                    resetCache();
+                    result = result && !internalExists();
+                } else {
+                    // Delete this file
+                    m_channel.rm(path);
+                    resetCache();
+                    result = result && !internalExists();
                 }
-                // Delete this directory
-                channel.rmdir(path);
-                resetCache();
-                result = result && !exists();
-            } else {
-                // Delete this file
-                channel.rm(path);
-                resetCache();
-                result = result && !exists();
             }
+        } finally {
+            closeChannel();
         }
         return result;
     }
@@ -355,17 +449,28 @@ public class SFTPRemoteFile extends RemoteFile {
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings("unchecked")
     @Override
     public RemoteFile[] listFiles() throws Exception {
+        RemoteFile[] files;
+        try {
+            openChannel();
+            files = internalListFiles();
+        } finally {
+            closeChannel();
+        }
+        return files;
+    }
+
+    @SuppressWarnings("unchecked")
+    private RemoteFile[] internalListFiles() throws Exception {
         List<RemoteFile> files = new LinkedList<RemoteFile>();
         RemoteFile[] outFiles = new RemoteFile[0];
         openChannel();
-        if (isDirectory()) {
+        if (internalIsDirectory()) {
             try {
                 cd(m_path);
                 // Get ls entries
-                List<LsEntry> entries = channel.ls(".");
+                List<LsEntry> entries = m_channel.ls(".");
                 URI thisUri = getURI();
                 // Generate remote file for each entry that is a file
                 for (int i = 0; i < entries.size(); i++) {
@@ -378,7 +483,7 @@ public class SFTPRemoteFile extends RemoteFile {
                         try {
                             // Build URI
                             URI uri =
-                                    new URI(thisUri.getScheme(), thisUri.getAuthority(), getPath() + filename,
+                                    new URI(thisUri.getScheme(), thisUri.getAuthority(), internalGetPath() + filename,
                                             thisUri.getQuery(), thisUri.getFragment());
                             // Create remote file and open it
                             RemoteFile file =
@@ -408,11 +513,14 @@ public class SFTPRemoteFile extends RemoteFile {
     public boolean mkDir() throws Exception {
         boolean result = false;
         try {
-            channel.mkdir(getFullName());
+            openChannel();
+            m_channel.mkdir(getFullName());
             resetCache();
             result = true;
         } catch (Exception e) {
             // result stays false
+        } finally {
+            closeChannel();
         }
         return result;
     }
@@ -425,16 +533,13 @@ public class SFTPRemoteFile extends RemoteFile {
      */
     private void openChannel() throws Exception {
         // Check if channel is ready
-        if (channel == null || !channel.getSession().isConnected()) {
+        if (m_channel == null || !m_channel.getSession().isConnected() || !m_channel.isConnected()) {
             Session session = ((SSHConnection)getConnection()).getSession();
             if (!session.isConnected()) {
                 session.connect();
             }
-            channel = (ChannelSftp)session.openChannel("sftp");
-        }
-        // Connect channel
-        if (!channel.isConnected()) {
-            channel.connect();
+            m_channel = (ChannelSftp)session.openChannel("sftp");
+            m_channel.connect();
         }
         // Check if path is initialized
         if (m_path == null) {
@@ -462,15 +567,21 @@ public class SFTPRemoteFile extends RemoteFile {
                 // Change directory to parent until the path does not change
                 // anymore
                 do {
-                    oldDir = channel.pwd();
+                    oldDir = m_channel.pwd();
                     cd("..");
-                    newDir = channel.pwd();
+                    newDir = m_channel.pwd();
                 } while (!newDir.equals(oldDir));
                 m_path = newDir;
             }
         }
         // Change to correct directory
         cd(m_path);
+    }
+
+    private void closeChannel() {
+        if (m_channel != null) {
+            m_channel.disconnect();
+        }
     }
 
     /**
@@ -485,17 +596,16 @@ public class SFTPRemoteFile extends RemoteFile {
         if (m_entryCache == null) {
             // Assume missing
             LsEntry entry = null;
-            openChannel();
             // If this is a directory change to parent
-            if (isDirectory()) {
-                channel.cd("..");
+            if (internalIsDirectory()) {
+                m_channel.cd("..");
             }
             // Get all entries in working directory
-            List<LsEntry> entries = channel.ls(".");
+            List<LsEntry> entries = m_channel.ls(".");
             // Check all entries by name
             for (int i = 0; i < entries.size(); i++) {
                 LsEntry currentEntry = entries.get(i);
-                if (currentEntry.getFilename().equals(getName())) {
+                if (currentEntry.getFilename().equals(internalGetName())) {
                     // Entry with the same name is the correct one
                     entry = currentEntry;
                     break;
@@ -516,12 +626,152 @@ public class SFTPRemoteFile extends RemoteFile {
     private boolean cd(final String path) {
         boolean result = false;
         try {
-            channel.cd(path);
+            m_channel.cd(path);
             result = true;
         } catch (SftpException e) {
             // return false if cd was not possible
         }
         return result;
+    }
+
+    private static class SFTPInputStream extends InputStream {
+
+        private InputStream m_stream;
+
+        private ChannelSftp m_channel;
+
+        SFTPInputStream(final InputStream inputStream, final ChannelSftp channel) {
+            m_stream = inputStream;
+            m_channel = channel;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int read() throws IOException {
+            return m_stream.read();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int available() throws IOException {
+            return m_stream.available();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void close() throws IOException {
+            m_stream.close();
+            m_channel.disconnect();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public synchronized void mark(final int readlimit) {
+            m_stream.mark(readlimit);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean markSupported() {
+            return m_stream.markSupported();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int read(final byte[] b) throws IOException {
+            return m_stream.read(b);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int read(final byte[] b, final int off, final int len) throws IOException {
+            return m_stream.read(b, off, len);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public synchronized void reset() throws IOException {
+            m_stream.reset();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public long skip(final long n) throws IOException {
+            return m_stream.skip(n);
+        }
+
+    }
+
+    private static class SFTPOutputStream extends OutputStream {
+
+        private OutputStream m_stream;
+
+        private ChannelSftp m_channel;
+
+        SFTPOutputStream(final OutputStream outputStream, final ChannelSftp channel) {
+            m_stream = outputStream;
+            m_channel = channel;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void write(final int b) throws IOException {
+            m_stream.write(b);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void close() throws IOException {
+            m_stream.close();
+            m_channel.disconnect();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void flush() throws IOException {
+            m_stream.flush();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void write(final byte[] b) throws IOException {
+            m_stream.write(b);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void write(final byte[] b, final int off, final int len) throws IOException {
+            m_stream.write(b, off, len);
+        }
+
     }
 
 }
