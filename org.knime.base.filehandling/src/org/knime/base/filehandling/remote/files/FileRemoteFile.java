@@ -180,18 +180,17 @@ public class FileRemoteFile extends RemoteFile {
      */
     @Override
     public RemoteFile[] listFiles() throws Exception {
-        RemoteFile[] files;
+        RemoteFile[] files = new RemoteFile[0];
         if (isDirectory()) {
             // Get files in directory
             File[] f = new File(getURI()).listFiles();
-            files = new RemoteFile[f.length];
-            // Create remote files from local files
-            for (int i = 0; i < f.length; i++) {
-                files[i] = new FileRemoteFile(f[i].toURI());
+            if (f != null) {
+                files = new RemoteFile[f.length];
+                // Create remote files from local files
+                for (int i = 0; i < f.length; i++) {
+                    files[i] = new FileRemoteFile(f[i].toURI());
+                }
             }
-        } else {
-            // Return 0 files
-            files = new RemoteFile[0];
         }
         // Sort files
         Arrays.sort(files);
