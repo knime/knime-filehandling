@@ -166,7 +166,7 @@ class UnzipNodeModel extends NodeModel {
                 exec.checkCanceled();
                 // Create target file for this entry
                 String pathFromZip = entry.getName();
-                if (isWindows && pathFromZip.matches("^[a-zA-Z]:[/\\].*")) {
+                if (isWindows && pathFromZip.matches("^[a-zA-Z]:[/\\\\].*")) {
                     // remove driver letter because this leads to invalid paths under Windows
                     pathFromZip = pathFromZip.substring(2);
                 }
