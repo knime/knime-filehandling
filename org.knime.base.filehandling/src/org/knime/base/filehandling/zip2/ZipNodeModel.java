@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 3, 2012 (Patrick Winter): created
  */
@@ -61,6 +61,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
@@ -72,6 +73,7 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.core.runtime.Platform;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
@@ -91,11 +93,12 @@ import org.knime.core.util.FileUtil;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class ZipNodeModel extends NodeModel {
+    private static final boolean IS_WINDOWS = Platform.OS_WIN32.equals(Platform.getOS());
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(ZipNodeModel.class);
 
@@ -149,7 +152,7 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Create an archive file containing the listed files.
-     * 
+     *
      * @param target The archive file that will be created
      * @param files The list of files that will be added to the archive
      * @param exec The execution context to check for cancellation
@@ -201,10 +204,10 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Adds files from the old archive to the new one.
-     * 
+     *
      * Old files that will be overwritten by one of the new files will be left
      * out.
-     * 
+     *
      * @param source The old archive
      * @param target Output stream to the new archive
      * @param newFiles Array of files that will be added later
@@ -246,7 +249,7 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Compress the file (if selected).
-     * 
+     *
      * @param file The uncompressed file
      * @return The compressed file
      * @throws Exception If an error occurred
@@ -273,7 +276,7 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Uncompresses the given file.
-     * 
+     *
      * @param source The potentially compressed source file
      * @return Uncompressed version of the source, or source if it was not
      *         compressed
@@ -296,9 +299,9 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Get an array of the files referenced by the table.
-     * 
+     *
      * The files contained in directories will already be resolved.
-     * 
+     *
      * @param table Table containing the references to the files.
      * @return Array of files
      */
@@ -341,8 +344,8 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Replaces directories in the given file array by all contained files.
-     * 
-     * 
+     *
+     *
      * @param files Array of files that potentially contains directories
      * @return List of all files with directories resolved
      */
@@ -364,7 +367,7 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Returns the name of the archive that will be created.
-     * 
+     *
      * @return Name of the archive (without compression extension)
      */
     private String getTargetName() {
@@ -392,8 +395,8 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Returns the correct file name according to the path handling policy.
-     * 
-     * 
+     *
+     *
      * @param file File for the name
      * @return Name of the given file with cut path
      */
@@ -408,14 +411,14 @@ class ZipNodeModel extends NodeModel {
         }
         if (pathhandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
             // Remove prefix
-            name = name.replaceFirst(prefix, "");
+            name = name.replaceFirst(Pattern.quote(prefix), "");
         }
-        return name;
+        return IS_WINDOWS ? name.replace('\\', '/') : name;
     }
 
     /**
      * Creates an archive entry based on the given type.
-     * 
+     *
      * @param type Type of the archive
      * @param file Content of the entry
      * @return Entry based on the given type

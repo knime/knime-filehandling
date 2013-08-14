@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
@@ -70,6 +70,7 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.eclipse.core.runtime.Platform;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -92,8 +93,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class UnzipNodeModel extends NodeModel {
@@ -139,7 +140,7 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Extracts the files from the source file into the configured directory.
-     * 
+     *
      * @param source Source archive containing the files.
      * @param outContainer Container that will be filled with the URIs/locations
      *            of the extracted files
@@ -149,6 +150,8 @@ class UnzipNodeModel extends NodeModel {
     private void unarchive(final File source,
             final BufferedDataContainer outContainer,
             final ExecutionContext exec) throws Exception {
+        final boolean isWindows = Platform.OS_WIN32.equals(Platform.getOS());
+
         int rowID = 0;
         File targetDirectory = new File(m_targetdirectory.getStringValue());
         // Create input stream
@@ -162,7 +165,12 @@ class UnzipNodeModel extends NodeModel {
             while ((entry = input.getNextEntry()) != null) {
                 exec.checkCanceled();
                 // Create target file for this entry
-                File target = new File(targetDirectory, entry.getName());
+                String pathFromZip = entry.getName();
+                if (isWindows && pathFromZip.matches("^[a-zA-Z]:[/\\\\].*")) {
+                    // remove driver letter because this leads to invalid paths under Windows
+                    pathFromZip = pathFromZip.substring(2);
+                }
+                File target = new File(targetDirectory, pathFromZip);
                 if (entry.isDirectory()) {
                     // Create directory if not there
                     // Only important if an empty directory is inside the
@@ -189,7 +197,7 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Writes the data from the input stream into the target file.
-     * 
+     *
      * @param input Input stream containing the data
      * @param target The file to write into
      * @return A cell with the URI to the file
@@ -238,7 +246,7 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Uncompresses the given file.
-     * 
+     *
      * @param source The potentially compressed source file
      * @return Uncompressed version of the source, or source if it was not
      *         compressed
@@ -264,7 +272,7 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Tries to create a path from the passed string.
-     * 
+     *
      * @param text the string to transform into a path
      * @return Path if entered value could be properly transformed
      */
@@ -290,8 +298,8 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Factory method for the output table spec.
-     * 
-     * 
+     *
+     *
      * @return Output table spec
      */
     private DataTableSpec createOutSpec() {
