@@ -9,7 +9,7 @@ Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Export-Package: org.knime.base.filehandling.remote.connectioninformation.port,
  org.knime.base.filehandling.mime
 Require-Bundle: org.apache.commons.net;bundle-version="3.1.0",
- org.apache.commons.io;bundle-version="1.4.0",
+ org.apache.commons.io;bundle-version="[1.4.0,3.0.0)",
  org.apache.commons.logging;bundle-version="1.1.1",
  org.apache.httpcomponents.httpclient;bundle-version="4.1.2",
  org.apache.httpcomponents.httpcore;bundle-version="4.1.4",
