@@ -73,6 +73,7 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.core.runtime.Platform;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
@@ -97,6 +98,7 @@ import org.knime.core.util.FileUtil;
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class ZipNodeModel extends NodeModel {
+    private static final boolean IS_WINDOWS = Platform.OS_WIN32.equals(Platform.getOS());
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(ZipNodeModel.class);
 
@@ -411,7 +413,7 @@ class ZipNodeModel extends NodeModel {
             // Remove prefix
             name = name.replaceFirst(Pattern.quote(prefix), "");
         }
-        return name;
+        return IS_WINDOWS ? name.replace('\\', '/') : name;
     }
 
     /**
