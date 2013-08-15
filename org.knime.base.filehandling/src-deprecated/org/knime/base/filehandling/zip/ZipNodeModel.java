@@ -59,11 +59,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.eclipse.core.runtime.Platform;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
@@ -88,6 +90,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class ZipNodeModel extends NodeModel {
+    private static final boolean IS_WINDOWS = Platform.OS_WIN32.equals(Platform.getOS());
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(ZipNodeModel.class);
 
@@ -402,9 +405,10 @@ class ZipNodeModel extends NodeModel {
             name = file.getName();
         }
         if (pathhandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
-            name = name.replaceFirst(prefix, "");
+            // Remove prefix
+            name = name.replaceFirst(Pattern.quote(prefix), "");
         }
-        return name;
+        return IS_WINDOWS ? name.replace('\\', '/') : name;
     }
 
     /**

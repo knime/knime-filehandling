@@ -68,6 +68,7 @@ import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.eclipse.core.runtime.Platform;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -146,6 +147,8 @@ class UnzipNodeModel extends NodeModel {
      * @throws Exception When abort condition is met or user canceled
      */
     private void extractZip(final BufferedDataContainer outContainer, final ExecutionContext exec) throws Exception {
+        final boolean isWindows = Platform.OS_WIN32.equals(Platform.getOS());
+
         boolean localFile = true;
         int rowID = 0;
         List<String> filenames = new LinkedList<String>();
@@ -176,7 +179,13 @@ class UnzipNodeModel extends NodeModel {
             ZipEntry entry = zin.getNextEntry();
             while (entry != null) {
                 // Generate full path to file
-                File file = new File(directory, entry.getName());
+                String pathFromZip = entry.getName();
+                if (isWindows && pathFromZip.matches("^[a-zA-Z]:[/\\\\].*")) {
+                    // remove driver letter because this leads to invalid paths under Windows
+                    pathFromZip = pathFromZip.substring(2);
+                }
+                File file = new File(directory, pathFromZip);
+                
                 // If file exists and policy is abort throw an exception
                 String ifExists = m_ifexists.getStringValue();
                 if (file.exists() && ifExists.equals(OverwritePolicy.ABORT.getName())) {
