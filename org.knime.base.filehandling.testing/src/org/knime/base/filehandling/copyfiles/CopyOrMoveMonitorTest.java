@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Oct 11, 2012 (Patrick Winter): created
  */
@@ -52,8 +52,6 @@ package org.knime.base.filehandling.copyfiles;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,33 +59,33 @@ import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.knime.core.util.FileUtil;
 
 /**
  * JUnit test for the copy or move monitor class. Checks if the
  * <code>isNewFile()</code> and <code>rollback()</code> methods work correctly.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class CopyOrMoveMonitorTest {
-
-    private Path m_tempDir;
+    private File m_tempDir;
 
     private List<File> m_files;
 
     /**
      * Creates a temporary directory and puts a bunch of files into it.
-     * 
-     * 
+     *
+     *
      * @throws IOException If the files or the folder could not be created
      */
     @Before
     public void setupFiles() throws IOException {
         String[] filenames = new String[]{"file1", "file2", "file3"};
-        m_tempDir = Files.createTempDirectory("MonitorTest");
+        m_tempDir = FileUtil.createTempDir("MonitorTest");
         m_files = new ArrayList<File>();
         for (int i = 0; i < filenames.length; i++) {
-            File file = new File(m_tempDir.toFile(), filenames[i]);
+            File file = new File(m_tempDir, filenames[i]);
             if (!file.createNewFile()) {
                 throw new IOException("File " + file + " could not be created");
             }
@@ -97,19 +95,19 @@ public class CopyOrMoveMonitorTest {
 
     /**
      * Removes the temporary directory.
-     * 
-     * 
+     *
+     *
      * @throws IOException If a correct cleanup was not possible
      */
     @After
     public void cleanupFiles() throws IOException {
-        FileUtils.deleteDirectory(m_tempDir.toFile());
+        FileUtils.deleteDirectory(m_tempDir);
     }
 
     /**
      * Make a copy of each file and then a rollback (deleting the new files).
-     * 
-     * 
+     *
+     *
      * @throws Exception If the test fails
      */
     @Test
@@ -127,8 +125,8 @@ public class CopyOrMoveMonitorTest {
     /**
      * Move each file to a new location and then make a rollback (moving them
      * back to there original place).
-     * 
-     * 
+     *
+     *
      * @throws Exception If the test fails
      */
     @Test
@@ -146,8 +144,8 @@ public class CopyOrMoveMonitorTest {
     /**
      * Check if unregistered files are identified as new and registered files as
      * old.
-     * 
-     * 
+     *
+     *
      * @throws Exception If the test fails
      */
     @Test
@@ -168,8 +166,8 @@ public class CopyOrMoveMonitorTest {
     /**
      * Copies or moves the files according to the action and registers the
      * handled files in the monitor.
-     * 
-     * 
+     *
+     *
      * @param action Whether to copy or move the files
      * @param monitor Where the files will be registered
      * @throws IOException If the file operation fails
@@ -193,8 +191,8 @@ public class CopyOrMoveMonitorTest {
      * contain the same files. Only the filenames will be checked no attributes.
      * Does not work recursively. The list of files is read at construction
      * time, so the same directory can differ over time.
-     * 
-     * 
+     *
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private static class SimpleDirectoryComparer {
@@ -203,25 +201,25 @@ public class CopyOrMoveMonitorTest {
 
         /**
          * Constructer reads the files names present in the directory.
-         * 
-         * 
+         *
+         *
          * @param directory Original directory
          */
-        public SimpleDirectoryComparer(Path directory) {
-            m_filelist = directory.toFile().listFiles();
+        public SimpleDirectoryComparer(final File directory) {
+            m_filelist = directory.listFiles();
         }
 
         /**
          * Compares the filenamelist of the directory to the one created at
          * construction time.
-         * 
-         * 
+         *
+         *
          * @param directory Directory to check against
          * @return true if the filelists differ, false otherwise
          */
-        public boolean different(final Path directory) {
+        public boolean different(final File directory) {
             boolean result = false;
-            File[] newfilelist = directory.toFile().listFiles();
+            File[] newfilelist = directory.listFiles();
             if (m_filelist.length != newfilelist.length) {
                 result = true;
             }
