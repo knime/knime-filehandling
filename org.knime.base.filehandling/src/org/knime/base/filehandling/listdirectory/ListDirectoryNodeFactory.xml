@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./listdirectory16x16.png" type="Other">
+	<name>List Remote Directory</name>
+
+	<shortDescription>
+		List the files contained in a directory.
+	</shortDescription>
+
+	<fullDescription>
+		<intro>
+			This node lists the files that are contained in the specified
+			directory.
+			The location of the directory can either be local (if no
+			connection information is given) or on a remote
+			server.
+		</intro>
+
+
+		<option name="Directory">
+			The directory that should be listed.
+		</option>
+		<option name="Recursive">
+			If this is selected the files contained in
+			subfolders will also be listed.
+		</option>
+	</fullDescription>
+
+	<ports>
+		<inPort name="Connection information port" index="0">
+			Port
+			object
+			containing the connection information to the server. (Optional)
+		</inPort>
+		<outPort name="Filelist table" index="0">
+			Table containing
+			the
+			list
+			of files that are present in the directory.
+		</outPort>
+	</ports>
+</knimeNode>

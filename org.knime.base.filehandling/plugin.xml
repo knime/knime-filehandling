@@ -31,6 +31,7 @@
    <node category-path="/labs/filehandling/uri" factory-class="org.knime.base.filehandling.uriporttovariable.URIPortToVariableNodeFactory" id="org.knime.base.filehandling.uriporttovariable.URIPortToVariableNodeFactory" />
    <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.deletefiles.DeleteFilesNodeFactory" id="org.knime.base.filehandling.deletefiles.DeleteFilesNodeFactory" />
    <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.createdirectory.CreateDirectoryNodeFactory" id="org.knime.base.filehandling.createdirectory.CreateDirectoryNodeFactory" />
+   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.listdirectory.ListDirectoryNodeFactory" id="org.knime.base.filehandling.listdirectory.ListDirectoryNodeFactory" />
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category description="Nodes to handle files" icon="icons/cfilehandling16x16.png" level-id="filehandling" name="File Handling" path="/labs" />
