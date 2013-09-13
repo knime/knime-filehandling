@@ -269,7 +269,7 @@ public class FTPRemoteFile extends RemoteFile {
     public InputStream openInputStream() throws Exception {
         FTPClient client = getClient();
         String path = getURI().getPath();
-        File tempFile = FileUtil.createTempFile(getName(), "");
+        File tempFile = FileUtil.createTempFile("ftp-" + getName(), "");
         client.download(path, tempFile);
         InputStream stream = new FTPInputStream(tempFile);
         return stream;
@@ -280,7 +280,7 @@ public class FTPRemoteFile extends RemoteFile {
      */
     @Override
     public OutputStream openOutputStream() throws Exception {
-        File tempFile = FileUtil.createTempFile(getName(), "");
+        File tempFile = FileUtil.createTempFile("ftp-" + getName(), "");
         OutputStream stream = new FTPOutputStream(tempFile);
         resetCache();
         return stream;

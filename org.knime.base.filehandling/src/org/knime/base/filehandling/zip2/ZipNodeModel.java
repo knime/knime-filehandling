@@ -174,7 +174,7 @@ class ZipNodeModel extends NodeModel {
             type = ArchiveStreamFactory.TAR;
         }
         // Create temporary target file
-        File tmpFile = FileUtil.createTempFile(target.getName(), "tmp");
+        File tmpFile = FileUtil.createTempFile("zip-" + target.getName(), "tmp");
         // Create archive output stream
         final OutputStream out = openCompressStream(tmpFile);
         ArchiveOutputStream os = new ArchiveStreamFactory().createArchiveOutputStream(type, out);
