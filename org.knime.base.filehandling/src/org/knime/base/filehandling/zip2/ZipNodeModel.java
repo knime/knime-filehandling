@@ -57,6 +57,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -93,8 +95,8 @@ import org.knime.core.util.FileUtil;
 
 /**
  * This is the model implementation.
- *
- *
+ * 
+ * 
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class ZipNodeModel extends NodeModel {
@@ -152,7 +154,7 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Create an archive file containing the listed files.
-     *
+     * 
      * @param target The archive file that will be created
      * @param files The list of files that will be added to the archive
      * @param exec The execution context to check for cancellation
@@ -174,7 +176,7 @@ class ZipNodeModel extends NodeModel {
             type = ArchiveStreamFactory.TAR;
         }
         // Create temporary target file
-        File tmpFile = FileUtil.createTempFile(target.getName(), "tmp");
+        File tmpFile = FileUtil.createTempFile("zip-" + target.getName(), "tmp");
         // Create archive output stream
         final OutputStream out = openCompressStream(tmpFile);
         ArchiveOutputStream os = new ArchiveStreamFactory().createArchiveOutputStream(type, out);
@@ -204,10 +206,10 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Adds files from the old archive to the new one.
-     *
+     * 
      * Old files that will be overwritten by one of the new files will be left
      * out.
-     *
+     * 
      * @param source The old archive
      * @param target Output stream to the new archive
      * @param newFiles Array of files that will be added later
@@ -249,7 +251,7 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Compress the file (if selected).
-     *
+     * 
      * @param file The uncompressed file
      * @return The compressed file
      * @throws Exception If an error occurred
@@ -276,7 +278,7 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Uncompresses the given file.
-     *
+     * 
      * @param source The potentially compressed source file
      * @return Uncompressed version of the source, or source if it was not
      *         compressed
@@ -299,9 +301,9 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Get an array of the files referenced by the table.
-     *
+     * 
      * The files contained in directories will already be resolved.
-     *
+     * 
      * @param table Table containing the references to the files.
      * @return Array of files
      */
@@ -335,7 +337,10 @@ class ZipNodeModel extends NodeModel {
         // Create files for each filename
         File[] files = new File[filenames.length];
         for (int i = 0; i < files.length; i++) {
-            files[i] = new File(filenames[i]);
+            files[i] = pathToFile(filenames[i]);
+            if (files[i] == null) {
+                throw new IllegalArgumentException(filenames[i] + " is not a valid path to a local file");
+            }
         }
         // Resolve directories
         files = resolveDirectories(files);
@@ -343,9 +348,26 @@ class ZipNodeModel extends NodeModel {
     }
 
     /**
+     * Converts a path to a file object.
+     * 
+     * @param path The path (may be a: URL, URI or a normal file path)
+     * @return File object to the given path
+     */
+    private File pathToFile(final String path) {
+        File file;
+        try {
+            URL url = new URL(path);
+            file = FileUtils.toFile(url);
+        } catch (MalformedURLException e1) {
+            file = new File(path);
+        }
+        return file;
+    }
+
+    /**
      * Replaces directories in the given file array by all contained files.
-     *
-     *
+     * 
+     * 
      * @param files Array of files that potentially contains directories
      * @return List of all files with directories resolved
      */
@@ -367,7 +389,7 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Returns the name of the archive that will be created.
-     *
+     * 
      * @return Name of the archive (without compression extension)
      */
     private String getTargetName() {
@@ -395,8 +417,8 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Returns the correct file name according to the path handling policy.
-     *
-     *
+     * 
+     * 
      * @param file File for the name
      * @return Name of the given file with cut path
      */
@@ -418,7 +440,7 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Creates an archive entry based on the given type.
-     *
+     * 
      * @param type Type of the archive
      * @param file Content of the entry
      * @return Entry based on the given type

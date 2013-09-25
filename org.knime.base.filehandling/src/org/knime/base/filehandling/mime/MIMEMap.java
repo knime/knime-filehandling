@@ -121,7 +121,7 @@ public final class MIMEMap {
             IConfigurationElement[] children = allElements.get(i).getChildren();
             // Get file extensions
             for (int j = 0; j < children.length; j++) {
-                String fileextension = " " + children[j].getAttribute("name").toLowerCase();
+                String fileextension = children[j].getAttribute("name").toLowerCase();
                 entries[i].addExtension(fileextension);
                 LOGGER.debug("Found MIME-Type \"" + type + "\" for file extension \"" + fileextension + "\"");
             }
