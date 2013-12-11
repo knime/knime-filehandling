@@ -1,0 +1,5 @@
+# This helps resolving org.apache.httpcomponents.httpclient correctly because it does not have an explicit
+# dependency on org.apache.commons.logging.
+requires.0.name=org.apache.commons.logging
+requires.0.range=[1.1.1, 2.0.0)
+requires.0.namespace=osgi.bundle
