@@ -75,6 +75,7 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.core.runtime.Platform;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
@@ -435,7 +436,11 @@ class ZipNodeModel extends NodeModel {
             // Remove prefix
             name = name.replaceFirst(Pattern.quote(prefix), "");
         }
-        return IS_WINDOWS ? name.replace('\\', '/') : name;
+        if (IS_WINDOWS) {
+            name = name.replace(FilenameUtils.getPrefix(name), "\\");
+            name = FilenameUtils.separatorsToUnix(name);
+        }
+        return name;
     }
 
     /**
