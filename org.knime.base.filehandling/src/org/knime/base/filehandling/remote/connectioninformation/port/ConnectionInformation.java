@@ -188,7 +188,11 @@ public class ConnectionInformation implements Serializable {
             throw new Exception("Protocol incompatible");
         }
         // Host
-        if (!uri.getHost().toLowerCase().equals(m_host.toLowerCase())) {
+        final String uriHost = uri.getHost();
+        if (uriHost == null) {
+            throw new Exception("No host in URI " + uri);
+        }
+        if (!uriHost.toLowerCase().equals(m_host.toLowerCase())) {
             throw new Exception("Host incompatible");
         }
         // Port
