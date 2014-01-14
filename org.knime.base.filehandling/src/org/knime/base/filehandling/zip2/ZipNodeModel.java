@@ -437,8 +437,14 @@ class ZipNodeModel extends NodeModel {
             name = name.replaceFirst(Pattern.quote(prefix), "");
         }
         if (IS_WINDOWS) {
-            name = name.replace(FilenameUtils.getPrefix(name), "\\");
+            // Remove windows drive letter
+            name = name.replaceFirst(Pattern.quote(FilenameUtils.getPrefix(name)), "");
+            // Always use UNIX separators
             name = FilenameUtils.separatorsToUnix(name);
+        }
+        // Entry name never starts with separator
+        if (name.startsWith("/")) {
+            name = name.replaceFirst("/", "");
         }
         return name;
     }
