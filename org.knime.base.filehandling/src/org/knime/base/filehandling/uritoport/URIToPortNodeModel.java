@@ -59,6 +59,7 @@ import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.uri.IURIPortObject;
 import org.knime.core.data.uri.URIContent;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.data.uri.URIPortObject;
@@ -90,7 +91,7 @@ class URIToPortNodeModel extends NodeModel {
      */
     protected URIToPortNodeModel() {
         // Table input, URI port output
-        super(new PortType[]{BufferedDataTable.TYPE}, new PortType[]{URIPortObject.TYPE});
+        super(new PortType[]{BufferedDataTable.TYPE}, new PortType[]{IURIPortObject.TYPE});
         m_uricolumn = SettingsFactory.createURIColumnSettings();
     }
 

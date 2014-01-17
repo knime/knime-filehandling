@@ -61,7 +61,7 @@ import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.uri.URIContent;
 import org.knime.core.data.uri.URIDataCell;
-import org.knime.core.data.uri.URIPortObject;
+import org.knime.core.data.uri.IURIPortObject;
 import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
@@ -88,7 +88,7 @@ class PortToURINodeModel extends NodeModel {
      */
     protected PortToURINodeModel() {
         // URI port input, table output
-        super(new PortType[]{URIPortObject.TYPE}, new PortType[]{BufferedDataTable.TYPE});
+        super(new PortType[]{IURIPortObject.TYPE}, new PortType[]{BufferedDataTable.TYPE});
     }
 
     /**
@@ -98,7 +98,7 @@ class PortToURINodeModel extends NodeModel {
     protected PortObject[] execute(final PortObject[] inData, final ExecutionContext exec) throws Exception {
         BufferedDataContainer container = exec.createDataContainer(createOutSpec());
         // Get list of URIs
-        List<URIContent> contents = ((URIPortObject)inData[0]).getURIContents();
+        List<URIContent> contents = ((IURIPortObject)inData[0]).getURIContents();
         // Add URIs from list into table
         for (int i = 0; i < contents.size(); i++) {
             DataCell cell = new URIDataCell(contents.get(i));

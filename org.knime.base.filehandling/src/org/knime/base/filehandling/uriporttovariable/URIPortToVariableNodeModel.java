@@ -55,7 +55,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.knime.core.data.uri.URIContent;
-import org.knime.core.data.uri.URIPortObject;
+import org.knime.core.data.uri.IURIPortObject;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -82,7 +82,7 @@ class URIPortToVariableNodeModel extends NodeModel {
      */
     protected URIPortToVariableNodeModel() {
         // URI port input, table output
-        super(new PortType[]{URIPortObject.TYPE}, new PortType[]{FlowVariablePortObject.TYPE});
+        super(new PortType[]{IURIPortObject.TYPE}, new PortType[]{FlowVariablePortObject.TYPE});
     }
 
     /**
@@ -91,7 +91,7 @@ class URIPortToVariableNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inData, final ExecutionContext exec) throws Exception {
         // Get list of URIs
-        List<URIContent> contents = ((URIPortObject)inData[0]).getURIContents();
+        List<URIContent> contents = ((IURIPortObject)inData[0]).getURIContents();
         // Add URIs from list into table
         for (int i = 0; i < contents.size(); i++) {
             pushFlowVariableString("URI-" + i, contents.get(i).getURI().toString());
