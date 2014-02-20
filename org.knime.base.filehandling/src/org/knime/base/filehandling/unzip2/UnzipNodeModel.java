@@ -197,7 +197,7 @@ class UnzipNodeModel extends NodeModel {
                 // Create target file for this entry
                 String pathFromZip = entry.getName();
                 if (isWindows && pathFromZip.matches("^[a-zA-Z]:[/\\\\].*")) {
-                    // remove driver letter because this leads to invalid paths
+                    // remove drive letter because this leads to invalid paths
                     // under Windows
                     pathFromZip = pathFromZip.substring(2);
                 }
@@ -217,7 +217,11 @@ class UnzipNodeModel extends NodeModel {
         } catch (ArchiveException e) {
             // Uncompress single file
             String name = new File(textToPath(m_source.getStringValue())).getName();
-            File target = new File(targetDirectory, name.substring(0, name.lastIndexOf(".")));
+            int dotIndex = name.lastIndexOf(".");
+            if (dotIndex >= 0) {
+                name = name.substring(0, dotIndex);
+            }
+            File target = new File(targetDirectory, name);
             DataCell cell = writeToFile(in, target);
             outContainer.addRowToTable(new DefaultRow("Row" + rowID, cell));
         }
