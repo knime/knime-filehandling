@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright by 
+ *  Copyright by
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 3, 2012 (Patrick Winter): created
  */
@@ -85,10 +85,11 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
+@Deprecated
 class ZipNodeModel extends NodeModel {
     private static final boolean IS_WINDOWS = Platform.OS_WIN32.equals(Platform.getOS());
 
@@ -174,11 +175,11 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Puts all the given files into a zip file.
-     * 
-     * 
+     *
+     *
      * Behavior is controlled by the overwrite policy in the if existing
      * setting.
-     * 
+     *
      * @param filenames Path to the files
      * @param target Path to the zip file
      * @param exec Execution context for <code>checkCanceled()</code> and
@@ -252,11 +253,11 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Adds files from an old zip file into the zip stream.
-     * 
-     * 
+     *
+     *
      * Behavior is controlled by the overwrite policy in the if existing
      * setting. Files in the newfiles set will not be added.
-     * 
+     *
      * @param oldFile Zip file that contains the files to copy
      * @param zout Zip stream where the files get added
      * @param progress Progress of this nodes execution
@@ -304,8 +305,8 @@ class ZipNodeModel extends NodeModel {
     /**
      * Calculates the size off the files in the zip file, except the ones that
      * will get replaced.
-     * 
-     * 
+     *
+     *
      * @param file The zip file
      * @param newfiles Set of new files for conflict checking
      * @param exec Execution context for <code>checkCanceled()</code>
@@ -342,8 +343,8 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Calculate the total size of the given files.
-     * 
-     * 
+     *
+     *
      * @param files The files for the calculation
      * @return Size of all the files
      */
@@ -357,8 +358,8 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Adds the given file into the zip stream.
-     * 
-     * 
+     *
+     *
      * @param file The file to add
      * @param zout The zip stream where the file will be added
      * @param progress Progress of this nodes execution
@@ -392,8 +393,8 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Returns the correct file name according to the path handling policy.
-     * 
-     * 
+     *
+     *
      * @param file File for the name
      * @return Name of the given file with cut path
      */
@@ -413,8 +414,8 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Replaces directories in the given file array by all contained files.
-     * 
-     * 
+     *
+     *
      * @param files Array of files that potentially contains directories
      * @return List of all files with directories resolved
      */

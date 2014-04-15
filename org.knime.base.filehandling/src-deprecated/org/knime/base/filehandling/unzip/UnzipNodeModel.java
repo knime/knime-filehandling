@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright by 
+ *  Copyright by
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
@@ -91,10 +91,11 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
+@Deprecated
 class UnzipNodeModel extends NodeModel {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(UnzipNodeModel.class);
@@ -135,11 +136,11 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Extracts files from a zip file.
-     * 
-     * 
+     *
+     *
      * Extracts files from a zip file. The path or URI to the files will be put
      * into the container.
-     * 
+     *
      * @param outContainer Container to put the path or URI to the extracted
      *            files into
      * @param exec Execution context for <code>checkCanceled()</code> and
@@ -185,7 +186,7 @@ class UnzipNodeModel extends NodeModel {
                     pathFromZip = pathFromZip.substring(2);
                 }
                 File file = new File(directory, pathFromZip);
-                
+
                 // If file exists and policy is abort throw an exception
                 String ifExists = m_ifexists.getStringValue();
                 if (file.exists() && ifExists.equals(OverwritePolicy.ABORT.getName())) {
@@ -267,8 +268,8 @@ class UnzipNodeModel extends NodeModel {
     /**
      * Checks if any of the files in the zip already exist and returns the size
      * of all files in the zip file.
-     * 
-     * 
+     *
+     *
      * @param exec Execution context for <code>checkCanceled()</code>
      * @return Uncompressed size of all files in the zip file
      * @throws Exception When abort condition is met or user canceled
@@ -301,11 +302,11 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Removes all files in the list.
-     * 
-     * 
+     *
+     *
      * This method removes all files in the given list to clean up, when the
      * node gets aborted.
-     * 
+     *
      * @param filenames List of the files to remove
      */
     private void removeFiles(final List<String> filenames) {
@@ -317,7 +318,7 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Tries to create a path from the passed string.
-     * 
+     *
      * @param text the string to transform into a path
      * @return Path if entered value could be properly transformed
      */
@@ -343,8 +344,8 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Factory method for the output table spec.
-     * 
-     * 
+     *
+     *
      * @return Output table spec
      */
     private DataTableSpec createOutSpec() {

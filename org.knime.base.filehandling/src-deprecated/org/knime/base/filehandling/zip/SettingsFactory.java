@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright by 
+ *  Copyright by
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 3, 2012 (Patrick Winter): created
  */
@@ -55,10 +55,11 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * Factory for SettingsModels.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
+@Deprecated
 final class SettingsFactory {
 
     private SettingsFactory() {
@@ -67,8 +68,8 @@ final class SettingsFactory {
 
     /**
      * Factory method for the location column setting.
-     * 
-     * 
+     *
+     *
      * @return Location column <code>SettingsModel</code>
      */
     static SettingsModelString createLocationColumnSettings() {
@@ -77,8 +78,8 @@ final class SettingsFactory {
 
     /**
      * Factory method for the target setting.
-     * 
-     * 
+     *
+     *
      * @return Target <code>SettingsModel</code>
      */
     static SettingsModelString createTargetSettings() {
@@ -87,8 +88,8 @@ final class SettingsFactory {
 
     /**
      * Factory method for the compression level setting.
-     * 
-     * 
+     *
+     *
      * @return Compression level <code>SettingsModel</code>
      */
     static SettingsModelIntegerBounded createCompressionLevelSettings() {
@@ -97,8 +98,8 @@ final class SettingsFactory {
 
     /**
      * Factory method for the path handling setting.
-     * 
-     * 
+     *
+     *
      * @return Path handling <code>SettingsModel</code>
      */
     static SettingsModelString createPathHandlingSettings() {
@@ -107,11 +108,11 @@ final class SettingsFactory {
 
     /**
      * Factory method for the prefix setting.
-     * 
-     * 
+     *
+     *
      * @param pathhandling <code>SettingsModel</code> for the path handling
      *            setting
-     * 
+     *
      * @return Prefix <code>SettingsModel</code>
      */
     static SettingsModelString createPrefixSettings(final SettingsModelString pathhandling) {
@@ -122,8 +123,8 @@ final class SettingsFactory {
 
     /**
      * Factory method for the if exists setting.
-     * 
-     * 
+     *
+     *
      * @return If exists <code>SettingsModel</code>
      */
     static SettingsModelString createIfExistsSettings() {

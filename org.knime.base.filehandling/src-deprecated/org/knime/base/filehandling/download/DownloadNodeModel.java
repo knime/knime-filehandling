@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright by 
+ *  Copyright by
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -84,10 +84,11 @@ import org.knime.core.node.port.PortType;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
+@Deprecated
 public class DownloadNodeModel extends NodeModel {
 
     private ConnectionInformation m_connectionInformation;
@@ -133,12 +134,12 @@ public class DownloadNodeModel extends NodeModel {
 
     /**
      * Downloads a file or folder.
-     * 
-     * 
+     *
+     *
      * Downloads a file or folder to the configured target directory and writes
      * the new location into the container. Folders will be downloaded
      * recursively.
-     * 
+     *
      * @param source The file or folder to be downloaded
      * @param folder Folder where the file goes into
      * @param outContainer Container to write the reference of the downloaded
@@ -230,8 +231,8 @@ public class DownloadNodeModel extends NodeModel {
 
     /**
      * Check if the file fits the filter.
-     * 
-     * 
+     *
+     *
      * @param name Name of the file
      * @return true if it fits, false if it gets filtered out
      */
@@ -252,8 +253,8 @@ public class DownloadNodeModel extends NodeModel {
 
     /**
      * Factory method for the output table spec.
-     * 
-     * 
+     *
+     *
      * @return Output table spec
      */
     private DataTableSpec createOutSpec() {

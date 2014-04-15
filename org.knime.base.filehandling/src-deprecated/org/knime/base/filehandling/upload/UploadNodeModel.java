@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright by 
+ *  Copyright by
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -78,10 +78,11 @@ import org.knime.core.node.port.PortType;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
+@Deprecated
 public class UploadNodeModel extends NodeModel {
 
     private ConnectionInformation m_connectionInformation;
@@ -141,8 +142,8 @@ public class UploadNodeModel extends NodeModel {
 
     /**
      * Uploads a single file to the configured remote location.
-     * 
-     * 
+     *
+     *
      * @param source The source file
      * @param folder Folder where the file goes into
      * @param monitor The connection monitor

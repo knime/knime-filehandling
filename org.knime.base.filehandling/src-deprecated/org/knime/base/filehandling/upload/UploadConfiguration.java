@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright by 
+ *  Copyright by
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 9, 2012 (Patrick Winter): created
  */
@@ -56,10 +56,11 @@ import org.knime.core.node.NodeSettingsWO;
 
 /**
  * Configuration for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
+@Deprecated
 class UploadConfiguration {
 
     private String m_source;
@@ -144,8 +145,8 @@ class UploadConfiguration {
 
     /**
      * Save the configuration.
-     * 
-     * 
+     *
+     *
      * @param settings The <code>NodeSettings</code> to write to
      */
     void save(final NodeSettingsWO settings) {
@@ -158,8 +159,8 @@ class UploadConfiguration {
 
     /**
      * Load the configuration.
-     * 
-     * 
+     *
+     *
      * @param settings The <code>NodeSettings</code> to read from
      */
     void load(final NodeSettingsRO settings) {
@@ -172,8 +173,8 @@ class UploadConfiguration {
 
     /**
      * Load the configuration and check for validity.
-     * 
-     * 
+     *
+     *
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
@@ -194,8 +195,8 @@ class UploadConfiguration {
 
     /**
      * Checks if the string is not null or empty.
-     * 
-     * 
+     *
+     *
      * @param string The string to check
      * @throws InvalidSettingsException If the string is null or empty
      */

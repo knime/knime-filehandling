@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright by 
+ *  Copyright by
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -44,7 +44,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
@@ -54,10 +54,11 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * Factory for SettingsModels.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
+@Deprecated
 final class SettingsFactory {
 
     private SettingsFactory() {
@@ -66,8 +67,8 @@ final class SettingsFactory {
 
     /**
      * Factory method for the source setting.
-     * 
-     * 
+     *
+     *
      * @return Source <code>SettingsModel</code>
      */
     static SettingsModelString createSourceSettings() {
@@ -76,8 +77,8 @@ final class SettingsFactory {
 
     /**
      * Factory method for the target directory setting.
-     * 
-     * 
+     *
+     *
      * @return Target directory <code>SettingsModel</code>
      */
     static SettingsModelString createTargetDirectorySettings() {
@@ -86,8 +87,8 @@ final class SettingsFactory {
 
     /**
      * Factory method for the output setting.
-     * 
-     * 
+     *
+     *
      * @return Output <code>SettingsModel</code>
      */
     static SettingsModelString createOutputSettings() {
@@ -96,8 +97,8 @@ final class SettingsFactory {
 
     /**
      * Factory method for the if exists setting.
-     * 
-     * 
+     *
+     *
      * @return If exists <code>SettingsModel</code>
      */
     static SettingsModelString createIfExistsSettings() {

@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright by 
+ *  Copyright by
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -78,10 +78,11 @@ import org.knime.core.node.port.PortType;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
+@Deprecated
 public class DownloadUploadFromListNodeModel extends NodeModel {
 
     private ConnectionInformation m_connectionInformation;
@@ -155,8 +156,8 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
 
     /**
      * Copies the source file to the target file location.
-     * 
-     * 
+     *
+     *
      * @param source The source file
      * @param target The target location
      * @param monitor The connection monitor
