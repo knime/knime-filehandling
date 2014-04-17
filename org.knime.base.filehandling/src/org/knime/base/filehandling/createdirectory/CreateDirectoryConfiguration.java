@@ -67,6 +67,8 @@ class CreateDirectoryConfiguration {
     private String m_name;
 
     private boolean m_abortifexists;
+    
+    private String m_variablename;
 
     /**
      * @return the target
@@ -109,6 +111,20 @@ class CreateDirectoryConfiguration {
     public void setAbortifexists(final boolean abortifexists) {
         this.m_abortifexists = abortifexists;
     }
+    
+    /**
+     * @return the variablename
+     */
+    public String getVariablename() {
+        return m_variablename;
+    }
+    
+    /**
+     * @param variablename the variablename to set
+     */
+    public void setVariablename(final String variablename) {
+        m_variablename = variablename;
+    }
 
     /**
      * Save the configuration.
@@ -120,6 +136,7 @@ class CreateDirectoryConfiguration {
         settings.addString("target", m_target);
         settings.addString("name", m_name);
         settings.addBoolean("abortifexists", m_abortifexists);
+        settings.addString("variablename", m_variablename);
     }
 
     /**
@@ -132,6 +149,7 @@ class CreateDirectoryConfiguration {
         m_target = settings.getString("target", "");
         m_name = settings.getString("name", "");
         m_abortifexists = settings.getBoolean("abortifexists", false);
+        m_variablename = settings.getString("variablename", "directory");
     }
 
     /**
@@ -147,6 +165,8 @@ class CreateDirectoryConfiguration {
         m_name = settings.getString("name");
         validate("Name", m_name);
         m_abortifexists = settings.getBoolean("abortifexists");
+        // added in 2.10, see bug 4993 - dir_? is backward compatible
+        m_variablename = settings.getString("variablename", "dir_?");
     }
 
     /**

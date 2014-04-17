@@ -104,6 +104,10 @@ public class CreateDirectoryNodeDialog extends NodeDialogPane {
     private JTextField m_name;
 
     private JCheckBox m_abortifexists;
+    
+    private JLabel m_variablenameLabel;
+    
+    private JTextField m_variablename;
 
     /**
      * New pane for configuring the node dialog.
@@ -131,6 +135,9 @@ public class CreateDirectoryNodeDialog extends NodeDialogPane {
         m_name = new JTextField();
         // Abort if exists
         m_abortifexists = new JCheckBox("Abort if directory already exists");
+        // Variable name
+        m_variablenameLabel = new JLabel("Variable name:");
+        m_variablename = new JTextField();
         // Set layout
         addTab("Options", initLayout());
     }
@@ -162,6 +169,14 @@ public class CreateDirectoryNodeDialog extends NodeDialogPane {
         gbc.insets = new Insets(5, 0, 5, 5);
         m_localtargetPanel.add(m_targetfvm, gbc);
         m_localtargetPanel.setBorder(new TitledBorder(new EtchedBorder(), "Location"));
+        // Variable name
+        NodeUtils.resetGBC(gbc);
+        JPanel variablenamePanel = new JPanel(new GridBagLayout());
+        gbc.weightx = 0;
+        variablenamePanel.add(m_variablenameLabel, gbc);
+        gbc.gridx++;
+        gbc.weightx = 1;
+        variablenamePanel.add(m_variablename, gbc);
         // Outer panel
         NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
@@ -173,6 +188,8 @@ public class CreateDirectoryNodeDialog extends NodeDialogPane {
         gbc.gridy++;
         gbc.fill = GridBagConstraints.BOTH;
         panel.add(namePanel, gbc);
+        gbc.gridy++;
+        panel.add(variablenamePanel, gbc);
         gbc.gridy++;
         gbc.fill = GridBagConstraints.NONE;
         panel.add(m_abortifexists, gbc);
@@ -206,6 +223,7 @@ public class CreateDirectoryNodeDialog extends NodeDialogPane {
         m_localtarget.setSelectedFile(config.getTarget());
         m_name.setText(config.getName());
         m_abortifexists.setSelected(config.getAbortifexists());
+        m_variablename.setText(config.getVariablename());
     }
 
     /**
@@ -222,6 +240,10 @@ public class CreateDirectoryNodeDialog extends NodeDialogPane {
         } else {
             config.setTarget(m_localtarget.getSelectedFile());
         }
+        if (m_variablename.getText().isEmpty()) {
+            throw new InvalidSettingsException("Variable name missing");
+        }
+        config.setVariablename(m_variablename.getText());
         config.save(settings);
     }
 }

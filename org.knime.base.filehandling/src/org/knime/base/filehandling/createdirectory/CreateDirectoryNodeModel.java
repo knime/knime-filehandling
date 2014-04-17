@@ -127,7 +127,7 @@ public class CreateDirectoryNodeModel extends NodeModel {
                 throw new Exception("The directory " + folder.getURI() + " could not be created");
             }
             // Generate name for variable
-            String name = "dir_" + m_configuration.getName();
+            String name = m_configuration.getVariablename().replace("?", m_configuration.getName());
             // In case the variable name is already in use, append number
             Set<String> variables = getAvailableFlowVariables().keySet();
             if (variables.contains(name)) {
