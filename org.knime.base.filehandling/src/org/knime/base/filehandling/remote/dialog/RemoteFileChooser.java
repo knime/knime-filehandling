@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright by 
+ *  Copyright by
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -188,6 +188,7 @@ public final class RemoteFileChooser {
         m_dialog.pack();
         m_dialog.setModalityType(Dialog.DEFAULT_MODALITY_TYPE);
         m_dialog.setSize(400, 600);
+        m_dialog.setLocationRelativeTo(parent);
         m_dialog.setVisible(true);
         // Stops here as long as the dialog is open, then disposes of the
         // dialog

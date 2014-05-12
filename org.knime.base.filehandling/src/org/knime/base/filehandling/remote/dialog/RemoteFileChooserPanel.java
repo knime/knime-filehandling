@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  *
- *  Copyright by 
+ *  Copyright by
  *  University of Konstanz, Germany and
  *  KNIME GmbH, Konstanz, Germany
  *  Website: http://www.knime.org; Email: contact@knime.org
@@ -80,8 +80,8 @@ import org.knime.core.node.util.StringHistory;
 
 /**
  * Panel to choose a file from a remote location.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class RemoteFileChooserPanel {
@@ -102,16 +102,15 @@ public final class RemoteFileChooserPanel {
 
     /**
      * Create panel.
-     * 
-     * 
+     *
+     *
      * @param parentPanel The parent of this panel
-     * @param label Label of the file chooser
+     * @param label Label of the file chooser which will shown on the border (if enabled)
      * @param border If a border should be used
      * @param historyID ID for history persistence
      * @param selectionMode Select files, directories or both
      * @param fvm Model for the flow variable button
-     * @param connectionInformation Connection information for the remote
-     *            connection
+     * @param connectionInformation Connection information for the remote connection
      */
     public RemoteFileChooserPanel(final JPanel parentPanel, final String label, final boolean border,
             final String historyID, final int selectionMode, final FlowVariableModel fvm,
@@ -165,8 +164,6 @@ public final class RemoteFileChooserPanel {
         GridBagConstraints gbc = new GridBagConstraints();
         if (border) {
             m_panel.setBorder(new TitledBorder(new EtchedBorder(), label));
-        } else if (!label.equals("")) {
-            m_panel.setBorder(new TitledBorder(label));
         }
         NodeUtils.resetGBC(gbc);
         gbc.insets = new Insets(5, 5, 5, 0);
@@ -185,8 +182,8 @@ public final class RemoteFileChooserPanel {
 
     /**
      * Set the connection information that will be used for this connection.
-     * 
-     * 
+     *
+     *
      * @param connectionInformation The connection information for the
      *            connection.
      */
@@ -203,8 +200,8 @@ public final class RemoteFileChooserPanel {
 
     /**
      * Set the selection of this file chooser.
-     * 
-     * 
+     *
+     *
      * @param selection The new selection
      */
     public void setSelection(final String selection) {
@@ -213,8 +210,8 @@ public final class RemoteFileChooserPanel {
 
     /**
      * Get the current selection.
-     * 
-     * 
+     *
+     *
      * @return The current selection
      */
     public String getSelection() {
@@ -223,8 +220,8 @@ public final class RemoteFileChooserPanel {
 
     /**
      * Get the panel.
-     * 
-     * 
+     *
+     *
      * @return The panel
      */
     public JPanel getPanel() {
@@ -233,8 +230,8 @@ public final class RemoteFileChooserPanel {
 
     /**
      * Enable or disable this panel.
-     * 
-     * 
+     *
+     *
      * @param enabled If the panel should be enabled
      */
     public void setEnabled(final boolean enabled) {

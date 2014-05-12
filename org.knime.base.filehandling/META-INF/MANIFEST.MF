@@ -6,8 +6,11 @@ Bundle-Version: 2.10.0.qualifier
 Bundle-ClassPath: .
 Bundle-Activator: org.knime.base.filehandling.FilehandlingPlugin
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
-Export-Package: org.knime.base.filehandling.mime,
- org.knime.base.filehandling.remote.connectioninformation.port
+Export-Package: org.knime.base.filehandling,
+ org.knime.base.filehandling.mime,
+ org.knime.base.filehandling.remote.connectioninformation.port,
+ org.knime.base.filehandling.remote.dialog,
+ org.knime.base.filehandling.remote.files
 Require-Bundle: org.apache.commons.net;bundle-version="[3.1.0,4.0.0)",
  org.apache.commons.io;bundle-version="[1.4.0,3.0.0)",
  org.apache.httpcomponents.httpclient;bundle-version="[4.1.2,5.0.0)",
