@@ -740,7 +740,7 @@ propagated with or for interoperation with KNIME.
          id="com.jcraft.jsch"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="0.1.50.0042431"/>
 
    <plugin
          id="it.sauronsoftware.ftp4j"
