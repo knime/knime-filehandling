@@ -35,7 +35,7 @@
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category
-            after="other"
+            after="io-other"
             description="Nodes to handle files"
             icon="icons/cfilehandling16x16.png"
             level-id="filehandling"
