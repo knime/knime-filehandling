@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 2, 2012 (Patrick Winter): created
  */
@@ -58,8 +58,8 @@ import org.knime.core.node.ExecutionContext;
 
 /**
  * Remote file.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public abstract class RemoteFile implements Comparable<RemoteFile> {
@@ -74,8 +74,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Create a remote file.
-     * 
-     * 
+     *
+     *
      * @param uri The uri pointing to the file
      * @param connectionInformation Connection information to the file
      * @param connectionMonitor Monitor for the connection
@@ -89,16 +89,16 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * If this remote file uses a connection.
-     * 
-     * 
+     *
+     *
      * @return true if this remote file uses a connection, false otherwise
      */
     protected abstract boolean usesConnection();
 
     /**
      * Create and open the connection for this remote file.
-     * 
-     * 
+     *
+     *
      * @throws Exception If opening failed
      */
     final void open() throws Exception {
@@ -119,16 +119,16 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Internal method to create a new connection.
-     * 
-     * 
+     *
+     *
      * @return New connection for this remote file
      */
     protected abstract Connection createConnection();
 
     /**
      * Return the current connection.
-     * 
-     * 
+     *
+     *
      * @return The current connection
      */
     public final Connection getConnection() {
@@ -137,8 +137,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Internal method to create the identifier.
-     * 
-     * 
+     *
+     *
      * @return Identifier to this remote files connection
      */
     protected String getIdentifier() {
@@ -154,8 +154,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Creates the unsupported operation message.
-     * 
-     * 
+     *
+     *
      * @param operation The operation that is unsupported
      * @return Message for the unsupported operation exception
      */
@@ -165,8 +165,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Get the URI to this file.
-     * 
-     * 
+     *
+     *
      * @return The URI to this file
      */
     public final URI getURI() {
@@ -175,8 +175,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Get the connection information to this file.
-     * 
-     * 
+     *
+     *
      * @return The connection information to this file
      */
     public final ConnectionInformation getConnectionInformation() {
@@ -185,8 +185,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Get the monitor handling the connection.
-     * 
-     * 
+     *
+     *
      * @return the connectionMonitor
      */
     public final ConnectionMonitor getConnectionMonitor() {
@@ -195,20 +195,20 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Returns the type (URI scheme) of the remote file.
-     * 
-     * 
+     *
+     *
      * @return The remote files type
      */
     public abstract String getType();
 
     /**
      * Returns the name of this file without path information.
-     * 
-     * 
+     *
+     *
      * File: /usr/bin/ssh -> ssh
-     * 
+     *
      * Directory: /usr/bin/ -> bin
-     * 
+     *
      * @return The name of this file
      * @throws Exception If the operation could not be executed
      */
@@ -225,12 +225,12 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Returns the name of this file with path information.
-     * 
-     * 
+     *
+     *
      * File: /usr/bin/ssh -> /usr/bin/ssh
-     * 
+     *
      * Directory: /usr/bin/ -> /usr/bin/
-     * 
+     *
      * @return The full name with path.
      * @throws Exception If the operation could not be executed
      */
@@ -245,12 +245,12 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Returns the path of this file.
-     * 
-     * 
+     *
+     *
      * File: /usr/bin/ssh -> /usr/bin/
-     * 
+     *
      * Directory: /usr/bin/ -> /usr/bin/
-     * 
+     *
      * @return The path without the filename
      * @throws Exception If the operation could not be executed
      */
@@ -273,8 +273,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Check if the file does exist.
-     * 
-     * 
+     *
+     *
      * @return true if the file exists, false otherwise
      * @throws Exception If the operation could not be executed
      */
@@ -282,8 +282,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Check if the file is a directory.
-     * 
-     * 
+     *
+     *
      * @return true if the file is a directory, false otherwise
      * @throws Exception If the operation could not be executed
      */
@@ -291,8 +291,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Move the given file to this files location.
-     * 
-     * 
+     *
+     *
      * @param file The file to be moved
      * @param exec Execution context for <code>checkCanceled()</code> and
      *            <code>setProgress()</code>
@@ -306,10 +306,10 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Write the given remote file into this files location.
-     * 
-     * 
+     *
+     *
      * This method will overwrite the old file if it exists.
-     * 
+     *
      * @param file Source remote file
      * @param exec Execution context for <code>checkCanceled()</code> and
      *            <code>setProgress()</code>
@@ -318,7 +318,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
     public void write(final RemoteFile file, final ExecutionContext exec) throws Exception {
         // Default implementation using just remote file methods
         byte[] buffer = new byte[1024 * 1024]; // 1MB
-        String name = getFullName();
+        String uri = getURI().toString();
         InputStream in = file.openInputStream();
         OutputStream out = openOutputStream();
         long progress = 0;
@@ -328,7 +328,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
             progress += length;
             if (exec != null) {
                 exec.checkCanceled();
-                exec.setProgress("Written: " + FileUtils.byteCountToDisplaySize(progress) + " to file " + name);
+                exec.setProgress("Written: " + FileUtils.byteCountToDisplaySize(progress) + " to file " + uri);
             }
         }
         in.close();
@@ -337,8 +337,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Opens an input stream.
-     * 
-     * 
+     *
+     *
      * @return The input stream
      * @throws Exception If the input stream could not be opened
      */
@@ -346,8 +346,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Opens an output stream.
-     * 
-     * 
+     *
+     *
      * @return The output stream
      * @throws Exception If the output stream could not be opened
      */
@@ -355,8 +355,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Get the size of the file.
-     * 
-     * 
+     *
+     *
      * @return The size of the file or 0 if the file does not exist
      * @throws Exception If the size could not be retrieved
      */
@@ -364,8 +364,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Check for the last time the file was modified.
-     * 
-     * 
+     *
+     *
      * @return Time in UNIX-Time or 0 if the file does not exist
      * @throws Exception If the operation could not be executed
      */
@@ -373,8 +373,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Deletes the file.
-     * 
-     * 
+     *
+     *
      * @return true if the file could be deleted, false otherwise
      * @throws Exception If an error occurs during deletion
      */
@@ -382,8 +382,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Get the files in this directory.
-     * 
-     * 
+     *
+     *
      * @return Array of files contained in this directory, or empty array if
      *         this is not a directory
      * @throws Exception If the operation could not be executed
@@ -392,8 +392,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Create a directory.
-     * 
-     * 
+     *
+     *
      * @return true if the directory has been created, false otherwise
      * @throws Exception If the operation could not be executed
      */
@@ -401,8 +401,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Create all not existing directories of this files path.
-     * 
-     * 
+     *
+     *
      * @param includeThis If this file should also be created as directory
      * @return true if all upper directories could be created
      * @throws Exception If the operation could not be executed
@@ -421,8 +421,8 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
 
     /**
      * Get the parent of this file.
-     * 
-     * 
+     *
+     *
      * @return The parent file
      * @throws Exception If the operation could not be executed
      */
