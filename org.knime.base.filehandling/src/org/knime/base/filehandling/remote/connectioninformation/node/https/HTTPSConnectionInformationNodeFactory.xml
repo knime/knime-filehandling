@@ -43,6 +43,9 @@
             authentication via keyfile is
             selected.
         </option>
+        <option name="Timeout">
+            Specify the timeout for the connection in milliseconds here.
+        </option>        
     </fullDescription>
 
     <ports>

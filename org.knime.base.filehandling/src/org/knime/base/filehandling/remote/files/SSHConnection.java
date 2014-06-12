@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 5, 2012 (Patrick Winter): created
  */
@@ -57,8 +57,8 @@ import com.jcraft.jsch.Session;
 
 /**
  * Connection over SSH.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class SSHConnection extends Connection {
@@ -71,8 +71,8 @@ public class SSHConnection extends Connection {
 
     /**
      * Create a SSH connection to the given URI.
-     * 
-     * 
+     *
+     *
      * @param uri The URI
      * @param connectionInformation Connection information to the given URI
      */
@@ -117,6 +117,7 @@ public class SSHConnection extends Connection {
         if (knownHosts == null) {
             session.setConfig("StrictHostKeyChecking", "no");
         }
+        session.setTimeout(m_connectionInformation.getTimeout());
         session.connect();
         m_session = session;
     }
@@ -139,8 +140,8 @@ public class SSHConnection extends Connection {
 
     /**
      * Returns the Session of this connection.
-     * 
-     * 
+     *
+     *
      * @return The session
      */
     public Session getSession() {

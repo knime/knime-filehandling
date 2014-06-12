@@ -41,29 +41,29 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 9, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remote.connectioninformation.node;
 
 /**
- * 
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public enum Protocol {
 
     /** SSH protocol. */
-    SSH("ssh", 22, false, true, true, true, true),
+    SSH("ssh", 22, false, true, true, true, true, true),
 
     /** FTP protocol. */
-    FTP("ftp", 21, true, false, false, true, true),
+    FTP("ftp", 21, true, false, false, true, true, false),
 
     /** HTTP protocol. */
-    HTTP("http", 80, true, false, false, false, false),
+    HTTP("http", 80, true, false, false, false, false, true),
 
     /** HTTPS protocol. */
-    HTTPS("https", 443, true, false, false, false, false);
+    HTTPS("https", 443, true, false, false, false, false, true);
 
     private String m_name;
 
@@ -79,10 +79,12 @@ public enum Protocol {
 
     private boolean m_browseSupport;
 
+    private boolean m_userTimeoutSupport;
+
     /**
      * Create a protocol.
-     * 
-     * 
+     *
+     *
      * @param name The name
      * @param port The default port
      * @param authNoneSupport If the authentication method none is supported
@@ -90,9 +92,12 @@ public enum Protocol {
      * @param knownhostsSupport If use of known hosts is supported
      * @param testSupport If the testing of the connection is supported
      * @param browseSupport If this protocol supports browsing
+     * @param userTimeoutSupport <code>true</code> if the user can change the connection's timeout, <code>false</code>
+     *            otherwise
      */
     private Protocol(final String name, final int port, final boolean authNoneSupport, final boolean keyfileSupport,
-            final boolean knownhostsSupport, final boolean testSupport, final boolean browseSupport) {
+                     final boolean knownhostsSupport, final boolean testSupport, final boolean browseSupport,
+                     final boolean userTimeoutSupport) {
         m_name = name;
         m_port = port;
         m_authnonesupport = authNoneSupport;
@@ -100,6 +105,7 @@ public enum Protocol {
         m_knownhostssupport = knownhostsSupport;
         m_testsupport = testSupport;
         m_browseSupport = browseSupport;
+        m_userTimeoutSupport = userTimeoutSupport;
     }
 
     /**
@@ -152,9 +158,18 @@ public enum Protocol {
     }
 
     /**
+     * Returns whether the user can adjust the connection timeout or not.
+     *
+     * @return <code>true</code> if the connection timeout can be adjusted, <code>false</code> otherwise
+     */
+    public boolean hasUserDefinedTimeoutSupport() {
+        return m_userTimeoutSupport;
+    }
+
+    /**
      * Get the correspondent protocol to the name.
-     * 
-     * 
+     *
+     *
      * @param protocolName The name of the protocol
      * @return Protocol to the name
      */

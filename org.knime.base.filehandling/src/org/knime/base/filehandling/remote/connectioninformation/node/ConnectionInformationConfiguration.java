@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 9, 2012 (Patrick Winter): created
  */
@@ -57,8 +57,8 @@ import org.knime.core.util.KnimeEncryption;
 
 /**
  * Configuration for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class ConnectionInformationConfiguration {
@@ -85,10 +85,12 @@ class ConnectionInformationConfiguration {
 
     private String m_workflowcredentials;
 
+    private int m_timeout = 30000;
+
     /**
      * Create uninitialized configuration to a certain protocol.
-     * 
-     * 
+     *
+     *
      * @param protocol The protocol of this connection information configuration
      */
     ConnectionInformationConfiguration(final Protocol protocol) {
@@ -187,6 +189,16 @@ class ConnectionInformationConfiguration {
     }
 
     /**
+     * Returns the timeout for the connection.
+     *
+     * @return the timeout in milliseconds
+     */
+    int getTimeout() {
+        return m_timeout;
+    }
+
+
+    /**
      * @param useknownhosts the useknownhosts to set
      */
     void setUseknownhosts(final boolean useknownhosts) {
@@ -205,6 +217,15 @@ class ConnectionInformationConfiguration {
      */
     void setKnownhosts(final String knownhosts) {
         m_knownhosts = knownhosts;
+    }
+
+    /**
+     * Sets the timeout for the connection.
+     *
+     * @param timeout the timeout in milliseconds
+     */
+    void setTimeout(final int timeout) {
+        m_timeout = timeout;
     }
 
     /**
@@ -237,8 +258,8 @@ class ConnectionInformationConfiguration {
 
     /**
      * Create a connection information object from this settings.
-     * 
-     * 
+     *
+     *
      * @param credentialsProvider Provider for the credentials
      * @return The connection information object
      */
@@ -276,8 +297,8 @@ class ConnectionInformationConfiguration {
 
     /**
      * Save this configuration into the settings.
-     * 
-     * 
+     *
+     *
      * @param settings The <code>NodeSettings</code> to write to
      */
     void save(final NodeSettingsWO settings) {
@@ -297,12 +318,13 @@ class ConnectionInformationConfiguration {
             settings.addBoolean("useknownhosts", m_useknownhosts);
             settings.addString("knownhosts", m_knownhosts);
         }
+        settings.addInt("timeout", m_timeout);
     }
 
     /**
      * Load this configuration from the settings.
-     * 
-     * 
+     *
+     *
      * @param settings The <code>NodeSettings</code> to read from
      */
     void load(final NodeSettingsRO settings) {
@@ -322,12 +344,13 @@ class ConnectionInformationConfiguration {
             m_useknownhosts = settings.getBoolean("useknownhosts", false);
             m_knownhosts = settings.getString("knownhosts", "");
         }
+        m_timeout = settings.getInt("timeout", 30000); // new option in 2.10
     }
 
     /**
      * Load and validate this configuration from the settings.
-     * 
-     * 
+     *
+     *
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
@@ -371,12 +394,13 @@ class ConnectionInformationConfiguration {
                 validate(m_knownhosts, "knownhosts");
             }
         }
+        m_timeout = settings.getInt("timeout", 30000); // new option in 2.10
     }
 
     /**
      * Checks if the string is not null or empty.
-     * 
-     * 
+     *
+     *
      * @param string The string to check
      * @param settingName The name of the setting
      * @throws InvalidSettingsException If the string is null or empty

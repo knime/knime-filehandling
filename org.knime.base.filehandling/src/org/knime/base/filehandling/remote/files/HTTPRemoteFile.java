@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 5, 2012 (Patrick Winter): created
  */
@@ -57,22 +57,25 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.util.KnimeEncryption;
 
 /**
  * Implementation of the HTTP and HTTPS remote file.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class HTTPRemoteFile extends RemoteFile {
 
     /**
      * Creates a HTTP remote file for the given URI.
-     * 
-     * 
+     *
+     *
      * @param uri The URI
      * @param connectionInformation Connection information to the given URI
      */
@@ -210,14 +213,18 @@ public class HTTPRemoteFile extends RemoteFile {
 
     /**
      * Get the response to this files get request.
-     * 
-     * 
+     *
+     *
      * @return The response from the server
      * @throws Exception If communication did not work
      */
     private HttpResponse getResponse() throws Exception {
+        HttpParams params = new BasicHttpParams();
+        HttpConnectionParams.setConnectionTimeout(params, getConnectionInformation().getTimeout());
+        HttpConnectionParams.setSoTimeout(params, getConnectionInformation().getTimeout());
+
         // Create request
-        DefaultHttpClient client = new DefaultHttpClient();
+        DefaultHttpClient client = new DefaultHttpClient(params);
         // If user info is given in the URI use HTTP basic authentication
         if (getURI().getUserInfo() != null && getURI().getUserInfo().length() > 0) {
             // Decrypt password from the connection information

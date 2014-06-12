@@ -52,6 +52,9 @@
             Only connect if this host is part of the set
             known hosts file.
         </option>
+        <option name="Timeout">
+            Specify the timeout for the connection in milliseconds here.
+        </option>
         <option name="Test connection">
             Open dialog that test the current
             connection.

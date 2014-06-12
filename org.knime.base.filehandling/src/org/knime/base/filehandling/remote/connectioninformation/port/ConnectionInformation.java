@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 12, 2012 (Patrick Winter): created
  */
@@ -64,8 +64,8 @@ import org.knime.core.node.NodeLogger;
 
 /**
  * Contains the connection information for a connection.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ConnectionInformation implements Serializable {
@@ -89,10 +89,12 @@ public class ConnectionInformation implements Serializable {
 
     private String m_knownHosts = null;
 
+    private int m_timeout = 30000;
+
     /**
      * Save the connection information in a model content object.
-     * 
-     * 
+     *
+     *
      * @param model The model to save in
      */
     public void save(final ModelContentWO model) {
@@ -103,12 +105,13 @@ public class ConnectionInformation implements Serializable {
         model.addString("password", m_password);
         model.addString("keyfile", m_keyfile);
         model.addString("knownhosts", m_knownHosts);
+        model.addInt("timeout", m_timeout);
     }
 
     /**
      * Create a connection information object loaded from the content object.
-     * 
-     * 
+     *
+     *
      * @param model The model to read from
      * @return The created <code>ConnectionInformation</code> object
      * @throws InvalidSettingsException If the model contains invalid
@@ -124,13 +127,14 @@ public class ConnectionInformation implements Serializable {
         connectionInformation.setPassword(model.getString("password"));
         connectionInformation.setKeyfile(model.getString("keyfile"));
         connectionInformation.setKnownHosts(model.getString("knownhosts"));
+        connectionInformation.setTimeout(model.getInt("timeout", 30000)); // new option in 2.10
         return connectionInformation;
     }
 
     /**
      * Serializes this object.
-     * 
-     * 
+     *
+     *
      * @param output The output to save in
      * @throws IOException If an error occurs
      * @noreference Not to be called by client
@@ -143,11 +147,12 @@ public class ConnectionInformation implements Serializable {
         output.writeUTF(m_password);
         output.writeUTF(m_keyfile);
         output.writeUTF(m_knownHosts);
+        output.writeInt(m_timeout);
     }
 
     /**
      * Deserialize this object.
-     * 
+     *
      * @param input The input to load from
      * @return The created <code>ConnectionInformation</code> object
      * @throws IOException If an error occurs
@@ -162,13 +167,14 @@ public class ConnectionInformation implements Serializable {
         connectionInformation.setPassword(input.readUTF());
         connectionInformation.setKeyfile(input.readUTF());
         connectionInformation.setKnownHosts(input.readUTF());
+        connectionInformation.setTimeout(input.readInt());
         return connectionInformation;
     }
 
     /**
      * Checks if this connection information object fits to the URI.
-     * 
-     * 
+     *
+     *
      * @param uri The URI to check against
      * @throws Exception If something is incompatible
      */
@@ -209,8 +215,8 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Create the corresponding uri to this connection information.
-     * 
-     * 
+     *
+     *
      * @return URI to this connection information
      */
     public URI toURI() {
@@ -232,10 +238,10 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Set the protocol.
-     * 
-     * 
+     *
+     *
      * Will convert the protocol to lower case and change sftp and scp to ssh.
-     * 
+     *
      * @param protocol the protocol to set
      */
     public void setProtocol(final String protocol) {
@@ -250,10 +256,10 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Set the host.
-     * 
-     * 
+     *
+     *
      * Will convert the host to lower case.
-     * 
+     *
      * @param host the host to set
      */
     public void setHost(final String host) {
@@ -262,8 +268,8 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Set the port.
-     * 
-     * 
+     *
+     *
      * @param port the port to set
      */
     public void setPort(final int port) {
@@ -272,10 +278,10 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Set the user.
-     * 
-     * 
+     *
+     *
      * User may be null to disable user authentication.
-     * 
+     *
      * @param user the user to set
      */
     public void setUser(final String user) {
@@ -284,10 +290,10 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Set the password.
-     * 
-     * 
+     *
+     *
      * Password may be null to disable authentication via password.
-     * 
+     *
      * @param password the password to set
      */
     public void setPassword(final String password) {
@@ -296,10 +302,10 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Set the keyfile.
-     * 
-     * 
+     *
+     *
      * Keyfile may be null to disable authentication via keyfile.
-     * 
+     *
      * @param keyfile the keyfile to set
      */
     public void setKeyfile(final String keyfile) {
@@ -308,10 +314,10 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Set the known hosts file.
-     * 
-     * 
+     *
+     *
      * Known hosts may be null to disable use.
-     * 
+     *
      * @param knownHosts the known hosts file to set
      */
     public void setKnownHosts(final String knownHosts) {
@@ -319,9 +325,19 @@ public class ConnectionInformation implements Serializable {
     }
 
     /**
+     * Sets the timeout for the connection.
+     *
+     * @param timeout the timeout in milliseconds
+     */
+    public void setTimeout(final int timeout) {
+        m_timeout = timeout;
+    }
+
+
+    /**
      * Get the protocol.
-     * 
-     * 
+     *
+     *
      * @return the protocol
      */
     public String getProtocol() {
@@ -330,8 +346,8 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Get the host.
-     * 
-     * 
+     *
+     *
      * @return the host
      */
     public String getHost() {
@@ -340,8 +356,8 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Get the port.
-     * 
-     * 
+     *
+     *
      * @return the port
      */
     public int getPort() {
@@ -350,8 +366,8 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Get the user.
-     * 
-     * 
+     *
+     *
      * @return the user
      */
     public String getUser() {
@@ -360,8 +376,8 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Get the password.
-     * 
-     * 
+     *
+     *
      * @return the password
      */
     public String getPassword() {
@@ -370,8 +386,8 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Get the keyfile.
-     * 
-     * 
+     *
+     *
      * @return the keyfile
      */
     public String getKeyfile() {
@@ -380,12 +396,21 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * Get the known hosts.
-     * 
-     * 
+     *
+     *
      * @return the known hosts
      */
     public String getKnownHosts() {
         return m_knownHosts;
+    }
+
+    /**
+     * Returns the timeout for the connection.
+     *
+     * @return the timeout in milliseconds
+     */
+    public int getTimeout() {
+        return m_timeout;
     }
 
     /** {@inheritDoc} */

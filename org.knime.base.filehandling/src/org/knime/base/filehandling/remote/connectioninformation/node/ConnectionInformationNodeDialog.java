@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Oct 30, 2012 (Patrick Winter): created
  */
@@ -91,8 +91,8 @@ import org.knime.core.util.KnimeEncryption;
 
 /**
  * <code>NodeDialog</code> for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ConnectionInformationNodeDialog extends NodeDialogPane {
@@ -141,10 +141,12 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     private JPanel m_workflowcredentialspanel;
 
+    private final JSpinner m_timeout;
+
     /**
      * New pane for configuring the node dialog.
-     * 
-     * 
+     *
+     *
      * @param protocol The protocol of this connection information dialog
      */
     public ConnectionInformationNodeDialog(final Protocol protocol) {
@@ -192,16 +194,19 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_knownhosts.setSelectMode(JFileChooser.FILES_ONLY);
         m_knownhostsfvm = new FlowVariableModelButton(createFlowVariableModel("knownhosts", FlowVariable.Type.STRING));
         m_knownhostsfvm.getFlowVariableModel().addChangeListener(new UpdateListener());
+        // timeout
+        m_timeout = new JSpinner(new SpinnerNumberModel(30000, 0, Integer.MAX_VALUE, 100));
         // Test connection
         m_testconnection = new JButton("Test connection");
         m_testconnection.addActionListener(new TestConnectionListener());
+
         addTab("Options", initLayout());
     }
 
     /**
      * Create and initialize the panel for this dialog.
-     * 
-     * 
+     *
+     *
      * @return The initialized panel
      */
     private JPanel initLayout() {
@@ -269,7 +274,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         gbc.gridy++;
         panel.add(portLabel, gbc);
         gbc.gridx++;
-        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.NONE;
         panel.add(m_port, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
@@ -315,6 +320,17 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             gbc.weightx = 1;
             panel.add(knownhostsPanel, gbc);
         }
+
+        if (m_protocol.hasUserDefinedTimeoutSupport()) {
+            gbc.gridx = 0;
+            gbc.gridy++;
+            gbc.weightx = 0;
+            panel.add(new JLabel("Timeout:   "), gbc);
+            gbc.gridx++;
+            gbc.fill = GridBagConstraints.NONE;
+            panel.add(m_timeout, gbc);
+        }
+
         if (m_protocol.hasTestSupport()) {
             gbc.gridx = 0;
             gbc.gridy++;
@@ -377,8 +393,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     /**
      * Listener that updates the states of the UI elements.
-     * 
-     * 
+     *
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class UpdateListener implements ChangeListener {
@@ -395,8 +411,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     /**
      * Listener that opens the test connection dialog.
-     * 
-     * 
+     *
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class TestConnectionListener implements ActionListener {
@@ -441,8 +457,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     /**
      * Create a configuration object with the currently set settings.
-     * 
-     * 
+     *
+     *
      * @return The configuration object
      * @throws InvalidSettingsException
      */
@@ -473,6 +489,9 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         if (m_protocol.hasKnownhostsSupport()) {
             config.setUseknownhosts(m_useknownhosts.isSelected());
             config.setKnownhosts(m_knownhosts.getSelectedFile());
+        }
+        if (m_protocol.hasUserDefinedTimeoutSupport()) {
+            config.setTimeout((Integer) m_timeout.getValue());
         }
         return config;
     }
@@ -519,6 +538,9 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         if (m_protocol.hasKnownhostsSupport()) {
             m_useknownhosts.setSelected(config.getUseknownhosts());
             m_knownhosts.setSelectedFile(config.getKnownhosts());
+        }
+        if (m_protocol.hasUserDefinedTimeoutSupport()) {
+            m_timeout.setValue(config.getTimeout());
         }
         updateEnabledState();
     }
