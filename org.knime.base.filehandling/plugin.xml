@@ -4,42 +4,48 @@
 <plugin>
    <extension-point id="mimetypes" name="MIME Type" schema="schema/MIMEType.exsd"/>
    <extension point="org.knime.workbench.repository.nodes">
-   <node category-path="/labs/filehandling" factory-class="org.knime.base.filehandling.filemetainfo.FileMetaInfoNodeFactory" id="org.knime.base.filehandling.filemetainfo.FileMetaInfoNodeFactory"/>
-   <node category-path="/labs/filehandling" factory-class="org.knime.base.filehandling.findmimetype.FindMIMETypeNodeFactory" id="org.knime.base.filehandling.findmimetype.FindMIMETypeNodeFactory"/>
-   <node category-path="/labs/filehandling" factory-class="org.knime.base.filehandling.listmimetypes.ListMIMETypesNodeFactory" id="org.knime.base.filehandling.listmimetypes.ListMIMETypesNodeFactory"/>
-   <node category-path="/labs/filehandling/zip" factory-class="org.knime.base.filehandling.zip2.ZipNodeFactory" id="org.knime.base.filehandling.zip2.ZipNodeFactory"/>
-   <node category-path="/labs/filehandling/zip" factory-class="org.knime.base.filehandling.unzip2.UnzipNodeFactory" id="org.knime.base.filehandling.unzip2.UnzipNodeFactory"/>
-   <node category-path="/labs/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory" id="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory"/>
-   <node category-path="/labs/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory" id="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory"/>
-   <node category-path="/labs/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstopngs.BinaryObjectsToPNGsNodeFactory" id="org.knime.base.filehandling.binaryobjectstopngs.BinaryObjectsToPNGsNodeFactory"/>
-   <node category-path="/labs/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.pngstobinaryobjects.PNGsToBinaryObjectsNodeFactory" id="org.knime.base.filehandling.pngstobinaryobjects.PNGsToBinaryObjectsNodeFactory"/>
-   <node category-path="/labs/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstostrings.BinaryObjectsToStringsNodeFactory" id="org.knime.base.filehandling.binaryobjectstostrings.BinaryObjectsToStringsNodeFactory"/>
-   <node category-path="/labs/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.stringstobinaryobjects.StringsToBinaryObjectsNodeFactory" id="org.knime.base.filehandling.stringstobinaryobjects.StringsToBinaryObjectsNodeFactory"/>
-   <node category-path="/labs/filehandling/uri" factory-class="org.knime.base.filehandling.stringtouri.StringToURINodeFactory" id="org.knime.base.filehandling.stringtouri.StringToURINodeFactory" />
-   <node category-path="/labs/filehandling/uri" factory-class="org.knime.base.filehandling.uritostring.URIToStringNodeFactory" id="org.knime.base.filehandling.uritostring.URIToStringNodeFactory" />
-   <node category-path="/labs/filehandling/uri" factory-class="org.knime.base.filehandling.uritoport.URIToPortNodeFactory" id="org.knime.base.filehandling.uritoport.URIToPortNodeFactory" />
-   <node category-path="/labs/filehandling/uri" factory-class="org.knime.base.filehandling.porttouri.PortToURINodeFactory" id="org.knime.base.filehandling.porttouri.PortToURINodeFactory" />
-   <node category-path="/labs/filehandling/uri" factory-class="org.knime.base.filehandling.extracturiinfo.ExtractURIInfoNodeFactory" id="org.knime.base.filehandling.extracturiinfo.ExtractURIInfoNodeFactory" />
-   <node category-path="/labs/filehandling" factory-class="org.knime.base.filehandling.copyfiles.CopyFilesNodeFactory" id="org.knime.base.filehandling.copyfiles.CopyFilesNodeFactory" />
-   <node category-path="/labs/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.ftp.FTPConnectionInformationNodeFactory" id="org.knime.base.filehandling.remote.connectioninformation.node.ftp.FTPConnectionInformationNodeFactory" />
-   <node category-path="/labs/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.http.HTTPConnectionInformationNodeFactory" id="org.knime.base.filehandling.remote.connectioninformation.node.http.HTTPConnectionInformationNodeFactory" />
-   <node category-path="/labs/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.https.HTTPSConnectionInformationNodeFactory" id="org.knime.base.filehandling.remote.connectioninformation.node.https.HTTPSConnectionInformationNodeFactory" />
-   <node category-path="/labs/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.ssh.SSHConnectionInformationNodeFactory" id="org.knime.base.filehandling.remote.connectioninformation.node.ssh.SSHConnectionInformationNodeFactory" />
-   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.upload2.UploadNodeFactory" id="org.knime.base.filehandling.upload2.UploadNodeFactory" />
-   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.download2.DownloadNodeFactory" id="org.knime.base.filehandling.download2.DownloadNodeFactory" />
-   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.downloaduploadfromlist2.DownloadUploadFromListNodeFactory" id="org.knime.base.filehandling.downloaduploadfromlist2.DownloadUploadFromListNodeFactory" />
-   <node category-path="/labs/filehandling/uri" factory-class="org.knime.base.filehandling.uriporttovariable.URIPortToVariableNodeFactory" id="org.knime.base.filehandling.uriporttovariable.URIPortToVariableNodeFactory" />
-   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.deletefiles.DeleteFilesNodeFactory" id="org.knime.base.filehandling.deletefiles.DeleteFilesNodeFactory" />
-   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.createdirectory.CreateDirectoryNodeFactory" id="org.knime.base.filehandling.createdirectory.CreateDirectoryNodeFactory" />
-   <node category-path="/labs/filehandling/remote" factory-class="org.knime.base.filehandling.listdirectory.ListDirectoryNodeFactory" id="org.knime.base.filehandling.listdirectory.ListDirectoryNodeFactory" />
+   <node category-path="/io/filehandling" factory-class="org.knime.base.filehandling.filemetainfo.FileMetaInfoNodeFactory" id="org.knime.base.filehandling.filemetainfo.FileMetaInfoNodeFactory"/>
+   <node category-path="/io/filehandling" factory-class="org.knime.base.filehandling.findmimetype.FindMIMETypeNodeFactory" id="org.knime.base.filehandling.findmimetype.FindMIMETypeNodeFactory"/>
+   <node category-path="/io/filehandling" factory-class="org.knime.base.filehandling.listmimetypes.ListMIMETypesNodeFactory" id="org.knime.base.filehandling.listmimetypes.ListMIMETypesNodeFactory"/>
+   <node category-path="/io/filehandling/zip" factory-class="org.knime.base.filehandling.zip2.ZipNodeFactory" id="org.knime.base.filehandling.zip2.ZipNodeFactory"/>
+   <node category-path="/io/filehandling/zip" factory-class="org.knime.base.filehandling.unzip2.UnzipNodeFactory" id="org.knime.base.filehandling.unzip2.UnzipNodeFactory"/>
+   <node category-path="/io/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory" id="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory"/>
+   <node category-path="/io/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory" id="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory"/>
+   <node category-path="/io/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstopngs.BinaryObjectsToPNGsNodeFactory" id="org.knime.base.filehandling.binaryobjectstopngs.BinaryObjectsToPNGsNodeFactory"/>
+   <node category-path="/io/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.pngstobinaryobjects.PNGsToBinaryObjectsNodeFactory" id="org.knime.base.filehandling.pngstobinaryobjects.PNGsToBinaryObjectsNodeFactory"/>
+   <node category-path="/io/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstostrings.BinaryObjectsToStringsNodeFactory" id="org.knime.base.filehandling.binaryobjectstostrings.BinaryObjectsToStringsNodeFactory"/>
+   <node category-path="/io/filehandling/binaryobjects" factory-class="org.knime.base.filehandling.stringstobinaryobjects.StringsToBinaryObjectsNodeFactory" id="org.knime.base.filehandling.stringstobinaryobjects.StringsToBinaryObjectsNodeFactory"/>
+   <node category-path="/io/filehandling/uri" factory-class="org.knime.base.filehandling.stringtouri.StringToURINodeFactory" id="org.knime.base.filehandling.stringtouri.StringToURINodeFactory" />
+   <node category-path="/io/filehandling/uri" factory-class="org.knime.base.filehandling.uritostring.URIToStringNodeFactory" id="org.knime.base.filehandling.uritostring.URIToStringNodeFactory" />
+   <node category-path="/io/filehandling/uri" factory-class="org.knime.base.filehandling.uritoport.URIToPortNodeFactory" id="org.knime.base.filehandling.uritoport.URIToPortNodeFactory" />
+   <node category-path="/io/filehandling/uri" factory-class="org.knime.base.filehandling.porttouri.PortToURINodeFactory" id="org.knime.base.filehandling.porttouri.PortToURINodeFactory" />
+   <node category-path="/io/filehandling/uri" factory-class="org.knime.base.filehandling.extracturiinfo.ExtractURIInfoNodeFactory" id="org.knime.base.filehandling.extracturiinfo.ExtractURIInfoNodeFactory" />
+   <node category-path="/io/filehandling" factory-class="org.knime.base.filehandling.copyfiles.CopyFilesNodeFactory" id="org.knime.base.filehandling.copyfiles.CopyFilesNodeFactory" />
+   <node category-path="/io/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.ftp.FTPConnectionInformationNodeFactory" id="org.knime.base.filehandling.remote.connectioninformation.node.ftp.FTPConnectionInformationNodeFactory" />
+   <node category-path="/io/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.http.HTTPConnectionInformationNodeFactory" id="org.knime.base.filehandling.remote.connectioninformation.node.http.HTTPConnectionInformationNodeFactory" />
+   <node category-path="/io/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.https.HTTPSConnectionInformationNodeFactory" id="org.knime.base.filehandling.remote.connectioninformation.node.https.HTTPSConnectionInformationNodeFactory" />
+   <node category-path="/io/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.ssh.SSHConnectionInformationNodeFactory" id="org.knime.base.filehandling.remote.connectioninformation.node.ssh.SSHConnectionInformationNodeFactory" />
+   <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.upload2.UploadNodeFactory" id="org.knime.base.filehandling.upload2.UploadNodeFactory" />
+   <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.download2.DownloadNodeFactory" id="org.knime.base.filehandling.download2.DownloadNodeFactory" />
+   <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.downloaduploadfromlist2.DownloadUploadFromListNodeFactory" id="org.knime.base.filehandling.downloaduploadfromlist2.DownloadUploadFromListNodeFactory" />
+   <node category-path="/io/filehandling/uri" factory-class="org.knime.base.filehandling.uriporttovariable.URIPortToVariableNodeFactory" id="org.knime.base.filehandling.uriporttovariable.URIPortToVariableNodeFactory" />
+   <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.deletefiles.DeleteFilesNodeFactory" id="org.knime.base.filehandling.deletefiles.DeleteFilesNodeFactory" />
+   <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.createdirectory.CreateDirectoryNodeFactory" id="org.knime.base.filehandling.createdirectory.CreateDirectoryNodeFactory" />
+   <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.listdirectory.ListDirectoryNodeFactory" id="org.knime.base.filehandling.listdirectory.ListDirectoryNodeFactory" />
 </extension>
    <extension point="org.knime.workbench.repository.categories">
-      <category description="Nodes to handle files" icon="icons/cfilehandling16x16.png" level-id="filehandling" name="File Handling" path="/labs" />
-      <category description="Nodes to handle zip files" icon="icons/czip16x16.png" level-id="zip" name="Zip" path="/labs/filehandling" />
-      <category description="Nodes to handle binary objects" icon="icons/cbinaryobjects16x16.png" level-id="binaryobjects" name="Binary Objects" path="/labs/filehandling" />
-      <category description="Nodes to handle URI conversion" icon="icons/curi16x16.png" level-id="uri" name="URI" path="/labs/filehandling" />
-      <category description="Nodes to handle remote file operations" icon="icons/cremote16x16.png" level-id="remote" name="Remote" path="/labs/filehandling" />
-      <category description="Nodes to create connections for remote file operations" icon="icons/cconnections16x16.png" level-id="connections" name="Connections" path="/labs/filehandling/remote" />
+      <category
+            after="other"
+            description="Nodes to handle files"
+            icon="icons/cfilehandling16x16.png"
+            level-id="filehandling"
+            name="File Handling"
+            path="/io"/>
+      <category description="Nodes to handle zip files" icon="icons/czip16x16.png" level-id="zip" name="Zip" path="/io/filehandling" />
+      <category description="Nodes to handle binary objects" icon="icons/cbinaryobjects16x16.png" level-id="binaryobjects" name="Binary Objects" path="/io/filehandling" />
+      <category description="Nodes to handle URI conversion" icon="icons/curi16x16.png" level-id="uri" name="URI" path="/io/filehandling" />
+      <category description="Nodes to handle remote file operations" icon="icons/cremote16x16.png" level-id="remote" name="Remote" path="/io/filehandling" />
+      <category description="Nodes to create connections for remote file operations" icon="icons/cconnections16x16.png" level-id="connections" name="Connections" path="/io/filehandling/remote" />
    </extension>
 
 </plugin>
