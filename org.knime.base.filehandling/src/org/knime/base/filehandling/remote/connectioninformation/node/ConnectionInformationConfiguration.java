@@ -292,6 +292,7 @@ class ConnectionInformationConfiguration {
         if (m_protocol.hasKnownhostsSupport() && getUseknownhosts()) {
             connectionInformation.setKnownHosts(getKnownhosts());
         }
+        connectionInformation.setTimeout(getTimeout());
         return connectionInformation;
     }
 
