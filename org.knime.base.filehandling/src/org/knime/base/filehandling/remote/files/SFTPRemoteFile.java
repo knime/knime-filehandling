@@ -415,16 +415,17 @@ public class SFTPRemoteFile extends RemoteFile {
     public boolean delete() throws Exception {
         boolean result;
         try {
-            openChannel();
             // Delete can only be true if the file exists
             result = internalExists();
-            String path = getFullName();
+            final String path = getFullName();
+            //getFullName() closes the channel -> reopen it
+            openChannel();
             if (internalExists()) {
                 if (internalIsDirectory()) {
                     // Delete inner files first
-                    RemoteFile[] files = internalListFiles();
-                    for (int i = 0; i < files.length; i++) {
-                        files[i].delete();
+                    final RemoteFile[] files = internalListFiles();
+                    for (final RemoteFile file : files) {
+                        file.delete();
                     }
                     // Delete this directory
                     m_channel.rmdir(path);
@@ -432,6 +433,7 @@ public class SFTPRemoteFile extends RemoteFile {
                     result = result && !internalExists();
                 } else {
                     // Delete this file
+                    openChannel();
                     m_channel.rm(path);
                     resetCache();
                     result = result && !internalExists();
@@ -591,6 +593,7 @@ public class SFTPRemoteFile extends RemoteFile {
     @SuppressWarnings("unchecked")
     private LsEntry getLsEntry() throws Exception {
         if (m_entryCache == null) {
+            openChannel();
             // Assume missing
             LsEntry entry = null;
             // If this is a directory change to parent
