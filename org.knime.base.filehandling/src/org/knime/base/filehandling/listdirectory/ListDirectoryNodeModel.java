@@ -51,12 +51,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
-
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
+import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
@@ -82,8 +82,8 @@ import org.knime.core.node.port.PortType;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ListDirectoryNodeModel extends NodeModel {
@@ -106,10 +106,10 @@ public class ListDirectoryNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         // Create connection monitor
-        ConnectionMonitor monitor = new ConnectionMonitor();
+        final ConnectionMonitor<? extends Connection> monitor = new ConnectionMonitor<>();
         // Create output spec and container
-        DataTableSpec outSpec = createOutSpec();
-        BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
+        final DataTableSpec outSpec = createOutSpec();
+        final BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
         try {
             URI directoryUri;
             if (m_connectionInformation != null) {
@@ -123,7 +123,8 @@ public class ListDirectoryNodeModel extends NodeModel {
                 directoryUri = new File(m_configuration.getDirectory()).toURI();
             }
             // Create remote file for directory selection
-            RemoteFile file = RemoteFileFactory.createRemoteFile(directoryUri, m_connectionInformation, monitor);
+            final RemoteFile<? extends Connection> file =
+                    RemoteFileFactory.createRemoteFile(directoryUri, m_connectionInformation, monitor);
             // List the selected directory
             exec.setProgress("Retrieving list of files");
             listDirectory(file, outContainer, true, exec);
@@ -137,38 +138,39 @@ public class ListDirectoryNodeModel extends NodeModel {
 
     /**
      * List a directory.
-     * 
-     * 
+     *
+     *
      * Writes the location of all files in a directory into the container. Files
      * will be listed recursively if the option is selected.
-     * 
+     *
      * @param file The file or directory to be listed
      * @param outContainer Container to write the reference of the files into
      * @param root If this directory is the root directory
      * @param exec Execution context to check if the execution has been canceled
      * @throws Exception If remote file operation did not succeed
      */
-    private void listDirectory(final RemoteFile file, final BufferedDataContainer outContainer, final boolean root,
+    private void listDirectory(final RemoteFile<? extends Connection> file,
+            final BufferedDataContainer outContainer, final boolean root,
             final ExecutionContext exec) throws Exception {
         // Check if the user canceled
         exec.checkCanceled();
         if (!root) {
-            URI fileUri = file.getURI();
+            final URI fileUri = file.getURI();
             // URI to the file
-            String extension = FilenameUtils.getExtension(fileUri.getPath());
-            URIContent content = new URIContent(fileUri, extension);
-            URIDataCell uriCell = new URIDataCell(content);
-            BooleanCell boolCell = BooleanCell.get(file.isDirectory());
+            final String extension = FilenameUtils.getExtension(fileUri.getPath());
+            final URIContent content = new URIContent(fileUri, extension);
+            final URIDataCell uriCell = new URIDataCell(content);
+            final BooleanCell boolCell = BooleanCell.get(file.isDirectory());
             // Add file information to the container
             outContainer.addRowToTable(new DefaultRow("Row" + outContainer.size(), uriCell, boolCell));
         }
         // If the source is a directory list inner files
         if (file.isDirectory()) {
             if (root || m_configuration.getRecursive()) {
-                RemoteFile[] files = file.listFiles();
+                final RemoteFile<? extends Connection>[] files = file.listFiles();
                 Arrays.sort(files);
-                for (int i = 0; i < files.length; i++) {
-                    listDirectory(files[i], outContainer, false, exec);
+                for (final RemoteFile<? extends Connection> file2 : files) {
+                    listDirectory(file2, outContainer, false, exec);
                 }
             }
         }
@@ -176,12 +178,12 @@ public class ListDirectoryNodeModel extends NodeModel {
 
     /**
      * Factory method for the output table spec.
-     * 
-     * 
+     *
+     *
      * @return Output table spec
      */
     private DataTableSpec createOutSpec() {
-        DataColumnSpec[] columnSpecs = new DataColumnSpec[2];
+        final DataColumnSpec[] columnSpecs = new DataColumnSpec[2];
         columnSpecs[0] = new DataColumnSpecCreator("URI", URIDataCell.TYPE).createSpec();
         columnSpecs[1] = new DataColumnSpecCreator("Directory", BooleanCell.TYPE).createSpec();
         return new DataTableSpec(columnSpecs);
@@ -194,7 +196,7 @@ public class ListDirectoryNodeModel extends NodeModel {
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         // Check if a port object is available
         if (inSpecs[0] != null) {
-            ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
+            final ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
             m_connectionInformation = object.getConnectionInformation();
             // Check if the port object has connection information
             if (m_connectionInformation == null) {
@@ -251,7 +253,7 @@ public class ListDirectoryNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        ListDirectoryConfiguration config = new ListDirectoryConfiguration();
+        final ListDirectoryConfiguration config = new ListDirectoryConfiguration();
         config.loadAndValidate(settings);
         m_configuration = config;
     }

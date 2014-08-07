@@ -45,41 +45,42 @@
  * History
  *   Nov 9, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.remote.connectioninformation.node;
+package org.knime.base.filehandling.remote.files;
 
 /**
  *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @since 2.11
  */
-public enum Protocol {
+public class Protocol {
 
-    /** SSH protocol. */
-    SSH("ssh", 22, false, true, true, true, true, true),
+//    /** SSH protocol. */
+//    SSH("ssh", 22, false, true, true, true, true, true),
+//
+//    /** FTP protocol. */
+//    FTP("ftp", 21, true, false, false, true, true, false),
+//
+//    /** HTTP protocol. */
+//    HTTP("http", 80, true, false, false, false, false, true),
+//
+//    /** HTTPS protocol. */
+//    HTTPS("https", 443, true, false, false, false, false, true);
 
-    /** FTP protocol. */
-    FTP("ftp", 21, true, false, false, true, true, false),
+    private final String m_name;
 
-    /** HTTP protocol. */
-    HTTP("http", 80, true, false, false, false, false, true),
+    private final int m_port;
 
-    /** HTTPS protocol. */
-    HTTPS("https", 443, true, false, false, false, false, true);
+    private final boolean m_authnonesupport;
 
-    private String m_name;
+    private final boolean m_keyfilesupport;
 
-    private int m_port;
+    private final boolean m_knownhostssupport;
 
-    private boolean m_authnonesupport;
+    private final boolean m_testsupport;
 
-    private boolean m_keyfilesupport;
+    private final boolean m_browseSupport;
 
-    private boolean m_knownhostssupport;
-
-    private boolean m_testsupport;
-
-    private boolean m_browseSupport;
-
-    private boolean m_userTimeoutSupport;
+    private final boolean m_userTimeoutSupport;
 
     /**
      * Create a protocol.
@@ -95,10 +96,10 @@ public enum Protocol {
      * @param userTimeoutSupport <code>true</code> if the user can change the connection's timeout, <code>false</code>
      *            otherwise
      */
-    private Protocol(final String name, final int port, final boolean authNoneSupport, final boolean keyfileSupport,
+    public Protocol(final String name, final int port, final boolean authNoneSupport, final boolean keyfileSupport,
                      final boolean knownhostsSupport, final boolean testSupport, final boolean browseSupport,
                      final boolean userTimeoutSupport) {
-        m_name = name;
+        m_name = name.toLowerCase();
         m_port = port;
         m_authnonesupport = authNoneSupport;
         m_keyfilesupport = keyfileSupport;
@@ -165,33 +166,4 @@ public enum Protocol {
     public boolean hasUserDefinedTimeoutSupport() {
         return m_userTimeoutSupport;
     }
-
-    /**
-     * Get the correspondent protocol to the name.
-     *
-     *
-     * @param protocolName The name of the protocol
-     * @return Protocol to the name
-     */
-    public static Protocol getProtocol(final String protocolName) {
-        Protocol protocol = null;
-        if (protocolName.equals(SSH.getName())) {
-            protocol = SSH;
-        } else if (protocolName.equals(FTP.getName())) {
-            protocol = FTP;
-        } else if (protocolName.equals(HTTP.getName())) {
-            protocol = HTTP;
-        } else if (protocolName.equals(HTTPS.getName())) {
-            protocol = HTTPS;
-        }
-        return protocol;
-    }
-
-    /**
-     * @return Array with all protocol names
-     */
-    public static String[] getAllProtocols() {
-        return new String[]{SSH.getName(), FTP.getName(), HTTP.getName(), HTTPS.getName()};
-    }
-
 }

@@ -50,12 +50,12 @@ package org.knime.base.filehandling.download2;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
+import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
@@ -83,8 +83,8 @@ import org.knime.core.node.port.PortType;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class DownloadNodeModel extends NodeModel {
@@ -111,20 +111,21 @@ public class DownloadNodeModel extends NodeModel {
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         m_abort = false;
         // Create connection monitor
-        ConnectionMonitor monitor = new ConnectionMonitor();
+        final ConnectionMonitor<Connection> monitor = new ConnectionMonitor<>();
         // Create output spec and container
-        DataTableSpec outSpec = createOutSpec();
-        BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
+        final DataTableSpec outSpec = createOutSpec();
+        final BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
         try {
             exec.setProgress("Connecting to " + m_connectionInformation.toURI());
             // Generate URI to the source
-            URI sourceUri =
+            final URI sourceUri =
                     new URI(m_connectionInformation.toURI().toString()
                             + NodeUtils.encodePath(m_configuration.getSource()));
             // Create remote file for source selection
-            RemoteFile file = RemoteFileFactory.createRemoteFile(sourceUri, m_connectionInformation, monitor);
+            final RemoteFile<Connection> file =
+                    RemoteFileFactory.createRemoteFile(sourceUri, m_connectionInformation, monitor);
             // Create target folder
-            RemoteFile folder =
+            final RemoteFile<Connection> folder =
                     RemoteFileFactory.createRemoteFile(new File(m_configuration.getTarget()).toURI(), null, null);
             folder.mkDirs(true);
             // Download the selected directory or file
@@ -139,12 +140,12 @@ public class DownloadNodeModel extends NodeModel {
 
     /**
      * Downloads a file or folder.
-     * 
-     * 
+     *
+     *
      * Downloads a file or folder to the configured target directory and writes
      * the new location into the container. Folders will be downloaded
      * recursively.
-     * 
+     *
      * @param source The file or folder to be downloaded
      * @param folder Folder where the file goes into
      * @param outContainer Container to write the reference of the downloaded
@@ -153,12 +154,13 @@ public class DownloadNodeModel extends NodeModel {
      * @param exec Execution context to check if the execution has been canceled
      * @throws Exception If remote file operation did not succeed
      */
-    private void download(final RemoteFile source, final RemoteFile folder, final BufferedDataContainer outContainer,
-            final boolean root, final ExecutionContext exec) throws Exception {
+    private void download(final RemoteFile<Connection> source, final RemoteFile<Connection> folder,
+            final BufferedDataContainer outContainer, final boolean root, final ExecutionContext exec)
+                    throws Exception {
         try {
             boolean mkDirs = true;
             // Get filename
-            String pathHandling = m_configuration.getPathHandling();
+            final String pathHandling = m_configuration.getPathHandling();
             String name = "";
             if (pathHandling.equals(PathHandling.FULL_PATH.getName())) {
                 name = source.getFullName();
@@ -166,16 +168,16 @@ public class DownloadNodeModel extends NodeModel {
                 name = source.getName();
                 mkDirs = false;
             } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
-                String prefix = m_configuration.getPrefix();
+                final String prefix = m_configuration.getPrefix();
                 name = source.getFullName().replaceFirst(prefix, "");
             }
             if (name.startsWith("/")) {
                 name = name.replaceFirst("/", "");
             }
             // Generate URI to the target
-            URI targetUri = new File(folder.getFullName() + name).toURI();
+            final URI targetUri = new File(folder.getFullName() + name).toURI();
             // Create target file
-            RemoteFile target = RemoteFileFactory.createRemoteFile(targetUri, null, null);
+            final RemoteFile<Connection> target = RemoteFileFactory.createRemoteFile(targetUri, null, null);
             // Check if the user canceled
             exec.checkCanceled();
             // If the source is a directory download inner files
@@ -184,9 +186,9 @@ public class DownloadNodeModel extends NodeModel {
                     if (mkDirs) {
                         target.mkDirs(true);
                     }
-                    RemoteFile[] files = source.listFiles();
-                    for (int i = 0; i < files.length; i++) {
-                        download(files[i], folder, outContainer, false, exec);
+                    final RemoteFile<Connection>[] files = source.listFiles();
+                    for (final RemoteFile<Connection> file : files) {
+                        download(file, folder, outContainer, false, exec);
                     }
                 }
             } else if (fitsFilter(source.getName())) {
@@ -195,7 +197,7 @@ public class DownloadNodeModel extends NodeModel {
                 boolean failure = false;
                 try {
                     // Get overwrite policy
-                    String overwritePolicy = m_configuration.getOverwritePolicy();
+                    final String overwritePolicy = m_configuration.getOverwritePolicy();
                     if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                         // Policy overwrite:
                         // Just write
@@ -204,8 +206,8 @@ public class DownloadNodeModel extends NodeModel {
                     } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER.getName())) {
                         // Policy overwrite if newer:
                         // Get modification time
-                        long sourceTime = source.lastModified();
-                        long targetTime = target.lastModified();
+                        final long sourceTime = source.lastModified();
+                        final long targetTime = target.lastModified();
                         // Check if both times could be retrieved, else do an
                         // overwrite
                         if (sourceTime > 0 && targetTime > 0) {
@@ -230,7 +232,7 @@ public class DownloadNodeModel extends NodeModel {
                         target.write(source, exec);
                         downloaded = true;
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     if (m_abort || m_configuration.getAbortonfail()) {
                         throw e;
                     }
@@ -239,14 +241,14 @@ public class DownloadNodeModel extends NodeModel {
                     failure = true;
                 }
                 // URI to the created file
-                String extension = FilenameUtils.getExtension(targetUri.getPath());
-                URIContent content = new URIContent(targetUri, extension);
-                URIDataCell uriCell = new URIDataCell(content);
+                final String extension = FilenameUtils.getExtension(targetUri.getPath());
+                final URIContent content = new URIContent(targetUri, extension);
+                final URIDataCell uriCell = new URIDataCell(content);
                 // Has the file been downloaded or not?
-                BooleanCell downloadedCell = BooleanCell.get(downloaded);
+                final BooleanCell downloadedCell = BooleanCell.get(downloaded);
                 if (!m_configuration.getAbortonfail()) {
                     // Has the download failed?
-                    BooleanCell failedCell = BooleanCell.get(failure);
+                    final BooleanCell failedCell = BooleanCell.get(failure);
                     // Add file information to the container
                     outContainer.addRowToTable(new DefaultRow("Row" + outContainer.size(), uriCell, downloadedCell,
                             failedCell));
@@ -255,7 +257,7 @@ public class DownloadNodeModel extends NodeModel {
                     outContainer.addRowToTable(new DefaultRow("Row" + outContainer.size(), uriCell, downloadedCell));
                 }
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (m_abort || m_configuration.getAbortonfail()) {
                 throw e;
             }
@@ -264,14 +266,14 @@ public class DownloadNodeModel extends NodeModel {
 
     /**
      * Check if the file fits the filter.
-     * 
-     * 
+     *
+     *
      * @param name Name of the file
      * @return true if it fits, false if it gets filtered out
      */
     private boolean fitsFilter(final String name) {
         boolean result = false;
-        String filter = m_configuration.getFilterType();
+        final String filter = m_configuration.getFilterType();
         String pattern = m_configuration.getFilterPattern();
         if (!m_configuration.getUseFilter()) {
             result = true;
@@ -286,8 +288,8 @@ public class DownloadNodeModel extends NodeModel {
 
     /**
      * Factory method for the output table spec.
-     * 
-     * 
+     *
+     *
      * @return Output table spec
      */
     private DataTableSpec createOutSpec() {
@@ -312,7 +314,7 @@ public class DownloadNodeModel extends NodeModel {
         if (inSpecs[0] == null) {
             throw new InvalidSettingsException("No connection information available");
         }
-        ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
+        final ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
         m_connectionInformation = object.getConnectionInformation();
         // Check if the port object has connection information
         if (m_connectionInformation == null) {
@@ -366,7 +368,7 @@ public class DownloadNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        DownloadConfiguration config = new DownloadConfiguration();
+        final DownloadConfiguration config = new DownloadConfiguration();
         config.loadAndValidate(settings);
         m_configuration = config;
     }

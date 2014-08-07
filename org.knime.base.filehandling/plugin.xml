@@ -3,6 +3,7 @@
 
 <plugin>
    <extension-point id="mimetypes" name="MIME Type" schema="schema/MIMEType.exsd"/>
+   <extension-point id="RemoteFileHandler" name="Remote File Handler" schema="schema/RemoteFileHandler.exsd"/>
    <extension point="org.knime.workbench.repository.nodes">
    <node category-path="/io/filehandling" factory-class="org.knime.base.filehandling.filemetainfo.FileMetaInfoNodeFactory" id="org.knime.base.filehandling.filemetainfo.FileMetaInfoNodeFactory"/>
    <node category-path="/io/filehandling" factory-class="org.knime.base.filehandling.findmimetype.FindMIMETypeNodeFactory" id="org.knime.base.filehandling.findmimetype.FindMIMETypeNodeFactory"/>
@@ -46,6 +47,27 @@
       <category description="Nodes to handle URI conversion" icon="icons/curi16x16.png" level-id="uri" name="URI" path="/io/filehandling" />
       <category description="Nodes to handle remote file operations" icon="icons/cremote16x16.png" level-id="remote" name="Remote" path="/io/filehandling" />
       <category description="Nodes to create connections for remote file operations" icon="icons/cconnections16x16.png" level-id="connections" name="Connections" path="/io/filehandling/remote" />
+   </extension>
+   <extension
+         point="org.knime.base.filehandling.RemoteFileHandler">
+      <RemoteFileHandler
+            RemoteFileHandler="org.knime.base.filehandling.remote.files.FileRemoteFileHandler">
+      </RemoteFileHandler>
+      <RemoteFileHandler
+            RemoteFileHandler="org.knime.base.filehandling.remote.files.FTPRemoteFileHandler">
+      </RemoteFileHandler>
+      <RemoteFileHandler
+            RemoteFileHandler="org.knime.base.filehandling.remote.files.HTTPRemoteFileHandler">
+      </RemoteFileHandler>
+      <RemoteFileHandler
+            RemoteFileHandler="org.knime.base.filehandling.remote.files.SCPRemoteFileHandler">
+      </RemoteFileHandler>
+      <RemoteFileHandler
+            RemoteFileHandler="org.knime.base.filehandling.remote.files.SFTPRemoteFileHandler">
+      </RemoteFileHandler>
+      <RemoteFileHandler
+            RemoteFileHandler="org.knime.base.filehandling.remote.files.SSHRemoteFileHandler">
+      </RemoteFileHandler>
    </extension>
 
 </plugin>

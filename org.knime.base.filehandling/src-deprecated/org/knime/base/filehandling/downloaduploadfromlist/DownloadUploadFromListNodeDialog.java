@@ -47,6 +47,11 @@
  */
 package org.knime.base.filehandling.downloaduploadfromlist;
 
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
+
+
+
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -60,8 +65,6 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 import org.knime.base.filehandling.NodeUtils;
-import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
-import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.InvalidSettingsException;

@@ -40,67 +40,114 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
- *
- * History
- *   Sep 5, 2012 (Patrick Winter): created
+ * -------------------------------------------------------------------
  */
-package org.knime.base.filehandling.remote.connectioninformation.node.ssh;
 
-import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeDialog;
-import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeModel;
-import org.knime.base.filehandling.remote.files.SSHRemoteFileHandler;
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+package org.knime.base.filehandling.remote.files;
+
+import it.sauronsoftware.ftp4j.FTPClient;
+import org.knime.core.util.KnimeEncryption;
 
 /**
- * <code>NodeFactory</code> for node.
+ * Connection over FTP.
  *
  *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @since 2.11
  */
-public class SSHConnectionInformationNodeFactory extends NodeFactory<ConnectionInformationNodeModel> {
+public class FTPConnection extends Connection {
+
+    private final FTPRemoteFile m_ftpRemoteFile;
+
+    /**Constructor for class FTPConnection.
+     * @param ftpRemoteFile the {@link FTPRemoteFile}
+     */
+    public FTPConnection(final FTPRemoteFile ftpRemoteFile) {
+        m_ftpRemoteFile = ftpRemoteFile;
+    }
+
+    private FTPClient m_client;
+
+    private String m_defaultDir;
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ConnectionInformationNodeModel createNodeModel() {
-        return new ConnectionInformationNodeModel(SSHRemoteFileHandler.PROTOCOL);
+    public void open() throws Exception {
+        // Create client
+        m_client = new FTPClient();
+        // Read attributes
+        final String host = m_ftpRemoteFile.getURI().getHost();
+        final int port = m_ftpRemoteFile.getURI().getPort() != -1 ? m_ftpRemoteFile.getURI().getPort()
+                : RemoteFileHandlerRegistry.getDefaultPort(m_ftpRemoteFile.getType());
+        String user = m_ftpRemoteFile.getURI().getUserInfo();
+        if (user == null) {
+            user = "anonymous";
+        }
+        String password = null;
+        if (m_ftpRemoteFile.getConnectionInformation() != null) {
+            password = m_ftpRemoteFile.getConnectionInformation().getPassword();
+        }
+        if (password != null) {
+            password = KnimeEncryption.decrypt(password);
+        } else {
+            password = "";
+        }
+        // Open connection
+        m_client.connect(host, port);
+        m_client.setPassive(true);
+        // Login
+        m_client.login(user, password);
+        m_client.setType(FTPClient.TYPE_BINARY);
+        // Find root directory
+        String oldDir;
+        do {
+            oldDir = m_client.currentDirectory();
+            m_client.changeDirectoryUp();
+            m_defaultDir = m_client.currentDirectory();
+        } while (!m_defaultDir.equals(oldDir));
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int getNrNodeViews() {
-        return 0;
+    public boolean isOpen() {
+        boolean open = false;
+        if (m_client != null && m_client.isConnected()) {
+            open = true;
+        }
+        return open;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public NodeView<ConnectionInformationNodeModel> createNodeView(final int viewIndex,
-            final ConnectionInformationNodeModel nodeModel) {
-        return null;
+    public void close() throws Exception {
+        m_client.logout();
+        m_client.disconnect(true);
     }
 
     /**
-     * {@inheritDoc}
+     * Return the client of this connection.
+     *
+     *
+     * @return The FTP Client
      */
-    @Override
-    public boolean hasDialog() {
-        return true;
+    public FTPClient getClient() {
+        return m_client;
     }
 
     /**
-     * {@inheritDoc}
+     * Change working directory to root.
+     *
+     *
+     * @throws Exception If the operation could not be executed
      */
-    @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new ConnectionInformationNodeDialog(SSHRemoteFileHandler.PROTOCOL);
+    public void resetWorkingDir() throws Exception {
+        m_client.changeDirectory(m_defaultDir);
     }
 
 }

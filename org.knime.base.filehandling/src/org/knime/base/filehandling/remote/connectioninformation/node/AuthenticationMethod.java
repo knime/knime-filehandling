@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 3, 2012 (Patrick Winter): created
  */
@@ -49,8 +49,8 @@ package org.knime.base.filehandling.remote.connectioninformation.node;
 
 /**
  * Enums for authentication method.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 enum AuthenticationMethod {

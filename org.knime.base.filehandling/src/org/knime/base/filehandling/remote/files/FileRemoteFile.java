@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 2, 2012 (Patrick Winter): created
  */
@@ -54,21 +54,20 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
-
 import org.knime.core.node.ExecutionContext;
 
 /**
  * Implementation of the file remote file.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class FileRemoteFile extends RemoteFile {
+public class FileRemoteFile extends RemoteFile<Connection> {
 
     /**
      * Creates a file remote file for the given URI.
-     * 
-     * 
+     *
+     *
      * @param uri The URI
      */
     FileRemoteFile(final URI uri) {
@@ -120,10 +119,10 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void move(final RemoteFile file, final ExecutionContext exec) throws Exception {
+    public void move(final RemoteFile<Connection> file, final ExecutionContext exec) throws Exception {
         if (file instanceof FileRemoteFile) {
-            FileRemoteFile source = (FileRemoteFile)file;
-            boolean success = new File(getURI()).renameTo(new File(source.getURI()));
+            final FileRemoteFile source = (FileRemoteFile)file;
+            final boolean success = new File(getURI()).renameTo(new File(source.getURI()));
             if (!success) {
                 throw new Exception("Move operation failed");
             }
@@ -176,13 +175,13 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public RemoteFile[] listFiles() throws Exception {
-        RemoteFile[] files = new RemoteFile[0];
+    public RemoteFile<Connection>[] listFiles() throws Exception {
+        RemoteFile<Connection>[] files = new FileRemoteFile[0];
         if (isDirectory()) {
             // Get files in directory
-            File[] f = new File(getURI()).listFiles();
+            final File[] f = new File(getURI()).listFiles();
             if (f != null) {
-                files = new RemoteFile[f.length];
+                files = new FileRemoteFile[f.length];
                 // Create remote files from local files
                 for (int i = 0; i < f.length; i++) {
                     files[i] = new FileRemoteFile(f[i].toURI());
@@ -206,30 +205,30 @@ public class FileRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public RemoteFile getParent() throws Exception {
+    public RemoteFile<Connection> getParent() throws Exception {
         // Build URI
-        URI uri = new File(getURI()).getParentFile().toURI();
+        final URI uri = new File(getURI()).getParentFile().toURI();
         // Create remote file and open it
-        RemoteFile file = new FileRemoteFile(uri);
+        final RemoteFile<Connection> file = new FileRemoteFile(uri);
         file.open();
         return file;
     }
 
     /**
      * Deletes files and directories recursively.
-     * 
-     * 
+     *
+     *
      * @param path Path to the file or directory
      * @return true if deletion was successful, false otherwise
      */
     private boolean deleteRecursively(final String path) {
-        File file = new File(path);
+        final File file = new File(path);
         if (file.isDirectory()) {
             // Get files in directory
-            String[] files = file.list();
-            for (int i = 0; i < files.length; i++) {
+            final String[] files = file.list();
+            for (final String file2 : files) {
                 // Delete each file recursively
-                deleteRecursively(new File(file, files[i]).getAbsolutePath());
+                deleteRecursively(new File(file, file2).getAbsolutePath());
             }
         }
         // Delete this file

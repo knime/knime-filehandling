@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 2, 2012 (Patrick Winter): created
  */
@@ -49,45 +49,45 @@ package org.knime.base.filehandling.remote.files;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Monitors open connections.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @param <C> the {@link Connection}
  */
-public final class ConnectionMonitor {
+public final class ConnectionMonitor<C extends Connection> {
 
-    private Map<String, Connection> m_connections = new HashMap<String, Connection>();
+    private final Map<String, C> m_connections = new HashMap<>();
 
     /**
      * Register a connection.
-     * 
-     * 
+     *
+     *
      * @param identifier Identifier for the connection
      * @param connection Connection to register
      */
-    public synchronized void registerConnection(final String identifier, final Connection connection) {
+    public synchronized void registerConnection(final String identifier, final C connection) {
         m_connections.put(identifier, connection);
     }
 
     /**
      * Find an open connection to the identifier.
-     * 
-     * 
+     *
+     *
      * @param identifier The identifier
      * @return Already opened connection to the identifier or null if not
      *         available
      */
-    public synchronized Connection findConnection(final String identifier) {
-        Connection connection = m_connections.get(identifier);
+    public synchronized C findConnection(final String identifier) {
+        C connection = m_connections.get(identifier);
         // Check if connection is open
         if (connection != null && !connection.isOpen()) {
             try {
                 // Try to open connection
                 connection.open();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // Remove in case of error
                 m_connections.remove(identifier);
                 connection = null;
@@ -100,15 +100,18 @@ public final class ConnectionMonitor {
      * Close and remove all connections.
      */
     public synchronized void closeAll() {
-        Set<String> identifiers = m_connections.keySet();
-        for (String identifier : identifiers) {
+        if (m_connections == null || m_connections.isEmpty()) {
+            //nothing to close
+            return;
+        }
+        for (final C connection : m_connections.values()) {
             try {
-                m_connections.get(identifier).close();
-                m_connections.remove(identifier);
-            } catch (Exception e) {
+                connection.close();
+            } catch (final Exception e) {
                 // ignore and close next connection
             }
         }
+        m_connections.clear();
     }
 
 }

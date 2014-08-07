@@ -50,7 +50,6 @@ package org.knime.base.filehandling.remote.files;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
@@ -61,16 +60,17 @@ import org.knime.core.node.ExecutionContext;
  *
  *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @param <C> the {@link Connection}
  */
-public abstract class RemoteFile implements Comparable<RemoteFile> {
+public abstract class RemoteFile<C extends Connection> implements Comparable<RemoteFile<C>> {
 
-    private Connection m_connection = null;
+    private C m_connection = null;
 
     private URI m_uri = null;
 
     private ConnectionInformation m_connectionInformation = null;
 
-    private ConnectionMonitor m_connectionMonitor = null;
+    private ConnectionMonitor<C> m_connectionMonitor = null;
 
     /**
      * Create a remote file.
@@ -81,7 +81,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * @param connectionMonitor Monitor for the connection
      */
     protected RemoteFile(final URI uri, final ConnectionInformation connectionInformation,
-            final ConnectionMonitor connectionMonitor) {
+            final ConnectionMonitor<C> connectionMonitor) {
         m_uri = uri;
         m_connectionInformation = connectionInformation;
         m_connectionMonitor = connectionMonitor;
@@ -100,13 +100,14 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      *
      *
      * @throws Exception If opening failed
+     * @since 2.11
      */
-    final void open() throws Exception {
+    public final void open() throws Exception {
         // Only create a connection if this remote file uses a connection
         if (usesConnection() && m_connection == null) {
             // Look for existing connection
-            String identifier = getIdentifier();
-            Connection connection = m_connectionMonitor.findConnection(identifier);
+            final String identifier = getIdentifier();
+            C connection = m_connectionMonitor.findConnection(identifier);
             // If no connection is available create a new one
             if (connection == null) {
                 connection = createConnection();
@@ -123,7 +124,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      *
      * @return New connection for this remote file
      */
-    protected abstract Connection createConnection();
+    protected abstract C createConnection();
 
     /**
      * Return the current connection.
@@ -131,7 +132,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      *
      * @return The current connection
      */
-    public final Connection getConnection() {
+    public final C getConnection() {
         return m_connection;
     }
 
@@ -140,13 +141,14 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      *
      *
      * @return Identifier to this remote files connection
+     * @since 2.11
      */
-    protected String getIdentifier() {
-        URI uri = getURI();
+    public String getIdentifier() {
+        final URI uri = getURI();
         int port = uri.getPort();
         // If no port is available use the default port
         if (port < 0) {
-            port = DefaultPortMap.getMap().get(getType());
+            port = RemoteFileHandlerRegistry.getDefaultPort(getType());
         }
         // Format: scheme://user@host:port
         return uri.getScheme() + "://" + uri.getUserInfo() + "@" + uri.getHost() + ":" + port;
@@ -189,7 +191,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      *
      * @return the connectionMonitor
      */
-    public final ConnectionMonitor getConnectionMonitor() {
+    public final ConnectionMonitor<C> getConnectionMonitor() {
         return m_connectionMonitor;
     }
 
@@ -214,7 +216,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      */
     public String getName() throws Exception {
         // Default implementation using just the URI
-        URI uri = getURI();
+        final URI uri = getURI();
         String name = FilenameUtils.getName(uri.getPath());
         if (name != null && name.length() == 0) {
             // If name is empty it might be a directory
@@ -298,7 +300,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      *            <code>setProgress()</code>
      * @throws Exception If the operation could not be executed
      */
-    public void move(final RemoteFile file, final ExecutionContext exec) throws Exception {
+    public void move(final RemoteFile<C> file, final ExecutionContext exec) throws Exception {
         // Default implementation using just remote file methods
         write(file, exec);
         file.delete();
@@ -315,12 +317,12 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      *            <code>setProgress()</code>
      * @throws Exception If the operation could not be executed
      */
-    public void write(final RemoteFile file, final ExecutionContext exec) throws Exception {
+    public void write(final RemoteFile<C> file, final ExecutionContext exec) throws Exception {
         // Default implementation using just remote file methods
-        byte[] buffer = new byte[1024 * 1024]; // 1MB
-        String uri = getURI().toString();
-        InputStream in = file.openInputStream();
-        OutputStream out = openOutputStream();
+        final byte[] buffer = new byte[1024 * 1024]; // 1MB
+        final String uri = getURI().toString();
+        final InputStream in = file.openInputStream();
+        final OutputStream out = openOutputStream();
         long progress = 0;
         int length;
         while ((length = in.read(buffer)) > 0) {
@@ -388,7 +390,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      *         this is not a directory
      * @throws Exception If the operation could not be executed
      */
-    public abstract RemoteFile[] listFiles() throws Exception;
+    public abstract RemoteFile<C>[] listFiles() throws Exception;
 
     /**
      * Create a directory.
@@ -409,7 +411,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      */
     public final boolean mkDirs(final boolean includeThis) throws Exception {
         boolean success = true;
-        RemoteFile parent = getParent();
+        final RemoteFile<C> parent = getParent();
         if (!parent.exists()) {
             success = parent.mkDirs(true);
         }
@@ -426,16 +428,17 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * @return The parent file
      * @throws Exception If the operation could not be executed
      */
-    public RemoteFile getParent() throws Exception {
+    public RemoteFile<C> getParent() throws Exception {
         String path = getFullName();
         if (path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);
         }
         path = FilenameUtils.getFullPath(path);
         // Build URI
-        URI uri = new URI(m_uri.getScheme(), m_uri.getAuthority(), path, m_uri.getQuery(), m_uri.getFragment());
+        final URI uri = new URI(m_uri.getScheme(), m_uri.getAuthority(), path, m_uri.getQuery(), m_uri.getFragment());
         // Create remote file and open it
-        RemoteFile file = RemoteFileFactory.createRemoteFile(uri, m_connectionInformation, m_connectionMonitor);
+        final RemoteFile<C> file =
+                RemoteFileFactory.createRemoteFile(uri, m_connectionInformation, m_connectionMonitor);
         file.open();
         return file;
     }
@@ -448,7 +451,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
         String string = "unknown_file";
         try {
             string = getName();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // File name is unknown
         }
         return string;
@@ -458,7 +461,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
      * {@inheritDoc}
      */
     @Override
-    public int compareTo(final RemoteFile o) {
+    public int compareTo(final RemoteFile<C> o) {
         int result = 1;
         try {
             if (isDirectory() == o.isDirectory()) {
@@ -466,7 +469,7 @@ public abstract class RemoteFile implements Comparable<RemoteFile> {
             } else if (isDirectory()) {
                 result = -1;
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // put this after o
         }
         return result;

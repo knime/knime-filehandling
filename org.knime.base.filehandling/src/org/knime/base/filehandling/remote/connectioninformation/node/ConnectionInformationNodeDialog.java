@@ -47,6 +47,10 @@
  */
 package org.knime.base.filehandling.remote.connectioninformation.node;
 
+import org.knime.base.filehandling.remote.files.Protocol;
+
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+
 import java.awt.Container;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -55,7 +59,6 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
-
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -75,9 +78,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 import org.knime.base.filehandling.NodeUtils;
-import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;

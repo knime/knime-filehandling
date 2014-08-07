@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 13, 2012 (Patrick Winter): created
  */
@@ -50,7 +50,6 @@ package org.knime.base.filehandling.remote.connectioninformation.port;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
@@ -63,8 +62,8 @@ import org.knime.core.node.util.ViewUtils;
 
 /**
  * Port object containing connection information.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ConnectionInformationPortObject extends AbstractSimplePortObject {
@@ -85,7 +84,7 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
 
     /**
      * Creates a port object with the given connection information.
-     * 
+     *
      * @param connectionInformationPOS The spec wrapping the connection
      *            information.
      */
@@ -93,7 +92,7 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
         if (connectionInformationPOS == null) {
             throw new NullPointerException("Argument must not be null");
         }
-        ConnectionInformation connInfo = connectionInformationPOS.getConnectionInformation();
+        final ConnectionInformation connInfo = connectionInformationPOS.getConnectionInformation();
         if (connInfo == null) {
             throw new NullPointerException("Connection information must be set (is null)");
         }
@@ -102,8 +101,8 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
 
     /**
      * Returns the connection information contained by this port object.
-     * 
-     * 
+     *
+     *
      * @return The content of this port object
      */
     public ConnectionInformation getConnectionInformation() {
@@ -123,7 +122,7 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
      */
     @Override
     public JComponent[] getViews() {
-        JPanel f = ViewUtils.getInFlowLayout(new JLabel(getSummary()));
+        final JPanel f = ViewUtils.getInFlowLayout(new JLabel(getSummary()));
         f.setName("Connection");
         return new JComponent[]{f};
     }
@@ -139,6 +138,7 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("unused")
     @Override
     protected void save(final ModelContentWO model, final ExecutionMonitor exec) throws CanceledExecutionException {
         // nothing to save; all done in spec, which is saved separately
@@ -147,6 +147,7 @@ public class ConnectionInformationPortObject extends AbstractSimplePortObject {
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("unused")
     @Override
     protected void load(final ModelContentRO model, final PortObjectSpec spec, final ExecutionMonitor exec)
             throws InvalidSettingsException, CanceledExecutionException {

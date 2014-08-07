@@ -50,7 +50,6 @@ package org.knime.base.filehandling.remote.files;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -70,7 +69,7 @@ import org.knime.core.util.KnimeEncryption;
  *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class HTTPRemoteFile extends RemoteFile {
+public class HTTPRemoteFile extends RemoteFile<Connection> {
 
     /**
      * Creates a HTTP remote file for the given URI.
@@ -115,8 +114,8 @@ public class HTTPRemoteFile extends RemoteFile {
     @Override
     public boolean exists() throws Exception {
         boolean exists;
-        HttpResponse response = getResponse();
-        int code = response.getStatusLine().getStatusCode();
+        final HttpResponse response = getResponse();
+        final int code = response.getStatusLine().getStatusCode();
         // Status codes above 300 indicate missing resources
         exists = code < 300;
         return exists;
@@ -135,7 +134,7 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void move(final RemoteFile file, final ExecutionContext exec) throws Exception {
+    public void move(final RemoteFile<Connection> file, final ExecutionContext exec) throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("move"));
     }
 
@@ -143,7 +142,7 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void write(final RemoteFile file, final ExecutionContext exec) throws Exception {
+    public void write(final RemoteFile<Connection> file, final ExecutionContext exec) throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("write"));
     }
 
@@ -152,7 +151,7 @@ public class HTTPRemoteFile extends RemoteFile {
      */
     @Override
     public InputStream openInputStream() throws Exception {
-        HttpResponse response = getResponse();
+        final HttpResponse response = getResponse();
         return response.getEntity().getContent();
     }
 
@@ -171,8 +170,8 @@ public class HTTPRemoteFile extends RemoteFile {
     public long getSize() throws Exception {
         // Assume unknown length
         long size = 0;
-        HttpResponse response = getResponse();
-        long length = response.getEntity().getContentLength();
+        final HttpResponse response = getResponse();
+        final long length = response.getEntity().getContentLength();
         if (length > 0) {
             size = length;
         }
@@ -199,7 +198,7 @@ public class HTTPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public RemoteFile[] listFiles() throws Exception {
+    public RemoteFile<Connection>[] listFiles() throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("listFiles"));
     }
 
@@ -219,26 +218,26 @@ public class HTTPRemoteFile extends RemoteFile {
      * @throws Exception If communication did not work
      */
     private HttpResponse getResponse() throws Exception {
-        HttpParams params = new BasicHttpParams();
+        final HttpParams params = new BasicHttpParams();
         HttpConnectionParams.setConnectionTimeout(params, getConnectionInformation().getTimeout());
         HttpConnectionParams.setSoTimeout(params, getConnectionInformation().getTimeout());
 
         // Create request
-        DefaultHttpClient client = new DefaultHttpClient(params);
+        final DefaultHttpClient client = new DefaultHttpClient(params);
         // If user info is given in the URI use HTTP basic authentication
         if (getURI().getUserInfo() != null && getURI().getUserInfo().length() > 0) {
             // Decrypt password from the connection information
-            String password = KnimeEncryption.decrypt(getConnectionInformation().getPassword());
+            final String password = KnimeEncryption.decrypt(getConnectionInformation().getPassword());
             // Get port (replacing it with the default port if necessary)
             int port = getURI().getPort();
             if (port < 0) {
-                port = DefaultPortMap.getMap().get(getType());
+                port = RemoteFileHandlerRegistry.getDefaultPort(getType());
             }
-            Credentials credentials = new UsernamePasswordCredentials(getURI().getUserInfo(), password);
-            AuthScope scope = new AuthScope(getURI().getHost(), port);
+            final Credentials credentials = new UsernamePasswordCredentials(getURI().getUserInfo(), password);
+            final AuthScope scope = new AuthScope(getURI().getHost(), port);
             client.getCredentialsProvider().setCredentials(scope, credentials);
         }
-        HttpGet request = new HttpGet(getURI());
+        final HttpGet request = new HttpGet(getURI());
         // Return response
         return client.execute(request);
     }

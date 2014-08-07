@@ -48,6 +48,7 @@
 package org.knime.base.filehandling.remote.connectioninformation.node;
 
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.files.Protocol;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -63,7 +64,7 @@ import org.knime.core.util.KnimeEncryption;
  */
 class ConnectionInformationConfiguration {
 
-    private Protocol m_protocol;
+    private final Protocol m_protocol;
 
     private String m_user;
 
@@ -265,7 +266,7 @@ class ConnectionInformationConfiguration {
      */
     ConnectionInformation getConnectionInformation(final CredentialsProvider credentialsProvider) {
         // Create connection information object
-        ConnectionInformation connectionInformation = new ConnectionInformation();
+        final ConnectionInformation connectionInformation = new ConnectionInformation();
         // Put settings into object
         connectionInformation.setProtocol(m_protocol.getName());
         connectionInformation.setHost(getHost());
@@ -273,11 +274,11 @@ class ConnectionInformationConfiguration {
         if (!getAuthenticationmethod().equals(AuthenticationMethod.NONE.getName())) {
             if (m_useworkflowcredentials) {
                 // Use credentials
-                ICredentials credentials = credentialsProvider.get(m_workflowcredentials);
+                final ICredentials credentials = credentialsProvider.get(m_workflowcredentials);
                 connectionInformation.setUser(credentials.getLogin());
                 try {
                     connectionInformation.setPassword(KnimeEncryption.encrypt(credentials.getPassword().toCharArray()));
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     // Set no password
                 }
             } else {
@@ -286,7 +287,8 @@ class ConnectionInformationConfiguration {
                 connectionInformation.setPassword(getPassword());
             }
         }
-        if (m_protocol.hasKeyfileSupport() && getAuthenticationmethod().equals(AuthenticationMethod.KEYFILE.getName())) {
+        if (m_protocol.hasKeyfileSupport()
+                && getAuthenticationmethod().equals(AuthenticationMethod.KEYFILE.getName())) {
             connectionInformation.setKeyfile(getKeyfile());
         }
         if (m_protocol.hasKnownhostsSupport() && getUseknownhosts()) {

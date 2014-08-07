@@ -50,12 +50,12 @@ package org.knime.base.filehandling.deletefiles;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
+import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
@@ -84,8 +84,8 @@ import org.knime.core.node.port.PortType;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class DeleteFilesNodeModel extends NodeModel {
@@ -110,21 +110,22 @@ public class DeleteFilesNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         // Create connection monitor
-        ConnectionMonitor monitor = new ConnectionMonitor();
+        final ConnectionMonitor<? extends Connection> monitor = new ConnectionMonitor<>();
         // Create output spec and container
-        DataTableSpec outSpec = createOutSpec();
-        BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
+        final DataTableSpec outSpec = createOutSpec();
+        final BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
         try {
-            String target = m_configuration.getTarget();
+            final String target = m_configuration.getTarget();
             // Get table with source URIs
-            BufferedDataTable table = (BufferedDataTable)inObjects[1];
-            int targetIndex = table.getDataTableSpec().findColumnIndex(target);
+            final BufferedDataTable table = (BufferedDataTable)inObjects[1];
+            final int targetIndex = table.getDataTableSpec().findColumnIndex(target);
             int i = 0;
-            int rows = table.getRowCount();
+            final int rows = table.getRowCount();
+            exec.setMessage("Deleting files...");
             // Process each row
-            for (DataRow row : table) {
+            for (final DataRow row : table) {
                 exec.checkCanceled();
-                exec.setProgress((double)i / rows);
+                exec.setProgress((double)i / rows, i + " of " + rows + " files deleted");
                 // Skip missing values
                 if (!row.getCell(targetIndex).isMissing()) {
                     ConnectionInformation connectionInformation;
@@ -133,33 +134,32 @@ public class DeleteFilesNodeModel extends NodeModel {
                     try {
                         m_connectionInformation.fitsToURI(targetUri);
                         connectionInformation = m_connectionInformation;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         connectionInformation = null;
                     }
                     // Create target file
-                    RemoteFile targetFile =
+                    final RemoteFile<? extends Connection> targetFile =
                             RemoteFileFactory.createRemoteFile(targetUri, connectionInformation, monitor);
                     // Delete file
-                    boolean success = targetFile.delete();
+                    final boolean success = targetFile.delete();
                     if (!success) {
-                        String message = "File " + targetFile.getURI() + " could not be deleted";
+                        final String message = "File " + targetFile.getURI() + " could not be deleted";
                         if (m_configuration.getAbortonfail()) {
                             throw new Exception(message);
-                        } else {
-                            LOGGER.warn(message);
                         }
+                        LOGGER.warn(message);
                     }
                     targetUri = targetFile.getURI();
                     // URI to the created file
-                    String extension = FilenameUtils.getExtension(targetUri.getPath());
-                    URIContent content = new URIContent(targetUri, extension);
-                    URIDataCell uriCell = new URIDataCell(content);
+                    final String extension = FilenameUtils.getExtension(targetUri.getPath());
+                    final URIContent content = new URIContent(targetUri, extension);
+                    final URIDataCell uriCell = new URIDataCell(content);
                     if (m_configuration.getAbortonfail()) {
                         // Add file information to the container
                         outContainer.addRowToTable(new DefaultRow("Row" + outContainer.size(), uriCell));
                     } else {
                         // Has the file been deleted or not?
-                        BooleanCell deletedCell = BooleanCell.get(success);
+                        final BooleanCell deletedCell = BooleanCell.get(success);
                         // Add file information to the container
                         outContainer.addRowToTable(new DefaultRow("Row" + outContainer.size(), uriCell, deletedCell));
                     }
@@ -176,8 +176,8 @@ public class DeleteFilesNodeModel extends NodeModel {
 
     /**
      * Factory method for the output table spec.
-     * 
-     * 
+     *
+     *
      * @return Output table spec
      */
     private DataTableSpec createOutSpec() {
@@ -200,7 +200,7 @@ public class DeleteFilesNodeModel extends NodeModel {
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         // Check if a port object is available
         if (inSpecs[0] != null) {
-            ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
+            final ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
             m_connectionInformation = object.getConnectionInformation();
         } else {
             m_connectionInformation = null;
@@ -210,7 +210,7 @@ public class DeleteFilesNodeModel extends NodeModel {
             throw new InvalidSettingsException("No settings available");
         }
         // Check that target configuration is correct
-        String target = m_configuration.getTarget();
+        final String target = m_configuration.getTarget();
         NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Target", target, URIDataValue.class);
         return new PortObjectSpec[]{createOutSpec()};
     }
@@ -256,7 +256,7 @@ public class DeleteFilesNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        DeleteFilesConfiguration config = new DeleteFilesConfiguration();
+        final DeleteFilesConfiguration config = new DeleteFilesConfiguration();
         config.loadAndValidate(settings);
         m_configuration = config;
     }

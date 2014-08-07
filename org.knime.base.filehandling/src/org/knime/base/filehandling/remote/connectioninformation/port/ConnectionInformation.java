@@ -53,10 +53,11 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.knime.base.filehandling.remote.files.DefaultPortMap;
+import org.knime.base.filehandling.remote.files.Protocol;
+import org.knime.base.filehandling.remote.files.RemoteFileHandler;
+import org.knime.base.filehandling.remote.files.RemoteFileHandlerRegistry;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
 import org.knime.core.node.ModelContentWO;
@@ -119,7 +120,7 @@ public class ConnectionInformation implements Serializable {
      * @noreference Not to be called by client
      */
     public static ConnectionInformation load(final ModelContentRO model) throws InvalidSettingsException {
-        ConnectionInformation connectionInformation = new ConnectionInformation();
+        final ConnectionInformation connectionInformation = new ConnectionInformation();
         connectionInformation.setProtocol(model.getString("protocol"));
         connectionInformation.setHost(model.getString("host"));
         connectionInformation.setPort(model.getInt("port"));
@@ -159,7 +160,7 @@ public class ConnectionInformation implements Serializable {
      * @noreference Not to be called by client
      */
     public static ConnectionInformation load(final DataInput input) throws IOException {
-        ConnectionInformation connectionInformation = new ConnectionInformation();
+        final ConnectionInformation connectionInformation = new ConnectionInformation();
         connectionInformation.setProtocol(input.readUTF());
         connectionInformation.setHost(input.readUTF());
         connectionInformation.setPort(input.readInt());
@@ -179,16 +180,23 @@ public class ConnectionInformation implements Serializable {
      * @throws Exception If something is incompatible
      */
     public void fitsToURI(final URI uri) throws Exception {
-        // Scheme
-        String scheme = uri.getScheme().toLowerCase();
-        // Change sftp and scp to ssh
-        if (scheme.equals("sftp")) {
-            scheme = scheme.replace("sftp", "ssh");
-        } else if (scheme.equals("scp")) {
-            scheme = scheme.replace("scp", "ssh");
+        final RemoteFileHandler<?> fileHandler =
+                RemoteFileHandlerRegistry.getRemoteFileHandler(getProtocol());
+        if (fileHandler == null) {
+            throw new Exception("No file handler found for protocol: " + getProtocol());
         }
-        if (!scheme.equals(m_protocol)) {
-            throw new Exception("Protocol incompatible");
+        final String scheme = uri.getScheme().toLowerCase();
+        final Protocol[] protocols = fileHandler.getSupportedProtocols();
+        boolean supportedProtocol = false;
+        for (final Protocol protocol : protocols) {
+            if (protocol.getName().equals(scheme)) {
+                supportedProtocol = true;
+                break;
+            }
+        }
+        if (!supportedProtocol) {
+            throw new Exception("Protocol " + scheme + " incompatible with connection information protcol "
+                    + getProtocol());
         }
         // Host
         final String uriHost = uri.getHost();
@@ -196,19 +204,20 @@ public class ConnectionInformation implements Serializable {
             throw new Exception("No host in URI " + uri);
         }
         if (!uriHost.toLowerCase().equals(m_host.toLowerCase())) {
-            throw new Exception("Host incompatible");
+            throw new Exception("Host incompatible. URI host: " + uriHost
+                                + " connection information host " + getHost());
         }
         // Port
         int port = uri.getPort();
         // If port is invalid use default port
-        port = port < 0 ? DefaultPortMap.getMap().get(scheme) : port;
+        port = port < 0 ? RemoteFileHandlerRegistry.getDefaultPort(scheme) : port;
         if (port != m_port) {
             throw new Exception("Port incompatible");
         }
         // User
-        String user = uri.getUserInfo();
+        final String user = uri.getUserInfo();
         // User might not be used
-        if ((user != null && !user.equals(m_user)) || (m_user != null && !m_user.equals(user))) {
+        if (user != null && m_user != null && !user.equals(m_user)) {
             throw new Exception("User incompatible");
         }
     }
@@ -223,7 +232,7 @@ public class ConnectionInformation implements Serializable {
         URI uri = null;
         try {
             uri = new URI(toURIString());
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException e) {
             // Should not happen
             NodeLogger.getLogger(getClass()).coding(e.getMessage(), e);
         }
@@ -232,7 +241,7 @@ public class ConnectionInformation implements Serializable {
 
     private String toURIString() {
         // Add user only if available
-        String user = m_user != null ? m_user + "@" : "";
+        final String user = m_user != null ? m_user + "@" : "";
         return m_protocol + "://" + user + m_host + ":" + m_port;
     }
 
@@ -240,18 +249,18 @@ public class ConnectionInformation implements Serializable {
      * Set the protocol.
      *
      *
-     * Will convert the protocol to lower case and change sftp and scp to ssh.
+     * Will convert the protocol to lower case.
      *
      * @param protocol the protocol to set
      */
     public void setProtocol(final String protocol) {
         m_protocol = protocol.toLowerCase();
-        // Change sftp and scp to ssh
-        if (m_protocol.equals("sftp")) {
-            m_protocol = m_protocol.replace("sftp", "ssh");
-        } else if (m_protocol.equals("scp")) {
-            m_protocol = m_protocol.replace("scp", "ssh");
-        }
+//        // Change sftp and scp to ssh
+//        if (m_protocol.equals("sftp")) {
+//            m_protocol = m_protocol.replace("sftp", "ssh");
+//        } else if (m_protocol.equals("scp")) {
+//            m_protocol = m_protocol.replace("scp", "ssh");
+//        }
     }
 
     /**
@@ -416,7 +425,7 @@ public class ConnectionInformation implements Serializable {
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
-        HashCodeBuilder hcb = new HashCodeBuilder();
+        final HashCodeBuilder hcb = new HashCodeBuilder();
         hcb.append(m_protocol);
         hcb.append(m_host);
         hcb.append(m_port);
@@ -436,8 +445,8 @@ public class ConnectionInformation implements Serializable {
         if (!(obj instanceof ConnectionInformation)) {
             return false;
         }
-        ConnectionInformation ci = (ConnectionInformation)obj;
-        EqualsBuilder eqBuilder = new EqualsBuilder();
+        final ConnectionInformation ci = (ConnectionInformation)obj;
+        final EqualsBuilder eqBuilder = new EqualsBuilder();
         eqBuilder.append(m_protocol, ci.m_protocol);
         eqBuilder.append(m_host, ci.m_host);
         eqBuilder.append(m_port, ci.m_port);

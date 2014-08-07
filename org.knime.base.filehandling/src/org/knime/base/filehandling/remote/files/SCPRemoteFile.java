@@ -41,12 +41,14 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remote.files;
 
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.Session;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -54,34 +56,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
 
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.Session;
-
 /**
  * Implementation of the SCP remote file.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-public class SCPRemoteFile extends RemoteFile {
+public class SCPRemoteFile extends RemoteFile<SSHConnection> {
 
     private static final String EXCEPTION_FILE_NOT_FOUND = "File not found";
 
     /**
      * Creates a SCP remote file for the given URI.
-     * 
-     * 
+     *
+     *
      * @param uri The URI
      * @param connectionInformation Connection information to the given URI
      * @param connectionMonitor Monitor for the connection
      */
     SCPRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
-            final ConnectionMonitor connectionMonitor) {
+            final ConnectionMonitor<SSHConnection> connectionMonitor) {
         super(uri, connectionInformation, connectionMonitor);
     }
 
@@ -95,9 +93,10 @@ public class SCPRemoteFile extends RemoteFile {
 
     /**
      * {@inheritDoc}
+     * @since 2.11
      */
     @Override
-    protected Connection createConnection() {
+    protected SSHConnection createConnection() {
         // Use general SSH connection
         return new SSHConnection(getURI(), getConnectionInformation());
     }
@@ -117,7 +116,7 @@ public class SCPRemoteFile extends RemoteFile {
     public boolean exists() throws Exception {
         // Assume missing file
         boolean exists = false;
-        SCPChannel scp = new SCPChannel();
+        final SCPChannel scp = new SCPChannel();
         try {
             // Open file input will throw file not found exception if file does
             // not exist
@@ -126,7 +125,7 @@ public class SCPRemoteFile extends RemoteFile {
             // If no exception was thrown up until this point the file does
             // exist
             exists = true;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Throw the exception if it was not the file not found exception
             if (!e.getMessage().equals(EXCEPTION_FILE_NOT_FOUND)) {
                 throw e;
@@ -148,13 +147,13 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public void write(final RemoteFile file, final ExecutionContext exec) throws Exception {
-        byte[] buffer = new byte[1024];
-        SCPChannel scp = new SCPChannel();
+    public void write(final RemoteFile<SSHConnection> file, final ExecutionContext exec) throws Exception {
+        final byte[] buffer = new byte[1024];
+        final SCPChannel scp = new SCPChannel();
         // Open direct output stream
         scp.openFileOutput(getURI().getPath(), file.getSize());
-        InputStream in = file.openInputStream();
-        OutputStream out = scp.getOutputStream();
+        final InputStream in = file.openInputStream();
+        final OutputStream out = scp.getOutputStream();
         int length;
         // Read should deliver exactly file.getSize() bytes
         while ((length = in.read(buffer)) > 0) {
@@ -192,12 +191,12 @@ public class SCPRemoteFile extends RemoteFile {
     public long getSize() throws Exception {
         // Assume missing file
         long size = 0;
-        SCPChannel scp = new SCPChannel();
+        final SCPChannel scp = new SCPChannel();
         try {
             // Opening the file input does deliver the size
             size = scp.openFileInput(getURI().getPath());
             scp.close();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Throw the exception if it was not the file not found exception
             if (!e.getMessage().equals(EXCEPTION_FILE_NOT_FOUND)) {
                 throw e;
@@ -226,7 +225,7 @@ public class SCPRemoteFile extends RemoteFile {
      * {@inheritDoc}
      */
     @Override
-    public RemoteFile[] listFiles() throws Exception {
+    public RemoteFile<SSHConnection>[] listFiles() throws Exception {
         throw new UnsupportedOperationException(unsupportedMessage("listFiles"));
     }
 
@@ -240,8 +239,8 @@ public class SCPRemoteFile extends RemoteFile {
 
     /**
      * SCP channel to handle the start and closing of SCP data transfer.
-     * 
-     * 
+     *
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class SCPChannel {
@@ -254,8 +253,8 @@ public class SCPRemoteFile extends RemoteFile {
 
         /**
          * Get the input stream of this channel.
-         * 
-         * 
+         *
+         *
          * @return Input stream
          */
         public InputStream getInputStream() {
@@ -264,8 +263,8 @@ public class SCPRemoteFile extends RemoteFile {
 
         /**
          * Get the output stream of this channel.
-         * 
-         * 
+         *
+         *
          * @return Output stream
          */
         public OutputStream getOutputStream() {
@@ -274,8 +273,8 @@ public class SCPRemoteFile extends RemoteFile {
 
         /**
          * Open a channel for file input.
-         * 
-         * 
+         *
+         *
          * @param path Path to the remote file
          * @return Size of the remote file
          * @throws Exception If the opening was unsuccessful
@@ -284,7 +283,7 @@ public class SCPRemoteFile extends RemoteFile {
             String skipped;
             long size = 0L;
             // Open execution channel
-            Session session = ((SSHConnection)getConnection()).getSession();
+            final Session session = getConnection().getSession();
             m_channel = (ChannelExec)session.openChannel("exec");
             // Get communication streams
             m_in = m_channel.getInputStream();
@@ -311,8 +310,8 @@ public class SCPRemoteFile extends RemoteFile {
 
         /**
          * Close a file input channel.
-         * 
-         * 
+         *
+         *
          * @throws IOException If the closing was unsuccessful
          */
         public void closeFileInput() throws IOException {
@@ -323,15 +322,15 @@ public class SCPRemoteFile extends RemoteFile {
 
         /**
          * Open a channel for file output.
-         * 
-         * 
+         *
+         *
          * @param path Path where the file should be written to
          * @param size Size of the file that should be written
          * @throws Exception If the opening was unsuccessful
          */
         public void openFileOutput(final String path, final long size) throws Exception {
             // Open execution channel
-            Session session = ((SSHConnection)getConnection()).getSession();
+            final Session session = getConnection().getSession();
             m_channel = (ChannelExec)session.openChannel("exec");
             // Get communication streams
             m_in = m_channel.getInputStream();
@@ -342,7 +341,7 @@ public class SCPRemoteFile extends RemoteFile {
             checkForConfirmation();
             // Send line with permissions (using default), file size and file
             // name
-            String command = "C0644 " + size + " " + FilenameUtils.getName(path) + "\n";
+            final String command = "C0644 " + size + " " + FilenameUtils.getName(path) + "\n";
             m_out.write(command.getBytes());
             m_out.flush();
             checkForConfirmation();
@@ -350,8 +349,8 @@ public class SCPRemoteFile extends RemoteFile {
 
         /**
          * Close a file output channel.
-         * 
-         * 
+         *
+         *
          * @throws IOException If the closing was unsuccessful
          */
         public void closeFileOutput() throws IOException {
@@ -362,8 +361,8 @@ public class SCPRemoteFile extends RemoteFile {
 
         /**
          * Close input and output streams and disconnect channel.
-         * 
-         * 
+         *
+         *
          * @throws IOException If the closing was unsuccessful
          */
         private void close() throws IOException {
@@ -374,13 +373,13 @@ public class SCPRemoteFile extends RemoteFile {
 
         /**
          * Check the input stream for the confirmation byte.
-         * 
-         * 
+         *
+         *
          * @throws IOException If communication was unsuccessful, or
          *             confirmation was false
          */
         private void checkForConfirmation() throws IOException {
-            byte[] buffer = new byte[1];
+            final byte[] buffer = new byte[1];
             if (m_in.read(buffer) == 0) {
                 // Stream does not have valid data
                 throw new IOException("SCP error");
@@ -393,12 +392,12 @@ public class SCPRemoteFile extends RemoteFile {
 
         /**
          * Send a confirmation byte.
-         * 
-         * 
+         *
+         *
          * @throws IOException If communication was unsuccessful
          */
         private void sendConfirmation() throws IOException {
-            byte[] buffer = new byte[1];
+            final byte[] buffer = new byte[1];
             // 0 means positive confirmation
             buffer[0] = 0;
             m_out.write(buffer);
@@ -408,8 +407,8 @@ public class SCPRemoteFile extends RemoteFile {
         /**
          * Consumes all bytes from the input stream up to and including the
          * given character.
-         * 
-         * 
+         *
+         *
          * @param streamIn Stream to read from
          * @param character The character that will be searched for
          * @return All consumed characters (excluding the given character)
@@ -417,11 +416,11 @@ public class SCPRemoteFile extends RemoteFile {
          *             character
          */
         private String skipTo(final InputStream streamIn, final char character) throws IOException {
-            StringBuffer result = new StringBuffer();
-            byte[] buffer = new byte[1];
+            final StringBuffer result = new StringBuffer();
+            final byte[] buffer = new byte[1];
             // Read single byte until character appears
             do {
-                int length = streamIn.read(buffer, 0, 1);
+                final int length = streamIn.read(buffer, 0, 1);
                 if (length < 0) {
                     throw new IOException("Reached end of stream and found no '" + character + "'");
                 }
@@ -437,20 +436,20 @@ public class SCPRemoteFile extends RemoteFile {
 
     /**
      * Input stream wrapper for SCP.
-     * 
-     * 
+     *
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class SCPInputStream extends InputStream {
 
-        private SCPChannel m_scp;
+        private final SCPChannel m_scp;
 
         private long m_bytesLeft;
 
         /**
          * Create SCP input stream wrapper.
-         * 
-         * 
+         *
+         *
          * @param path The path to the remote file
          * @throws Exception If the opening was unsuccessful
          */
@@ -464,7 +463,7 @@ public class SCPRemoteFile extends RemoteFile {
          */
         @Override
         public int read() throws IOException {
-            byte[] b = new byte[1];
+            final byte[] b = new byte[1];
             // Pass to read(buffer)
             if (read(b) == 0) {
                 throw new IOException("Stream has no bytes left");
@@ -487,7 +486,7 @@ public class SCPRemoteFile extends RemoteFile {
         @Override
         public int read(final byte[] buffer, final int offset, final int length) throws IOException {
             // Get input stream of SCP channel
-            InputStream in = m_scp.getInputStream();
+            final InputStream in = m_scp.getInputStream();
             int result = -1;
             // Check if bytes are available
             if (m_bytesLeft > 0L) {
@@ -509,10 +508,10 @@ public class SCPRemoteFile extends RemoteFile {
         @Override
         public long skip(final long n) throws IOException {
             // Get input stream of SCP channel
-            InputStream in = m_scp.getInputStream();
-            long skip = m_bytesLeft < n ? m_bytesLeft : n;
+            final InputStream in = m_scp.getInputStream();
+            final long skip = m_bytesLeft < n ? m_bytesLeft : n;
             // skip bytes
-            long skipped = in.skip(skip);
+            final long skipped = in.skip(skip);
             // subtract skipped bytes from bytes left
             m_bytesLeft -= skipped;
             return skipped;
@@ -562,26 +561,26 @@ public class SCPRemoteFile extends RemoteFile {
 
     /**
      * Output stream wrapper for SCP.
-     * 
-     * 
+     *
+     *
      * Workaround for SCPs inability to write a file without previously knowing
      * the size. Will write the bytes to a temporary file and write the file to
      * SCP on <code>close()</code>.
-     * 
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class SCPOutputStream extends OutputStream {
 
-        private OutputStream m_stream;
+        private final OutputStream m_stream;
 
-        private File m_file;
+        private final File m_file;
 
-        private String m_path;
+        private final String m_path;
 
         /**
          * Create SCP output stream wrapper.
-         * 
-         * 
+         *
+         *
          * @param path Remote path
          * @throws Exception If the temporary file could not be created
          */
@@ -599,23 +598,23 @@ public class SCPRemoteFile extends RemoteFile {
         @Override
         public void close() throws IOException {
             // Open file input stream
-            InputStream in = new FileInputStream(m_file);
+            final InputStream in = new FileInputStream(m_file);
             try {
-                byte[] buffer = new byte[1024];
+                final byte[] buffer = new byte[1024];
                 int length;
                 // Close file output stream
                 m_stream.close();
-                SCPChannel scp = new SCPChannel();
+                final SCPChannel scp = new SCPChannel();
                 scp.openFileOutput(m_path, m_file.length());
                 // Get scp channel output stream
-                OutputStream out = scp.getOutputStream();
+                final OutputStream out = scp.getOutputStream();
                 // Copy bytes from file input to scp output
                 while ((length = in.read(buffer)) > 0) {
                     out.write(buffer, 0, length);
                 }
                 in.close();
                 scp.closeFileOutput();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 if (in != null) {
                     in.close();
                 }
@@ -629,7 +628,7 @@ public class SCPRemoteFile extends RemoteFile {
          */
         @Override
         public void write(final int b) throws IOException {
-            byte[] bytes = new byte[1];
+            final byte[] bytes = new byte[1];
             bytes[0] = (byte)b;
             // Pass to write(buffer)
             write(bytes);

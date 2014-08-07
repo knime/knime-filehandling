@@ -41,21 +41,19 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 2, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
-import java.net.URISyntaxException;
-
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 
 /**
  * Factory for remote files.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class RemoteFileFactory {
@@ -65,58 +63,69 @@ public final class RemoteFileFactory {
     }
 
     /**
-     * Creates a remote file for the URI.
-     * 
-     * 
+     * Creates a remote file for the URI and opens it.
+     *
+     *
      * @param uri The URI
      * @param connectionInformation Connection information to the given URI
      * @param connectionMonitor Monitor for the connection
+     * @param <F> the {@link RemoteFile} implementation
+     * @param <C> the {@link Connection} implementation
      * @return Remote file for the given URI
      * @throws Exception If creation of the remote file or opening of its
      *             connection failed
      */
-    public static RemoteFile createRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
-            final ConnectionMonitor connectionMonitor) throws Exception {
-        String scheme = uri.getScheme().toLowerCase();
+    public static <C extends Connection, F extends RemoteFile<C>> F createRemoteFile(final URI uri,
+            final ConnectionInformation connectionInformation, final ConnectionMonitor<C> connectionMonitor)
+                    throws Exception {
+        final String scheme = uri.getScheme().toLowerCase();
         if (connectionInformation != null) {
             // Check if the connection information fit to the URI
             connectionInformation.fitsToURI(uri);
         }
-        RemoteFile remoteFile = null;
-        // Create remote file that fits to the scheme
-        if (scheme.equals("file")) {
-            remoteFile = new FileRemoteFile(uri);
-        } else if (scheme.equals("ftp")) {
-            remoteFile = new FTPRemoteFile(uri, connectionInformation, connectionMonitor);
-        } else if (scheme.equals("sftp") || scheme.equals("ssh")) {
-            URI sshUri = uri;
-            if (scheme.equals("sftp")) {
-                // Change protocol to general SSH
-                try {
-                    sshUri =
-                            new URI(uri.getScheme().replaceFirst("sftp", "ssh"), uri.getSchemeSpecificPart(),
-                                    uri.getFragment());
-                } catch (URISyntaxException e) {
-                    // Should not happen, since the syntax remains untouched
-                }
-            }
-            remoteFile = new SFTPRemoteFile(sshUri, connectionInformation, connectionMonitor);
-        } else if (scheme.equals("http") || scheme.equals("https")) {
-            remoteFile = new HTTPRemoteFile(uri, connectionInformation);
-        } else if (scheme.equals("scp")) {
-            URI sshUri = uri;
-            if (scheme.equals("scp")) {
-                // Change protocol to general SSH
-                try {
-                    sshUri =
-                            new URI(uri.getScheme().replaceFirst("scp", "ssh"), uri.getSchemeSpecificPart(),
-                                    uri.getFragment());
-                } catch (URISyntaxException e) {
-                    // Should not happen, since the syntax remains untouched
-                }
-            }
-            remoteFile = new SCPRemoteFile(sshUri, connectionInformation, connectionMonitor);
+
+        final RemoteFileHandler<C> handler =
+                (RemoteFileHandler<C>)RemoteFileHandlerRegistry.getRemoteFileHandler(scheme);
+        if (handler == null) {
+            throw new Exception("No RemoteFileHandler found for scheme: " + scheme);
         }
+        final F remoteFile = (F)handler.createRemoteFile(uri, connectionInformation, connectionMonitor);
+
+//        RemoteFile remoteFile = null;
+//        // Create remote file that fits to the scheme
+//        if (scheme.equals("file")) {
+//            remoteFile = new FileRemoteFile(uri);
+//        } else if (scheme.equals("ftp")) {
+//            remoteFile = new FTPRemoteFile(uri, connectionInformation, connectionMonitor);
+//        } else if (scheme.equals("sftp") || scheme.equals("ssh")) {
+//            URI sshUri = uri;
+//            if (scheme.equals("sftp")) {
+//                // Change protocol to general SSH
+//                try {
+//                    sshUri =
+//                            new URI(uri.getScheme().replaceFirst("sftp", "ssh"), uri.getSchemeSpecificPart(),
+//                                    uri.getFragment());
+//                } catch (final URISyntaxException e) {
+//                    // Should not happen, since the syntax remains untouched
+//                }
+//            }
+//            remoteFile = new SFTPRemoteFile(sshUri, connectionInformation, connectionMonitor);
+//        } else if (scheme.equals("http") || scheme.equals("https")) {
+//            remoteFile = new HTTPRemoteFile(uri, connectionInformation);
+//        } else if (scheme.equals("scp")) {
+//            URI sshUri = uri;
+//            if (scheme.equals("scp")) {
+//                // Change protocol to general SSH
+//                try {
+//                    sshUri =
+//                            new URI(uri.getScheme().replaceFirst("scp", "ssh"), uri.getSchemeSpecificPart(),
+//                                    uri.getFragment());
+//                } catch (final URISyntaxException e) {
+//                    // Should not happen, since the syntax remains untouched
+//                }
+//            }
+//            remoteFile = new SCPRemoteFile(sshUri, connectionInformation, connectionMonitor);
+//        }
         if (remoteFile != null) {
             // Open connection of the remote file
             remoteFile.open();

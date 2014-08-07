@@ -47,13 +47,12 @@
  */
 package org.knime.base.filehandling.remote.files;
 
-import java.net.URI;
-
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
-import org.knime.core.util.KnimeEncryption;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+import java.net.URI;
+import org.knime.core.util.KnimeEncryption;
 
 /**
  * Connection over SSH.
@@ -63,11 +62,11 @@ import com.jcraft.jsch.Session;
  */
 public class SSHConnection extends Connection {
 
-    private URI m_uri;
+    private final URI m_uri;
 
     private Session m_session;
 
-    private ConnectionInformation m_connectionInformation;
+    private final ConnectionInformation m_connectionInformation;
 
     /**
      * Create a SSH connection to the given URI.
@@ -90,16 +89,16 @@ public class SSHConnection extends Connection {
             throw new Exception("Missing the connection information for " + m_uri);
         }
         // Read attributes
-        String host = m_uri.getHost();
-        int port = m_uri.getPort() >= 0 ? m_uri.getPort() : DefaultPortMap.getMap().get("ssh");
-        String user = m_uri.getUserInfo();
+        final String host = m_uri.getHost();
+        final int port = m_uri.getPort() >= 0 ? m_uri.getPort() : RemoteFileHandlerRegistry.getDefaultPort("ssh");
+        final String user = m_uri.getUserInfo();
         String password = m_connectionInformation.getPassword();
         if (password != null) {
             password = KnimeEncryption.decrypt(password);
         }
-        JSch jsch = new JSch();
+        final JSch jsch = new JSch();
         // Use keyfile if available
-        String keyfile = m_connectionInformation.getKeyfile();
+        final String keyfile = m_connectionInformation.getKeyfile();
         if (keyfile != null && keyfile.length() != 0) {
             if (password == null) {
                 jsch.addIdentity(keyfile);
@@ -108,11 +107,11 @@ public class SSHConnection extends Connection {
             }
         }
         // Set known hosts if available
-        String knownHosts = m_connectionInformation.getKnownHosts();
+        final String knownHosts = m_connectionInformation.getKnownHosts();
         if (knownHosts != null) {
             jsch.setKnownHosts(knownHosts);
         }
-        Session session = jsch.getSession(user, host, port);
+        final Session session = jsch.getSession(user, host, port);
         session.setPassword(password);
         if (knownHosts == null) {
             session.setConfig("StrictHostKeyChecking", "no");

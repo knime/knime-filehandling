@@ -55,16 +55,16 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
+import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.SwingWorkerWithContext;
@@ -72,6 +72,7 @@ import org.knime.core.util.SwingWorkerWithContext;
 /**
  *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @since 2.11
  */
 public class TestConnectionDialog {
 
@@ -79,7 +80,7 @@ public class TestConnectionDialog {
 
     private JDialog m_dialog;
 
-    private ConnectionMonitor m_monitor;
+    private ConnectionMonitor<? extends Connection> m_monitor;
 
     private JLabel m_info;
 
@@ -108,12 +109,12 @@ public class TestConnectionDialog {
      * @param parent Parent frame of this dialog
      */
     public void open(final Frame parent) {
-        m_monitor = new ConnectionMonitor();
-        JPanel panel = initPanel();
+        m_monitor = new ConnectionMonitor<>();
+        final JPanel panel = initPanel();
         // Create dialog
         m_dialog = new JDialog(parent);
         m_dialog.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
         gbc.weighty = 1;
@@ -139,10 +140,10 @@ public class TestConnectionDialog {
      * @return The initialized panel
      */
     private JPanel initPanel() {
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         // Info
         NodeUtils.resetGBC(gbc);
-        JPanel infoPanel = new JPanel(new GridBagLayout());
+        final JPanel infoPanel = new JPanel(new GridBagLayout());
         m_info = new JLabel();
         m_progress = new JProgressBar();
         m_progress.setIndeterminate(true);
@@ -154,7 +155,7 @@ public class TestConnectionDialog {
         infoPanel.add(m_info, gbc);
         // Buttons
         NodeUtils.resetGBC(gbc);
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
+        final JPanel buttonPanel = new JPanel(new GridBagLayout());
         m_buttonSize = new JButton("Try again").getPreferredSize();
         m_button1 = new JButton();
         m_button1.addActionListener(new ButtonListener());
@@ -166,7 +167,7 @@ public class TestConnectionDialog {
         gbc.gridx++;
         buttonPanel.add(m_cancel, gbc);
         // Outer panel
-        JPanel panel = new JPanel(new GridBagLayout());
+        final JPanel panel = new JPanel(new GridBagLayout());
         NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
         panel.add(infoPanel, gbc);
@@ -196,7 +197,7 @@ public class TestConnectionDialog {
         @Override
         public void actionPerformed(final ActionEvent e) {
             // Get action of the button
-            String action = e.getActionCommand();
+            final String action = e.getActionCommand();
             if (action.equals("ok") || action.equals("cancel")) {
                 // Close dialog on ok or cancel
                 m_dialog.dispose();
@@ -226,11 +227,18 @@ public class TestConnectionDialog {
         @Override
         protected Void doInBackgroundWithContext() throws Exception {
             try {
-                ConnectionMonitor monitor = new ConnectionMonitor();
-                RemoteFileFactory.createRemoteFile(m_connectionInformation.toURI(), m_connectionInformation, monitor);
+                final ConnectionMonitor<? extends Connection> monitor = new ConnectionMonitor<>();
+                final RemoteFile<? extends Connection> file =
+                        RemoteFileFactory.createRemoteFile(m_connectionInformation.toURI(),
+                                                                     m_connectionInformation, monitor);
                 monitor.closeAll();
-                m_success = true;
-            } catch (Exception e) {
+                if (file != null) {
+                    m_success = true;
+                } else {
+                    m_success = false;
+                    m_error = "Could not establish a connection.";
+                }
+            } catch (final Exception e) {
                 NodeLogger.getLogger(getClass()).warn("Couldn't connect", e);
                 m_error = e.getMessage();
                 m_success = false;

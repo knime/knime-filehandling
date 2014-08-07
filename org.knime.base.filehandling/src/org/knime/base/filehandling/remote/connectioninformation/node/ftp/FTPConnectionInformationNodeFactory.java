@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
@@ -49,15 +49,15 @@ package org.knime.base.filehandling.remote.connectioninformation.node.ftp;
 
 import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeDialog;
 import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeModel;
-import org.knime.base.filehandling.remote.connectioninformation.node.Protocol;
+import org.knime.base.filehandling.remote.files.FTPRemoteFileHandler;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
 
 /**
  * <code>NodeFactory</code> for node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class FTPConnectionInformationNodeFactory extends NodeFactory<ConnectionInformationNodeModel> {
@@ -67,7 +67,7 @@ public class FTPConnectionInformationNodeFactory extends NodeFactory<ConnectionI
      */
     @Override
     public ConnectionInformationNodeModel createNodeModel() {
-        return new ConnectionInformationNodeModel(Protocol.FTP);
+        return new ConnectionInformationNodeModel(FTPRemoteFileHandler.PROTOCOL);
     }
 
     /**
@@ -100,7 +100,7 @@ public class FTPConnectionInformationNodeFactory extends NodeFactory<ConnectionI
      */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new ConnectionInformationNodeDialog(Protocol.FTP);
+        return new ConnectionInformationNodeDialog(FTPRemoteFileHandler.PROTOCOL);
     }
 
 }

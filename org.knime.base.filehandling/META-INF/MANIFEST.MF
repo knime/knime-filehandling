@@ -8,6 +8,7 @@ Bundle-Activator: org.knime.base.filehandling.FilehandlingPlugin
 Bundle-Vendor: KNIME GmbH, Konstanz, Germany
 Export-Package: org.knime.base.filehandling,
  org.knime.base.filehandling.mime,
+ org.knime.base.filehandling.remote.connectioninformation.node,
  org.knime.base.filehandling.remote.connectioninformation.port,
  org.knime.base.filehandling.remote.dialog,
  org.knime.base.filehandling.remote.files

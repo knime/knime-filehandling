@@ -58,7 +58,6 @@ import java.awt.event.ActionListener;
 import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
-
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -71,9 +70,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
@@ -107,15 +106,15 @@ public final class RemoteFileChooser {
      */
     private static final String LOADING = "Loading...";
 
-    private URI m_uri;
+    private final URI m_uri;
 
-    private ConnectionInformation m_connectionInformation;
+    private final ConnectionInformation m_connectionInformation;
 
-    private ConnectionMonitor m_connectionMonitor;
+    private final ConnectionMonitor m_connectionMonitor;
 
     private Frame m_parent;
 
-    private int m_selectionType;
+    private final int m_selectionType;
 
     private String m_selectedFile;
 
@@ -129,7 +128,7 @@ public final class RemoteFileChooser {
 
     private JProgressBar m_progress;
 
-    private List<RemoteFileTreeNodeWorker> m_workers;
+    private final List<RemoteFileTreeNodeWorker> m_workers;
 
     private boolean m_closed;
 
@@ -171,11 +170,11 @@ public final class RemoteFileChooser {
      */
     public void open(final Frame parent) {
         m_parent = parent;
-        JPanel panel = initPanel();
+        final JPanel panel = initPanel();
         // Create dialog
         m_dialog = new JDialog(parent);
         m_dialog.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
         gbc.weighty = 1;
@@ -202,10 +201,10 @@ public final class RemoteFileChooser {
      * @return Panel with all components of this dialog
      */
     private JPanel initPanel() {
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         // Info
         NodeUtils.resetGBC(gbc);
-        JPanel infoPanel = new JPanel(new GridBagLayout());
+        final JPanel infoPanel = new JPanel(new GridBagLayout());
         m_info = new JLabel(LOADING);
         m_progress = new JProgressBar();
         m_progress.setIndeterminate(true);
@@ -224,11 +223,11 @@ public final class RemoteFileChooser {
         new InitWorker().execute();
         // Buttons
         NodeUtils.resetGBC(gbc);
-        JPanel buttonPanel = new JPanel(new GridBagLayout());
-        JButton ok = new JButton("OK");
+        final JPanel buttonPanel = new JPanel(new GridBagLayout());
+        final JButton ok = new JButton("OK");
         ok.setActionCommand("ok");
         ok.addActionListener(new ButtonListener());
-        JButton cancel = new JButton("Cancel");
+        final JButton cancel = new JButton("Cancel");
         cancel.setActionCommand("cancel");
         cancel.addActionListener(new ButtonListener());
         ok.setPreferredSize(cancel.getPreferredSize());
@@ -236,7 +235,7 @@ public final class RemoteFileChooser {
         gbc.gridx++;
         buttonPanel.add(cancel, gbc);
         // Outer panel
-        JPanel panel = new JPanel(new GridBagLayout());
+        final JPanel panel = new JPanel(new GridBagLayout());
         NodeUtils.resetGBC(gbc);
         gbc.weightx = 1;
         gbc.weighty = 1;
@@ -283,13 +282,14 @@ public final class RemoteFileChooser {
         @Override
         public void actionPerformed(final ActionEvent e) {
             // Get action of the button
-            String action = e.getActionCommand();
+            final String action = e.getActionCommand();
             if (action.equals("ok")) {
                 // Get selected nodes
-                TreePath[] paths = m_tree.getSelectionModel().getSelectionPaths();
+                final TreePath[] paths = m_tree.getSelectionModel().getSelectionPaths();
                 if (paths.length > 0) {
                     // Get file from selected node (single selection)
-                    RemoteFile file = (RemoteFile)((RemoteFileTreeNode)paths[0].getLastPathComponent()).getUserObject();
+                    final RemoteFile<? extends Connection> file = (RemoteFile<? extends Connection>)
+                            ((RemoteFileTreeNode)paths[0].getLastPathComponent()).getUserObject();
                     try {
                         // Check if the selection has the correct type
                         boolean typeOk = false;
@@ -311,7 +311,7 @@ public final class RemoteFileChooser {
                         if (typeOk) {
                             saveAndClose(file);
                         }
-                    } catch (Exception ex) {
+                    } catch (final Exception ex) {
                         // do not save or close
                     }
                 }
@@ -323,7 +323,7 @@ public final class RemoteFileChooser {
             }
         }
 
-        private void saveAndClose(final RemoteFile file) {
+        private void saveAndClose(final RemoteFile<? extends Connection> file) {
             try {
                 // Save path of the selected file in variable
                 m_selectedFile = file.getFullName();
@@ -331,7 +331,7 @@ public final class RemoteFileChooser {
                 m_dialog.dispose();
                 m_connectionMonitor.closeAll();
                 m_closed = true;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // do not close in case of exception
             }
         }
@@ -356,9 +356,11 @@ public final class RemoteFileChooser {
         protected Void doInBackgroundWithContext() throws Exception {
             m_success = false;
             // Create remote file to the root of the tree
-            RemoteFile root = RemoteFileFactory.createRemoteFile(m_uri, m_connectionInformation, m_connectionMonitor);
+            @SuppressWarnings("unchecked")
+            final RemoteFile<? extends Connection> root =
+                    RemoteFileFactory.createRemoteFile(m_uri, m_connectionInformation, m_connectionMonitor);
             m_dir = root.isDirectory();
-            RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root);
+            final RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root);
             // Create tree model
             m_treemodel = new DefaultTreeModel(rootNode);
             m_success = true;
@@ -408,7 +410,7 @@ public final class RemoteFileChooser {
 
         private boolean m_success;
 
-        private RemoteFileTreeNode m_parentNode;
+        private final RemoteFileTreeNode m_parentNode;
 
         private RemoteFileTreeNode[] m_nodes;
 
@@ -423,7 +425,8 @@ public final class RemoteFileChooser {
         protected Void doInBackgroundWithContext() throws Exception {
             m_success = false;
             // List files in directory
-            RemoteFile[] files = ((RemoteFile)m_parentNode.getUserObject()).listFiles();
+            final RemoteFile<? extends Connection>[] files =
+                    ((RemoteFile<? extends Connection>)m_parentNode.getUserObject()).listFiles();
             m_nodes = new RemoteFileTreeNode[files.length];
             // Create node for each file
             for (int i = 0; i < files.length; i++) {
@@ -484,9 +487,9 @@ public final class RemoteFileChooser {
 
         private boolean m_loaded;
 
-        private String m_name;
+        private final String m_name;
 
-        private boolean m_isDirectory;
+        private final boolean m_isDirectory;
 
         /**
          * Create a tree node to a remote file.
@@ -495,7 +498,7 @@ public final class RemoteFileChooser {
          * @param file The remote file
          * @throws Exception If the file could not be accessed
          */
-        public RemoteFileTreeNode(final RemoteFile file) throws Exception {
+        public RemoteFileTreeNode(final RemoteFile<? extends Connection> file) throws Exception {
             super(file);
             m_loaded = false;
             // Get information needed for the node in creation time
@@ -531,7 +534,7 @@ public final class RemoteFileChooser {
         private void loadChildren() {
             m_loaded = true;
             // Create worker to load the children
-            RemoteFileTreeNodeWorker worker = new RemoteFileTreeNodeWorker(this);
+            final RemoteFileTreeNodeWorker worker = new RemoteFileTreeNodeWorker(this);
             // Add worker to list
             m_workers.add(worker);
             // If list does not hold more than this worker, start it

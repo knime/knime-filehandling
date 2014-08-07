@@ -40,67 +40,40 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
- *
- * History
- *   Sep 5, 2012 (Patrick Winter): created
+ * -------------------------------------------------------------------
  */
-package org.knime.base.filehandling.remote.connectioninformation.node.ssh;
 
-import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeDialog;
-import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeModel;
-import org.knime.base.filehandling.remote.files.SSHRemoteFileHandler;
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+package org.knime.base.filehandling.remote.files;
+
+import java.net.URI;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+
 
 /**
- * <code>NodeFactory</code> for node.
  *
- *
- * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @author Tobias Koetter
+ * @since 2.11
  */
-public class SSHConnectionInformationNodeFactory extends NodeFactory<ConnectionInformationNodeModel> {
+public class FTPRemoteFileHandler implements RemoteFileHandler<FTPConnection> {
+
+    /**The {@link Protocol} of this {@link RemoteFileHandler}.*/
+    public static final Protocol PROTOCOL = new Protocol("ftp", 21, true, false, false, true, true, false);
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ConnectionInformationNodeModel createNodeModel() {
-        return new ConnectionInformationNodeModel(SSHRemoteFileHandler.PROTOCOL);
+    public Protocol[] getSupportedProtocols() {
+        return new Protocol[] {PROTOCOL};
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int getNrNodeViews() {
-        return 0;
+    public RemoteFile<FTPConnection> createRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
+            final ConnectionMonitor<FTPConnection> connectionMonitor) throws Exception {
+        final FTPRemoteFile ftpFile = new FTPRemoteFile(uri, connectionInformation, connectionMonitor);
+        return ftpFile;
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeView<ConnectionInformationNodeModel> createNodeView(final int viewIndex,
-            final ConnectionInformationNodeModel nodeModel) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new ConnectionInformationNodeDialog(SSHRemoteFileHandler.PROTOCOL);
-    }
-
 }

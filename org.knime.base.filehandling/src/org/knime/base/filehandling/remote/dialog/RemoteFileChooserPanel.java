@@ -47,6 +47,13 @@
  */
 package org.knime.base.filehandling.remote.dialog;
 
+import org.knime.base.filehandling.remote.files.Protocol;
+import org.knime.base.filehandling.remote.files.RemoteFileHandlerRegistry;
+
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+
+
+
 import java.awt.Container;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -58,7 +65,6 @@ import java.io.File;
 import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -67,10 +73,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 import org.knime.base.filehandling.NodeUtils;
-import org.knime.base.filehandling.remote.connectioninformation.node.Protocol;
-import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.util.StringHistory;
@@ -85,17 +88,17 @@ public final class RemoteFileChooserPanel {
 
     private ConnectionInformation m_connectionInformation;
 
-    private String m_historyID;
+    private final String m_historyID;
 
     private String m_hostSpecificID;
 
-    private JPanel m_panel;
+    private final JPanel m_panel;
 
-    private JComboBox m_combobox;
+    private final JComboBox m_combobox;
 
-    private JButton m_button;
+    private final JButton m_button;
 
-    private FlowVariableModelButton m_fvmbutton;
+    private final FlowVariableModelButton m_fvmbutton;
 
     /**
      * Create panel.
@@ -138,9 +141,9 @@ public final class RemoteFileChooserPanel {
                 } else {
                     rootUri = new File("/").toURI();
                 }
-                RemoteFileChooser dialog = new RemoteFileChooser(rootUri, m_connectionInformation, selectionMode);
+                final RemoteFileChooser dialog = new RemoteFileChooser(rootUri, m_connectionInformation, selectionMode);
                 dialog.open(frame);
-                String selected = dialog.getSelectedFile();
+                final String selected = dialog.getSelectedFile();
                 if (selected != null) {
                     StringHistory.getInstance(m_hostSpecificID).add(selected);
                     setSelection(selected);
@@ -158,7 +161,7 @@ public final class RemoteFileChooserPanel {
         m_fvmbutton = new FlowVariableModelButton(fvm);
         // Outer panel
         m_panel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         if (border) {
             m_panel.setBorder(new TitledBorder(new EtchedBorder(), label));
         }
@@ -233,10 +236,13 @@ public final class RemoteFileChooserPanel {
      */
     public void setEnabled(final boolean enabled) {
         // Some components will only be enabled if replacement is not enabled
-        boolean replacement = m_fvmbutton.getFlowVariableModel().isVariableReplacementEnabled();
+        final boolean replacement = m_fvmbutton.getFlowVariableModel().isVariableReplacementEnabled();
         boolean browsable = true;
         if (m_connectionInformation != null) {
-            browsable = Protocol.getProtocol(m_connectionInformation.getProtocol()).hasBrowseSupport();
+            final Protocol protocol = RemoteFileHandlerRegistry.getProtocol(m_connectionInformation.getProtocol());
+            if (protocol != null) {
+                browsable = protocol.hasBrowseSupport();
+            }
         }
         m_panel.setEnabled(enabled);
         m_combobox.setEnabled(enabled && !replacement);
@@ -249,19 +255,19 @@ public final class RemoteFileChooserPanel {
      */
     private void updateHistory() {
         // Get history
-        StringHistory history = StringHistory.getInstance(m_hostSpecificID);
+        final StringHistory history = StringHistory.getInstance(m_hostSpecificID);
         // Get values
-        String[] strings = history.getHistory();
+        final String[] strings = history.getHistory();
         // Make values unique through use of set
-        Set<String> set = new LinkedHashSet<String>();
-        for (int i = 0; i < strings.length; i++) {
-            set.add(strings[i]);
+        final Set<String> set = new LinkedHashSet<String>();
+        for (final String string : strings) {
+            set.add(string);
         }
         // Remove old elements
-        DefaultComboBoxModel model = (DefaultComboBoxModel)m_combobox.getModel();
+        final DefaultComboBoxModel model = (DefaultComboBoxModel)m_combobox.getModel();
         model.removeAllElements();
         // Add new elements
-        for (String string : set) {
+        for (final String string : set) {
             model.addElement(string);
         }
     }

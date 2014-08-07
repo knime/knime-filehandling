@@ -40,62 +40,43 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
- * 
- * History
- *   Nov 12, 2012 (Patrick Winter): created
+ * -------------------------------------------------------------------
  */
+
 package org.knime.base.filehandling.remote.files;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+
 
 /**
- * Mapping for the default ports.
- * 
- * 
- * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ *
+ * @author Tobias Koetter
+ * @since 2.11
  */
-public final class DefaultPortMap {
+public class SCPRemoteFileHandler implements RemoteFileHandler<SSHConnection> {
 
-    private static DefaultPortMap portMap = new DefaultPortMap();
-
-    private Map<String, Integer> m_map;
+    /**The {@link Protocol} of this {@link RemoteFileHandler}.*/
+    public static final Protocol PROTOCOL = new Protocol("scp", 22, false, true, true, true, true, true);
 
     /**
-     * Create instance of default port map with known ports.
+     * {@inheritDoc}
      */
-    private DefaultPortMap() {
-        m_map = new HashMap<String, Integer>();
-        // Known ports
-        m_map.put("ssh", 22);
-        m_map.put("sftp", 22);
-        m_map.put("scp", 22);
-        m_map.put("ftp", 21);
-        m_map.put("http", 80);
-        m_map.put("https", 443);
+    @Override
+    public Protocol[] getSupportedProtocols() {
+        return new Protocol[] {PROTOCOL};
     }
 
     /**
-     * Get the instance of the default port map.
-     * 
-     * 
-     * @return Singleton instance of default port map
+     * {@inheritDoc}
      */
-    public static DefaultPortMap getMap() {
-        return portMap;
+    @Override
+    public RemoteFile<SSHConnection> createRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
+            final ConnectionMonitor<SSHConnection> connectionMonitor) throws Exception {
+        // Change protocol to general SSH
+        final URI sshUri = new URI(uri.getScheme().replaceFirst("scp", "ssh"), uri.getSchemeSpecificPart(),
+                              uri.getFragment());
+        final SCPRemoteFile remoteFile = new SCPRemoteFile(sshUri, connectionInformation, connectionMonitor);
+        return remoteFile;
     }
-
-    /**
-     * Get the port to a protocol.
-     * 
-     * 
-     * @param key Name of the protocol
-     * @return Default port of this protocol
-     */
-    public int get(final String key) {
-        Integer port = m_map.get(key);
-        return port != null ? port : -1;
-    }
-
 }

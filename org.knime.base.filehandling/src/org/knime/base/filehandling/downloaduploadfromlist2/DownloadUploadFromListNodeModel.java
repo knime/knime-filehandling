@@ -50,12 +50,12 @@ package org.knime.base.filehandling.downloaduploadfromlist2;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
+import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
@@ -84,8 +84,8 @@ import org.knime.core.node.port.PortType;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class DownloadUploadFromListNodeModel extends NodeModel {
@@ -110,47 +110,47 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         // Create connection monitor
-        ConnectionMonitor monitor = new ConnectionMonitor();
+        final ConnectionMonitor<Connection> monitor = new ConnectionMonitor<>();
         // Create output spec and container
-        DataTableSpec outSpec = createOutSpec();
-        BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
+        final DataTableSpec outSpec = createOutSpec();
+        final BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
         try {
-            String source = m_configuration.getSource();
-            String target = m_configuration.getTarget();
+            final String source = m_configuration.getSource();
+            final String target = m_configuration.getTarget();
             // Get table with source URIs
-            BufferedDataTable table = (BufferedDataTable)inObjects[1];
-            int sourceIndex = table.getDataTableSpec().findColumnIndex(source);
-            int targetIndex = table.getDataTableSpec().findColumnIndex(target);
+            final BufferedDataTable table = (BufferedDataTable)inObjects[1];
+            final int sourceIndex = table.getDataTableSpec().findColumnIndex(source);
+            final int targetIndex = table.getDataTableSpec().findColumnIndex(target);
             int i = 0;
-            int rows = table.getRowCount();
+            final int rows = table.getRowCount();
             // Process each row
-            for (DataRow row : table) {
+            for (final DataRow row : table) {
                 exec.checkCanceled();
                 exec.setProgress((double)i / rows);
                 // Skip missing values
                 if (!row.getCell(sourceIndex).isMissing() && !row.getCell(targetIndex).isMissing()) {
                     ConnectionInformation connectionInformation;
                     // Get source URI
-                    URI sourceUri = ((URIDataValue)row.getCell(sourceIndex)).getURIContent().getURI();
+                    final URI sourceUri = ((URIDataValue)row.getCell(sourceIndex)).getURIContent().getURI();
                     try {
                         m_connectionInformation.fitsToURI(sourceUri);
                         connectionInformation = m_connectionInformation;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         connectionInformation = null;
                     }
                     // Create source file
-                    RemoteFile sourceFile =
+                    final RemoteFile<Connection> sourceFile =
                             RemoteFileFactory.createRemoteFile(sourceUri, connectionInformation, monitor);
                     // Get target URI
-                    URI targetUri = ((URIDataValue)row.getCell(targetIndex)).getURIContent().getURI();
+                    final URI targetUri = ((URIDataValue)row.getCell(targetIndex)).getURIContent().getURI();
                     try {
                         m_connectionInformation.fitsToURI(targetUri);
                         connectionInformation = m_connectionInformation;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         connectionInformation = null;
                     }
                     // Create target file
-                    RemoteFile targetFile =
+                    final RemoteFile<Connection> targetFile =
                             RemoteFileFactory.createRemoteFile(targetUri, connectionInformation, monitor);
                     targetFile.mkDirs(false);
                     // Copy file
@@ -168,8 +168,8 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
 
     /**
      * Factory method for the output table spec.
-     * 
-     * 
+     *
+     *
      * @return Output table spec
      */
     private DataTableSpec createOutSpec() {
@@ -188,28 +188,28 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
 
     /**
      * Copies the source file to the target file location.
-     * 
-     * 
+     *
+     *
      * @param source The source file
      * @param target The target location
      * @param monitor The connection monitor
      * @throws Exception If the operation could not be processed
      */
-    private void copy(final URI sourceUri, final RemoteFile source, final RemoteFile target,
-            final BufferedDataContainer outContainer, final ConnectionMonitor monitor, final ExecutionContext exec)
-            throws Exception {
+    private void copy(final URI sourceUri, final RemoteFile<Connection> source, final RemoteFile<Connection> target,
+            final BufferedDataContainer outContainer, final ConnectionMonitor<Connection> monitor,
+            final ExecutionContext exec) throws Exception {
         if (source.isDirectory()) {
             target.mkDir();
-            RemoteFile[] files = source.listFiles();
+            final RemoteFile<Connection>[] files = source.listFiles();
             String targetUri = target.getURI().toString();
             if (!targetUri.endsWith("/")) {
                 targetUri += "/";
             }
-            for (int i = 0; i < files.length; i++) {
-                URI newTargetUri = new URI(targetUri + NodeUtils.encodePath(files[i].getName()));
-                RemoteFile newTarget =
+            for (final RemoteFile<Connection> file : files) {
+                final URI newTargetUri = new URI(targetUri + NodeUtils.encodePath(file.getName()));
+                final RemoteFile<Connection> newTarget =
                         RemoteFileFactory.createRemoteFile(newTargetUri, target.getConnectionInformation(), monitor);
-                copy(sourceUri, files[i], newTarget, outContainer, monitor, exec);
+                copy(sourceUri, file, newTarget, outContainer, monitor, exec);
             }
         } else {
             boolean abort = false;
@@ -217,7 +217,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
             boolean failure = false;
             try {
                 // Get overwrite policy
-                String overwritePolicy = m_configuration.getOverwritePolicy();
+                final String overwritePolicy = m_configuration.getOverwritePolicy();
                 if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                     // Policy overwrite:
                     // Just write
@@ -226,8 +226,8 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                 } else if (overwritePolicy.equals(OverwritePolicy.OVERWRITEIFNEWER.getName())) {
                     // Policy overwrite if newer:
                     // Get modification time
-                    long sourceTime = source.lastModified();
-                    long targetTime = target.lastModified();
+                    final long sourceTime = source.lastModified();
+                    final long targetTime = target.lastModified();
                     // Check if both times could be retrieved, else do an
                     // overwrite
                     if (sourceTime > 0 && targetTime > 0) {
@@ -252,7 +252,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                     target.write(source, exec);
                     transferred = true;
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 if (abort || m_configuration.getAbortonfail()) {
                     throw e;
                 }
@@ -261,19 +261,19 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                 failure = true;
             }
             // URI to the source file
-            String srcExtension = FilenameUtils.getExtension(sourceUri.getPath());
-            URIContent srcContent = new URIContent(sourceUri, srcExtension);
-            URIDataCell srcUriCell = new URIDataCell(srcContent);
+            final String srcExtension = FilenameUtils.getExtension(sourceUri.getPath());
+            final URIContent srcContent = new URIContent(sourceUri, srcExtension);
+            final URIDataCell srcUriCell = new URIDataCell(srcContent);
             // URI to the created file
-            URI targetUri = target.getURI();
-            String extension = FilenameUtils.getExtension(targetUri.getPath());
-            URIContent content = new URIContent(targetUri, extension);
-            URIDataCell uriCell = new URIDataCell(content);
+            final URI targetUri = target.getURI();
+            final String extension = FilenameUtils.getExtension(targetUri.getPath());
+            final URIContent content = new URIContent(targetUri, extension);
+            final URIDataCell uriCell = new URIDataCell(content);
             // Has the file been transferred or not?
-            BooleanCell transferredCell = BooleanCell.get(transferred);
+            final BooleanCell transferredCell = BooleanCell.get(transferred);
             if (!m_configuration.getAbortonfail()) {
                 // Has the transfer failed?
-                BooleanCell failedCell = BooleanCell.get(failure);
+                final BooleanCell failedCell = BooleanCell.get(failure);
                 // Add file information to the container
                 outContainer.addRowToTable(new DefaultRow("Row" + outContainer.size(), srcUriCell, uriCell,
                         transferredCell, failedCell));
@@ -293,7 +293,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         // Check if a port object is available
         if (inSpecs[0] != null) {
-            ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
+            final ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
             m_connectionInformation = object.getConnectionInformation();
         } else {
             m_connectionInformation = null;
@@ -303,10 +303,10 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
             throw new InvalidSettingsException("No settings available");
         }
         // Check that source configuration is correct
-        String source = m_configuration.getSource();
+        final String source = m_configuration.getSource();
         NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Source", source, URIDataValue.class);
         // Check that target configuration is correct
-        String target = m_configuration.getTarget();
+        final String target = m_configuration.getTarget();
         NodeUtils.checkColumnSelection((DataTableSpec)inSpecs[1], "Target", target, URIDataValue.class);
         if (m_configuration.getSource().equals(m_configuration.getTarget())) {
             throw new InvalidSettingsException("Source and target are the same");
@@ -355,7 +355,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        DownloadUploadFromListConfiguration config = new DownloadUploadFromListConfiguration();
+        final DownloadUploadFromListConfiguration config = new DownloadUploadFromListConfiguration();
         config.loadAndValidate(settings);
         m_configuration = config;
     }

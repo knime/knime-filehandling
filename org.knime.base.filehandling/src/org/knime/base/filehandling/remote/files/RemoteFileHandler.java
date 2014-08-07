@@ -40,67 +40,37 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
- *
- * History
- *   Sep 5, 2012 (Patrick Winter): created
+ * -------------------------------------------------------------------
  */
-package org.knime.base.filehandling.remote.connectioninformation.node.ssh;
 
-import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeDialog;
-import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeModel;
-import org.knime.base.filehandling.remote.files.SSHRemoteFileHandler;
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+package org.knime.base.filehandling.remote.files;
+
+import java.net.URI;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+
 
 /**
- * <code>NodeFactory</code> for node.
  *
- *
- * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @author Tobias Koetter
+ * @param <C> the {@link Connection} type
+ * @since 2.11
  */
-public class SSHConnectionInformationNodeFactory extends NodeFactory<ConnectionInformationNodeModel> {
+public interface RemoteFileHandler<C extends Connection> {
 
     /**
-     * {@inheritDoc}
+     * @return the supported {@link Protocol}s
      */
-    @Override
-    public ConnectionInformationNodeModel createNodeModel() {
-        return new ConnectionInformationNodeModel(SSHRemoteFileHandler.PROTOCOL);
-    }
+    public Protocol[] getSupportedProtocols();
 
     /**
-     * {@inheritDoc}
+     * @param uri The URI
+     * @param connectionInformation Connection information to the given URI
+     * @param connectionMonitor Monitor for the connection
+     * @return Remote file for the given URI
+     * @throws Exception If creation of the remote file or opening of its
+     *             connection failed
      */
-    @Override
-    public int getNrNodeViews() {
-        return 0;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeView<ConnectionInformationNodeModel> createNodeView(final int viewIndex,
-            final ConnectionInformationNodeModel nodeModel) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new ConnectionInformationNodeDialog(SSHRemoteFileHandler.PROTOCOL);
-    }
+    public RemoteFile<C> createRemoteFile(URI uri, ConnectionInformation connectionInformation,
+            ConnectionMonitor<C> connectionMonitor) throws Exception;
 
 }

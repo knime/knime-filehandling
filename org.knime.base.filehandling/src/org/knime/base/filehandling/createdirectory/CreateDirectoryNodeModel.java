@@ -51,11 +51,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
-
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
+import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
@@ -74,8 +74,8 @@ import org.knime.core.node.port.flowvariable.FlowVariablePortObjectSpec;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class CreateDirectoryNodeModel extends NodeModel {
@@ -98,7 +98,7 @@ public class CreateDirectoryNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         // Create connection monitor
-        ConnectionMonitor monitor = new ConnectionMonitor();
+        final ConnectionMonitor<? extends Connection> monitor = new ConnectionMonitor<>();
         try {
             // Generate URI to the target folder
             URI folderUri;
@@ -112,7 +112,8 @@ public class CreateDirectoryNodeModel extends NodeModel {
                 folderUri = new File(m_configuration.getTarget(), m_configuration.getName()).toURI();
             }
             // Create remote file for target selection
-            RemoteFile folder = RemoteFileFactory.createRemoteFile(folderUri, m_connectionInformation, monitor);
+            final RemoteFile<? extends Connection> folder =
+                    RemoteFileFactory.createRemoteFile(folderUri, m_connectionInformation, monitor);
             // Check if abort condition is met
             if (m_configuration.getAbortifexists() && folder.exists()) {
                 throw new Exception("The directory " + folder.getURI() + " does already exist");
@@ -126,7 +127,7 @@ public class CreateDirectoryNodeModel extends NodeModel {
             // Generate name for variable
             String name = m_configuration.getVariablename().replace("?", m_configuration.getName());
             // In case the variable name is already in use, append number
-            Set<String> variables = getAvailableFlowVariables().keySet();
+            final Set<String> variables = getAvailableFlowVariables().keySet();
             if (variables.contains(name)) {
                 int i = 2;
                 name += "_";
@@ -155,7 +156,7 @@ public class CreateDirectoryNodeModel extends NodeModel {
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         // Check if a port object is available
         if (inSpecs[0] != null) {
-            ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
+            final ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)inSpecs[0];
             m_connectionInformation = object.getConnectionInformation();
         }
         // Check if configuration has been loaded
@@ -206,7 +207,7 @@ public class CreateDirectoryNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        CreateDirectoryConfiguration config = new CreateDirectoryConfiguration();
+        final CreateDirectoryConfiguration config = new CreateDirectoryConfiguration();
         config.loadAndValidate(settings);
         m_configuration = config;
     }

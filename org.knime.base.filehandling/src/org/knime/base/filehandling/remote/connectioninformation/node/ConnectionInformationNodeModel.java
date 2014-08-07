@@ -47,12 +47,14 @@
  */
 package org.knime.base.filehandling.remote.connectioninformation.node;
 
-import java.io.File;
-import java.io.IOException;
+import org.knime.base.filehandling.remote.files.Protocol;
 
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
+
+import java.io.File;
+import java.io.IOException;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -66,8 +68,8 @@ import org.knime.core.node.port.PortType;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ConnectionInformationNodeModel extends NodeModel {
@@ -78,7 +80,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
 
     /**
      * Constructor for the node model.
-     * 
+     *
      * @param protocol The protocol of this connection information model
      */
     public ConnectionInformationNodeModel(final Protocol protocol) {
@@ -112,7 +114,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
 
     /**
      * Create the spec, throw exception if no config available.
-     * 
+     *
      * @return ...
      * @throws InvalidSettingsException ...
      */
@@ -120,7 +122,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
         if (m_configuration == null || m_configuration.getHost() == null) {
             throw new InvalidSettingsException("No configuration available");
         }
-        ConnectionInformation connectionInformation =
+        final ConnectionInformation connectionInformation =
                 m_configuration.getConnectionInformation(getCredentialsProvider());
         return new ConnectionInformationPortObjectSpec(connectionInformation);
     }
@@ -140,7 +142,7 @@ public class ConnectionInformationNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        ConnectionInformationConfiguration config = new ConnectionInformationConfiguration(m_protocol);
+        final ConnectionInformationConfiguration config = new ConnectionInformationConfiguration(m_protocol);
         config.loadAndValidate(settings);
         m_configuration = config;
     }

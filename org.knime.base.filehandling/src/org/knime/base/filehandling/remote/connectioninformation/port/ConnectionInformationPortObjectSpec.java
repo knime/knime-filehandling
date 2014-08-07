@@ -48,7 +48,6 @@
 package org.knime.base.filehandling.remote.connectioninformation.port;
 
 import javax.swing.JComponent;
-
 import org.apache.commons.lang.ObjectUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
