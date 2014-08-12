@@ -71,6 +71,7 @@ import org.knime.core.node.port.PortType;
  *
  *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @since 2.11
  */
 public class ConnectionInformationNodeModel extends NodeModel {
 

@@ -95,50 +95,51 @@ import org.knime.core.util.KnimeEncryption;
  *
  *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @since 2.11
  */
 public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
-    private Protocol m_protocol;
+    private final Protocol m_protocol;
 
-    private JTextField m_host;
+    private final JTextField m_host;
 
-    private JSpinner m_port;
+    private final JSpinner m_port;
 
-    private JRadioButton m_authnone;
+    private final JRadioButton m_authnone;
 
-    private JRadioButton m_authpassword;
+    private final JRadioButton m_authpassword;
 
-    private JRadioButton m_authkeyfile;
+    private final JRadioButton m_authkeyfile;
 
-    private ButtonGroup m_authmethod;
+    private final ButtonGroup m_authmethod;
 
-    private JLabel m_userLabel;
+    private final JLabel m_userLabel;
 
-    private JTextField m_user;
+    private final JTextField m_user;
 
-    private JLabel m_passwordLabel;
+    private final JLabel m_passwordLabel;
 
-    private JPasswordField m_password;
+    private final JPasswordField m_password;
 
-    private JLabel m_keyfileLabel;
+    private final JLabel m_keyfileLabel;
 
-    private FilesHistoryPanel m_keyfile;
+    private final FilesHistoryPanel m_keyfile;
 
-    private FlowVariableModelButton m_keyfilefvm;
+    private final FlowVariableModelButton m_keyfilefvm;
 
-    private JCheckBox m_useknownhosts;
+    private final JCheckBox m_useknownhosts;
 
-    private JLabel m_knownhostsLabel;
+    private final JLabel m_knownhostsLabel;
 
-    private FilesHistoryPanel m_knownhosts;
+    private final FilesHistoryPanel m_knownhosts;
 
-    private FlowVariableModelButton m_knownhostsfvm;
+    private final FlowVariableModelButton m_knownhostsfvm;
 
-    private JButton m_testconnection;
+    private final JButton m_testconnection;
 
-    private JCheckBox m_useworkflowcredentials;
+    private final JCheckBox m_useworkflowcredentials;
 
-    private JComboBox m_workflowcredentials;
+    private final JComboBox m_workflowcredentials;
 
     private JPanel m_workflowcredentialspanel;
 
@@ -155,7 +156,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         // Host
         m_host = new JTextField();
         // Port
-        SpinnerModel portModel = new SpinnerNumberModel(0, 0, 65535, 1);
+        final SpinnerModel portModel = new SpinnerNumberModel(0, 0, 65535, 1);
         m_port = new JSpinner(portModel);
         // Authentication method
         m_authnone = new JRadioButton(AuthenticationMethod.NONE.getName());
@@ -211,14 +212,14 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * @return The initialized panel
      */
     private JPanel initLayout() {
-        GridBagConstraints gbc = new GridBagConstraints();
+        final GridBagConstraints gbc = new GridBagConstraints();
         // Host
-        JLabel hostLabel = new JLabel("Host:");
+        final JLabel hostLabel = new JLabel("Host:");
         // Port
-        JLabel portLabel = new JLabel("Port:");
+        final JLabel portLabel = new JLabel("Port:");
         // Authentication panel
         NodeUtils.resetGBC(gbc);
-        JPanel authenticationPanel = new JPanel(new GridBagLayout());
+        final JPanel authenticationPanel = new JPanel(new GridBagLayout());
         authenticationPanel.setBorder(new TitledBorder(new EtchedBorder(), "Authentication"));
         if (m_protocol.hasAuthNoneSupport()) {
             authenticationPanel.add(m_authnone);
@@ -265,7 +266,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         }
         // Outer Panel
         NodeUtils.resetGBC(gbc);
-        JPanel panel = new JPanel(new GridBagLayout());
+        final JPanel panel = new JPanel(new GridBagLayout());
         panel.add(hostLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
@@ -347,19 +348,19 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      */
     private void updateEnabledState() {
         // If a password should be used
-        boolean usePassword =
+        final boolean usePassword =
                 m_authmethod.getSelection() != null ? m_authmethod.getSelection().getActionCommand()
                         .equals(AuthenticationMethod.PASSWORD.getName()) : false;
         // If a keyfile should be used
-        boolean useKeyfile =
+        final boolean useKeyfile =
                 m_authmethod.getSelection() != null ? m_authmethod.getSelection().getActionCommand()
                         .equals(AuthenticationMethod.KEYFILE.getName()) : false;
         // Check if credentials are available
-        boolean credentialsAvailable = m_workflowcredentials.getItemCount() > 0;
+        final boolean credentialsAvailable = m_workflowcredentials.getItemCount() > 0;
         // Check if credentials can be selected
-        boolean credentialsSelectable = (usePassword || useKeyfile) && credentialsAvailable;
+        final boolean credentialsSelectable = (usePassword || useKeyfile) && credentialsAvailable;
         // Check if the user and password have to be set manually
-        boolean manualCredentials = (usePassword || useKeyfile) && !m_useworkflowcredentials.isSelected();
+        final boolean manualCredentials = (usePassword || useKeyfile) && !m_useworkflowcredentials.isSelected();
         // Disable workflow credentials if auth method is none or no credentials
         // are available
         m_workflowcredentialspanel.setEnabled(credentialsSelectable);
@@ -373,7 +374,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_password.setEnabled(manualCredentials);
         // Do this only if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
-            boolean keyfileReplacement = m_keyfilefvm.getFlowVariableModel().isVariableReplacementEnabled();
+            final boolean keyfileReplacement = m_keyfilefvm.getFlowVariableModel().isVariableReplacementEnabled();
             m_keyfileLabel.setEnabled(useKeyfile);
             // Enable file panel only if the flow variable replacement is not
             // active
@@ -382,8 +383,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         }
         // Do this only if the protocol supports known hosts
         if (m_protocol.hasKnownhostsSupport()) {
-            boolean useknownhosts = m_useknownhosts.isSelected();
-            boolean knownhostsReplacement = m_knownhostsfvm.getFlowVariableModel().isVariableReplacementEnabled();
+            final boolean useknownhosts = m_useknownhosts.isSelected();
+            final boolean knownhostsReplacement = m_knownhostsfvm.getFlowVariableModel().isVariableReplacementEnabled();
             m_knownhostsLabel.setEnabled(useknownhosts);
             // Enable file panel only if the flow variable replacement is not
             // active
@@ -435,11 +436,11 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             }
             try {
                 // Get connection information to current settings
-                ConnectionInformation connectionInformation =
+                final ConnectionInformation connectionInformation =
                         createConfig().getConnectionInformation(getCredentialsProvider());
                 // Open dialog
                 new TestConnectionDialog(connectionInformation).open(frame);
-            } catch (InvalidSettingsException e2) {
+            } catch (final InvalidSettingsException e2) {
                 JOptionPane.showMessageDialog(new JFrame(), e2.getMessage(), "Invalid settings",
                         JOptionPane.ERROR_MESSAGE);
             }
@@ -452,7 +453,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
-        ConnectionInformationConfiguration config = createConfig();
+        final ConnectionInformationConfiguration config = createConfig();
         config.save(settings);
     }
 
@@ -464,11 +465,11 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * @throws InvalidSettingsException
      */
     private ConnectionInformationConfiguration createConfig() throws InvalidSettingsException {
-        ConnectionInformationConfiguration config = new ConnectionInformationConfiguration(m_protocol);
+        final ConnectionInformationConfiguration config = new ConnectionInformationConfiguration(m_protocol);
         config.setUseworkflowcredentials(m_useworkflowcredentials.isSelected());
         config.setWorkflowcredentials((String)m_workflowcredentials.getSelectedItem());
         config.setUser(m_user.getText());
-        String host = m_host.getText();
+        final String host = m_host.getText();
         if (!DomainValidator.isValidDomain(host)) {
             throw new InvalidSettingsException("Host invalid. Host must not include scheme, user, port, path or query");
         }
@@ -479,7 +480,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             if (m_password.getPassword().length > 0) {
                 config.setPassword(KnimeEncryption.encrypt(m_password.getPassword()));
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Do not change password
         }
         // Only save if the protocol supports keyfiles
@@ -503,12 +504,12 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
             throws NotConfigurableException {
-        Collection<String> credentials = getCredentialsNames();
+        final Collection<String> credentials = getCredentialsNames();
         m_workflowcredentials.removeAllItems();
-        for (String credential : credentials) {
+        for (final String credential : credentials) {
             m_workflowcredentials.addItem(credential);
         }
-        ConnectionInformationConfiguration config = new ConnectionInformationConfiguration(m_protocol);
+        final ConnectionInformationConfiguration config = new ConnectionInformationConfiguration(m_protocol);
         config.load(settings);
         if (m_workflowcredentials.getItemCount() > 0) {
             m_useworkflowcredentials.setSelected(config.getUseworkflowcredentials());
@@ -517,7 +518,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_user.setText(config.getUser());
         m_host.setText(config.getHost());
         m_port.setValue(config.getPort());
-        String authmethod = config.getAuthenticationmethod();
+        final String authmethod = config.getAuthenticationmethod();
         // Select correct auth method
         if (authmethod.equals(AuthenticationMethod.NONE.getName())) {
             m_authmethod.setSelected(m_authnone.getModel(), true);
@@ -528,7 +529,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         }
         try {
             m_password.setText(KnimeEncryption.decrypt(config.getPassword()));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Leave empty
         }
         // Only load if the protocol supports keyfiles
