@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Oct 30, 2012 (Patrick Winter): created
  */
@@ -82,8 +82,8 @@ import org.knime.core.node.workflow.FlowVariable;
 
 /**
  * <code>NodeDialog</code> for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class DownloadNodeDialog extends NodeDialogPane {
@@ -207,8 +207,8 @@ public class DownloadNodeDialog extends NodeDialogPane {
 
     /**
      * Create and fill panel for the dialog.
-     * 
-     * 
+     *
+     *
      * @return The panel for the dialog
      */
     private JPanel initLayout() {
@@ -290,8 +290,8 @@ public class DownloadNodeDialog extends NodeDialogPane {
 
     /**
      * Listener that updates the enabled state of the components.
-     * 
-     * 
+     *
+     *
      * @author Patrick Winter, KNIME.com, Zurich, Switzerland
      */
     private class UpdateListener implements ActionListener {
@@ -393,5 +393,6 @@ public class DownloadNodeDialog extends NodeDialogPane {
         config.setFilterType(m_filterType.getSelection().getActionCommand());
         config.setFilterPattern(m_filterPattern.getText());
         config.save(settings);
+        m_target.addToHistory();
     }
 }

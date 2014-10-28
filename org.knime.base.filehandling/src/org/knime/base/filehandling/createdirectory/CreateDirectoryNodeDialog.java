@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Oct 30, 2012 (Patrick Winter): created
  */
@@ -78,8 +78,8 @@ import org.knime.core.node.workflow.FlowVariable;
 
 /**
  * <code>NodeDialog</code> for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class CreateDirectoryNodeDialog extends NodeDialogPane {
@@ -101,9 +101,9 @@ public class CreateDirectoryNodeDialog extends NodeDialogPane {
     private JTextField m_name;
 
     private JCheckBox m_abortifexists;
-    
+
     private JLabel m_variablenameLabel;
-    
+
     private JTextField m_variablename;
 
     /**
@@ -141,8 +141,8 @@ public class CreateDirectoryNodeDialog extends NodeDialogPane {
 
     /**
      * Create and fill panel for the dialog.
-     * 
-     * 
+     *
+     *
      * @return The panel for the dialog
      */
     private JPanel initLayout() {
@@ -242,5 +242,6 @@ public class CreateDirectoryNodeDialog extends NodeDialogPane {
         }
         config.setVariablename(m_variablename.getText());
         config.save(settings);
+        m_localtarget.addToHistory();
     }
 }
