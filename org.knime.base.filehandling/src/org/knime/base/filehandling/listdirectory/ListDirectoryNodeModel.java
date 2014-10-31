@@ -209,6 +209,7 @@ public class ListDirectoryNodeModel extends NodeModel {
         if (m_configuration == null) {
             throw new InvalidSettingsException("No settings available");
         }
+        m_configuration.validate("Directory", m_configuration.getDirectory());
         return new PortObjectSpec[]{createOutSpec()};
     }
 

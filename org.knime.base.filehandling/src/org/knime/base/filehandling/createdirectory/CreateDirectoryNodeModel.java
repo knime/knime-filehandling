@@ -163,6 +163,7 @@ public class CreateDirectoryNodeModel extends NodeModel {
         if (m_configuration == null) {
             throw new InvalidSettingsException("No settings available");
         }
+        m_configuration.validate("Directory", m_configuration.getTarget());
         return new PortObjectSpec[]{FlowVariablePortObjectSpec.INSTANCE};
     }
 

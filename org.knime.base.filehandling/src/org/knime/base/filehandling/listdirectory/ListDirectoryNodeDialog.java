@@ -57,14 +57,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooser;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooserPanel;
+import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
@@ -73,6 +72,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.FilesHistoryPanel;
+import org.knime.core.node.util.FilesHistoryPanel.LocationValidation;
 import org.knime.core.node.workflow.FlowVariable;
 
 /**
@@ -103,21 +103,18 @@ public class ListDirectoryNodeDialog extends NodeDialogPane {
     public ListDirectoryNodeDialog() {
         // Info
         m_info = new JLabel();
+
+        FlowVariableModel fvm = createFlowVariableModel("directory", FlowVariable.Type.STRING);
         // Directory (remote location)
-        m_directoryfvm = new FlowVariableModelButton(createFlowVariableModel("directory", FlowVariable.Type.STRING));
         m_directory =
-                new RemoteFileChooserPanel(getPanel(), "Directory", true, "directoryHistory",
-                        RemoteFileChooser.SELECT_DIR, m_directoryfvm.getFlowVariableModel(), m_connectionInformation);
+            new RemoteFileChooserPanel(getPanel(), "Directory", true, "directoryHistory", RemoteFileChooser.SELECT_DIR,
+                fvm, m_connectionInformation);
         // Directory (local location)
-        m_localdirectory = new FilesHistoryPanel("localDirectoryHistory", false);
+        m_localdirectory =
+            new FilesHistoryPanel(fvm,
+                "localDirectoryHistory", LocationValidation.DirectoryInput, new String[]{});
         m_localdirectory.setSelectMode(JFileChooser.DIRECTORIES_ONLY);
-        m_directoryfvm.getFlowVariableModel().addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                boolean replacement = m_directoryfvm.getFlowVariableModel().isVariableReplacementEnabled();
-                m_localdirectory.setEnabled(!replacement);
-            }
-        });
+
         // Recursive
         m_recursive = new JCheckBox("Recursive");
         // Set layout
@@ -141,7 +138,6 @@ public class ListDirectoryNodeDialog extends NodeDialogPane {
         gbc.weightx = 0;
         gbc.gridx++;
         gbc.insets = new Insets(5, 0, 5, 5);
-        m_localdirectoryPanel.add(m_directoryfvm, gbc);
         m_localdirectoryPanel.setBorder(new TitledBorder(new EtchedBorder(), "Directory"));
         // Outer panel
         NodeUtils.resetGBC(gbc);
@@ -163,7 +159,7 @@ public class ListDirectoryNodeDialog extends NodeDialogPane {
      */
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
-            throws NotConfigurableException {
+        throws NotConfigurableException {
         // Check if a port object is available
         if (specs[0] != null) {
             ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec)specs[0];

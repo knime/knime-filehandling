@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 9, 2012 (Patrick Winter): created
  */
@@ -53,8 +53,8 @@ import org.knime.core.node.NodeSettingsWO;
 
 /**
  * Configuration for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class CreateDirectoryConfiguration {
@@ -64,7 +64,7 @@ class CreateDirectoryConfiguration {
     private String m_name;
 
     private boolean m_abortifexists;
-    
+
     private String m_variablename;
 
     /**
@@ -108,14 +108,14 @@ class CreateDirectoryConfiguration {
     public void setAbortifexists(final boolean abortifexists) {
         this.m_abortifexists = abortifexists;
     }
-    
+
     /**
      * @return the variablename
      */
     public String getVariablename() {
         return m_variablename;
     }
-    
+
     /**
      * @param variablename the variablename to set
      */
@@ -125,8 +125,8 @@ class CreateDirectoryConfiguration {
 
     /**
      * Save the configuration.
-     * 
-     * 
+     *
+     *
      * @param settings The <code>NodeSettings</code> to write to
      */
     void save(final NodeSettingsWO settings) {
@@ -138,8 +138,8 @@ class CreateDirectoryConfiguration {
 
     /**
      * Load the configuration.
-     * 
-     * 
+     *
+     *
      * @param settings The <code>NodeSettings</code> to read from
      */
     void load(final NodeSettingsRO settings) {
@@ -151,14 +151,14 @@ class CreateDirectoryConfiguration {
 
     /**
      * Load the configuration and check for validity.
-     * 
-     * 
+     *
+     *
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
     void loadAndValidate(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_target = settings.getString("target");
-        validate("Target", m_target);
+        //validate("Target", m_target);
         m_name = settings.getString("name");
         validate("Name", m_name);
         m_abortifexists = settings.getBoolean("abortifexists");
@@ -168,13 +168,13 @@ class CreateDirectoryConfiguration {
 
     /**
      * Checks if the setting is not null or empty.
-     * 
-     * 
+     *
+     *
      * @param name The name that will be displayed in case of error
      * @param setting The setting to check
      * @throws InvalidSettingsException If the string is null or empty
      */
-    private void validate(final String name, final String setting) throws InvalidSettingsException {
+    public void validate(final String name, final String setting) throws InvalidSettingsException {
         if (setting == null || setting.length() == 0) {
             throw new InvalidSettingsException(name + " missing");
         }
