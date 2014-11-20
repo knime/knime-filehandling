@@ -50,6 +50,7 @@ package org.knime.base.filehandling.remote.files;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
@@ -238,7 +239,7 @@ public abstract class RemoteFile<C extends Connection> implements Comparable<Rem
      */
     public final String getFullName() throws Exception {
         String fullname = getPath();
-        if (!isDirectory()) {
+        if (!isDirectory() && exists()) {
             // Append name to path
             fullname += getName();
         }
