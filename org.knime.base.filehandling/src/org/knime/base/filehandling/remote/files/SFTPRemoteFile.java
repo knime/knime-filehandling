@@ -47,10 +47,6 @@
  */
 package org.knime.base.filehandling.remote.files;
 
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.ChannelSftp.LsEntry;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -59,9 +55,16 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
+
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.ChannelSftp.LsEntry;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpATTRS;
+import com.jcraft.jsch.SftpException;
 
 /**
  * Implementation of the SFTP remote file.
@@ -111,6 +114,30 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
     SFTPRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
             final ConnectionMonitor<SSHConnection> connectionMonitor) {
         super(uri, connectionInformation, connectionMonitor);
+    }
+
+
+    /**
+     * Creates a SFTP remote file for the given URI. It uses information from an "ls" call to populate the metadata
+     * such as filename, size, etc.
+     *
+     *
+     * @param uri The URI
+     * @param parentPath the path of the parent directory
+     * @param lsEntry the LsEntry from a ls call
+     * @param connectionInformation Connection information to the given URI
+     * @param connectionMonitor Monitor for the connection
+     */
+    private SFTPRemoteFile(final URI uri, final String parentPath, final LsEntry lsEntry,
+        final ConnectionInformation connectionInformation, final ConnectionMonitor<SSHConnection> connectionMonitor) {
+        super(uri, connectionInformation, connectionMonitor);
+        SftpATTRS attrs = lsEntry.getAttrs();
+        m_existsCache = Boolean.TRUE;
+        m_isdirCache = attrs.isDir();
+        m_modifiedCache = (long) attrs.getMTime();
+        m_nameCache = lsEntry.getFilename();
+        m_pathCache = attrs.isDir() ? (parentPath + lsEntry.getFilename() + "/") : parentPath;
+        m_sizeCache = attrs.getSize();
     }
 
     /**
@@ -468,6 +495,7 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
             try {
                 cd(m_path);
                 // Get ls entries
+                @SuppressWarnings("unchecked")
                 final List<LsEntry> entries = m_channel.ls(".");
                 final URI thisUri = getURI();
                 // Generate remote file for each entry that is a file
@@ -485,7 +513,8 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                                             thisUri.getQuery(), thisUri.getFragment());
                             // Create remote file and open it
                             final SFTPRemoteFile file =
-                                    new SFTPRemoteFile(uri, getConnectionInformation(), getConnectionMonitor());
+                                new SFTPRemoteFile(uri, internalGetPath(), entries.get(i), getConnectionInformation(),
+                                    getConnectionMonitor());
                             file.open();
                             // Add remote file to the result list
                             files.add(file);
@@ -599,6 +628,7 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                 m_channel.cd("..");
             }
             // Get all entries in working directory
+            @SuppressWarnings("unchecked")
             final List<LsEntry> entries = m_channel.ls(".");
             // Check all entries by name
             for (int i = 0; i < entries.size(); i++) {
