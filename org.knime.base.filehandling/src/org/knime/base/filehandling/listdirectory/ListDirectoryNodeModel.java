@@ -51,6 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
+
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
@@ -79,6 +80,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.core.util.MutableInteger;
 
 /**
  * This is the model implementation.
@@ -127,7 +129,7 @@ public class ListDirectoryNodeModel extends NodeModel {
                     RemoteFileFactory.createRemoteFile(directoryUri, m_connectionInformation, monitor);
             // List the selected directory
             exec.setProgress("Retrieving list of files");
-            listDirectory(file, outContainer, true, exec);
+            listDirectory(file, outContainer, true, exec, new MutableInteger(0), new MutableInteger(0));
             outContainer.close();
         } finally {
             // Close connections
@@ -151,7 +153,7 @@ public class ListDirectoryNodeModel extends NodeModel {
      */
     private void listDirectory(final RemoteFile<? extends Connection> file,
             final BufferedDataContainer outContainer, final boolean root,
-            final ExecutionContext exec) throws Exception {
+            final ExecutionContext exec, final MutableInteger processedEntries, final MutableInteger maxEntries) throws Exception {
         // Check if the user canceled
         exec.checkCanceled();
         if (!root) {
@@ -169,8 +171,12 @@ public class ListDirectoryNodeModel extends NodeModel {
             if (root || m_configuration.getRecursive()) {
                 final RemoteFile<? extends Connection>[] files = file.listFiles();
                 Arrays.sort(files);
+                maxEntries.setValue(maxEntries.intValue() + files.length);
+                exec.setMessage("Scanning " + file.getFullName());
                 for (final RemoteFile<? extends Connection> file2 : files) {
-                    listDirectory(file2, outContainer, false, exec);
+                    listDirectory(file2, outContainer, false, exec, processedEntries, maxEntries);
+                    processedEntries.inc();
+                    exec.setProgress(processedEntries.intValue() / maxEntries.doubleValue());
                 }
             }
         }
