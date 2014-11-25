@@ -70,17 +70,21 @@ public class Protocol {
 
     private final int m_port;
 
-    private final boolean m_authnonesupport;
+    private final boolean m_authNoneSupport;
 
-    private final boolean m_keyfilesupport;
+    private final boolean m_keyFileSupport;
 
-    private final boolean m_knownhostssupport;
+    private final boolean m_knownHostsSupport;
 
-    private final boolean m_testsupport;
+    private final boolean m_testSupport;
 
     private final boolean m_browseSupport;
 
     private final boolean m_userTimeoutSupport;
+
+    private final boolean m_passwordSupport;
+
+    private final boolean m_kerberosSupport;
 
     /**
      * Create a protocol.
@@ -95,18 +99,22 @@ public class Protocol {
      * @param browseSupport If this protocol supports browsing
      * @param userTimeoutSupport <code>true</code> if the user can change the connection's timeout, <code>false</code>
      *            otherwise
+     * @param passwordSupport <code>true</code> if the protocol supports password based authentication
+     * @param kerberorsSupport <code>true</code> if the protocol supports Kerberos based authentication
      */
     public Protocol(final String name, final int port, final boolean authNoneSupport, final boolean keyfileSupport,
                      final boolean knownhostsSupport, final boolean testSupport, final boolean browseSupport,
-                     final boolean userTimeoutSupport) {
+                     final boolean userTimeoutSupport, final boolean passwordSupport, final boolean kerberorsSupport) {
         m_name = name.toLowerCase();
         m_port = port;
-        m_authnonesupport = authNoneSupport;
-        m_keyfilesupport = keyfileSupport;
-        m_knownhostssupport = knownhostsSupport;
-        m_testsupport = testSupport;
+        m_authNoneSupport = authNoneSupport;
+        m_keyFileSupport = keyfileSupport;
+        m_knownHostsSupport = knownhostsSupport;
+        m_testSupport = testSupport;
         m_browseSupport = browseSupport;
         m_userTimeoutSupport = userTimeoutSupport;
+        m_passwordSupport = passwordSupport;
+        m_kerberosSupport = kerberorsSupport;
     }
 
     /**
@@ -127,28 +135,28 @@ public class Protocol {
      * @return If this protocol supports the authentication method none
      */
     public boolean hasAuthNoneSupport() {
-        return m_authnonesupport;
+        return m_authNoneSupport;
     }
 
     /**
      * @return If this protocol has support for key files
      */
     public boolean hasKeyfileSupport() {
-        return m_keyfilesupport;
+        return m_keyFileSupport;
     }
 
     /**
      * @return If this protocol has support for known hosts
      */
     public boolean hasKnownhostsSupport() {
-        return m_knownhostssupport;
+        return m_knownHostsSupport;
     }
 
     /**
      * @return If this protocol has support for testing the connection
      */
     public boolean hasTestSupport() {
-        return m_testsupport;
+        return m_testSupport;
     }
 
     /**
@@ -165,5 +173,19 @@ public class Protocol {
      */
     public boolean hasUserDefinedTimeoutSupport() {
         return m_userTimeoutSupport;
+    }
+
+    /**
+     * @return <code>true</code> if the protocol supports password authentication
+     */
+    public boolean hasPasswordSupport() {
+        return m_passwordSupport;
+    }
+
+    /**
+     * @return <code>true</code> if the protocol supports Kerberos based authentication
+     */
+    public boolean hasKerberosSupport() {
+        return m_kerberosSupport;
     }
 }

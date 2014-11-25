@@ -46,6 +46,7 @@
 package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
+
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 
 
@@ -57,7 +58,7 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 public class SCPRemoteFileHandler implements RemoteFileHandler<SSHConnection> {
 
     /**The {@link Protocol} of this {@link RemoteFileHandler}.*/
-    public static final Protocol PROTOCOL = new Protocol("scp", 22, false, true, true, true, true, true);
+    public static final Protocol PROTOCOL = new Protocol("scp", 22, false, true, true, true, true, true, true, false);
 
     /**
      * {@inheritDoc}

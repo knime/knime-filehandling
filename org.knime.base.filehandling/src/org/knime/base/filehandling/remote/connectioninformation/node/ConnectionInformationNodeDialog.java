@@ -159,13 +159,13 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         final SpinnerModel portModel = new SpinnerNumberModel(0, 0, 65535, 1);
         m_port = new JSpinner(portModel);
         // Authentication method
-        m_authnone = new JRadioButton(AuthenticationMethod.NONE.getName());
+        m_authnone = new JRadioButton(AuthenticationMethod.NONE.getLabel());
         m_authnone.setActionCommand(AuthenticationMethod.NONE.getName());
         m_authnone.addChangeListener(new UpdateListener());
-        m_authpassword = new JRadioButton(AuthenticationMethod.PASSWORD.getName());
+        m_authpassword = new JRadioButton(AuthenticationMethod.PASSWORD.getLabel());
         m_authpassword.setActionCommand(AuthenticationMethod.PASSWORD.getName());
         m_authpassword.addChangeListener(new UpdateListener());
-        m_authkeyfile = new JRadioButton(AuthenticationMethod.KEYFILE.getName());
+        m_authkeyfile = new JRadioButton(AuthenticationMethod.KEYFILE.getLabel());
         m_authkeyfile.setActionCommand(AuthenticationMethod.KEYFILE.getName());
         m_authkeyfile.addChangeListener(new UpdateListener());
         m_authmethod = new ButtonGroup();
@@ -219,16 +219,20 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         final JLabel portLabel = new JLabel("Port:");
         // Authentication panel
         NodeUtils.resetGBC(gbc);
+        int authenticationMethodCount = 0;
         final JPanel authenticationPanel = new JPanel(new GridBagLayout());
         authenticationPanel.setBorder(new TitledBorder(new EtchedBorder(), "Authentication"));
         if (m_protocol.hasAuthNoneSupport()) {
             authenticationPanel.add(m_authnone);
             gbc.gridx++;
+            authenticationMethodCount++;
         }
         authenticationPanel.add(m_authpassword);
+        authenticationMethodCount++;
         if (m_protocol.hasKeyfileSupport()) {
             gbc.gridx++;
             authenticationPanel.add(m_authkeyfile);
+            authenticationMethodCount++;
         }
         // Workflow credentials
         NodeUtils.resetGBC(gbc);
@@ -278,13 +282,17 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         gbc.gridx++;
         gbc.fill = GridBagConstraints.NONE;
         panel.add(m_port, gbc);
+        if (authenticationMethodCount > 1) {
+            gbc.gridx = 0;
+            gbc.gridy++;
+            gbc.gridwidth = 2;
+            gbc.fill = GridBagConstraints.NONE;
+            panel.add(authenticationPanel, gbc);
+        }
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(authenticationPanel, gbc);
         gbc.fill = GridBagConstraints.BOTH;
-        gbc.gridy++;
         panel.add(m_workflowcredentialspanel, gbc);
         gbc.gridwidth = 1;
         gbc.weightx = 0;
@@ -293,13 +301,15 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         gbc.gridx++;
         gbc.weightx = 1;
         panel.add(m_user, gbc);
-        gbc.gridx = 0;
-        gbc.weightx = 0;
-        gbc.gridy++;
-        panel.add(m_passwordLabel, gbc);
-        gbc.gridx++;
-        gbc.weightx = 1;
-        panel.add(m_password, gbc);
+        if (m_protocol.hasPasswordSupport()) {
+            gbc.gridx = 0;
+            gbc.weightx = 0;
+            gbc.gridy++;
+            panel.add(m_passwordLabel, gbc);
+            gbc.gridx++;
+            gbc.weightx = 1;
+            panel.add(m_password, gbc);
+        }
         if (m_protocol.hasKeyfileSupport()) {
             gbc.gridx = 0;
             gbc.weightx = 0;

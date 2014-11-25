@@ -46,6 +46,7 @@
 package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
+
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 
 
@@ -57,7 +58,7 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 public class FTPRemoteFileHandler implements RemoteFileHandler<FTPConnection> {
 
     /**The {@link Protocol} of this {@link RemoteFileHandler}.*/
-    public static final Protocol PROTOCOL = new Protocol("ftp", 21, true, false, false, true, true, false);
+    public static final Protocol PROTOCOL = new Protocol("ftp", 21, true, false, false, true, true, false, true, false);
 
     /**
      * {@inheritDoc}

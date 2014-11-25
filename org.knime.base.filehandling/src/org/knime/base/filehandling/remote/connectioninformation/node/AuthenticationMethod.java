@@ -58,25 +58,28 @@ enum AuthenticationMethod {
     /**
      * Use no authentication.
      */
-    NONE("None"),
+    NONE("None", "None"),
 
     /**
      * Use password.
      */
-    PASSWORD("Password"),
+    PASSWORD("Password", "User"),
 
     /**
      * Use keyfile.
      */
-    KEYFILE("Keyfile");
+    KEYFILE("Keyfile", "Keyfile");
 
     private final String m_name;
+    private final String m_label;
 
     /**
-     * @param name Name of this setting
+     * @param name the unique name of this setting
+     * @param label the label of the setting
      */
-    private AuthenticationMethod(final String name) {
+    private AuthenticationMethod(final String name, final String label) {
         m_name = name;
+        m_label = label;
     }
 
     /**
@@ -84,6 +87,13 @@ enum AuthenticationMethod {
      */
     String getName() {
         return m_name;
+    }
+
+    /**
+     * @return the label of the setting
+     */
+    String getLabel() {
+        return m_label;
     }
 
     /**

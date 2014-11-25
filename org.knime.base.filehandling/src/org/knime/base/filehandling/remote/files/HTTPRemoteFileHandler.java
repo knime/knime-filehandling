@@ -46,6 +46,7 @@
 package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
+
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 
 
@@ -57,9 +58,11 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 public class HTTPRemoteFileHandler implements RemoteFileHandler<Connection> {
 
     /**The http {@link Protocol} of this {@link RemoteFileHandler}.*/
-    public static final Protocol HTTP_PROTOCOL = new Protocol("http", 80, true, false, false, false, false, true);
+    public static final Protocol HTTP_PROTOCOL =
+            new Protocol("http", 80, true, false, false, false, false, true, true, false);
     /**The https {@link Protocol} of this {@link RemoteFileHandler}.*/
-    public static final Protocol HTTPS_PROTOCOL = new Protocol("https", 443, true, false, false, false, false, true);
+    public static final Protocol HTTPS_PROTOCOL =
+            new Protocol("https", 443, true, false, false, false, false, true, true, false);
 
     /**
      * {@inheritDoc}
