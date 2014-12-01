@@ -127,16 +127,25 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
      * @param lsEntry the LsEntry from a ls call
      * @param connectionInformation Connection information to the given URI
      * @param connectionMonitor Monitor for the connection
+     * @throws Exception if an error occurs
      */
     private SFTPRemoteFile(final URI uri, final String parentPath, final LsEntry lsEntry,
-        final ConnectionInformation connectionInformation, final ConnectionMonitor<SSHConnection> connectionMonitor) {
+        final ConnectionInformation connectionInformation, final ConnectionMonitor<SSHConnection> connectionMonitor)
+        throws Exception {
         super(uri, connectionInformation, connectionMonitor);
         SftpATTRS attrs = lsEntry.getAttrs();
         m_existsCache = Boolean.TRUE;
-        m_isdirCache = attrs.isDir();
         m_modifiedCache = (long) attrs.getMTime();
         m_nameCache = lsEntry.getFilename();
-        m_pathCache = attrs.isDir() ? (parentPath + lsEntry.getFilename() + "/") : parentPath;
+        if (attrs.isDir()) {
+            m_isdirCache = true;
+        } else if (attrs.isLink()) {
+            open();
+            openChannel(); // this sets m_isDirCache
+        } else {
+            m_isdirCache = false;
+        }
+        m_pathCache = m_isdirCache ? (parentPath + lsEntry.getFilename() + "/") : parentPath;
         m_sizeCache = attrs.getSize();
     }
 
@@ -578,7 +587,13 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                     // Path points to directory
                     m_path = path;
                     pathSet = true;
+                    if (m_isdirCache == null) {
+                        m_isdirCache = true;
+                    }
                 } else {
+                    if (m_isdirCache == null) {
+                        m_isdirCache = false;
+                    }
                     // Path points to file
                     path = FilenameUtils.getFullPath(path);
                     if (cd(path)) {
