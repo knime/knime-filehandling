@@ -119,9 +119,9 @@ public class SFTPRemoteFileTest {
         Path file = Files.createFile(tempRoot.resolve("file"));
         Files.createDirectory(tempRoot.resolve("dir"));
 
+        String path = tempRoot.toUri().getPath().replace("C:", "cygdrive/c"); // fix path for Windows
         RemoteFile<SSHConnection> remoteFile =
-            m_fileHandler.createRemoteFile(new URI("sftp", "localhost", tempRoot.toString(), null), m_connInfo,
-                m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI("sftp", "localhost", path, null), m_connInfo, m_connectionMonitor);
 
         RemoteFile<SSHConnection>[] dirContents = remoteFile.listFiles();
         assertThat("Unexpected number of directory entries returned", dirContents.length, is(2));

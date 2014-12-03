@@ -498,7 +498,6 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
 
     private SFTPRemoteFile[] internalListFiles() throws Exception {
         final List<RemoteFile<SSHConnection>> files = new LinkedList<>();
-        SFTPRemoteFile[] outFiles = new SFTPRemoteFile[0];
         openChannel();
         if (internalIsDirectory()) {
             try {
@@ -511,10 +510,7 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                 for (int i = 0; i < entries.size(); i++) {
                     // . and .. will return null after normalization
                     String filename = entries.get(i).getFilename();
-                    if (filename != null && (filename.equals(".") || filename.equals(".."))) {
-                        filename = "";
-                    }
-                    if (filename != null && filename.length() > 0) {
+                    if ((filename != null) && !(filename.equals(".") || filename.equals(".."))) {
                         try {
                             // Build URI
                             final URI uri =
@@ -532,14 +528,17 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                         }
                     }
                 }
-                outFiles = files.toArray(new SFTPRemoteFile[files.size()]);
+                SFTPRemoteFile[] outFiles = files.toArray(new SFTPRemoteFile[files.size()]);
+                // Sort results
+                Arrays.sort(outFiles);
+                return outFiles;
             } catch (final SftpException e) {
                 // Return 0 files
+                return new SFTPRemoteFile[0];
             }
+        } else {
+            return new SFTPRemoteFile[0];
         }
-        // Sort results
-        Arrays.sort(outFiles);
-        return outFiles;
     }
 
     /**
@@ -568,6 +567,9 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
      * @throws Exception If the channel could not be opened
      */
     private void openChannel() throws Exception {
+        if (getConnection() == null) {
+            open();
+        }
         // Check if channel is ready
         if (m_channel == null || !m_channel.getSession().isConnected() || !m_channel.isConnected()) {
             final Session session = getConnection().getSession();
