@@ -133,8 +133,9 @@ public class SFTPRemoteFileTest {
         assertThat("Entry at position 1 is a directory", dirContents[1].isDirectory(), is(false));
 
         // list on file, should not return any entries
+        path = file.toUri().getPath().replace("C:", "cygdrive/c"); // fix path for Windows
         remoteFile =
-            m_fileHandler.createRemoteFile(new URI("sftp", "localhost", file.toString(), null), m_connInfo,
+            m_fileHandler.createRemoteFile(new URI("sftp", "localhost", path, null), m_connInfo,
                 m_connectionMonitor);
 
         dirContents = remoteFile.listFiles();
