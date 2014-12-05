@@ -74,8 +74,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class URIToStringNodeModel extends NodeModel {
@@ -110,8 +110,8 @@ class URIToStringNodeModel extends NodeModel {
     /**
      * Create a rearranger that either replaces the selected column with its
      * string counterpart, or appends a new column.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @return Rearranger that will append a new column or replace the selected
      *         column
@@ -150,8 +150,8 @@ class URIToStringNodeModel extends NodeModel {
 
     /**
      * Create the correspondent string cell to the selected URI cell.
-     * 
-     * 
+     *
+     *
      * @param row The row with the URI cell
      * @param spec Specification of the input table
      * @return String cell
@@ -172,8 +172,8 @@ class URIToStringNodeModel extends NodeModel {
 
     /**
      * Check if the settings are all valid.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -185,7 +185,7 @@ class URIToStringNodeModel extends NodeModel {
         if (append) {
             // Is column name empty?
             if (m_columnname.getStringValue().equals("")) {
-                throw new InvalidSettingsException("Column name can not be empty");
+                throw new InvalidSettingsException("Column name cannot be empty");
             }
             if (inSpec.findColumnIndex(m_columnname.getStringValue()) != -1) {
                 throw new InvalidSettingsException("Column name already taken");

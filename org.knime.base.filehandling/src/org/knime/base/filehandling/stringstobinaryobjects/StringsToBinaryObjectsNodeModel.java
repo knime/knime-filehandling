@@ -75,8 +75,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class StringsToBinaryObjectsNodeModel extends NodeModel {
@@ -114,8 +114,8 @@ class StringsToBinaryObjectsNodeModel extends NodeModel {
     /**
      * Create a rearranger that either replaces the selected column with its
      * binary object counterpart, or appends a new column.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @param exec Context of this execution
      * @return Rearranger that will append a new column or replace the selected
@@ -158,8 +158,8 @@ class StringsToBinaryObjectsNodeModel extends NodeModel {
 
     /**
      * Create a cell containing the binary object.
-     * 
-     * 
+     *
+     *
      * @param row Row containing the string cell
      * @param spec Specification of the input table
      * @param bocellfactory Factory for the creation of the binary objects
@@ -187,8 +187,8 @@ class StringsToBinaryObjectsNodeModel extends NodeModel {
 
     /**
      * Check if the settings are all valid.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -200,7 +200,7 @@ class StringsToBinaryObjectsNodeModel extends NodeModel {
         if (append) {
             // Is column name empty?
             if (m_columnname.getStringValue().equals("")) {
-                throw new InvalidSettingsException("Column name can not be empty");
+                throw new InvalidSettingsException("Column name cannot be empty");
             }
             if (inSpec.findColumnIndex(m_columnname.getStringValue()) != -1) {
                 throw new InvalidSettingsException("Column name already taken");

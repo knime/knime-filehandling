@@ -79,8 +79,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 final class FilesToBinaryObjectsNodeModel extends NodeModel {
@@ -116,8 +116,8 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     /**
      * Create a rearranger that adds the binary objects to the table.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @param exec Context of this execution
      * @return Rearranger that will add a binary object column or replace the
@@ -156,8 +156,8 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     /**
      * Check if the settings are all valid.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -169,7 +169,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
         if (append) {
             // Is the binary object column name empty?
             if (m_bocolumnname.getStringValue().equals("")) {
-                throw new InvalidSettingsException("Binary object column name can not be empty");
+                throw new InvalidSettingsException("Binary object column name cannot be empty");
             }
             if (inSpec.findColumnIndex(m_bocolumnname.getStringValue()) != -1) {
                 throw new InvalidSettingsException("Binary object column name already taken");
