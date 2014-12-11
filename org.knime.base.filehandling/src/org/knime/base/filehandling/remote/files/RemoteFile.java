@@ -369,7 +369,7 @@ public abstract class RemoteFile<C extends Connection> implements Comparable<Rem
      * Check for the last time the file was modified.
      *
      *
-     * @return Time in UNIX-Time or 0 if the file does not exist
+     * @return Time in UNIX-Time (seconds since 01.01.1970) or 0 if the file does not exist
      * @throws Exception If the operation could not be executed
      */
     public abstract long lastModified() throws Exception;
@@ -474,5 +474,10 @@ public abstract class RemoteFile<C extends Connection> implements Comparable<Rem
             // put this after o
         }
         return result;
+    }
+
+    @Override
+    public boolean equals(final Object rf) {
+        return 0 == this.compareTo((RemoteFile<C>)rf);
     }
 }

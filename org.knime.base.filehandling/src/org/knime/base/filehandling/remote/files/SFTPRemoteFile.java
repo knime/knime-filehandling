@@ -52,6 +52,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -321,16 +322,20 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
         // it can be moved
         if (file instanceof SFTPRemoteFile && getIdentifier().equals(file.getIdentifier())) {
             try {
-                openChannel();
                 final SFTPRemoteFile source = (SFTPRemoteFile)file;
                 // Remember if file existed before
-                final boolean existed = internalExists();
+                RemoteFile<SSHConnection>[] dirContents = listFiles();
+                final boolean existed = Arrays.asList(dirContents).contains(source);
+                openChannel();
                 // Move file
-                m_channel.rename(source.getURI().getPath(), getURI().getPath());
+                m_channel.rename(source.getFullName(), getFullName() + source.getName());
                 resetCache();
+
+                dirContents = listFiles();
+                final boolean exists = Arrays.asList(dirContents).contains(source);
                 // Success if target did not exist and now exists and the source
                 // does not exist anymore
-                final boolean success = !existed && internalExists() && !source.exists();
+                final boolean success = !existed && exists;
                 if (!success) {
                     throw new Exception("Move operation failed");
                 }
@@ -462,6 +467,8 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                     for (final RemoteFile<? extends Connection> file : files) {
                         file.delete();
                     }
+                    // move to parent directory
+                    m_channel.cd("..");
                     // Delete this directory
                     m_channel.rmdir(path);
                     resetCache();
@@ -547,10 +554,19 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
     @Override
     public boolean mkDir() throws Exception {
         boolean result = false;
+        if (exists()) {
+            if (!isDirectory()) {
+                throw new FileAlreadyExistsException("File with the same name already exists: " + getFullName());
+            } else {
+                return false;
+            }
+        }
         try {
             openChannel();
-            m_channel.mkdir(getFullName());
+            m_channel.mkdir(getName() + "/");
             resetCache();
+            getLsEntry();
+            m_path = m_pathCache;
             result = true;
         } catch (final Exception e) {
             // result stays false
@@ -584,7 +600,7 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
             boolean pathSet = false;
             String path = getURI().getPath();
             // If URI has path
-            if (path != null && path.length() > 0) {
+            if (path != null && !path.isEmpty()) {
                 if (cd(path)) {
                     // Path points to directory
                     m_path = path;

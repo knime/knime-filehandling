@@ -50,11 +50,13 @@ package org.knime.base.filehandling.remote.files;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
@@ -183,7 +185,8 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public long lastModified() throws Exception {
-        return getURI().toURL().openConnection().getLastModified();
+    	// convert from milliseconds to seconds
+        return getURI().toURL().openConnection().getLastModified() / 1000;
     }
 
     /**
@@ -224,6 +227,8 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
 
         // Create request
         final DefaultHttpClient client = new DefaultHttpClient(params);
+
+        final HttpGet request;
         // If user info is given in the URI use HTTP basic authentication
         if (getURI().getUserInfo() != null && getURI().getUserInfo().length() > 0) {
             // Decrypt password from the connection information
@@ -234,10 +239,14 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
                 port = RemoteFileHandlerRegistry.getDefaultPort(getType());
             }
             final Credentials credentials = new UsernamePasswordCredentials(getURI().getUserInfo(), password);
+
             final AuthScope scope = new AuthScope(getURI().getHost(), port);
             client.getCredentialsProvider().setCredentials(scope, credentials);
+            request = new HttpGet(getURI());
+            request.addHeader(BasicScheme.authenticate(credentials, "UTF-8", false));
+        } else {
+            request = new HttpGet(getURI());
         }
-        final HttpGet request = new HttpGet(getURI());
         // Return response
         return client.execute(request);
     }
