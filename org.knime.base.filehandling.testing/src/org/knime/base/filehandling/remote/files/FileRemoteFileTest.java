@@ -44,7 +44,7 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   02.12.2014 (thor): created
+ *   08.12.2014 (tibuch): created
  */
 package org.knime.base.filehandling.remote.files;
 
@@ -54,6 +54,7 @@ import static org.junit.Assert.assertThat;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -66,46 +67,61 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 import org.knime.core.util.PathUtils;
 
 /**
- * Testcases for {@link SFTPRemoteFile}.
  *
- * @author Thorsten Meinl, KNIME.com, Zurich, Switzerland
+ * @author Tim-Oliver Buchholz, KNIME.com, Zurich, Switzerland
  */
-public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
+public class FileRemoteFileTest extends RemoteFileTest<Connection> {
+
     /**
-     * Set up a connection to localhost with the current user using PPK authentication.
+     * {@inheritDoc}
      */
     @Before
     @Override
     public void setup() {
         m_connInfo = new ConnectionInformation();
-        m_connInfo.setHost("localhost");
-        m_connInfo.setUser(System.getProperty("user.name"));
-        m_connInfo.setProtocol("ssh");
-        m_connInfo.setPort(22);
+        m_connInfo.setProtocol("file");
 
-        Path sshDir = Paths.get(System.getProperty("user.home"), ".ssh");
-        if (Files.exists(sshDir.resolve("id_ecdsa"))) {
-            m_connInfo.setKeyfile(sshDir.resolve("id_ecdsa").toString());
-        } else if (Files.exists(sshDir.resolve("id_dsa"))) {
-            m_connInfo.setKeyfile(sshDir.resolve("id_dsa").toString());
-        } else if (Files.exists(sshDir.resolve("id_rsa"))) {
-            m_connInfo.setKeyfile(sshDir.resolve("id_rsa").toString());
-        }
+        m_type = "file";
+        m_host = null;
 
-        m_type = "sftp";
-        m_host = "localhost";
+        m_connectionMonitor = new ConnectionMonitor<Connection>();
 
-        m_connectionMonitor = new ConnectionMonitor<SSHConnection>();
-
-        m_fileHandler = new SFTPRemoteFileHandler();
+        m_fileHandler = new FileRemoteFileHandler();
     }
 
     /**
      * {@inheritDoc}
+     * @throws MalformedURLException
      */
     @Override
-    public String createPath(final Path p) {
-        return p.toUri().getPath().replace("C:", "cygdrive/c"); // fix path for Windows;
+    public String createPath(final Path p) throws MalformedURLException {
+
+        return p.toUri().toURL().getPath();
+
+    }
+
+    /**
+     * Test for {@link FileRemoteFile#getParent()}.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testGetParent() throws Exception {
+        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+
+        Path file = Files.createFile(tempRoot.resolve("file"));
+
+        String path = createPath(file);
+        RemoteFile<Connection> remoteFile =
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+
+        path = createPath(tempRoot);
+        RemoteFile<Connection> remoteTempRoot =
+                m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+
+        remoteFile.getParent().equals(remoteTempRoot);
+        assertThat("Parent is not a directory", remoteFile.getParent().isDirectory(), is(true));
+        assertThat("Incorrect name of parent direcotry", remoteFile.getParent().getName(), equalTo(remoteTempRoot.getName()));
     }
 
     /**
@@ -116,22 +132,34 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
         super.testMove();
 
         ConnectionInformation connInfo = new ConnectionInformation();
-        connInfo = new ConnectionInformation();
-        connInfo.setProtocol("file");
+        connInfo.setHost("localhost");
+        connInfo.setUser(System.getProperty("user.name"));
+        connInfo.setProtocol("ssh");
+        connInfo.setPort(22);
 
-        ConnectionMonitor<Connection> connectionMonitor = new ConnectionMonitor<Connection>();
-        RemoteFileHandler<Connection> fileFileHandler = new FileRemoteFileHandler();
+        Path sshDir = Paths.get(System.getProperty("user.home"), ".ssh");
+        if (Files.exists(sshDir.resolve("id_ecdsa"))) {
+            connInfo.setKeyfile(sshDir.resolve("id_ecdsa").toString());
+        } else if (Files.exists(sshDir.resolve("id_dsa"))) {
+            connInfo.setKeyfile(sshDir.resolve("id_dsa").toString());
+        } else if (Files.exists(sshDir.resolve("id_rsa"))) {
+            connInfo.setKeyfile(sshDir.resolve("id_rsa").toString());
+        }
 
-        Path fileTempRoot = PathUtils.createTempDir(getClass().getName());
+        ConnectionMonitor<SSHConnection> connectionMonitor = new ConnectionMonitor<SSHConnection>();
 
-        Path fileFile = Files.createFile(fileTempRoot.resolve("sftpFile"));
+        RemoteFileHandler<SSHConnection> sftpFileHandler = new SFTPRemoteFileHandler();
 
-        String fileFilePath = fileFile.toUri().toURL().getPath();
-        RemoteFile<Connection> fileRemoteFile =
-            fileFileHandler.createRemoteFile(new URI("file", null, fileFilePath, null), connInfo, connectionMonitor);
+        Path sftpTempRoot = PathUtils.createTempDir(getClass().getName());
+
+        Path sftpFile = Files.createFile(sftpTempRoot.resolve("sftpFile"));
+
+        String sftpFilePath = sftpFile.toUri().getPath().replace("C:", "cygdrive/c");
+        RemoteFile<SSHConnection> sftpRemoteFile =
+            sftpFileHandler.createRemoteFile(new URI("sftp", "localhost", sftpFilePath, null), connInfo, connectionMonitor);
 
         String str1 = "sftpRemoteFile was here";
-        try (OutputStream os = fileRemoteFile.openOutputStream()) {
+        try (OutputStream os = sftpRemoteFile.openOutputStream()) {
             IOUtils.write(str1, os);
         }
 
@@ -140,10 +168,10 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
         Path file = Files.createFile(tempRoot.resolve("file"));
 
         String path = createPath(file);
-        RemoteFile<SSHConnection> remoteFile =
+        RemoteFile<Connection> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
-        remoteFile.move((RemoteFile)fileRemoteFile, null);
+        remoteFile.move((RemoteFile)sftpRemoteFile, null);
 
         try (InputStream is = remoteFile.openInputStream()) {
             String str2 = IOUtils.toString(is, "UTF-8");
@@ -152,19 +180,5 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
 
     }
 
-    /**
-     * Test if URI without path works.
-     *
-     * @throws Exception if error occurs
-     */
-    @Test
-    public void testOpenChannelWithoutPath() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
-        Files.createFile(tempRoot.resolve("file"));
 
-        RemoteFile<SSHConnection> remoteFile =
-                m_fileHandler.createRemoteFile(new URI(m_type, m_host, null, null), m_connInfo, m_connectionMonitor);
-        assertThat("Directory does not exist", remoteFile.exists(), is(true));
-        assertThat("Directory is not root directory", remoteFile.getFullName(), equalTo("/"));
-    }
 }

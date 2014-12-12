@@ -53,7 +53,11 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+
 import org.knime.core.node.ExecutionContext;
 
 /**
@@ -122,10 +126,9 @@ public class FileRemoteFile extends RemoteFile<Connection> {
     public void move(final RemoteFile<Connection> file, final ExecutionContext exec) throws Exception {
         if (file instanceof FileRemoteFile) {
             final FileRemoteFile source = (FileRemoteFile)file;
-            final boolean success = new File(getURI()).renameTo(new File(source.getURI()));
-            if (!success) {
-                throw new Exception("Move operation failed");
-            }
+            Path toMove = Paths.get(source.getURI());
+            Path newName = Paths.get(getURI()).resolve(source.getName());
+            Files.move(toMove, newName);
         } else {
             super.move(file, exec);
         }
@@ -198,7 +201,13 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public boolean mkDir() throws Exception {
-        return new File(getURI()).mkdir();
+        Path f = Paths.get(getURI());
+        if (Files.isDirectory(f)) {
+            return false;
+        } else {
+            Files.createDirectory(f);
+            return true;
+        }
     }
 
     /**

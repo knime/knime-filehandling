@@ -65,7 +65,9 @@ import org.knime.core.node.ExecutionContext;
  *
  *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @deprecated use {@link SFTPRemoteFile} instead
  */
+@Deprecated
 public class SCPRemoteFile extends RemoteFile<SSHConnection> {
 
     private static final String EXCEPTION_FILE_NOT_FOUND = "File not found";
