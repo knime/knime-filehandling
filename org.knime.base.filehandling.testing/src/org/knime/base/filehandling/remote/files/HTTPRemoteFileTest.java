@@ -115,6 +115,14 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
      * {@inheritDoc}
      */
     @Override
+    public void testListFilesSymlinks() throws Exception {
+        // not supported by http
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void testIsDirectory() throws Exception {
         // not supported by http
     }
