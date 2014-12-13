@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.knime.base.filehandling.remote.files.Protocol;
@@ -62,6 +63,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
 import org.knime.core.node.ModelContentWO;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.util.KnimeEncryption;
 
 /**
  * Contains the connection information for a connection.
@@ -298,12 +300,11 @@ public class ConnectionInformation implements Serializable {
     }
 
     /**
-     * Set the password.
+     * Set the password. The password must be encrypted by the {@link KnimeEncryption} class.
      *
+     * Password may be <code>null</code> to disable authentication via password.
      *
-     * Password may be null to disable authentication via password.
-     *
-     * @param password the password to set
+     * @param password the encrypted password
      */
     public void setPassword(final String password) {
         m_password = password;
@@ -384,10 +385,9 @@ public class ConnectionInformation implements Serializable {
     }
 
     /**
-     * Get the password.
+     * Get the encrypted password. Use {@link KnimeEncryption} to decrypt the password.
      *
-     *
-     * @return the password
+     * @return the encrypted password
      */
     public String getPassword() {
         return m_password;
