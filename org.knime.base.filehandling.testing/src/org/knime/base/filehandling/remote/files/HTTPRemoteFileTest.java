@@ -61,6 +61,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.util.KnimeEncryption;
 
 /**
  *
@@ -108,6 +109,14 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
      */
     @Override
     public void testListFiles() throws Exception {
+        // not supported by http
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void testListFilesSymlinks() throws Exception {
         // not supported by http
     }
 
@@ -228,12 +237,13 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
     @Test
     public void testOpenInputStreamWithUserInfo() throws Exception {
 
-        m_connInfo.setPassword("testing");
+        m_connInfo.setPassword(KnimeEncryption.encrypt("testing".toCharArray()));
         URI u = new URI(m_type, "knime", m_host, 443, "/filehandling-tests/password-protected/README.txt", null, null);
         RemoteFile<Connection> remoteFile =
                 m_fileHandler.createRemoteFile(u, m_connInfo, m_connectionMonitor);
 
-        String str1 = "This location is used by the HTTP Filehandling test. It must be password protected in order to check whether retrieving with authentication works.\n";
+        String str1 = "This location is used by the HTTP Filehandling test. It must be password protected in order to"
+            + " check whether retrieving with authentication works.\n";
         try (InputStream stream = remoteFile.openInputStream()) {
             String str2 = IOUtils.toString(stream);
             assertThat("Strings do not have same length", str2.length(), is(str1.length()));
