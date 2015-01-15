@@ -50,7 +50,11 @@ package org.knime.base.filehandling.listdirectory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.NodeUtils;
@@ -61,6 +65,8 @@ import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
+import org.knime.base.node.io.listfiles.ListFiles.Filter;
+import org.knime.base.util.WildcardMatcher;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
@@ -93,6 +99,14 @@ public class ListDirectoryNodeModel extends NodeModel {
     private ConnectionInformation m_connectionInformation;
 
     private ListDirectoryConfiguration m_configuration;
+
+    private String[] m_extensions;
+
+    private Pattern m_regExpPattern;
+
+    private int m_analyzedFiles;
+
+    private int m_currentRowID;
 
     /**
      * Constructor for the node model.
@@ -171,14 +185,102 @@ public class ListDirectoryNodeModel extends NodeModel {
             if (root || m_configuration.getRecursive()) {
                 final RemoteFile<? extends Connection>[] files = file.listFiles();
                 Arrays.sort(files);
-                maxEntries.setValue(maxEntries.intValue() + files.length);
+                final RemoteFile<? extends Connection>[] filteredFiles = filterFiles(files);
+                maxEntries.setValue(maxEntries.intValue() + filteredFiles.length);
                 exec.setMessage("Scanning " + file.getFullName());
-                for (final RemoteFile<? extends Connection> file2 : files) {
+                for (final RemoteFile<? extends Connection> file2 : filteredFiles) {
                     listDirectory(file2, outContainer, false, exec, processedEntries, maxEntries);
                     processedEntries.inc();
                     exec.setProgress(processedEntries.intValue() / maxEntries.doubleValue());
                 }
             }
+        }
+    }
+
+    /**
+     * @param files
+     * @return
+     */
+    private RemoteFile<? extends Connection>[] filterFiles(final RemoteFile<? extends Connection>[] files) {
+        String extString = m_configuration.getExtensionsString();
+        Filter filter = m_configuration.getFilter();
+        switch (filter) {
+        case None:
+            break;
+        case Extensions:
+            // extensions had to be splitted
+            m_extensions = extString.split(";");
+            break;
+        case RegExp:
+            // no break;
+        case Wildcards:
+            String patternS;
+            if (filter.equals(Filter.Wildcards)) {
+                patternS = WildcardMatcher.wildcardToRegex(extString);
+            } else {
+                patternS = extString;
+            }
+            if (m_configuration.isCaseSensitive()) {
+                m_regExpPattern = Pattern.compile(patternS);
+            } else {
+                m_regExpPattern =
+                    Pattern.compile(patternS, Pattern.CASE_INSENSITIVE);
+            }
+            break;
+        default:
+            throw new IllegalStateException("Unknown filter: " + filter);
+            // transform wildcard to regExp.
+        }
+        m_analyzedFiles = 0;
+        m_currentRowID = 0;
+        List<RemoteFile<? extends Connection>> filteredFiles = new ArrayList<RemoteFile<? extends Connection>>();
+        for (RemoteFile<?> f : files) {
+            try {
+                if (f.isDirectory() || satisfiesFilter(f.getName())) {
+                    filteredFiles.add(f);
+                }
+            } catch (Exception e) {
+                // catch or throw?
+            }
+        }
+        return filteredFiles.toArray(new RemoteFile[filteredFiles.size()]);
+    }
+
+    /**
+     * Checks if the given File name satisfies the selected filter requirements.
+     *
+     * @param name filename
+     * @return True if satisfies the file else False
+     */
+    private boolean satisfiesFilter(final String name) {
+        switch (m_configuration.getFilter()) {
+        case None:
+            return true;
+        case Extensions:
+            if (m_configuration.isCaseSensitive()) {
+                // check if one of the extensions matches
+                for (String ext : m_extensions) {
+                    if (name.endsWith(ext)) {
+                        return true;
+                    }
+                }
+            } else {
+                // case insensitive check on toLowerCase
+                String lowname = name.toLowerCase();
+                for (String ext : m_extensions) {
+                    if (lowname.endsWith(ext.toLowerCase())) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        case RegExp:
+            // no break;
+        case Wildcards:
+            Matcher matcher = m_regExpPattern.matcher(name);
+            return matcher.matches();
+        default:
+            return false;
         }
     }
 
@@ -243,7 +345,7 @@ public class ListDirectoryNodeModel extends NodeModel {
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         if (m_configuration != null) {
-            m_configuration.save(settings);
+            m_configuration.saveSettingsTo(settings);
         }
     }
 
@@ -252,7 +354,7 @@ public class ListDirectoryNodeModel extends NodeModel {
      */
     @Override
     protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        new ListDirectoryConfiguration().loadAndValidate(settings);
+        new ListDirectoryConfiguration().loadSettingsInModel(settings);
     }
 
     /**
@@ -261,7 +363,7 @@ public class ListDirectoryNodeModel extends NodeModel {
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         final ListDirectoryConfiguration config = new ListDirectoryConfiguration();
-        config.loadAndValidate(settings);
+        config.loadSettingsInModel(settings);
         m_configuration = config;
     }
 

@@ -47,9 +47,12 @@
  */
 package org.knime.base.filehandling.listdirectory;
 
+
+import org.knime.base.node.io.listfiles.ListFiles.Filter;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.util.StringHistory;
 
 /**
  * Configuration for the node.
@@ -59,9 +62,40 @@ import org.knime.core.node.NodeSettingsWO;
  */
 class ListDirectoryConfiguration {
 
+    /** Key to store the location settings. */
+    public static final String LOCATION_SETTINGS = "directory";
+
+    /** Key to store the RECURSIVE_SETTINGS. */
+    public static final String RECURSIVE_SETTINGS = "recursive";
+
+    /** ID for the file history. */
+    private static final String LIST_FILES_HISTORY_ID = "List Files History ID";
+
+    /** ID for the extension history. */
+    private static final String LIST_FILES_EXT_HISTORY_ID =
+            "LIST_FILES_EXT_HISTORY_ID";
+
+    /** Key to store the Filter Settings. */
+    public static final String FILTER_SETTINGS = "FILTER_SETTINGS";
+
+    /** Key to store the case sensitive settings. */
+    public static final String CASE_SENSITIVE_STRING = "CASESENSITVE";
+
+    /** Key to store the extension_settings. */
+    public static final String EXTENSIONS_SETTINGS = "EXTENSIONS";
+
     private String m_directory;
 
     private boolean m_recursive = true;
+
+    /** contains the log-format of the files. */
+    private String m_extensionsString;
+
+    /** Flag to switch between case sensitive and insensitive. */
+    private boolean m_caseSensitive = false;
+
+    /** Filter type. */
+    private Filter m_filter = Filter.None;
 
     /**
      * @return the directory
@@ -97,9 +131,24 @@ class ListDirectoryConfiguration {
      *
      * @param settings The <code>NodeSettings</code> to write to
      */
-    void save(final NodeSettingsWO settings) {
-        settings.addString("directory", m_directory);
-        settings.addBoolean("recursive", m_recursive);
+    void saveSettingsTo(final NodeSettingsWO settings) {
+        settings.addString(LOCATION_SETTINGS, m_directory);
+        settings.addBoolean(RECURSIVE_SETTINGS, m_recursive);
+        settings.addString(EXTENSIONS_SETTINGS, m_extensionsString);
+        settings.addString(FILTER_SETTINGS, m_filter.name());
+        settings.addBoolean(CASE_SENSITIVE_STRING, m_caseSensitive);
+
+        if (m_directory != null) {
+            StringHistory h = StringHistory.getInstance(LIST_FILES_HISTORY_ID);
+            h.add(m_directory);
+        }
+
+        if (m_extensionsString != null) {
+            StringHistory h =
+                    StringHistory.getInstance(LIST_FILES_EXT_HISTORY_ID);
+            h.add(m_extensionsString);
+
+        }
     }
 
     /**
@@ -108,9 +157,21 @@ class ListDirectoryConfiguration {
      *
      * @param settings The <code>NodeSettings</code> to read from
      */
-    void load(final NodeSettingsRO settings) {
-        m_directory = settings.getString("directory", "");
-        m_recursive = settings.getBoolean("recursive", true);
+    void loadSettingsInDialog(final NodeSettingsRO settings) {
+        m_directory = settings.getString(LOCATION_SETTINGS, "");
+        m_extensionsString = settings.getString(EXTENSIONS_SETTINGS, "");
+        m_recursive = settings.getBoolean(RECURSIVE_SETTINGS, true);
+        final Filter defFilter = Filter.None;
+        String filterS = settings.getString(FILTER_SETTINGS, defFilter.name());
+        if (filterS == null) {
+            filterS = defFilter.name();
+        }
+        try {
+            m_filter = Filter.valueOf(filterS);
+        } catch (IllegalArgumentException iae) {
+            m_filter = defFilter;
+        }
+        m_caseSensitive = settings.getBoolean(CASE_SENSITIVE_STRING, false);
     }
 
     /**
@@ -120,9 +181,13 @@ class ListDirectoryConfiguration {
      * @param settings The <code>NodeSettings</code> to read from
      * @throws InvalidSettingsException If one of the settings is not valid
      */
-    void loadAndValidate(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_directory = settings.getString("directory");
-        m_recursive = settings.getBoolean("recursive", true);
+    void loadSettingsInModel(final NodeSettingsRO settings) throws InvalidSettingsException {
+        m_directory = settings.getString(LOCATION_SETTINGS);
+        m_extensionsString = settings.getString(EXTENSIONS_SETTINGS, "");
+        m_recursive = settings.getBoolean(RECURSIVE_SETTINGS);
+        String filterS = settings.getString(FILTER_SETTINGS, Filter.None.name());
+        m_filter = Filter.valueOf(filterS);
+        m_caseSensitive = settings.getBoolean(CASE_SENSITIVE_STRING, false);
     }
 
     /**
@@ -139,4 +204,45 @@ class ListDirectoryConfiguration {
         }
     }
 
+    /** @return the caseSensitive */
+    public boolean isCaseSensitive() {
+        return m_caseSensitive;
+    }
+
+    /** @param caseSensitive the caseSensitive to set */
+    public void setCaseSensitive(final boolean caseSensitive) {
+        m_caseSensitive = caseSensitive;
+    }
+
+    /** @return the extensionsString */
+    public String getExtensionsString() {
+        return m_extensionsString;
+    }
+
+    /** @param extensionsString the extensionsString to set */
+    public void setExtensionsString(final String extensionsString) {
+        m_extensionsString = extensionsString;
+    }
+
+    /** @return the filter */
+    public Filter getFilter() {
+        return m_filter;
+    }
+
+    /**
+     * @param filter the filter to set
+     * @throws NullPointerException If argument is null.
+     */
+    public void setFilter(final Filter filter) {
+        if (filter == null) {
+            throw new NullPointerException("Argument must not be null.");
+        }
+        m_filter = filter;
+    }
+
+    /** @return the previous selected extension field strings. */
+    static String[] getExtensionHistory() {
+        StringHistory h = StringHistory.getInstance(LIST_FILES_EXT_HISTORY_ID);
+        return h.getHistory();
+    }
 }

@@ -47,14 +47,26 @@
  */
 package org.knime.base.filehandling.listdirectory;
 
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
@@ -63,14 +75,16 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooser;
 import org.knime.base.filehandling.remote.dialog.RemoteFileChooserPanel;
+import org.knime.base.node.io.listfiles.ListFiles.Filter;
+import org.knime.base.util.WildcardMatcher;
 import org.knime.core.node.FlowVariableModel;
-import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.util.ConvenientComboBoxRenderer;
 import org.knime.core.node.util.FilesHistoryPanel;
 import org.knime.core.node.util.FilesHistoryPanel.LocationValidation;
 import org.knime.core.node.workflow.FlowVariable;
@@ -83,6 +97,10 @@ import org.knime.core.node.workflow.FlowVariable;
  */
 public class ListDirectoryNodeDialog extends NodeDialogPane {
 
+    private static final int HORIZ_SPACE = 10;
+
+    private static final int PANEL_WIDTH = 585;
+
     private ConnectionInformation m_connectionInformation;
 
     private JLabel m_info;
@@ -93,9 +111,19 @@ public class ListDirectoryNodeDialog extends NodeDialogPane {
 
     private FilesHistoryPanel m_localdirectory;
 
-    private FlowVariableModelButton m_directoryfvm;
-
     private JPanel m_localdirectoryPanel;
+
+    private JComboBox m_extensionField;
+
+    private JCheckBox m_caseSensitive;
+
+    private JRadioButton m_filterALLRadio;
+
+    private JRadioButton m_filterExtensionsRadio;
+
+    private JRadioButton m_filterRegExpRadio;
+
+    private JRadioButton m_filterWildCardsRadio;
 
     /**
      * New pane for configuring the node dialog.
@@ -151,7 +179,109 @@ public class ListDirectoryNodeDialog extends NodeDialogPane {
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridy++;
         panel.add(m_recursive, gbc);
+        createFiltersModels();
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(createFilterBox(), gbc);
         return panel;
+    }
+
+    /**
+     * This method create the Filter-Box.
+     *
+     * @return Filter-Box
+     */
+    private Box createFilterBox() {
+        Box panel2 = Box.createVerticalBox();
+        panel2.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(), "Filter:"));
+
+        // Get the same height for Location and extension field.
+        int buttonHeight = new JButton("Browse...").getPreferredSize().height;
+
+        m_extensionField = new JComboBox();
+        m_extensionField.setEditable(true);
+        m_extensionField.setRenderer(new ConvenientComboBoxRenderer());
+        m_extensionField
+                .setMaximumSize(new Dimension(PANEL_WIDTH, buttonHeight));
+        m_extensionField.setMinimumSize(new Dimension(250, buttonHeight));
+        m_extensionField.setPreferredSize(new Dimension(250, buttonHeight));
+
+        Box extBox = Box.createHorizontalBox();
+        extBox.add(Box.createHorizontalStrut(HORIZ_SPACE));
+        extBox.add(new JLabel("Extension(s) / Expression:"));
+        extBox.add(Box.createHorizontalStrut(HORIZ_SPACE));
+        extBox.add(m_extensionField);
+        extBox.add(Box.createHorizontalStrut(HORIZ_SPACE));
+
+        m_caseSensitive = new JCheckBox();
+        m_caseSensitive.setText("case sensitive");
+
+        JPanel filterBox = new JPanel(new GridLayout(2, 3));
+        filterBox.add(m_filterALLRadio);
+        filterBox.add(m_filterExtensionsRadio);
+        filterBox.add(m_caseSensitive);
+        filterBox.add(m_filterRegExpRadio);
+        filterBox.add(m_filterWildCardsRadio);
+
+        Box filterBox2 = Box.createHorizontalBox();
+        filterBox2.add(Box.createHorizontalStrut(HORIZ_SPACE));
+        filterBox2.add(filterBox);
+        filterBox2.add(Box.createHorizontalStrut(PANEL_WIDTH / 4));
+
+        panel2.add(extBox);
+        panel2.add(filterBox2);
+
+        panel2.setMaximumSize(new Dimension(PANEL_WIDTH, 120));
+        panel2.setMinimumSize(new Dimension(PANEL_WIDTH, 120));
+
+        return panel2;
+    }
+
+    /** creates the filter radio buttons. */
+    private void createFiltersModels() {
+        m_filterALLRadio = new JRadioButton();
+        m_filterALLRadio.setText("none");
+        m_filterALLRadio.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent arg0) {
+                m_extensionField.setEnabled(false);
+            }
+        });
+
+        m_filterExtensionsRadio = new JRadioButton();
+        m_filterExtensionsRadio.setText("file extension(s)");
+        m_filterExtensionsRadio.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent arg0) {
+                m_extensionField.setEnabled(true);
+            }
+        });
+
+        m_filterRegExpRadio = new JRadioButton();
+        m_filterRegExpRadio.setText("regular expression");
+        m_filterRegExpRadio.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent arg0) {
+                m_extensionField.setEnabled(true);
+            }
+        });
+
+        m_filterWildCardsRadio = new JRadioButton();
+        m_filterWildCardsRadio.setText("wildcard pattern");
+        m_filterWildCardsRadio.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent arg0) {
+                m_extensionField.setEnabled(true);
+            }
+        });
+
+        ButtonGroup group = new ButtonGroup();
+        group.add(m_filterALLRadio);
+        group.add(m_filterExtensionsRadio);
+        group.add(m_filterRegExpRadio);
+        group.add(m_filterWildCardsRadio);
+
     }
 
     /**
@@ -171,7 +301,7 @@ public class ListDirectoryNodeDialog extends NodeDialogPane {
             m_info.setText("List from: " + m_connectionInformation.toURI());
         } else {
             m_connectionInformation = null;
-            m_info.setText("List from: local maschine");
+            m_info.setText("List from: local machine");
         }
         // Show only one of the location panels
         m_directory.getPanel().setVisible(m_connectionInformation != null);
@@ -179,10 +309,35 @@ public class ListDirectoryNodeDialog extends NodeDialogPane {
         m_directory.setConnectionInformation(m_connectionInformation);
         // Load configuration
         ListDirectoryConfiguration config = new ListDirectoryConfiguration();
-        config.load(settings);
+        config.loadSettingsInDialog(settings);
         m_directory.setSelection(config.getDirectory());
         m_localdirectory.setSelectedFile(config.getDirectory());
         m_recursive.setSelected(config.getRecursive());
+
+     // add previous selections to the extension textfield
+        String[] history = ListDirectoryConfiguration.getExtensionHistory();
+        m_extensionField.removeAllItems();
+        for (String str : history) {
+            m_extensionField.addItem(str);
+        }
+
+        m_caseSensitive.setSelected(config.isCaseSensitive());
+        String ext = config.getExtensionsString();
+        m_extensionField.getEditor().setItem(ext == null ? "" : ext);
+        switch (config.getFilter()) {
+            case Extensions:
+                m_filterExtensionsRadio.doClick(); // trigger event
+                break;
+            case RegExp:
+                m_filterRegExpRadio.doClick();
+                break;
+            case Wildcards:
+                m_filterWildCardsRadio.doClick();
+                break;
+            default:
+                m_filterALLRadio.doClick();
+        }
+
     }
 
     /**
@@ -198,7 +353,51 @@ public class ListDirectoryNodeDialog extends NodeDialogPane {
             config.setDirectory(m_localdirectory.getSelectedFile());
         }
         config.setRecursive(m_recursive.isSelected());
-        config.save(settings);
+
+        config.setCaseSensitive(m_caseSensitive.isSelected());
+        String extensions = m_extensionField.getEditor().getItem().toString();
+        config.setExtensionsString(extensions);
+
+        // save the selected radio-Button
+        Filter filter;
+        if (m_filterALLRadio.isSelected()) {
+            filter = Filter.None;
+        } else if (m_filterExtensionsRadio.isSelected()) {
+            filter = Filter.Extensions;
+        } else if (m_filterRegExpRadio.isSelected()) {
+            if (extensions.trim().isEmpty()) {
+                throw new InvalidSettingsException(
+                        "Enter valid regular expressin pattern");
+            }
+            try {
+                String pattern = extensions;
+                Pattern.compile(pattern);
+            } catch (PatternSyntaxException pse) {
+                throw new InvalidSettingsException("Error in pattern: ('"
+                        + pse.getMessage(), pse);
+            }
+            filter = Filter.RegExp;
+        } else if (m_filterWildCardsRadio.isSelected()) {
+
+            if ((extensions).length() <= 0) {
+                throw new InvalidSettingsException(
+                        "Enter valid wildcard pattern");
+            }
+            try {
+                String pattern = extensions;
+                pattern = WildcardMatcher.wildcardToRegex(pattern);
+                Pattern.compile(pattern);
+            } catch (PatternSyntaxException pse) {
+                throw new InvalidSettingsException("Error in pattern: '"
+                        + pse.getMessage(), pse);
+            }
+            filter = Filter.Wildcards;
+        } else { // one button must be selected though
+            filter = Filter.None;
+        }
+        config.setFilter(filter);
+
+        config.saveSettingsTo(settings);
         m_localdirectory.addToHistory();
     }
 }
