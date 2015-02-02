@@ -520,9 +520,9 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                     if ((filename != null) && !(filename.equals(".") || filename.equals(".."))) {
                         try {
                             // Build URI
-                            final URI uri =
-                                    new URI(thisUri.getScheme(), thisUri.getAuthority(), internalGetPath() + filename,
-                                            thisUri.getQuery(), thisUri.getFragment());
+                            final URI uri = new URI(thisUri.getScheme(), thisUri.getUserInfo(), thisUri.getHost(),
+                                thisUri.getPort(), internalGetPath() + filename,
+                                thisUri.getQuery(), thisUri.getFragment());
                             // Create remote file and open it
                             final SFTPRemoteFile file =
                                 new SFTPRemoteFile(uri, internalGetPath(), entries.get(i), getConnectionInformation(),

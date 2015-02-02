@@ -361,9 +361,8 @@ public class FTPRemoteFile extends RemoteFile<FTPConnection> {
             // Generate remote file for each file
             for (int i = 0; i < ftpFiles.length; i++) {
                 // Build URI
-                final URI uri =
-                        new URI(thisUri.getScheme(), thisUri.getAuthority(), getPath() + ftpFiles[i].getName(),
-                                thisUri.getQuery(), thisUri.getFragment());
+                final URI uri = new URI(thisUri.getScheme(), thisUri.getUserInfo(), thisUri.getHost(),
+                    thisUri.getPort(), getPath() + ftpFiles[i].getName(), thisUri.getQuery(), thisUri.getFragment());
                 // Create remote file and open it
                 files[i] = new FTPRemoteFile(uri, getConnectionInformation(), getConnectionMonitor());
                 files[i].open();

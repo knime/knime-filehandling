@@ -233,18 +233,12 @@ public class ConnectionInformation implements Serializable {
     public URI toURI() {
         URI uri = null;
         try {
-            uri = new URI(toURIString());
+            uri = new URI(m_protocol, m_user, m_host, m_port, null, null, null);
         } catch (final URISyntaxException e) {
             // Should not happen
             NodeLogger.getLogger(getClass()).coding(e.getMessage(), e);
         }
         return uri;
-    }
-
-    private String toURIString() {
-        // Add user only if available
-        final String user = m_user != null ? m_user + "@" : "";
-        return m_protocol + "://" + user + m_host + ":" + m_port;
     }
 
     /**
@@ -460,7 +454,7 @@ public class ConnectionInformation implements Serializable {
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return toURIString();
+        return toURI().toString();
     }
 
 }
