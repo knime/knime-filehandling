@@ -52,7 +52,7 @@
          <attribute name="RemoteFileHandler" type="string" use="required">
             <annotation>
                <documentation>
-                  Spedify a class that implements the org.knime.base.filehandling.remote.RemoteFileHandler interface.
+                  Specify a class that implements the org.knime.base.filehandling.remote.RemoteFileHandler interface.
                </documentation>
                <appInfo>
                   <meta.attribute kind="java" basedOn=":org.knime.base.filehandling.remote.RemoteFileHandler"/>
