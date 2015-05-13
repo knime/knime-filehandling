@@ -41,20 +41,20 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Oct 11, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.mime;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.activation.FileTypeMap;
 import javax.activation.MimetypesFileTypeMap;
 
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -67,8 +67,8 @@ import org.knime.core.node.NodeLogger;
 
 /**
  * Utility class for a singleton <code>MimetypesFileTypeMap</code>.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class MIMEMap {
@@ -77,7 +77,10 @@ public final class MIMEMap {
 
     private static final String EXTENSIONPOINT_ID = "org.knime.base.filehandling.mimetypes";
 
-    private static MimetypesFileTypeMap mimeMap = null;
+    static {
+        // Add MIME-Types defined by other plugins
+        addFromExtensions();
+    }
 
     private MIMEMap() {
         // Disable default constructor
@@ -88,14 +91,13 @@ public final class MIMEMap {
      * @return MIME-Type for the given file extension
      */
     public static String getMIMEType(final String fileextension) {
-        init();
-        return mimeMap.getContentType("." + fileextension.toLowerCase());
+        return FileTypeMap.getDefaultFileTypeMap().getContentType("." + fileextension.toLowerCase());
     }
 
     /**
      * Searches for all MIME-Types registered through the extension point.
-     * 
-     * 
+     *
+     *
      * @return MIME-Types in mime.types format
      */
     private static MIMETypeEntry[] getTypesFromExtensions() {
@@ -179,30 +181,13 @@ public final class MIMEMap {
     }
 
     /**
-     * Initializes the mime map if it has not been initialized before. Should be
-     * called before every operation on <code>mimeMap</code>.
-     */
-    private static synchronized void init() {
-        if (mimeMap == null) {
-            try {
-                mimeMap = new MimetypesFileTypeMap(FilehandlingPlugin.getDefault().getMIMETypeStream());
-            } catch (IOException e) {
-                LOGGER.error("Failed to parse mime.types config file", e);
-                // If the file is not readable use default MIME-Types
-                mimeMap = new MimetypesFileTypeMap();
-            }
-        }
-        // Add MIME-Types defined by other plugins
-        addFromExtensions();
-    }
-
-    /**
      * Adds MIME-Types added through the extension point into the mime map.
      */
     private static void addFromExtensions() {
         MIMETypeEntry[] types = getTypesFromExtensions();
         for (int i = 0; i < types.length; i++) {
-            mimeMap.addMimeTypes(types[i].toString());
+            // org.knime.core sets the default map to a MimetypesFileTypeMap
+            ((MimetypesFileTypeMap) FileTypeMap.getDefaultFileTypeMap()).addMimeTypes(types[i].toString());
         }
     }
 

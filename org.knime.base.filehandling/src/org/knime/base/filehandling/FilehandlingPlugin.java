@@ -41,20 +41,19 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Oct 11, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 
 /**
@@ -77,7 +76,7 @@ public final class FilehandlingPlugin extends Plugin {
 
     /**
      * This method is called when the plug-in is stopped.
-     * 
+     *
      * @param context The bundle context.
      * @throws Exception If cause by super class.
      */
@@ -89,7 +88,7 @@ public final class FilehandlingPlugin extends Plugin {
 
     /**
      * Returns the shared instance.
-     * 
+     *
      * @return The shared instance
      */
     public static FilehandlingPlugin getDefault() {
@@ -98,15 +97,14 @@ public final class FilehandlingPlugin extends Plugin {
 
     /**
      * Opens an input stream to the file, defining the MIME-Types.
-     * 
-     * 
+     *
+     *
      * @return Input stream to the MIME-Type file
      * @throws IOException If the file is unreadable
      */
     public InputStream getMIMETypeStream() throws IOException {
-        final URL pluginURL =
-                FileLocator.resolve(FileLocator.find(plugin.getBundle(), new Path("resources" + File.separator
-                        + "mime.types"), null));
-        return pluginURL.openStream();
+        Bundle utilBundle = Platform.getBundle("org.knime.core.util");
+        URL mimeFile = utilBundle.getResource("META-INF/mime.types");
+        return mimeFile.openStream();
     }
 }
