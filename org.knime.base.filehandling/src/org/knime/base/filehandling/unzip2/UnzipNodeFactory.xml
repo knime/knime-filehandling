@@ -28,10 +28,9 @@
 		</intro>
 
 
-		<option name="Input file">Path to the archive.</option>
+		<option name="Input file">Path or URL to the input archive.</option>
 		<option name="Output directory">Path to the output directory, where the
-			files will
-			be extracted to.
+			files will be extracted to. The output directory may be a local URL, remote URLs usually don't work.
 		</option>
 		<option name="Output...">
 			Specifies the content of the output table.

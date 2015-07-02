@@ -49,18 +49,17 @@ package org.knime.base.filehandling.zip2;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
@@ -93,8 +92,7 @@ import org.knime.core.util.FileUtil;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class ZipNodeModel extends NodeModel {
@@ -132,41 +130,40 @@ class ZipNodeModel extends NodeModel {
      */
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
-            throws Exception {
+        throws Exception {
         boolean abort = m_ifexists.getStringValue().equals(OverwritePolicy.ABORT.getName());
-        // Create target file
-        File targetFile = new File(getTargetName());
+        // Create target url
+        URL targetUrl = FileUtil.toURL(getTargetName());
+        File targetFile = fileFromUrl(targetUrl);
         // Abort if setting is abort and final target file exists
-        if (abort && targetFile.exists()) {
+        if (abort && targetFile != null && targetFile.exists()) {
             throw new Exception("File \"" + targetFile.getAbsolutePath() + "\" exists, overwrite policy: \""
-                    + m_ifexists.getStringValue() + "\"");
+                + m_ifexists.getStringValue() + "\"");
         }
         // Get filelist from the table
-        File[] files = getFiles(inData[0]);
+        URL[] urls = getUrls(inData[0]);
         // Create archive from filelist
-        archive(targetFile, files, exec);
-        // Compress file (if selected)
-        // compress(targetFile);
+        archive(targetUrl, urls, exec);
         return new BufferedDataTable[0];
     }
 
     /**
      * Create an archive file containing the listed files.
-     * 
+     *
      * @param target The archive file that will be created
      * @param files The list of files that will be added to the archive
      * @param exec The execution context to check for cancellation
      * @throws Exception If an error occurs
      */
-    private void archive(final File target, final File[] files, final ExecutionContext exec) throws Exception {
+    private void archive(final URL target, final URL[] files, final ExecutionContext exec) throws Exception {
         boolean append =
-                m_ifexists.getStringValue().equals(OverwritePolicy.APPEND_OVERWRITE.getName())
-                        || m_ifexists.getStringValue().equals(OverwritePolicy.APPEND_ABORT.getName());
+            m_ifexists.getStringValue().equals(OverwritePolicy.APPEND_OVERWRITE.getName())
+                || m_ifexists.getStringValue().equals(OverwritePolicy.APPEND_ABORT.getName());
         // Detect archive type
         boolean zip = m_format.getStringValue().equals(Format.ZIP.getName());
         boolean tar =
-                m_format.getStringValue().equals(Format.TAR_GZ.getName())
-                        || m_format.getStringValue().equals(Format.TAR_BZ2.getName());
+            m_format.getStringValue().equals(Format.TAR_GZ.getName())
+                || m_format.getStringValue().equals(Format.TAR_BZ2.getName());
         String type = "";
         if (zip) {
             type = ArchiveStreamFactory.ZIP;
@@ -174,14 +171,15 @@ class ZipNodeModel extends NodeModel {
             type = ArchiveStreamFactory.TAR;
         }
         // Create temporary target file
-        File tmpFile = FileUtil.createTempFile("zip-" + target.getName(), "tmp");
+        File tmpFile = FileUtil.createTempFile("zip-" + name(target), "tmp");
         // Create archive output stream
         final OutputStream out = openCompressStream(tmpFile);
         ArchiveOutputStream os = new ArchiveStreamFactory().createArchiveOutputStream(type, out);
         // Append files from existing archive (if selected)
-        File source = new File(target.getAbsolutePath());
-        if (append && source.exists()) {
-            addOldFiles(source, os, files, type, exec);
+        File targetFile = fileFromUrl(target);
+        boolean exists = targetFile != null && (targetFile.exists() || existsHTTPConnection(target));
+        if (append && exists) {
+            addOldFiles(target, os, files, type, exec);
         }
         // Add new files to archive
         for (int i = 0; i < files.length; i++) {
@@ -189,25 +187,89 @@ class ZipNodeModel extends NodeModel {
             // Add entry
             os.putArchiveEntry(getArchiveEntry(type, files[i]));
             // Add content if not a directory
-            if (!files[i].isDirectory()) {
-                InputStream in = new FileInputStream(files[i]);
-                IOUtils.copy(in, os);
-                in.close();
+            if (!isDirectory(files[i])) {
+                try (InputStream in = FileUtil.openStreamWithTimeout(files[i])) {
+                    IOUtils.copy(in, os);
+                }
             }
             os.closeArchiveEntry();
         }
         os.close();
         // Replace old archive with new one
-        target.delete();
-        FileUtils.moveFile(tmpFile, target);
+        if (targetFile != null) {
+            targetFile.delete();
+            FileUtils.moveFile(tmpFile, targetFile);
+        } else {
+            //try remote delete if exists
+            if (exists) {
+                try {
+                    FileUtil.openOutputConnection(target, "DELETE");
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to delete: " + target, e);
+                }
+            }
+            //PUT to the ooutputstream
+            URLConnection connection = FileUtil.openOutputConnection(target, "PUT");
+            try (OutputStream outStream = connection.getOutputStream()) {
+                FileUtils.copyFile(tmpFile, outStream);
+                //cleanup
+                FileUtils.deleteQuietly(tmpFile);
+            }
+        }
+    }
+
+    /**
+     * Heuristic to decide whether the {@code url} is a folder/directory.
+     * @param url A {@link URL}.
+     * @return denotes a folder/directory or not.
+     */
+    private static boolean isDirectory(final URL url) {
+        File file = fileFromUrl(url);
+        if (file != null) {
+            return file.isDirectory();
+        }
+        String path = url.getPath();
+        return path == null || path.endsWith("/");
+    }
+
+    /**
+     * @param target A {@link URL}
+     * @return Checks whether there is something to read from the selected url.
+     */
+    private static boolean existsHTTPConnection(final URL target) {
+        try {
+            FileUtil.openStreamWithTimeout(target);
+            //            //"Cheap" check
+            //            FileUtil.openOutputConnection(target, "HEAD");
+            return true;
+        } catch (IOException e) {
+            //            try {
+            //                //More expensive check
+            //                FileUtil.openOutputConnection(target, "GET");
+            //                return true;
+            //            } catch (IOException e1) {
+            return false;
+            //            }
+        }
+    }
+
+    /**
+     * @param url A {@link URL}.
+     * @return The name part from the path of {@code code}.
+     */
+    private static String name(final URL url) {
+        String path = url.getPath();
+        if (path == null) {
+            return "";
+        }
+        return path.substring(path.lastIndexOf('/') + 1);
     }
 
     /**
      * Adds files from the old archive to the new one.
-     * 
-     * Old files that will be overwritten by one of the new files will be left
-     * out.
-     * 
+     *
+     * Old files that will be overwritten by one of the new files will be left out.
+     *
      * @param source The old archive
      * @param target Output stream to the new archive
      * @param newFiles Array of files that will be added later
@@ -215,8 +277,8 @@ class ZipNodeModel extends NodeModel {
      * @param exec Execution context to check for cancellation
      * @throws Exception If an error occurs
      */
-    private void addOldFiles(final File source, final ArchiveOutputStream target, final File[] newFiles,
-            final String type, final ExecutionContext exec) throws Exception {
+    private void addOldFiles(final URL source, final ArchiveOutputStream target, final URL[] newFiles,
+        final String type, final ExecutionContext exec) throws Exception {
         boolean abort = m_ifexists.getStringValue().equals(OverwritePolicy.APPEND_ABORT.getName());
         // Create set of files that will be added later
         Set<String> newFilesSet = new HashSet<String>();
@@ -238,7 +300,7 @@ class ZipNodeModel extends NodeModel {
             } else if (abort) {
                 // Abort if old files may not be replaced
                 throw new Exception("File \"" + entry.getName() + "\" exists in old file, overwrite" + " policy: \""
-                        + m_ifexists.getStringValue() + "\"");
+                    + m_ifexists.getStringValue() + "\"");
             } else {
                 // Inform user that old file will be replaced
                 LOGGER.info("Replacing file " + entry.getName());
@@ -249,7 +311,7 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Compress the file (if selected).
-     * 
+     *
      * @param file The uncompressed file
      * @return The compressed file
      * @throws Exception If an error occurred
@@ -276,16 +338,15 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Uncompresses the given file.
-     * 
+     *
      * @param source The potentially compressed source file
-     * @return Uncompressed version of the source, or source if it was not
-     *         compressed
+     * @return Uncompressed version of the source, or source if it was not compressed
      * @throws Exception If IOException occurred
      */
-    private InputStream openUncompressStream(final File source) throws Exception {
+    private InputStream openUncompressStream(final URL source) throws Exception {
         InputStream uncompressStream;
-        // Buffered stream needet for autodetection of type
-        InputStream in = new BufferedInputStream(new FileInputStream(source));
+        // Buffered stream needed for autodetection of type
+        InputStream in = new BufferedInputStream(FileUtil.openStreamWithTimeout(source));
         try {
             // Try to create a compressor for the source, throws exception if
             // source is not compressed
@@ -299,14 +360,15 @@ class ZipNodeModel extends NodeModel {
 
     /**
      * Get an array of the files referenced by the table.
-     * 
+     *
      * The files contained in directories will already be resolved.
-     * 
+     *
      * @param table Table containing the references to the files.
      * @return Array of files
+     * @throws IOException When file cannot be properly converted to URL
      */
-    private File[] getFiles(final BufferedDataTable table) {
-        List<String> entries = new LinkedList<String>();
+    private URL[] getUrls(final BufferedDataTable table) throws IOException {
+        List<URL> entries = new LinkedList<>();
         // Read filenames from table
         String column = m_locationcolumn.getStringValue();
         int index = table.getDataTableSpec().findColumnIndex(column);
@@ -316,10 +378,7 @@ class ZipNodeModel extends NodeModel {
             for (DataRow row : table) {
                 if (!row.getCell(index).isMissing()) {
                     URIDataValue value = (URIDataValue)row.getCell(index);
-                    if (!value.getURIContent().getURI().getScheme().equals("file")) {
-                        throw new RuntimeException("This node only supports the protocol \"file\"");
-                    }
-                    entries.add(value.getURIContent().getURI().getPath());
+                    entries.add(value.getURIContent().getURI().toURL());
                 }
             }
         } else if (type.isCompatible(StringValue.class)) {
@@ -327,15 +386,15 @@ class ZipNodeModel extends NodeModel {
             for (DataRow row : table) {
                 if (!row.getCell(index).isMissing()) {
                     StringValue value = (StringValue)row.getCell(index);
-                    entries.add(value.getStringValue());
+                    entries.add(FileUtil.toURL(value.getStringValue()));
                 }
             }
         }
-        String[] filenames = entries.toArray(new String[entries.size()]);
+        URL[] filenames = entries.toArray(new URL[entries.size()]);
         // Create files for each filename
-        File[] files = new File[filenames.length];
+        URL[] files = new URL[filenames.length];
         for (int i = 0; i < files.length; i++) {
-            files[i] = pathToFile(filenames[i]);
+            files[i] = filenames[i];
             if (files[i] == null) {
                 throw new IllegalArgumentException(filenames[i] + " is not a valid path to a local file");
             }
@@ -346,48 +405,33 @@ class ZipNodeModel extends NodeModel {
     }
 
     /**
-     * Converts a path to a file object.
-     * 
-     * @param path The path (may be a: URL, URI or a normal file path)
-     * @return File object to the given path
-     */
-    private File pathToFile(final String path) {
-        File file;
-        try {
-            URL url = new URL(path);
-            file = FileUtils.toFile(url);
-        } catch (MalformedURLException e1) {
-            file = new File(path);
-        }
-        return file;
-    }
-
-    /**
      * Replaces directories in the given file array by all contained files.
-     * 
-     * 
+     *
+     *
      * @param files Array of files that potentially contains directories
      * @return List of all files with directories resolved
+     * @throws IOException When file path cannot be converted to URL
      */
-    private File[] resolveDirectories(final File[] files) {
-        List<File> allFiles = new LinkedList<File>();
+    private URL[] resolveDirectories(final URL[] files) throws IOException {
+        List<URL> allFiles = new LinkedList<>();
         for (int i = 0; i < files.length; i++) {
             // Add both files and directories
             allFiles.add(files[i]);
-            if (files[i].isDirectory()) {
+            File file = fileFromUrl(files[i]);
+            if (isDirectory(files[i])) {
                 // Get inner files through recursive call and add them
-                File[] innerFiles = resolveDirectories(files[i].listFiles());
+                URL[] innerFiles = resolveDirectories(FileUtils.toURLs(file.listFiles()));
                 for (int j = 0; j < innerFiles.length; j++) {
                     allFiles.add(innerFiles[j]);
                 }
             }
         }
-        return allFiles.toArray(new File[allFiles.size()]);
+        return allFiles.toArray(new URL[allFiles.size()]);
     }
 
     /**
      * Returns the name of the archive that will be created.
-     * 
+     *
      * @return Name of the archive (without compression extension)
      */
     private String getTargetName() {
@@ -414,9 +458,35 @@ class ZipNodeModel extends NodeModel {
     }
 
     /**
+     * @param url A {@link URL} which might point to a file.
+     * @return The name from the {@code url}, special cased for files.
+     */
+    private String getName(final URL url) {
+        File file = fileFromUrl(url);
+        if (file != null) {
+            return getName(file);
+        }
+        return FilenameUtils.getName(url.getPath());
+    }
+
+    /**
+     * A wrapper around {@link FileUtil#getFileFromURL(URL)} to handle non-local files similarly (ie. return {@code null}).
+     *
+     * @param url A {@link URL}.
+     * @return The local file, or {@code null}.
+     */
+    private static File fileFromUrl(final URL url) {
+        try {
+            return FileUtil.getFileFromURL(url);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /**
      * Returns the correct file name according to the path handling policy.
-     * 
-     * 
+     *
+     *
      * @param file File for the name
      * @return Name of the given file with cut path
      */
@@ -431,38 +501,68 @@ class ZipNodeModel extends NodeModel {
         }
         if (pathhandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
             // Remove prefix
-            name = name.replaceFirst(Pattern.quote(prefix), "");
+            name = name.startsWith(prefix) ? name.substring(prefix.length()) : name;
         }
         if (IS_WINDOWS) {
             // Remove windows drive letter
-            name = name.replaceFirst(Pattern.quote(FilenameUtils.getPrefix(name)), "");
+            String filePrefix = FilenameUtils.getPrefix(name);
+            name = name.startsWith(filePrefix) ? name.substring(filePrefix.length()) : name;
             // Always use UNIX separators
             name = FilenameUtils.separatorsToUnix(name);
         }
         // Entry name never starts with separator
         if (name.startsWith("/")) {
-            name = name.replaceFirst("/", "");
+            name = name.substring(1);
         }
         return name;
     }
 
     /**
      * Creates an archive entry based on the given type.
-     * 
+     *
      * @param type Type of the archive
-     * @param file Content of the entry
+     * @param url Content of the entry
      * @return Entry based on the given type
      */
-    private ArchiveEntry getArchiveEntry(final String type, final File file) {
-        String name = getName(file);
-        ArchiveEntry entry = null;
+    private ArchiveEntry getArchiveEntry(final String type, final URL url) {
+        String name = getName(url);
+        final ArchiveEntry entry;
+        File file = fileFromUrl(url);
         // Create entry for given type
         if (type.equals(ArchiveStreamFactory.ZIP)) {
-            entry = new ZipArchiveEntry(file, name);
+            if (file != null) {
+                entry = new ZipArchiveEntry(file, name);
+            } else {
+                ZipArchiveEntry zentry;
+                String nameAdjusted = nameAdjusted(url, name);
+                zentry = new ZipArchiveEntry(nameAdjusted);
+                zentry.setTime(new Date().getTime());
+                entry = zentry;
+            }
         } else if (type.equals(ArchiveStreamFactory.TAR)) {
-            entry = new TarArchiveEntry(file, name);
+            if (file != null) {
+                entry = new TarArchiveEntry(file, name);
+            } else {
+                TarArchiveEntry tentry;
+                tentry = new TarArchiveEntry(nameAdjusted(url, name));
+                tentry.setModTime(new Date());
+                entry = tentry;
+            }
+        } else {
+            throw new UnsupportedOperationException("Not supported type: " + type);
         }
         return entry;
+    }
+
+    /**
+     * @param url A {@link URL}.
+     * @param name The name part of {@code url}.
+     * @return {@code name} or {@code name/} when {@code url} denotes a folder.
+     */
+    private static String nameAdjusted(final URL url, final String name) {
+        boolean dir = isDirectory(url);
+        String nameAdjusted = dir && !name.endsWith("/") ? name + "/" : name;
+        return nameAdjusted;
     }
 
     /**
@@ -501,7 +601,7 @@ class ZipNodeModel extends NodeModel {
         }
         // Does the prefix directory exist? (If it is needet)
         if (m_pathhandling.getStringValue().equals(PathHandling.TRUNCATE_PREFIX.getName())
-                && !new File(m_prefix.getStringValue()).exists()) {
+            && !new File(m_prefix.getStringValue()).exists()) {
             throw new InvalidSettingsException("Prefix directory does not exist");
         }
         return new DataTableSpec[]{};
@@ -556,7 +656,7 @@ class ZipNodeModel extends NodeModel {
      */
     @Override
     protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+        CanceledExecutionException {
         // Not used
     }
 
@@ -565,7 +665,7 @@ class ZipNodeModel extends NodeModel {
      */
     @Override
     protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+        CanceledExecutionException {
         // Not used
     }
 

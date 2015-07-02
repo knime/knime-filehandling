@@ -38,7 +38,8 @@
 			Tar file compressed with bzip2.
 		</option>
 		<option name="Output file">
-			Path of the archive that will be created.
+			Path of the archive that will be created. You can use local filesystem paths or URL, given that they are
+			allow for writing.
 		</option>
 		<option name="Path handling">
 			Specifies how the file path shall be handled inside the archive.

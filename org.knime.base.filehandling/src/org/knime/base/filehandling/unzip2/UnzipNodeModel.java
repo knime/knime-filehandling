@@ -49,7 +49,6 @@ package org.knime.base.filehandling.unzip2;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -57,6 +56,9 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
@@ -67,11 +69,13 @@ import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.CountingInputStream;
+import org.apache.http.client.utils.URIBuilder;
 import org.eclipse.core.runtime.Platform;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.MissingCell;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.data.uri.URIContent;
@@ -87,11 +91,12 @@ import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.util.CheckUtils;
+import org.knime.core.util.FileUtil;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class UnzipNodeModel extends NodeModel {
@@ -124,7 +129,7 @@ class UnzipNodeModel extends NodeModel {
      */
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
-            throws Exception {
+        throws Exception {
         // Create output spec and container
         DataTableSpec outSpec = createOutSpec();
         BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
@@ -138,55 +143,55 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Opens a stream to the given URL or file path.
-     * 
+     *
      * @param path Path to the file in the form of a URL or a local file path
      * @param exec The execution context
      * @return InputStream to the file
-     * @throws IOException If the path was invalid or the stream could not be
-     *             opened
+     * @throws IOException If the path was invalid or the stream could not be opened
+     * @throws InvalidSettingsException When the {@code path} cannot be parsed as location.
      */
-    private InputStream openStream(final String path, final ExecutionContext exec) throws IOException {
-        InputStream stream;
-        URL url;
-        try {
-            // Try path as URL
-            url = new URL(path);
-        } catch (MalformedURLException e) {
-            // Try path as local file path
-            url = new File(path).toURI().toURL();
-        }
+    private InputStream openStream(final String path, final ExecutionContext exec) throws IOException, InvalidSettingsException {
+        InputStream stream = FileUtil.openInputStream(path);
         // Create progress monitor
-        if (url.getProtocol().equals("file")) {
-            m_progress =
-                    new ProgressMonitor(new File(url.getPath()).length(), "Unzipping " + url.getPath() + "...", exec);
-            stream = new ProgressInputStream(url.openStream());
-        } else {
-            m_progress = new ProgressMonitor("Unzipping " + url.getPath() + "...", exec);
-            stream = url.openStream();
+        try {
+            URL url = FileUtil.toURL(path);
+            if (url != null && "file".equals(url.getProtocol())) {
+                m_progress =
+                    new ProgressMonitor(FileUtil.getFileFromURL(url).length(), "Unzipping " + url.getPath() + "...",
+                        exec);
+                stream = new ProgressInputStream(stream);
+            } else {
+                m_progress = new ProgressMonitor("Unzipping " + path + "...", exec);
+            }
+        } catch (MalformedURLException | InvalidPathException e) {
+            m_progress = new ProgressMonitor("Unzipping " + path + "...", exec);
         }
         return stream;
     }
 
     /**
      * Extracts the files from the source file into the configured directory.
-     * 
+     *
      * @param source Source stream to the archive containing the files.
-     * @param outContainer Container that will be filled with the URIs/locations
-     *            of the extracted files
+     * @param outContainer Container that will be filled with the URIs/locations of the extracted files
      * @param exec Execution context to check for cancellation
-     * @throws Exception If an error occurs
+     * @throws CanceledExecutionException Execution cancelled.
+     * @throws IOException If an error occurs
+     * @throws InvalidSettingsException Target cannot be written
+     * @throws URISyntaxException Wrong URI when converted from URL
      */
     private void unarchive(final InputStream source, final BufferedDataContainer outContainer,
-            final ExecutionContext exec) throws Exception {
+        final ExecutionContext exec) throws IOException, CanceledExecutionException, InvalidSettingsException, URISyntaxException {
+        CheckUtils.checkDestinationDirectory(m_targetdirectory.getStringValue());
+
         final boolean isWindows = Platform.OS_WIN32.equals(Platform.getOS());
 
         int rowID = 0;
-        File targetDirectory = new File(m_targetdirectory.getStringValue());
+        URL targetUrl = FileUtil.toURL(m_targetdirectory.getStringValue());
         // Create input stream
         // Autodetection of type (needs buffered stream)
         InputStream in = new BufferedInputStream(openUncompressStream(source));
-        try {
-            ArchiveInputStream input = new ArchiveStreamFactory().createArchiveInputStream(in);
+        try (ArchiveInputStream input = new ArchiveStreamFactory().createArchiveInputStream(in)) {
             ArchiveEntry entry;
             // Process each archive entry
             while ((entry = input.getNextEntry()) != null) {
@@ -198,19 +203,22 @@ class UnzipNodeModel extends NodeModel {
                     // under Windows
                     pathFromZip = pathFromZip.substring(2);
                 }
-                File target = new File(targetDirectory, pathFromZip);
+                URL target = combine(targetUrl, pathFromZip);
                 if (entry.isDirectory()) {
                     // Create directory if not there
                     // Only important if an empty directory is inside the
                     // archive
-                    target.mkdirs();
+                    try {
+                        FileUtil.getFileFromURL(target).mkdirs();
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        //ignore, as we cannot create folders on remote locations
+                    }
                 } else {
-                    DataCell cell = writeToFile(input, target);
+                    DataCell cell = writeToURL(input, target);
                     outContainer.addRowToTable(new DefaultRow("Row" + rowID, cell));
                     rowID++;
                 }
             }
-            input.close();
         } catch (ArchiveException e) {
             // Uncompress single file
             String name = new File(textToPath(m_source.getStringValue())).getName();
@@ -218,51 +226,101 @@ class UnzipNodeModel extends NodeModel {
             if (dotIndex >= 0) {
                 name = name.substring(0, dotIndex);
             }
-            File target = new File(targetDirectory, name);
-            DataCell cell = writeToFile(in, target);
+            URL target = combine(targetUrl, name);
+            DataCell cell = writeToURL(in, target);
             outContainer.addRowToTable(new DefaultRow("Row" + rowID, cell));
         }
     }
 
     /**
+     * Combines {@code url} and {@code path}, where {@code path} is a relative path.
+     *
+     * @param url A {@link URL}.
+     * @param path A relative path.
+     * @return The {@link URL} of {@code url} resolved to the relative {@code path}.
+     * @throws URISyntaxException Convert failed
+     * @throws MalformedURLException Convert failed
+     */
+    private static URL combine(final URL url, final String path) throws URISyntaxException, MalformedURLException {
+        URIBuilder builder = new URIBuilder(url.toURI());
+        builder.setPath(append(builder.getPath(), path));
+        return builder.build().toURL();
+    }
+
+    /**
+     * @param path The base path.
+     * @param relativePath The relative path compared to {@code path}
+     * @return {@code path} followed by {@code relativePath}.
+     */
+    private static String append(final String path, final String relativePath) {
+        if (path == null) {
+            return relativePath;
+        }
+        if (path.charAt(path.length() - 1) == '/') {
+            return path.concat(relativePath);
+        }
+        return path.concat("/").concat(relativePath);
+    }
+
+    /**
      * Writes the data from the input stream into the target file.
-     * 
+     *
      * @param input Input stream containing the data
      * @param target The file to write into
      * @return A cell with the URI to the file
-     * @throws Exception If an I/O operation fails or the file exists and the
-     *             policy is abort
+     * @throws IOException If an I/O operation fails or the file exists and the policy is abort
+     * @throws URISyntaxException The target file cannot be converted to URI.
+     * @throws InvalidSettingsException The destination file cannot be written.
      */
-    private DataCell writeToFile(final InputStream input, final File target) throws Exception {
-        m_progress.setMessage("Unzipping file " + target.getAbsolutePath() + "...");
+    private DataCell writeToURL(final InputStream input, final URL target) throws IOException, URISyntaxException, InvalidSettingsException {
+        m_progress.setMessage("Unzipping file " + target + "...");
         boolean abort = m_ifexists.getStringValue().equals(OverwritePolicy.ABORT.getName());
         // If target exists either throw exception or inform user of
         // replacement
-        if (target.exists()) {
-            if (abort) {
-                throw new Exception("File \"" + target.getAbsolutePath() + "\" exists, overwrite policy: \""
-                        + m_ifexists.getStringValue() + "\"");
-            } else {
-                LOGGER.info("Replacing file " + target.getAbsolutePath());
-            }
+        Path path = FileUtil.resolveToPath(target);
+        if (path != null) {
+            path.getParent().toFile().mkdirs();
         }
-        // Create dirs if necessary
-        target.mkdirs();
-        // Delete old file if there is one and create new one
-        target.delete();
-        target.createNewFile();
-        OutputStream out = new FileOutputStream(target);
-        // Copy content of current entry to target file
-        IOUtils.copy(input, out);
-        out.close();
+        CheckUtils.checkDestinationFile(target.toString(), !abort);
+        File targetFile;
+        try {
+            targetFile = FileUtil.getFileFromURL(target);
+            if (targetFile != null) {
+                if (targetFile.exists()) {
+                    if (abort) {
+                        throw new IOException("File \"" + targetFile.getAbsolutePath() + "\" exists, overwrite policy: \""
+                            + m_ifexists.getStringValue() + "\"");
+                    } else {
+                        LOGGER.info("Replacing file " + targetFile.getAbsolutePath());
+                    }
+                }
+
+                // Create dirs if necessary
+                targetFile.mkdirs();
+                // Delete old file if there is one and create new one
+                targetFile.delete();
+                targetFile.createNewFile();
+            }
+        } catch (IllegalArgumentException e) {
+            //It is not local, cannot check existence
+            targetFile = null;
+        }
+        try (OutputStream out = openStream(target)){
+            // Copy content of current entry to target file
+            IOUtils.copy(input, out);
+        }
         // Create row with path or URI
         DataCell cell = null;
         String outputSelection = m_output.getStringValue();
         if (outputSelection.equals(OutputSelection.LOCATION.getName())) {
-            cell = new StringCell(target.getAbsolutePath());
+            if (targetFile == null) {
+                cell = new MissingCell("Not a local file: " + target.toString());
+            } else {
+                cell = new StringCell(targetFile.getAbsolutePath());
+            }
         }
         if (outputSelection.equals(OutputSelection.URI.getName())) {
-            URI uri = target.getAbsoluteFile().toURI();
+            URI uri = target.toURI();
             String extension = FilenameUtils.getExtension(uri.getPath());
             URIContent content = new URIContent(uri, extension);
             cell = new URIDataCell(content);
@@ -271,16 +329,31 @@ class UnzipNodeModel extends NodeModel {
     }
 
     /**
-     * Uncompresses the given file.
-     * 
-     * @param source The potentially compressed source stream
-     * @return Uncompressed version of the source, or source if it was not
-     *         compressed
-     * @throws Exception If IOException occurred
+     * Opens an {@link OutputStream} from {@code target}.
+     *
+     * @param target A {@link URL} pointing to a {@link File} or an HTTP location.
+     * @return The {@link OutputStream} for the selected resource (with {@code PUT} for HTTP).
+     * @throws URISyntaxException Conversion problem
+     * @throws IOException Read problem
      */
-    private InputStream openUncompressStream(final InputStream source) throws Exception {
+    private static OutputStream openStream(final URL target) throws IOException, URISyntaxException {
+        Path path = FileUtil.resolveToPath(target);
+        if (path == null) {
+            return FileUtil.openOutputConnection(target, "PUT").getOutputStream();
+        }
+        return Files.newOutputStream(path);
+    }
+
+    /**
+     * Uncompresses the given file.
+     *
+     * @param source The potentially compressed source stream
+     * @return Uncompressed version of the source, or source if it was not compressed
+     * @throws IOException If IOException occurred
+     */
+    private InputStream openUncompressStream(final InputStream source) throws IOException {
         InputStream uncompressStream;
-        // Buffered stream needet for autodetection of type
+        // Buffered stream needed for autodetection of type
         InputStream in = new BufferedInputStream(source);
         try {
             // Try to create a compressor for the source, throws exception if
@@ -295,7 +368,7 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Tries to create a path from the passed string.
-     * 
+     *
      * @param text the string to transform into a path
      * @return Path if entered value could be properly transformed
      */
@@ -321,8 +394,8 @@ class UnzipNodeModel extends NodeModel {
 
     /**
      * Factory method for the output table spec.
-     * 
-     * 
+     *
+     *
      * @return Output table spec
      */
     private DataTableSpec createOutSpec() {
@@ -359,10 +432,7 @@ class UnzipNodeModel extends NodeModel {
             throw new InvalidSettingsException("Target directory not set");
         }
         // Does the target directory exist?
-        File targetdirectory = new File(m_targetdirectory.getStringValue());
-        if (!targetdirectory.isDirectory()) {
-            throw new InvalidSettingsException("Target directory does not exist");
-        }
+        CheckUtils.checkDestinationDirectory(m_targetdirectory.getStringValue());
         return new DataTableSpec[]{createOutSpec()};
     }
 
@@ -404,7 +474,7 @@ class UnzipNodeModel extends NodeModel {
      */
     @Override
     protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+        CanceledExecutionException {
         // Not used
     }
 
@@ -413,7 +483,7 @@ class UnzipNodeModel extends NodeModel {
      */
     @Override
     protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+        CanceledExecutionException {
         // Not used
     }
 
@@ -422,7 +492,7 @@ class UnzipNodeModel extends NodeModel {
         ProgressInputStream(final InputStream inputStream) {
             super(inputStream);
         }
-        
+
         /** {@inheritDoc} */
         @Override
         protected synchronized void afterRead(final int n) {
