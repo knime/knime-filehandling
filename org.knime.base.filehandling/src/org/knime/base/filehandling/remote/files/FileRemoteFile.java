@@ -50,13 +50,23 @@ package org.knime.base.filehandling.remote.files;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.knime.core.node.ExecutionContext;
 
@@ -68,6 +78,22 @@ import org.knime.core.node.ExecutionContext;
  */
 public class FileRemoteFile extends RemoteFile<Connection> {
 
+    private Boolean m_existsCache = null;
+
+    private Boolean m_isdirCache = null;
+
+    private Long m_sizeCache = null;
+
+    private Long m_modifiedCache = null;
+
+    private void resetCache() {
+        // Empty cache
+        m_existsCache = null;
+        m_isdirCache = null;
+        m_sizeCache = null;
+        m_modifiedCache = null;
+    }
+
     /**
      * Creates a file remote file for the given URI.
      *
@@ -76,6 +102,11 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     FileRemoteFile(final URI uri) {
         super(uri, null, null);
+    }
+
+    private FileRemoteFile(final URI uri, final boolean isDirectory) {
+        this(uri);
+        m_isdirCache = isDirectory;
     }
 
     /**
@@ -108,7 +139,10 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public boolean exists() throws Exception {
-        return new File(getURI()).exists();
+        if (m_existsCache == null) {
+            m_existsCache = new File(getURI()).exists();
+        }
+        return m_existsCache;
     }
 
     /**
@@ -116,7 +150,10 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public boolean isDirectory() throws Exception {
-        return new File(getURI()).isDirectory();
+        if (m_isdirCache == null) {
+            m_isdirCache = new File(getURI()).isDirectory();
+        }
+        return m_isdirCache;
     }
 
     /**
@@ -124,13 +161,17 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public void move(final RemoteFile<Connection> file, final ExecutionContext exec) throws Exception {
-        if (file instanceof FileRemoteFile) {
-            final FileRemoteFile source = (FileRemoteFile)file;
-            Path toMove = Paths.get(source.getURI());
-            Path newName = Paths.get(getURI()).resolve(source.getName());
-            Files.move(toMove, newName);
-        } else {
-            super.move(file, exec);
+        try {
+            if (file instanceof FileRemoteFile) {
+                final FileRemoteFile source = (FileRemoteFile)file;
+                Path toMove = Paths.get(source.getURI());
+                Path newName = Paths.get(getURI()).resolve(source.getName());
+                Files.move(toMove, newName);
+            } else {
+                super.move(file, exec);
+            }
+        } finally {
+            resetCache();
         }
     }
 
@@ -147,7 +188,11 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public OutputStream openOutputStream() throws Exception {
-        return new FileOutputStream(new File(getURI()));
+        try {
+            return new FileOutputStream(new File(getURI()));
+        } finally {
+            resetCache();
+        }
     }
 
     /**
@@ -155,7 +200,10 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public long getSize() throws Exception {
-        return new File(getURI()).length();
+        if (m_sizeCache == null) {
+            m_sizeCache = new File(getURI()).length();
+        }
+        return m_sizeCache;
     }
 
     /**
@@ -163,7 +211,10 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public long lastModified() throws Exception {
-        return new File(getURI()).lastModified() / 1000;
+        if (m_modifiedCache == null) {
+            m_modifiedCache = new File(getURI()).lastModified() / 1000;
+        }
+        return m_modifiedCache;
     }
 
     /**
@@ -171,7 +222,11 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public boolean delete() throws Exception {
-        return deleteRecursively(getURI().getPath());
+        try {
+            return deleteRecursively(getURI().getPath());
+        } finally {
+            resetCache();
+        }
     }
 
     /**
@@ -179,21 +234,39 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public RemoteFile<Connection>[] listFiles() throws Exception {
-        RemoteFile<Connection>[] files = new FileRemoteFile[0];
+        final List<FileRemoteFile> files = new ArrayList<FileRemoteFile>();
         if (isDirectory()) {
-            // Get files in directory
-            final File[] f = new File(getURI()).listFiles();
-            if (f != null) {
-                files = new FileRemoteFile[f.length];
-                // Create remote files from local files
-                for (int i = 0; i < f.length; i++) {
-                    files[i] = new FileRemoteFile(f[i].toURI());
+            final Path current = new File(getURI()).toPath();
+            Set<FileVisitOption> options = new HashSet<FileVisitOption>();
+            options.add(FileVisitOption.FOLLOW_LINKS);
+            Files.walkFileTree(current, options, 2, new FileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) throws IOException {
+                    if(dir.equals(current)) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                    files.add(new FileRemoteFile(removeTripleSlash(dir.toUri()), true));
+                    return FileVisitResult.SKIP_SUBTREE;
                 }
-            }
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+                    if(!file.equals(current)) {
+                        files.add(new FileRemoteFile(removeTripleSlash(file.toUri()), false));
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+                @Override
+                public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+                @Override
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
         }
-        // Sort files
-        Arrays.sort(files);
-        return files;
+        Collections.sort(files);
+        return files.toArray(new FileRemoteFile[files.size()]);
     }
 
     /**
@@ -201,12 +274,10 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public boolean mkDir() throws Exception {
-        Path f = Paths.get(getURI());
-        if (Files.isDirectory(f)) {
-            return false;
-        } else {
-            Files.createDirectory(f);
-            return true;
+        try {
+            return new File(getURI()).mkdir();
+        } finally {
+            resetCache();
         }
     }
 
@@ -242,6 +313,17 @@ public class FileRemoteFile extends RemoteFile<Connection> {
         }
         // Delete this file
         return file.delete();
+    }
+
+    private URI removeTripleSlash(URI uri) {
+        try {
+            if (uri.getSchemeSpecificPart().startsWith("///")) {
+                uri = new URI(uri.getScheme(), uri.getSchemeSpecificPart().substring(2), uri.getFragment());
+            }
+        } catch (URISyntaxException e) {
+            // return the original
+        }
+        return uri;
     }
 
 }
