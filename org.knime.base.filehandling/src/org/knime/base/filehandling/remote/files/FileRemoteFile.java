@@ -275,7 +275,13 @@ public class FileRemoteFile extends RemoteFile<Connection> {
     @Override
     public boolean mkDir() throws Exception {
         try {
-            return new File(getURI()).mkdir();
+            Path f = Paths.get(getURI());
+            if (Files.isDirectory(f)) {
+                return false;
+            } else {
+                Files.createDirectory(f);
+                return true;
+            }
         } finally {
             resetCache();
         }
