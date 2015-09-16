@@ -48,7 +48,9 @@
 package org.knime.base.filehandling.remote.files;
 
 import java.net.URI;
+
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.node.util.CheckUtils;
 
 /**
  * Factory for remote files.
@@ -78,7 +80,7 @@ public final class RemoteFileFactory {
     public static <C extends Connection, F extends RemoteFile<C>> F createRemoteFile(final URI uri,
             final ConnectionInformation connectionInformation, final ConnectionMonitor<C> connectionMonitor)
                     throws Exception {
-        final String scheme = uri.getScheme().toLowerCase();
+        final String scheme = CheckUtils.checkArgumentNotNull(uri, "URI must not be null").getScheme().toLowerCase();
         if (connectionInformation != null) {
             // Check if the connection information fit to the URI
             connectionInformation.fitsToURI(uri);

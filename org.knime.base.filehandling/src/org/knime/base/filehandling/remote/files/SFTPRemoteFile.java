@@ -60,6 +60,7 @@ import java.util.List;
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
+import org.knime.core.node.util.CheckUtils;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
@@ -115,6 +116,7 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
     SFTPRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
             final ConnectionMonitor<SSHConnection> connectionMonitor) {
         super(uri, connectionInformation, connectionMonitor);
+        CheckUtils.checkArgumentNotNull(connectionInformation, "Connection information must not be null");
     }
 
 

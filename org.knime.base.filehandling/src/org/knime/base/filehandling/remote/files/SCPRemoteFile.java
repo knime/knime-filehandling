@@ -47,8 +47,6 @@
  */
 package org.knime.base.filehandling.remote.files;
 
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.Session;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -56,9 +54,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
+import org.knime.core.node.util.CheckUtils;
+
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.Session;
 
 /**
  * Implementation of the SCP remote file.
@@ -83,6 +86,7 @@ public class SCPRemoteFile extends RemoteFile<SSHConnection> {
     SCPRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
             final ConnectionMonitor<SSHConnection> connectionMonitor) {
         super(uri, connectionInformation, connectionMonitor);
+        CheckUtils.checkArgumentNotNull(connectionInformation, "Connection information must not be null");
     }
 
     /**
