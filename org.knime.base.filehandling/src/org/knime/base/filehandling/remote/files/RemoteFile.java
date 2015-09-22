@@ -55,6 +55,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
+import org.knime.core.node.util.CheckUtils;
 
 /**
  * Remote file.
@@ -83,7 +84,7 @@ public abstract class RemoteFile<C extends Connection> implements Comparable<Rem
      */
     protected RemoteFile(final URI uri, final ConnectionInformation connectionInformation,
             final ConnectionMonitor<C> connectionMonitor) {
-        m_uri = uri;
+        m_uri = CheckUtils.checkArgumentNotNull(uri, "URI must not be null");
         m_connectionInformation = connectionInformation;
         m_connectionMonitor = connectionMonitor;
     }
@@ -180,7 +181,7 @@ public abstract class RemoteFile<C extends Connection> implements Comparable<Rem
      * Get the connection information to this file.
      *
      *
-     * @return The connection information to this file
+     * @return The connection information to this file (might be null)
      */
     public final ConnectionInformation getConnectionInformation() {
         return m_connectionInformation;
@@ -190,7 +191,7 @@ public abstract class RemoteFile<C extends Connection> implements Comparable<Rem
      * Get the monitor handling the connection.
      *
      *
-     * @return the connectionMonitor
+     * @return the connectionMonitor (might be null)
      */
     public final ConnectionMonitor<C> getConnectionMonitor() {
         return m_connectionMonitor;

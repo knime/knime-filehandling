@@ -222,8 +222,10 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
      */
     private HttpResponse getResponse() throws Exception {
         final HttpParams params = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(params, getConnectionInformation().getTimeout());
-        HttpConnectionParams.setSoTimeout(params, getConnectionInformation().getTimeout());
+        if (getConnectionInformation() != null) {
+            HttpConnectionParams.setConnectionTimeout(params, getConnectionInformation().getTimeout());
+            HttpConnectionParams.setSoTimeout(params, getConnectionInformation().getTimeout());
+        }
 
         // Create request
         final DefaultHttpClient client = new DefaultHttpClient(params);
