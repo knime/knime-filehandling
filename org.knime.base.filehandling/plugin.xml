@@ -30,6 +30,8 @@
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.download2.DownloadNodeFactory" id="org.knime.base.filehandling.download2.DownloadNodeFactory" />
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.downloaduploadfromlist2.DownloadUploadFromListNodeFactory" id="org.knime.base.filehandling.downloaduploadfromlist2.DownloadUploadFromListNodeFactory" />
    <node category-path="/io/filehandling/uri" factory-class="org.knime.base.filehandling.uriporttovariable.URIPortToVariableNodeFactory" id="org.knime.base.filehandling.uriporttovariable.URIPortToVariableNodeFactory" />
+   <node category-path="/io/filehandling/uri" factory-class="org.knime.base.filehandling.urltofilepath.UrlToFilePathNodeFactory" id="org.knime.base.filehandling.urltofilepath.UrlToFilePathNodeFactory" />
+   <node category-path="/io/filehandling/uri" factory-class="org.knime.base.filehandling.urltofilepathvariable.UrlToFilePathVariableNodeFactory" id="org.knime.base.filehandling.urltofilepathvariable.UrlToFilePathVariableNodeFactory" />
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.deletefiles.DeleteFilesNodeFactory" id="org.knime.base.filehandling.deletefiles.DeleteFilesNodeFactory" />
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.createdirectory.CreateDirectoryNodeFactory" id="org.knime.base.filehandling.createdirectory.CreateDirectoryNodeFactory" />
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.listdirectory.ListDirectoryNodeFactory" id="org.knime.base.filehandling.listdirectory.ListDirectoryNodeFactory" />
@@ -68,6 +70,12 @@
       <RemoteFileHandler
             RemoteFileHandler="org.knime.base.filehandling.remote.files.SSHRemoteFileHandler">
       </RemoteFileHandler>
+   </extension>
+   <extension
+         point="org.knime.core.NodeFactoryClassMapper">
+      <NodeFactoryClassMapper
+            classMapper="org.knime.base.filehandling.FileHandlingNodeFactoryClassMapper">
+      </NodeFactoryClassMapper>
    </extension>
 
 </plugin>
