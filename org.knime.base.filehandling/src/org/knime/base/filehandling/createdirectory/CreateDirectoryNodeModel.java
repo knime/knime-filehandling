@@ -51,6 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
+
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
@@ -88,7 +89,7 @@ public class CreateDirectoryNodeModel extends NodeModel {
      * Constructor for the node model.
      */
     public CreateDirectoryNodeModel() {
-        super(new PortType[]{new PortType(ConnectionInformationPortObject.class, true)},
+        super(new PortType[]{ConnectionInformationPortObject.TYPE_OPTIONAL},
                 new PortType[]{FlowVariablePortObject.TYPE});
     }
 

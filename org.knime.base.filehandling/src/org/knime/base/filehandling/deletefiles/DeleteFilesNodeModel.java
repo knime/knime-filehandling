@@ -50,6 +50,7 @@ package org.knime.base.filehandling.deletefiles;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
@@ -100,7 +101,7 @@ public class DeleteFilesNodeModel extends NodeModel {
      * Constructor for the node model.
      */
     public DeleteFilesNodeModel() {
-        super(new PortType[]{new PortType(ConnectionInformationPortObject.class, true), BufferedDataTable.TYPE},
+        super(new PortType[]{ConnectionInformationPortObject.TYPE_OPTIONAL, BufferedDataTable.TYPE},
                 new PortType[]{BufferedDataTable.TYPE});
     }
 

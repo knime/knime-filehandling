@@ -80,7 +80,7 @@
    <extension
          point="org.knime.core.PortType">
       <portType
-            color="#1e69af"
+            color="#1eb9dc"
             name="Remote Connection"
             objectClass="org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject"
             objectSerializer="org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject$Serializer"

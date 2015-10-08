@@ -112,7 +112,7 @@ public class ListDirectoryNodeModel extends NodeModel {
      * Constructor for the node model.
      */
     public ListDirectoryNodeModel() {
-        super(new PortType[]{new PortType(ConnectionInformationPortObject.class, true)},
+        super(new PortType[]{ConnectionInformationPortObject.TYPE_OPTIONAL},
                 new PortType[]{BufferedDataTable.TYPE});
     }
 
