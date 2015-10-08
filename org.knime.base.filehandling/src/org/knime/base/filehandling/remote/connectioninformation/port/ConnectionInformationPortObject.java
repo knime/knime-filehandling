@@ -50,6 +50,7 @@ package org.knime.base.filehandling.remote.connectioninformation.port;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
@@ -67,6 +68,11 @@ import org.knime.core.node.util.ViewUtils;
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ConnectionInformationPortObject extends AbstractSimplePortObject {
+    /**
+     * @noreference This class is not intended to be referenced by clients.
+     * @since 3.0
+     */
+    public static final class Serializer extends AbstractSimplePortObjectSerializer<ConnectionInformationPortObject> {}
 
     private ConnectionInformationPortObjectSpec m_connectionInformationPOS;
 

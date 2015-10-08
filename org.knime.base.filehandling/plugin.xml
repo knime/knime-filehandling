@@ -77,5 +77,16 @@
             classMapper="org.knime.base.filehandling.FileHandlingNodeFactoryClassMapper">
       </NodeFactoryClassMapper>
    </extension>
+   <extension
+         point="org.knime.core.PortType">
+      <portType
+            color="#1e69af"
+            name="Remote Connection"
+            objectClass="org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject"
+            objectSerializer="org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject$Serializer"
+            specClass="org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec"
+            specSerializer="org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec$Serializer">
+      </portType>
+   </extension>
 
 </plugin>

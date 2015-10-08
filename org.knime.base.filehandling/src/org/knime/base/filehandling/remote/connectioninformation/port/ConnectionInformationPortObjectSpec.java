@@ -41,13 +41,14 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Nov 13, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.remote.connectioninformation.port;
 
 import javax.swing.JComponent;
+
 import org.apache.commons.lang.ObjectUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
@@ -56,11 +57,17 @@ import org.knime.core.node.port.AbstractSimplePortObjectSpec;
 
 /**
  * Spec for the connection information port object.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public class ConnectionInformationPortObjectSpec extends AbstractSimplePortObjectSpec {
+    /**
+     * @noreference This class is not intended to be referenced by clients.
+     * @since 3.0
+     */
+    public static final class Serializer
+        extends AbstractSimplePortObjectSpecSerializer<ConnectionInformationPortObjectSpec> { }
 
     private ConnectionInformation m_connectionInformation;
 
@@ -73,8 +80,8 @@ public class ConnectionInformationPortObjectSpec extends AbstractSimplePortObjec
 
     /**
      * Create specs that contain connection information.
-     * 
-     * 
+     *
+     *
      * @param connectionInformation The content of this port object
      */
     public ConnectionInformationPortObjectSpec(final ConnectionInformation connectionInformation) {
@@ -86,8 +93,8 @@ public class ConnectionInformationPortObjectSpec extends AbstractSimplePortObjec
 
     /**
      * Return the connection information contained by this port object spec.
-     * 
-     * 
+     *
+     *
      * @return The content of this port object
      */
     public ConnectionInformation getConnectionInformation() {
