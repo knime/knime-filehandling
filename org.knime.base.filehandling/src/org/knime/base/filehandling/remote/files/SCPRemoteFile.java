@@ -145,7 +145,7 @@ public class SCPRemoteFile extends RemoteFile<SSHConnection> {
      */
     @Override
     public boolean isDirectory() throws Exception {
-        // SCP can not address directories
+        // SCP cannot address directories
         return false;
     }
 

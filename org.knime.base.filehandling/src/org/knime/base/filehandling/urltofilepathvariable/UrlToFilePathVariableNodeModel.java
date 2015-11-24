@@ -221,7 +221,7 @@ class UrlToFilePathVariableNodeModel extends NodeModel {
                     try {
                         url = new URL("file", null, urlStr);
                     } catch (MalformedURLException e2) {
-                        // file can not exist since url is invalid
+                        // file cannot exist since url is invalid
                         // => throw exception if fail is specified
                         if (m_failOnInvalidLocationModel.getBooleanValue()) {
                             throw new InvalidSettingsException("File at " + urlStr + " does not exist!");

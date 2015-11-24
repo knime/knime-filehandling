@@ -308,7 +308,7 @@ class ZipNodeModel extends NodeModel {
      * @param newfiles Set of new files for conflict checking
      * @param exec Execution context for <code>checkCanceled()</code>
      * @return Uncompressed size of files in the zip file
-     * @throws Exception If the file can not be read or user canceled
+     * @throws Exception If the file cannot be read or user canceled
      */
     private long checkFilesInZip(final File file, final Set<String> newfiles, final ExecutionContext exec)
             throws Exception {
@@ -362,7 +362,7 @@ class ZipNodeModel extends NodeModel {
      * @param progress Progress of this nodes execution
      * @param exec Execution context for <code>checkCanceled()</code> and
      *            <code>setProgress()</code>
-     * @throws Exception If the file can not be read or user canceled
+     * @throws Exception If the file cannot be read or user canceled
      */
     private void addFile(final File file, final ZipOutputStream zout, final Progress progress,
             final ExecutionContext exec) throws Exception {
