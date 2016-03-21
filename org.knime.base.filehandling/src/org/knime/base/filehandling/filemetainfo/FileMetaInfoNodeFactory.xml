@@ -44,10 +44,6 @@
             <br />
             Is the file hidden.
             <br />
-            <b>Symbolic link</b>
-            <br />
-            If the file is a symbolic link
-            <br />
             <b>Size</b>
             <br />
             Size of the file. If the file is a directory, the sizes of
@@ -65,10 +61,6 @@
             <b>Permissions</b>
             <br />
             Read (r), write (w) and execute (x) permissions of the file.
-            <br />
-            <b>Owner</b>
-            <br />
-            The owner of the file.
         </outPort>
     </ports>
 </knimeNode>

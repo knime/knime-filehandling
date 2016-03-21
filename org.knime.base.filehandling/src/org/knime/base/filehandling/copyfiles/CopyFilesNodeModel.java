@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.Objects;
 
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.NodeUtils;
@@ -80,8 +81,8 @@ import org.knime.core.node.NodeSettingsWO;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class CopyFilesNodeModel extends NodeModel {
@@ -141,8 +142,8 @@ class CopyFilesNodeModel extends NodeModel {
 
     /**
      * Create a rearranger that adds the URI column.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @param monitor Monitors which files have been copied/moved
      * @param exec Context of this execution
@@ -178,8 +179,8 @@ class CopyFilesNodeModel extends NodeModel {
 
     /**
      * Check if the settings are all valid.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -212,8 +213,8 @@ class CopyFilesNodeModel extends NodeModel {
 
     /**
      * Executes the configured action (copy or move).
-     * 
-     * 
+     *
+     *
      * @param row Row with the needed data
      * @param rowNr Number of the row in the table
      * @param monitor Monitors which files have been copied/moved
@@ -235,7 +236,7 @@ class CopyFilesNodeModel extends NodeModel {
         DataCell uriCell = DataType.getMissingCell();
         if (!row.getCell(sourceIndex).isMissing()) {
             URI sourceUri = ((URIDataValue)row.getCell(sourceIndex)).getURIContent().getURI();
-            if (!sourceUri.getScheme().equals("file")) {
+            if (!Objects.equals(sourceUri.getScheme(), "file")) {
                 throw new RuntimeException("This node only supports the protocol \"file\"");
             }
             if (filenameHandling.equals(fromColumn)) {
@@ -245,7 +246,7 @@ class CopyFilesNodeModel extends NodeModel {
                     throw new RuntimeException("Target URI in row \"" + row.getKey() + "\" is missing");
                 }
                 URI targetUri = ((URIDataCell)(row.getCell(targetIndex))).getURIContent().getURI();
-                if (!targetUri.getScheme().equals("file")) {
+                if (!Objects.equals(targetUri.getScheme(), "file")) {
                     throw new RuntimeException("This node only supports the protocol \"file\"");
                 }
                 // Absolute path in filename, no preceding directory
