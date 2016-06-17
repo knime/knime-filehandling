@@ -49,6 +49,7 @@ package org.knime.base.filehandling.filemetainfo;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.Calendar;
 
@@ -65,6 +66,7 @@ import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.data.date.DateAndTimeCell;
 import org.knime.core.data.def.BooleanCell;
+import org.knime.core.data.def.BooleanCell.BooleanCellFactory;
 import org.knime.core.data.def.LongCell;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.data.uri.URIDataValue;
@@ -78,11 +80,12 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.util.FileUtil;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class FileMetaInfoNodeModel extends NodeModel {
@@ -91,6 +94,8 @@ class FileMetaInfoNodeModel extends NodeModel {
 
     private SettingsModelBoolean m_abortifnotlocal;
 
+    private SettingsModelBoolean m_failiffiledoesnotexist;
+
     /**
      * Constructor for the node model.
      */
@@ -98,6 +103,7 @@ class FileMetaInfoNodeModel extends NodeModel {
         super(1, 1);
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_abortifnotlocal = SettingsFactory.createAbortIfNotLocalSettings();
+        m_failiffiledoesnotexist = SettingsFactory.createFailIfDoesNotExistSettings();
     }
 
     /**
@@ -113,8 +119,8 @@ class FileMetaInfoNodeModel extends NodeModel {
 
     /**
      * Create a rearranger that adds the meta information to the table.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @return Rearranger that will add the meta information columns
      * @throws InvalidSettingsException If the settings are incorrect
@@ -147,18 +153,19 @@ class FileMetaInfoNodeModel extends NodeModel {
 
     /**
      * Find the attributes of a file.
-     * 
-     * 
+     *
+     *
      * Find out the attributes of a file. The files URI has to be contained in
      * one of the rows cells. Will return missing cells if the file does not
      * exist.
-     * 
+     *
      * @param row Row with the URI cell in it
      * @param uriIndex Index of the URI cell
      * @return Data cells with the attributes of the file
      */
     private DataCell[] inspectFile(final DataRow row, final int uriIndex) {
         boolean abort = m_abortifnotlocal.getBooleanValue();
+        boolean failIfFileDoesNotExist = m_failiffiledoesnotexist.getBooleanValue();
         DataCell[] cells = new DataCell[Attributes.getAllAttributes().length];
         // Assume missing cell or unreachable file
         for (int i = 0; i < cells.length; i++) {
@@ -170,17 +177,29 @@ class FileMetaInfoNodeModel extends NodeModel {
             URI uri = value.getURIContent().getURI();
             String scheme = uri.getScheme();
             // Check scheme if selected
-            if (abort && (scheme == null || !scheme.equals("file"))) {
+            if (abort && (scheme == null || !(scheme.equals("file") || scheme.equals("knime")))) {
                 throw new RuntimeException("The URI \"" + uri.toString() + "\" does have the scheme \"" + scheme
-                        + "\", expected \"file\"");
+                        + "\", expected \"file\" or \"knime\"");
             }
-            File file = new File(uri.getPath());
+            File file = null;
+            if (scheme.equals("file")) {
+                file = new File(uri.getPath());
+            } else if (scheme.equals("knime")) {
+                try {
+                    file = FileUtil.getFileFromURL(uri.toURL());
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            } else {
+                // File is remote, return all as missing values
+                return cells;
+            }
             if (file.exists()) {
                 try {
                     // Directory
-                    cells[Attributes.DIRECTORY.getPosition()] = BooleanCell.get(file.isDirectory());
+                    cells[Attributes.DIRECTORY.getPosition()] = BooleanCellFactory.create(file.isDirectory());
                     // Hidden
-                    cells[Attributes.HIDDEN.getPosition()] = BooleanCell.get(file.isHidden());
+                    cells[Attributes.HIDDEN.getPosition()] = BooleanCellFactory.create(file.isHidden());
                     // Size
                     long size = getFileSize(file);
                     cells[Attributes.SIZE.getPosition()] = new LongCell(size);
@@ -202,9 +221,15 @@ class FileMetaInfoNodeModel extends NodeModel {
                     permissions += file.canWrite() ? "w" : "";
                     permissions += file.canExecute() ? "x" : "";
                     cells[Attributes.PERMISSIONS.getPosition()] = new StringCell(permissions);
+                    // Exists
+                    cells[Attributes.EXISTS.getPosition()] = BooleanCell.TRUE;
                 } catch (Exception e) {
                     // If one file does not work, go on
                 }
+            } else if (failIfFileDoesNotExist) {
+                throw new RuntimeException("The file \"" + file.getAbsolutePath() + "\" does not exist.");
+            } else {
+                cells[Attributes.EXISTS.getPosition()] = BooleanCell.FALSE;
             }
         }
         return cells;
@@ -212,11 +237,11 @@ class FileMetaInfoNodeModel extends NodeModel {
 
     /**
      * Get the size of a file.
-     * 
-     * 
+     *
+     *
      * This method will return the size of the given file. If the file is a
      * directory, it will return the summarized size of the contained files.
-     * 
+     *
      * @param file The file to check
      * @return The size of the file
      */
@@ -235,8 +260,8 @@ class FileMetaInfoNodeModel extends NodeModel {
 
     /**
      * Check if the settings are all valid.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -271,6 +296,7 @@ class FileMetaInfoNodeModel extends NodeModel {
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_uricolumn.saveSettingsTo(settings);
         m_abortifnotlocal.saveSettingsTo(settings);
+        m_failiffiledoesnotexist.saveSettingsTo(settings);
     }
 
     /**
@@ -280,6 +306,12 @@ class FileMetaInfoNodeModel extends NodeModel {
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_uricolumn.loadSettingsFrom(settings);
         m_abortifnotlocal.loadSettingsFrom(settings);
+        try {
+            m_failiffiledoesnotexist.loadSettingsFrom(settings);
+        } catch (InvalidSettingsException ex) {
+            // option added with 3.2, older workflows don't have it
+            m_failiffiledoesnotexist.setBooleanValue(false);
+        }
     }
 
     /**

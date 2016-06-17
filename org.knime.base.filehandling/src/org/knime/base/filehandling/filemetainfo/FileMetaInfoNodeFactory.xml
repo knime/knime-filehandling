@@ -17,12 +17,13 @@
         <option name="URI column">
             Column with the path to the files.
         </option>
+        <option name="Fail if file does not exist">
+        	Aborts execution if one of the files does not exist. Enabling this option will also enable the check
+        	for local files (see below) because file existence usually cannot be checked for remote files.
+        </option>
         <option name="Fail execution if URI does not point to local file">
-            Does abort the execution if one of the URIs does
-            not point to a local
-            file. A correct URI to a local file has the
-            scheme "file" in front of
-            it.
+            Aborts execution if one of the URIs does not point to a local file. A correct URI to a local file has the
+            scheme "file" or "knime" in front of it.
         </option>
     </fullDescription>
 
@@ -61,6 +62,10 @@
             <b>Permissions</b>
             <br />
             Read (r), write (w) and execute (x) permissions of the file.
+            <br />
+            <b>Exists</b>
+            <br />
+            If the file exists.
         </outPort>
     </ports>
 </knimeNode>

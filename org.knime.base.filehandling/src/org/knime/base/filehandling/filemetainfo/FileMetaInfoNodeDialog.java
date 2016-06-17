@@ -41,11 +41,14 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.filemetainfo;
+
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
@@ -56,8 +59,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * <code>NodeDialog</code> for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
@@ -65,6 +68,9 @@ class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
     private SettingsModelString m_uricolumn;
 
     private SettingsModelBoolean m_abortifnotlocal;
+
+    private SettingsModelBoolean m_failiffiledoesnotexist;
+
 
     /**
      * New pane for configuring the node dialog.
@@ -74,10 +80,28 @@ class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
         super();
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_abortifnotlocal = SettingsFactory.createAbortIfNotLocalSettings();
+        m_failiffiledoesnotexist = SettingsFactory.createFailIfDoesNotExistSettings();
+        m_failiffiledoesnotexist.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                updateEnabledStatus();
+            }
+        });
+        updateEnabledStatus();
         // URI column
         addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn, "URI column", 0, URIDataValue.class));
+        // Fail if file does not exist
+        addDialogComponent(new DialogComponentBoolean(m_failiffiledoesnotexist, "Fail if file does not exist"));
         // Abort if not local
         addDialogComponent(new DialogComponentBoolean(m_abortifnotlocal,
                 "Fail execution if URI does not point to local file"));
     }
+
+    private void updateEnabledStatus() {
+        m_abortifnotlocal.setEnabled(!m_failiffiledoesnotexist.getBooleanValue());
+        if (m_failiffiledoesnotexist.getBooleanValue()) {
+            m_abortifnotlocal.setBooleanValue(true);
+        }
+    }
+
 }

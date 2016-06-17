@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
@@ -52,8 +52,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * Factory for SettingsModels.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 final class SettingsFactory {
@@ -64,8 +64,8 @@ final class SettingsFactory {
 
     /**
      * Factory method for the URI column setting.
-     * 
-     * 
+     *
+     *
      * @return URI column <code>SettingsModel</code>
      */
     static SettingsModelString createURIColumnSettings() {
@@ -74,12 +74,21 @@ final class SettingsFactory {
 
     /**
      * Factory method for the abort if not local setting.
-     * 
-     * 
+     *
+     *
      * @return Abort if not local <code>SettingsModel</code>
      */
     static SettingsModelBoolean createAbortIfNotLocalSettings() {
         return new SettingsModelBoolean("abortifnotlocal", false);
     }
 
+    /**
+     * Factory method for the fail if file does not exist setting.
+     *
+     *
+     * @return Fail if file does not exist <code>SettingsModel</code>
+     */
+    static SettingsModelBoolean createFailIfDoesNotExistSettings() {
+        return new SettingsModelBoolean("failiffiledoesnotexist", false);
+    }
 }

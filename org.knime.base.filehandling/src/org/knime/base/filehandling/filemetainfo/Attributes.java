@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 21, 2012 (Patrick Winter): created
  */
@@ -55,8 +55,8 @@ import org.knime.core.data.def.StringCell;
 
 /**
  * Enums for attributes.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 enum Attributes {
@@ -89,7 +89,13 @@ enum Attributes {
     /**
      * Read, write and execute permissions for the file.
      */
-    PERMISSIONS(5, "Permissions", StringCell.TYPE);
+    PERMISSIONS(5, "Permissions", StringCell.TYPE),
+
+    /**
+     * If the file exists.
+     */
+    EXISTS(6, "Exists", BooleanCell.TYPE);
+
 
     private final int m_position;
 
@@ -133,7 +139,7 @@ enum Attributes {
      * @return Array of all attributes
      */
     static Attributes[] getAllAttributes() {
-        return new Attributes[]{DIRECTORY, HIDDEN, SIZE, HUMANSIZE, MODIFIED, PERMISSIONS};
+        return new Attributes[]{DIRECTORY, HIDDEN, SIZE, HUMANSIZE, MODIFIED, PERMISSIONS, EXISTS};
     }
 
 }
