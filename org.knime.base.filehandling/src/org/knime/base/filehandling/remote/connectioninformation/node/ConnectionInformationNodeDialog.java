@@ -55,8 +55,11 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.Enumeration;
 
+import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
+import javax.swing.ButtonModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -110,6 +113,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
     private final JRadioButton m_authpassword;
 
     private final JRadioButton m_authkeyfile;
+
+    private final JRadioButton m_authKerberos;
 
     private final ButtonGroup m_authmethod;
 
@@ -168,10 +173,14 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_authkeyfile = new JRadioButton(AuthenticationMethod.KEYFILE.getLabel());
         m_authkeyfile.setActionCommand(AuthenticationMethod.KEYFILE.getName());
         m_authkeyfile.addChangeListener(new UpdateListener());
+        m_authKerberos = new JRadioButton(AuthenticationMethod.KERBEROS.getLabel());
+        m_authKerberos.setActionCommand(AuthenticationMethod.KERBEROS.getName());
+        m_authKerberos.addChangeListener(new UpdateListener());
         m_authmethod = new ButtonGroup();
         m_authmethod.add(m_authnone);
         m_authmethod.add(m_authpassword);
         m_authmethod.add(m_authkeyfile);
+        m_authmethod.add(m_authKerberos);
         // Workflow credentials
         m_useworkflowcredentials = new JCheckBox();
         m_useworkflowcredentials.addChangeListener(new UpdateListener());
@@ -227,11 +236,19 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             gbc.gridx++;
             authenticationMethodCount++;
         }
-        authenticationPanel.add(m_authpassword);
-        authenticationMethodCount++;
+        if (m_protocol.hasPasswordSupport() || m_protocol.hasKerberosSupport()) {
+            authenticationPanel.add(m_authpassword);
+            gbc.gridx++;
+            authenticationMethodCount++;
+        }
         if (m_protocol.hasKeyfileSupport()) {
             gbc.gridx++;
             authenticationPanel.add(m_authkeyfile);
+            authenticationMethodCount++;
+        }
+        if (m_protocol.hasKerberosSupport()) {
+            gbc.gridx++;
+            authenticationPanel.add(m_authKerberos);
             authenticationMethodCount++;
         }
         // Workflow credentials
@@ -294,13 +311,15 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.BOTH;
         panel.add(m_workflowcredentialspanel, gbc);
-        gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        gbc.gridy++;
-        panel.add(m_userLabel, gbc);
-        gbc.gridx++;
-        gbc.weightx = 1;
-        panel.add(m_user, gbc);
+        if (m_protocol.hasPasswordSupport() || m_protocol.hasKerberosSupport()) {
+            gbc.gridwidth = 1;
+            gbc.weightx = 0;
+            gbc.gridy++;
+            panel.add(m_userLabel, gbc);
+            gbc.gridx++;
+            gbc.weightx = 1;
+            panel.add(m_user, gbc);
+        }
         if (m_protocol.hasPasswordSupport()) {
             gbc.gridx = 0;
             gbc.weightx = 0;
@@ -358,19 +377,24 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      */
     private void updateEnabledState() {
         // If a password should be used
+        final ButtonModel selectedAuthMethod = m_authmethod.getSelection();
         final boolean usePassword =
-                m_authmethod.getSelection() != null ? m_authmethod.getSelection().getActionCommand()
+                selectedAuthMethod != null ? selectedAuthMethod.getActionCommand()
                         .equals(AuthenticationMethod.PASSWORD.getName()) : false;
         // If a keyfile should be used
         final boolean useKeyfile =
-                m_authmethod.getSelection() != null ? m_authmethod.getSelection().getActionCommand()
+                selectedAuthMethod != null ? selectedAuthMethod.getActionCommand()
                         .equals(AuthenticationMethod.KEYFILE.getName()) : false;
+        //if Kerberos should be used
+        final boolean useKerberos = selectedAuthMethod != null ? selectedAuthMethod.getActionCommand()
+            .equals(AuthenticationMethod.KERBEROS.getName()) : false;
         // Check if credentials are available
         final boolean credentialsAvailable = m_workflowcredentials.getItemCount() > 0;
         // Check if credentials can be selected
-        final boolean credentialsSelectable = (usePassword || useKeyfile) && credentialsAvailable;
+        final boolean credentialsSelectable = (usePassword || useKeyfile || useKerberos) && credentialsAvailable;
         // Check if the user and password have to be set manually
-        final boolean manualCredentials = (usePassword || useKeyfile) && !m_useworkflowcredentials.isSelected();
+        final boolean manualCredentials = (usePassword || useKeyfile || useKerberos)
+                && !m_useworkflowcredentials.isSelected();
         // Disable workflow credentials if auth method is none or no credentials
         // are available
         m_workflowcredentialspanel.setEnabled(credentialsSelectable);
@@ -380,8 +404,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_userLabel.setEnabled(manualCredentials);
         m_user.setEnabled(manualCredentials);
         // Password should be enabled if the password or the keyfile get used
-        m_passwordLabel.setEnabled(manualCredentials);
-        m_password.setEnabled(manualCredentials);
+        m_passwordLabel.setEnabled(manualCredentials && !useKerberos);
+        m_password.setEnabled(manualCredentials && !useKerberos);
         // Do this only if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             final boolean keyfileReplacement = m_keyfilefvm.getFlowVariableModel().isVariableReplacementEnabled();
@@ -530,14 +554,15 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_user.setText(config.getUser());
         m_host.setText(config.getHost());
         m_port.setValue(config.getPort());
-        final String authmethod = config.getAuthenticationmethod();
         // Select correct auth method
-        if (authmethod.equals(AuthenticationMethod.NONE.getName())) {
-            m_authmethod.setSelected(m_authnone.getModel(), true);
-        } else if (authmethod.equals(AuthenticationMethod.PASSWORD.getName())) {
-            m_authmethod.setSelected(m_authpassword.getModel(), true);
-        } else if (authmethod.equals(AuthenticationMethod.KEYFILE.getName())) {
-            m_authmethod.setSelected(m_authkeyfile.getModel(), true);
+        final String authmethod = config.getAuthenticationmethod();
+        final Enumeration<AbstractButton> buttons = m_authmethod.getElements();
+        while (buttons.hasMoreElements()) {
+            final AbstractButton button = buttons.nextElement();
+            if (button.getActionCommand().equals(authmethod)) {
+                button.setSelected(true);
+                break;
+            }
         }
         try {
             m_password.setText(KnimeEncryption.decrypt(config.getPassword()));

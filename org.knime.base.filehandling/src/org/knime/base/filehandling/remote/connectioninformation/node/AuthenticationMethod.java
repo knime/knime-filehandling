@@ -52,8 +52,9 @@ package org.knime.base.filehandling.remote.connectioninformation.node;
  *
  *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @since 3.2
  */
-enum AuthenticationMethod {
+public enum AuthenticationMethod {
 
     /**
      * Use no authentication.
@@ -68,7 +69,12 @@ enum AuthenticationMethod {
     /**
      * Use keyfile.
      */
-    KEYFILE("Keyfile", "Keyfile");
+    KEYFILE("Keyfile", "Keyfile"),
+
+    /**
+     * Use Kerberos.
+     */
+    KERBEROS("Kerberos", "Kerberos");
 
     private final String m_name;
     private final String m_label;
@@ -100,7 +106,7 @@ enum AuthenticationMethod {
      * @return Array of all authentication method settings
      */
     static String[] getAllSettings() {
-        return new String[]{NONE.getName(), PASSWORD.getName(), KEYFILE.getName()};
+        return new String[]{NONE.getName(), PASSWORD.getName(), KEYFILE.getName(), KERBEROS.getName()};
     }
 
 }

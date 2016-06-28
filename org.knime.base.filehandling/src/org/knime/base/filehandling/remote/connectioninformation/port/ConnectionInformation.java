@@ -94,6 +94,8 @@ public class ConnectionInformation implements Serializable {
 
     private int m_timeout = 30000;
 
+    private boolean m_useKerberos;
+
     /**
      * Save the connection information in a model content object.
      *
@@ -109,6 +111,7 @@ public class ConnectionInformation implements Serializable {
         model.addString("keyfile", m_keyfile);
         model.addString("knownhosts", m_knownHosts);
         model.addInt("timeout", m_timeout);
+        model.addBoolean("kerberos", m_useKerberos);
     }
 
     /**
@@ -131,6 +134,7 @@ public class ConnectionInformation implements Serializable {
         connectionInformation.setKeyfile(model.getString("keyfile"));
         connectionInformation.setKnownHosts(model.getString("knownhosts"));
         connectionInformation.setTimeout(model.getInt("timeout", 30000)); // new option in 2.10
+        connectionInformation.setUseKerberos(model.getBoolean("kerberos", false)); //new option in 3.2
         return connectionInformation;
     }
 
@@ -151,6 +155,7 @@ public class ConnectionInformation implements Serializable {
         output.writeUTF(m_keyfile);
         output.writeUTF(m_knownHosts);
         output.writeInt(m_timeout);
+        output.writeBoolean(m_useKerberos);
     }
 
     /**
@@ -337,6 +342,13 @@ public class ConnectionInformation implements Serializable {
         m_timeout = timeout;
     }
 
+    /**
+     * @param useKerberos <code>true</code> if Kerberos should be used
+     * @since 3.2
+     */
+    public void setUseKerberos(final boolean useKerberos) {
+        m_useKerberos = useKerberos;
+    }
 
     /**
      * Get the protocol.
@@ -416,6 +428,14 @@ public class ConnectionInformation implements Serializable {
         return m_timeout;
     }
 
+    /**
+     * @return <code>true</code> if Kerberos should be used
+     * @since 3.2
+     */
+    public boolean useKerberos() {
+        return m_useKerberos;
+    }
+
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
@@ -427,6 +447,7 @@ public class ConnectionInformation implements Serializable {
         hcb.append(m_password);
         hcb.append(m_keyfile);
         hcb.append(m_knownHosts);
+        hcb.append(m_useKerberos);
         return hcb.hashCode();
     }
 
@@ -448,6 +469,7 @@ public class ConnectionInformation implements Serializable {
         eqBuilder.append(m_password, ci.m_password);
         eqBuilder.append(m_keyfile, ci.m_keyfile);
         eqBuilder.append(m_knownHosts, ci.m_knownHosts);
+        eqBuilder.append(m_useKerberos, ci.m_useKerberos);
         return eqBuilder.isEquals();
     }
 

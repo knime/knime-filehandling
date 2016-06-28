@@ -271,7 +271,8 @@ class ConnectionInformationConfiguration {
         connectionInformation.setProtocol(m_protocol.getName());
         connectionInformation.setHost(getHost());
         connectionInformation.setPort(getPort());
-        if (!getAuthenticationmethod().equals(AuthenticationMethod.NONE.getName())) {
+        final String authenticationMethod = getAuthenticationmethod();
+        if (!authenticationMethod.equals(AuthenticationMethod.NONE.getName())) {
             if (m_useworkflowcredentials) {
                 // Use credentials
                 final ICredentials credentials = credentialsProvider.get(m_workflowcredentials);
@@ -288,13 +289,14 @@ class ConnectionInformationConfiguration {
             }
         }
         if (m_protocol.hasKeyfileSupport()
-                && getAuthenticationmethod().equals(AuthenticationMethod.KEYFILE.getName())) {
+                && authenticationMethod.equals(AuthenticationMethod.KEYFILE.getName())) {
             connectionInformation.setKeyfile(getKeyfile());
         }
         if (m_protocol.hasKnownhostsSupport() && getUseknownhosts()) {
             connectionInformation.setKnownHosts(getKnownhosts());
         }
         connectionInformation.setTimeout(getTimeout());
+        connectionInformation.setUseKerberos(AuthenticationMethod.KERBEROS.getName().equals(authenticationMethod));
         return connectionInformation;
     }
 
