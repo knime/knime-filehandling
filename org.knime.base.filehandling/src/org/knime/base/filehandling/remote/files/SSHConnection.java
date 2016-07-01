@@ -47,12 +47,16 @@
  */
 package org.knime.base.filehandling.remote.files;
 
+import java.net.URI;
+import java.net.URL;
+
+import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.util.FileUtil;
+import org.knime.core.util.KnimeEncryption;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
-import java.net.URI;
-import org.knime.core.util.KnimeEncryption;
 
 /**
  * Connection over SSH.
@@ -98,8 +102,11 @@ public class SSHConnection extends Connection {
         }
         final JSch jsch = new JSch();
         // Use keyfile if available
-        final String keyfile = m_connectionInformation.getKeyfile();
-        if (keyfile != null && keyfile.length() != 0) {
+        String keyfile = m_connectionInformation.getKeyfile();
+        if (!StringUtils.isEmpty(keyfile)) {
+            if (keyfile.startsWith("knime://")) {
+                keyfile = FileUtil.getFileFromURL(new URL(keyfile)).getAbsolutePath();
+            }
             if (password == null) {
                 jsch.addIdentity(keyfile);
             } else {
