@@ -385,15 +385,12 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         final boolean useKeyfile =
                 selectedAuthMethod != null ? selectedAuthMethod.getActionCommand()
                         .equals(AuthenticationMethod.KEYFILE.getName()) : false;
-        //if Kerberos should be used
-        final boolean useKerberos = selectedAuthMethod != null ? selectedAuthMethod.getActionCommand()
-            .equals(AuthenticationMethod.KERBEROS.getName()) : false;
         // Check if credentials are available
         final boolean credentialsAvailable = m_workflowcredentials.getItemCount() > 0;
         // Check if credentials can be selected
-        final boolean credentialsSelectable = (usePassword || useKeyfile || useKerberos) && credentialsAvailable;
+        final boolean credentialsSelectable = (usePassword || useKeyfile) && credentialsAvailable;
         // Check if the user and password have to be set manually
-        final boolean manualCredentials = (usePassword || useKeyfile || useKerberos)
+        final boolean manualCredentials = (usePassword || useKeyfile)
                 && !m_useworkflowcredentials.isSelected();
         // Disable workflow credentials if auth method is none or no credentials
         // are available
@@ -404,8 +401,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_userLabel.setEnabled(manualCredentials);
         m_user.setEnabled(manualCredentials);
         // Password should be enabled if the password or the keyfile get used
-        m_passwordLabel.setEnabled(manualCredentials && !useKerberos);
-        m_password.setEnabled(manualCredentials && !useKerberos);
+        m_passwordLabel.setEnabled(manualCredentials);
+        m_password.setEnabled(manualCredentials);
         // Do this only if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             final boolean keyfileReplacement = m_keyfilefvm.getFlowVariableModel().isVariableReplacementEnabled();
