@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IExtensionRegistry;
@@ -120,9 +121,9 @@ public final class RemoteFileHandlerRegistry {
                             (RemoteFileHandler<? extends Connection>)elem.createExecutableExtension(EXT_POINT_ATTR_DF);
                     addRemoteFileHandler(handler);
                 } catch (final Throwable t) {
-                    LOGGER.error("Problems during initialization of RemoteFileHandler (with id '" + operator + "'.)");
+                    LOGGER.error("Problems during initialization of RemoteFileHandler (with id '" + operator + "'.)", t);
                     if (decl != null) {
-                        LOGGER.error("Extension " + decl + " ignored.", t);
+                        LOGGER.error("Extension " + decl + " ignored.");
                     }
                 }
             }
