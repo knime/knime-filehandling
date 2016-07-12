@@ -224,7 +224,7 @@ public class ConnectionInformation implements Serializable {
         // User
         final String user = uri.getUserInfo();
         // User might not be used
-        if (user != null && m_user != null && !user.equals(m_user)) {
+        if (!m_useKerberos && user != null && !user.isEmpty() && m_user != null && !m_user.isEmpty() && !user.equals(m_user)) {
             throw new Exception("User incompatible");
         }
     }
