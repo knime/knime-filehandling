@@ -194,16 +194,16 @@ class UploadConfiguration {
      */
     void loadAndValidate(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_source = settings.getString("source");
-        validate(m_source);
+        validate("Source", m_source);
         m_target = settings.getString("target");
-        validate(m_target);
+        validate("Target", m_target);
         m_overwritePolicy = settings.getString("overwritepolicy");
-        validate(m_overwritePolicy);
+        validate("Override policy", m_overwritePolicy);
         m_pathHandling = settings.getString("pathhandling");
-        validate(m_pathHandling);
+        validate("Path handling", m_pathHandling);
         m_prefix = settings.getString("prefix");
         if (m_pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
-            validate(m_prefix);
+            validate("Prefix", m_prefix);
         }
         m_abortonfail = settings.getBoolean("abortonfail", true);
     }
@@ -215,9 +215,9 @@ class UploadConfiguration {
      * @param string The string to check
      * @throws InvalidSettingsException If the string is null or empty
      */
-    private void validate(final String string) throws InvalidSettingsException {
+    private void validate(final String field, final String string) throws InvalidSettingsException {
         if (string == null || string.length() == 0) {
-            throw new InvalidSettingsException("Invalid setting");
+            throw new InvalidSettingsException("Invalid setting: " + field + " can't be empty.");
         }
     }
 
