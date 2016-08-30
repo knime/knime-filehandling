@@ -44,7 +44,7 @@
         <option name="Target folder">
             Where the downloaded files will be put.
         </option>
-        <option name="Download subfolders (if applicable)">
+        <option name="Download sub folders (if applicable)">
             If this is selected subfolders and there
             contend will be downloaded, otherwise they will be ignored.
         </option>

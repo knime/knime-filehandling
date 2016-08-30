@@ -144,7 +144,7 @@ public class ListDirectoryNodeDialog extends NodeDialogPane {
         m_localdirectory.setSelectMode(JFileChooser.DIRECTORIES_ONLY);
 
         // Recursive
-        m_recursive = new JCheckBox("Recursive");
+        m_recursive = new JCheckBox("Include sub folders");
         // Set layout
         addTab("Options", initLayout());
     }

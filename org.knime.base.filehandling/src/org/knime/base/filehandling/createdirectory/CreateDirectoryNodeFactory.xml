@@ -31,8 +31,7 @@
         	'?' will be replaced by the directory name.
         </option>
         <option name="Abort if directory already exists">
-            If this is checked the node will abort if
-            the directory does already exist.
+            If this is checked the node will abort if the directory already exists.
         </option>
     </fullDescription>
 

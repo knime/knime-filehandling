@@ -172,7 +172,7 @@ public class DownloadNodeDialog extends NodeDialogPane {
             }
         });
         // Subfolders
-        m_subfolders = new JCheckBox("Download subfolders (if applicable)");
+        m_subfolders = new JCheckBox("Download sub folders (if applicable)");
         // File filter
         m_useFilter = new JCheckBox("Only download files that match pattern");
         m_useFilter.addActionListener(new UpdateListener());

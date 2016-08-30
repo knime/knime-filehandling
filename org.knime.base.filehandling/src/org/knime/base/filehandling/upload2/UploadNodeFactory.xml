@@ -16,8 +16,7 @@
 
 
         <option name="Target folder">
-            Location on the server, where the files will
-            be put.
+            Location on the server where the files will be put.
         </option>
         <option name="Source">
             Column of the input table with the URIs to
@@ -32,7 +31,7 @@
             <br />
             <b>Use only filename</b>
             <br />
-            Truncate the whole path and leave only the files name.
+            Truncate the whole path and leave only the name of the file.
             <br />
             <b>Truncate prefix</b>
             <br />
@@ -59,10 +58,11 @@
             Abort the execution of the node.
         </option>
         <option name="Abort if transfer fails">
-            If this is checked the node will abort if
-            one of the files could not be transferred. If it is unchecked
-            the output table will contain a column that indicates if the
-            file could be successfully transferred or not.
+            If this is checked the node will abort if 
+            one of the files could not be transferred. 
+            If it is unchecked the output table will contain 
+            a column that indicates whether or not 
+            the file could be successfully transferred.
         </option>
     </fullDescription>
 

@@ -20,9 +20,9 @@
 		<option name="Directory">
 			The directory that should be listed.
 		</option>
-		<option name="Recursive">
+		<option name="Include sub folders">
 			If this is selected the files contained in
-			subfolders will also be listed.
+			sub folders will also be listed.
 		</option>
 	</fullDescription>
 
