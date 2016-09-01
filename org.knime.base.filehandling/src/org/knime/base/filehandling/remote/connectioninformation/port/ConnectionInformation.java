@@ -97,6 +97,32 @@ public class ConnectionInformation implements Serializable {
     private boolean m_useKerberos;
 
     /**
+     * Parameterless constructor.
+     */
+    public ConnectionInformation() {
+    }
+
+    /**
+     * Constructor to load model settings from {@link ModelContentRO}
+     *
+     * @param model {@link ModelContentRO} to read model settings from
+     * @throws InvalidSettingsException
+     * @since 3.3
+     */
+    protected ConnectionInformation(final ModelContentRO model) throws InvalidSettingsException {
+        this.setProtocol(model.getString("protocol"));
+        this.setHost(model.getString("host"));
+        this.setPort(model.getInt("port"));
+        this.setUser(model.getString("user"));
+        this.setPassword(model.getString("password"));
+        this.setKeyfile(model.getString("keyfile"));
+        this.setKnownHosts(model.getString("knownhosts"));
+        this.setTimeout(model.getInt("timeout", 30000)); // new option in 2.10
+        this.setUseKerberos(model.getBoolean("kerberos", false)); //new option in 3.2
+    }
+
+
+    /**
      * Save the connection information in a model content object.
      *
      *
@@ -125,17 +151,7 @@ public class ConnectionInformation implements Serializable {
      * @noreference Not to be called by client
      */
     public static ConnectionInformation load(final ModelContentRO model) throws InvalidSettingsException {
-        final ConnectionInformation connectionInformation = new ConnectionInformation();
-        connectionInformation.setProtocol(model.getString("protocol"));
-        connectionInformation.setHost(model.getString("host"));
-        connectionInformation.setPort(model.getInt("port"));
-        connectionInformation.setUser(model.getString("user"));
-        connectionInformation.setPassword(model.getString("password"));
-        connectionInformation.setKeyfile(model.getString("keyfile"));
-        connectionInformation.setKnownHosts(model.getString("knownhosts"));
-        connectionInformation.setTimeout(model.getInt("timeout", 30000)); // new option in 2.10
-        connectionInformation.setUseKerberos(model.getBoolean("kerberos", false)); //new option in 3.2
-        return connectionInformation;
+        return new ConnectionInformation(model);
     }
 
     /**
