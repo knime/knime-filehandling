@@ -75,6 +75,16 @@ public abstract class RemoteFile<C extends Connection> implements Comparable<Rem
     private ConnectionMonitor<C> m_connectionMonitor = null;
 
     /**
+     * Encapsulates connection specific access exceptions.
+     * @since 3.3
+     */
+    public static class AccessControlException extends RuntimeException {
+        public AccessControlException(final Throwable e) {
+            super(e.getMessage(), e);
+        }
+    }
+
+    /**
      * Create a remote file.
      *
      *

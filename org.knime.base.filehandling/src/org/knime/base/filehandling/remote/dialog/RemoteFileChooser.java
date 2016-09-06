@@ -55,9 +55,12 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -70,12 +73,14 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
+
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.util.SwingWorkerWithContext;
 
 /**
@@ -85,6 +90,8 @@ import org.knime.core.util.SwingWorkerWithContext;
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 public final class RemoteFileChooser {
+
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(RemoteFileChooser.class);
 
     /**
      * Select a file.
@@ -111,6 +118,12 @@ public final class RemoteFileChooser {
     private final ConnectionInformation m_connectionInformation;
 
     private final ConnectionMonitor m_connectionMonitor;
+
+    /** Contains default path selected on dialog initialization. */
+    private String m_defaultPath;
+
+    /** Contains fallback nodes if parts of default path are not list able. */
+    private ArrayList<RemoteFileTreeNode> m_defaultRemoteFileTreeNodes;
 
     private Frame m_parent;
 
@@ -141,6 +154,20 @@ public final class RemoteFileChooser {
      * @param selectionType Whether a file or a directory should be selected
      */
     public RemoteFileChooser(final URI uri, final ConnectionInformation connectionInformation, final int selectionType) {
+        this(uri, connectionInformation, selectionType, null);
+    }
+
+    /**
+     * Creates remote file chooser for the specified folder.
+     *
+     *
+     * @param uri The URI
+     * @param connectionInformation Connection information to the URI
+     * @param selectionType Whether a file or a directory should be selected
+     * @param defaultPath Path to select on dialog start
+     * @since 3.3
+     */
+    public RemoteFileChooser(final URI uri, final ConnectionInformation connectionInformation, final int selectionType, final String defaultPath) {
         m_uri = uri;
         m_connectionInformation = connectionInformation;
         m_connectionMonitor = new ConnectionMonitor();
@@ -148,6 +175,14 @@ public final class RemoteFileChooser {
         m_selectedFile = null;
         m_workers = new LinkedList<RemoteFileTreeNodeWorker>();
         m_closed = false;
+
+        if (defaultPath != null && !defaultPath.isEmpty()) {
+            if (selectionType == SELECT_DIR) {
+                m_defaultPath = (defaultPath + "/").replaceAll("/+", "/");
+            } else {
+                m_defaultPath = defaultPath.replaceAll("/+", "/");
+            }
+        }
     }
 
     /**
@@ -347,8 +382,6 @@ public final class RemoteFileChooser {
 
         private boolean m_success;
 
-        private boolean m_dir;
-
         /**
          * {@inheritDoc}
          */
@@ -359,11 +392,30 @@ public final class RemoteFileChooser {
             @SuppressWarnings("unchecked")
             final RemoteFile<? extends Connection> root =
                     RemoteFileFactory.createRemoteFile(m_uri, m_connectionInformation, m_connectionMonitor);
-            m_dir = root.isDirectory();
-            final RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root);
+            final RemoteFileTreeNode rootNode = new RemoteFileTreeNode(root, "", "/", true);
             // Create tree model
             m_treemodel = new DefaultTreeModel(rootNode);
             m_success = true;
+
+            if (m_defaultPath != null) {
+                // Create fallback nodes if parts of default path are not read / list able.
+                // Do not use file.getFullName or file.isDirectory here, they require read access on parent node...
+                m_defaultRemoteFileTreeNodes = new ArrayList<RemoteFileTreeNode>();
+                String currentPath = "/";
+                String elements[] = m_defaultPath.split("/");
+                for (int i = 1; i < elements.length; i++) { // ignore root => start at 1
+                    boolean isDirectory = i < elements.length + 1 || m_defaultPath.endsWith("/");
+                    String name = elements[i];
+                    if (isDirectory) {
+                        currentPath += name + "/";
+                    } else {
+                        currentPath += name;
+                    }
+                    RemoteFile<? extends Connection> file = RemoteFileFactory.createRemoteFile(m_uri.resolve(currentPath), m_connectionInformation, m_connectionMonitor);
+                    m_defaultRemoteFileTreeNodes.add(new RemoteFileTreeNode(file, name, currentPath, isDirectory));
+                }
+            }
+            
             return null;
         }
 
@@ -372,13 +424,21 @@ public final class RemoteFileChooser {
          */
         @Override
         protected void doneWithContext() {
-            if (m_success && m_dir) {
-                // Remove loading message
-                m_progress.setVisible(false);
-                setDefaultMessage();
+            if (m_success) {
                 // Initialize tree
                 m_tree.setModel(m_treemodel);
                 m_tree.setRootVisible(true);
+
+                if (m_defaultPath != null) {
+                    // enabled by select node
+                    m_tree.setEnabled(false);
+
+                } else {
+                    // Remove loading message
+                    m_progress.setVisible(false);
+                    setDefaultMessage();
+                }
+
             } else {
                 // Close dialog and used connections
                 m_dialog.dispose();
@@ -424,14 +484,32 @@ public final class RemoteFileChooser {
         @Override
         protected Void doInBackgroundWithContext() throws Exception {
             m_success = false;
-            // List files in directory
-            final RemoteFile<? extends Connection>[] files =
-                    ((RemoteFile<? extends Connection>)m_parentNode.getUserObject()).listFiles();
-            m_nodes = new RemoteFileTreeNode[files.length];
-            // Create node for each file
-            for (int i = 0; i < files.length; i++) {
-                m_nodes[i] = new RemoteFileTreeNode(files[i]);
+
+            try {
+                // List files in directory
+                final RemoteFile<? extends Connection>[] files =
+                        ((RemoteFile<? extends Connection>)m_parentNode.getUserObject()).listFiles();
+                m_nodes = new RemoteFileTreeNode[files.length];
+                // Create node for each file
+                for (int i = 0; i < files.length; i++) {
+                    m_nodes[i] = new RemoteFileTreeNode(files[i]);
+                }
+
+            } catch (RemoteFile.AccessControlException e) {
+                LOGGER.warn("Unable to list files in remote location " + m_parentNode.getFullName() + ". Check directory permissions and username.");
+
+                if (m_defaultPath != null && m_defaultRemoteFileTreeNodes.size() > m_parentNode.getLevel()) {
+                    m_nodes = new RemoteFileTreeNode[] { m_defaultRemoteFileTreeNodes.get(m_parentNode.getLevel()) };
+                    m_nodes[0].loadChildsOnDefaultPath();
+                } else {
+                    m_nodes = new RemoteFileTreeNode[0];
+                }
+
+            } catch (FileNotFoundException e) {
+                LOGGER.warn("Unable to locate files in " + m_parentNode.getFullName() + ". Check name and permissions.");
+                m_nodes = new RemoteFileTreeNode[0];
             }
+
             m_success = true;
             return null;
         }
@@ -446,8 +524,12 @@ public final class RemoteFileChooser {
                 for (int i = 0; i < m_nodes.length; i++) {
                     m_treemodel.insertNodeInto(m_nodes[i], m_parentNode, i);
                 }
+
                 // Remove this worker
                 m_workers.remove(0);
+
+                selectDefaultPath();
+
                 // Look for other workers
                 if (m_workers.size() > 0) {
                     // Start next worker
@@ -470,6 +552,35 @@ public final class RemoteFileChooser {
             }
         }
 
+        /**
+         * Validates and selects this node if default path matches.
+         */
+        private void selectDefaultPath() {
+            try {
+                if (m_defaultPath != null && m_defaultPath.startsWith(m_parentNode.getFullName())) {
+                    // Search for a matching child
+                    for (RemoteFileTreeNode node : m_nodes) {
+                        if (m_defaultPath.startsWith(node.getFullName())) {
+                            return;
+                        }
+                    }
+
+                    // No child matched, parent node is the last possible selection on path
+                    m_tree.setExpandsSelectedPaths(true);
+                    m_tree.setSelectionPath(new TreePath(m_treemodel.getPathToRoot(m_parentNode)));
+                    if (!m_parentNode.isLeaf()) {
+                        m_tree.expandPath(new TreePath(m_treemodel.getPathToRoot(m_parentNode)));
+                    }
+                    m_tree.setEnabled(true);
+                    m_defaultPath = null;
+
+                }
+            } catch (Exception e) {
+                // Whoops, default path select failed. Show at least the (unselected) tree.
+                m_tree.setEnabled(true);
+            }
+        }
+
     }
 
     /**
@@ -489,21 +600,39 @@ public final class RemoteFileChooser {
 
         private final String m_name;
 
+        private final String m_fullName;
+
         private final boolean m_isDirectory;
 
         /**
-         * Create a tree node to a remote file.
+         * Create a tree node to a remote file and load child nodes if on default path.
          *
-         *
-         * @param file The remote file
          * @throws Exception If the file could not be accessed
          */
         public RemoteFileTreeNode(final RemoteFile<? extends Connection> file) throws Exception {
+            this(file, file.getName(), file.getFullName(), file.isDirectory());
+            loadChildsOnDefaultPath();
+        }
+
+        /**
+         * Create a tree node to a remote file with given attributes.
+         * Use this constructor if this directory is a guess / parent directory can't be listed.
+         *
+         * @throws Exception If the file could not be accessed
+         */
+        public RemoteFileTreeNode(final RemoteFile<? extends Connection> file, final String name, final String fullName, final boolean isDirectory) throws Exception {
             super(file);
             m_loaded = false;
-            // Get information needed for the node in creation time
-            m_name = file.getName();
-            m_isDirectory = file.isDirectory();
+            m_name = name;
+            m_fullName = fullName;
+            m_isDirectory = isDirectory;
+        }
+
+        /** Loads child nodes if this node is part of default path. */
+        public void loadChildsOnDefaultPath() {
+            if (m_defaultPath != null && m_defaultPath.startsWith(m_fullName) && m_isDirectory) {
+                loadChildren();
+            }
         }
 
         /**
@@ -512,6 +641,10 @@ public final class RemoteFileChooser {
         @Override
         public boolean isLeaf() {
             return !m_isDirectory;
+        }
+
+        public String getFullName() {
+            return m_fullName;
         }
 
         /**
@@ -531,19 +664,21 @@ public final class RemoteFileChooser {
          * Loads the children of this node by using the list files ability of
          * the remote file.
          */
-        private void loadChildren() {
-            m_loaded = true;
-            // Create worker to load the children
-            final RemoteFileTreeNodeWorker worker = new RemoteFileTreeNodeWorker(this);
-            // Add worker to list
-            m_workers.add(worker);
-            // If list does not hold more than this worker, start it
-            if (m_workers.size() < 2) {
-                // Set loading message and show progress bar
-                m_progress.setVisible(true);
-                m_info.setText(LOADING);
-                // Start worker
-                worker.execute();
+        public void loadChildren() {
+            if (!m_loaded) {
+                m_loaded = true;
+                // Create worker to load the children
+                final RemoteFileTreeNodeWorker worker = new RemoteFileTreeNodeWorker(this);
+                // Add worker to list
+                m_workers.add(worker);
+                // If list does not hold more than this worker, start it
+                if (m_workers.size() < 2) {
+                    // Set loading message and show progress bar
+                    m_progress.setVisible(true);
+                    m_info.setText(LOADING);
+                    // Start worker
+                    worker.execute();
+                }
             }
         }
 

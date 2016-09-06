@@ -47,13 +47,6 @@
  */
 package org.knime.base.filehandling.remote.dialog;
 
-import org.knime.base.filehandling.remote.files.Protocol;
-import org.knime.base.filehandling.remote.files.RemoteFileHandlerRegistry;
-
-import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
-
-
-
 import java.awt.Container;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -63,8 +56,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -73,7 +68,11 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
 import org.knime.base.filehandling.NodeUtils;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.files.Protocol;
+import org.knime.base.filehandling.remote.files.RemoteFileHandlerRegistry;
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.util.StringHistory;
@@ -137,11 +136,11 @@ public final class RemoteFileChooserPanel {
                 }
                 URI rootUri;
                 if (m_connectionInformation != null) {
-                    rootUri = m_connectionInformation.toURI();
+                    rootUri = m_connectionInformation.toURI().resolve("/");
                 } else {
                     rootUri = new File("/").toURI();
                 }
-                final RemoteFileChooser dialog = new RemoteFileChooser(rootUri, m_connectionInformation, selectionMode);
+                final RemoteFileChooser dialog = new RemoteFileChooser(rootUri, m_connectionInformation, selectionMode, getSelection());
                 dialog.open(frame);
                 final String selected = dialog.getSelectedFile();
                 if (selected != null) {
