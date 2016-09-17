@@ -80,7 +80,8 @@ public final class RemoteFileFactory {
     public static <C extends Connection, F extends RemoteFile<C>> F createRemoteFile(final URI uri,
             final ConnectionInformation connectionInformation, final ConnectionMonitor<C> connectionMonitor)
                     throws Exception {
-        final String scheme = CheckUtils.checkArgumentNotNull(uri, "URI must not be null").getScheme().toLowerCase();
+        String schemeCaps = CheckUtils.checkArgumentNotNull(uri, "URI must not be null").getScheme();
+        final String scheme = CheckUtils.checkArgumentNotNull(schemeCaps).toLowerCase();
         if (connectionInformation != null) {
             // Check if the connection information fit to the URI
             connectionInformation.fitsToURI(uri);
