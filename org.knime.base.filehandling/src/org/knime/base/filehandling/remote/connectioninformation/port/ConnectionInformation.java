@@ -54,6 +54,7 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.knime.base.filehandling.remote.files.Protocol;
@@ -226,7 +227,7 @@ public class ConnectionInformation implements Serializable {
         if (uriHost == null) {
             throw new Exception("No host in URI " + uri);
         }
-        if (!uriHost.toLowerCase().equals(m_host.toLowerCase())) {
+        if (!uriHost.equalsIgnoreCase(m_host)) {
             throw new Exception("Host incompatible. URI host: " + uriHost
                                 + " connection information host " + getHost());
         }
@@ -240,7 +241,7 @@ public class ConnectionInformation implements Serializable {
         // User
         final String user = uri.getUserInfo();
         // User might not be used
-        if (!m_useKerberos && user != null && !user.isEmpty() && m_user != null && !m_user.isEmpty() && !user.equals(m_user)) {
+        if (!m_useKerberos && StringUtils.isNotEmpty(user) && StringUtils.isNotEmpty(m_user) && !user.equals(m_user)) {
             throw new Exception("User incompatible");
         }
     }
