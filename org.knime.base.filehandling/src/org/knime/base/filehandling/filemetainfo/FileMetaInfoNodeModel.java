@@ -190,7 +190,11 @@ class FileMetaInfoNodeModel extends NodeModel {
                     URL url = uri.toURL();
                     file = FileUtil.getFileFromURL(url);
                     if (file == null) {
-                        throw new RuntimeException("URL " + url + " is not a valid URL pointing to a local file.");
+                        if (abort) {
+                            throw new RuntimeException("URL " + url + " is not a URL pointing to a local file.");
+                        } else {
+                            return cells;
+                        }
                     }
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e.getMessage(), e);
