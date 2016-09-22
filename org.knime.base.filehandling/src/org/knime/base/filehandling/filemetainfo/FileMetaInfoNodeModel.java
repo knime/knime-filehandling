@@ -51,6 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.util.Calendar;
 
 import org.apache.commons.io.FileUtils;
@@ -186,7 +187,15 @@ class FileMetaInfoNodeModel extends NodeModel {
                 file = new File(uri.getPath());
             } else if (scheme.equals("knime")) {
                 try {
-                    file = FileUtil.getFileFromURL(uri.toURL());
+                    URL url = uri.toURL();
+                    file = FileUtil.getFileFromURL(url);
+                    if (file == null) {
+                        if (abort) {
+                            throw new RuntimeException("URL " + url + " is not a URL pointing to a local file.");
+                        } else {
+                            return cells;
+                        }
+                    }
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
