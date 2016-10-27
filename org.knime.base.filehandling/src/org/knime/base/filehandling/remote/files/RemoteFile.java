@@ -407,33 +407,53 @@ public abstract class RemoteFile<C extends Connection> implements Comparable<Rem
      * Create all not existing directories of this files path.
      *
      *
-     * @param includeThis If this file should also be created as directory
-     * @return true if all upper directories could be created
+     * @param includeThis If this file should also be a directory, otherwise only the parent is considered
+     * @return true if all directories exist, false otherwise
      * @throws Exception If the operation could not be executed
      */
     public final boolean mkDirs(final boolean includeThis) throws Exception {
-        boolean success = true;
-        final RemoteFile<C> parent = getParent();
-        if (!parent.exists()) {
-            success = parent.mkDirs(true);
+        if (exists()) {
+            // We don't have to create anything or care about the parent, this stops the recursion
+            if (includeThis) {
+                // If this file exists and is a directory
+                return isDirectory();
+            } else {
+                // If this file exists then the parent path does also
+                return true;
+            }
+        } else {
+            final RemoteFile<C> parent = getParent();
+            boolean parentIsDirectory;
+            if (parent != null) {
+                // We try to make the parent path (if necessary) and retrieve if it exists now
+                parentIsDirectory = parent.mkDirs(true);
+            } else {
+                // There is no parent so it can not be a directory
+                parentIsDirectory = false;
+            }
+            if (includeThis) {
+                // Try to make this directory
+                mkDir();
+            }
+            return includeThis ? isDirectory() : parentIsDirectory;
         }
-        if (success && !exists() && includeThis) {
-            success = mkDir();
-        }
-        return success;
     }
 
     /**
      * Get the parent of this file.
      *
      *
-     * @return The parent file
+     * @return The parent file or null if there is no parent
      * @throws Exception If the operation could not be executed
      */
     public RemoteFile<C> getParent() throws Exception {
         String path = getFullName();
         if (path.endsWith("/")) {
             path = path.substring(0, path.length() - 1);
+        }
+        if (path.isEmpty()) {
+            // There is no directory above this one
+            return null;
         }
         path = FilenameUtils.getFullPath(path);
         // Build URI

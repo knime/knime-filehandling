@@ -292,8 +292,13 @@ public class FileRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public RemoteFile<Connection> getParent() throws Exception {
+        final File parentFile = new File(getURI()).getParentFile();
+        if (parentFile == null) {
+            // This file has no parent
+            return null;
+        }
         // Build URI
-        final URI uri = new File(getURI()).getParentFile().toURI();
+        final URI uri = parentFile.toURI();
         // Create remote file and open it
         final RemoteFile<Connection> file = new FileRemoteFile(uri);
         file.open();
