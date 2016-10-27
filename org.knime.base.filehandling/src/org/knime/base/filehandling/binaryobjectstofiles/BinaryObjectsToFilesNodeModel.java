@@ -85,8 +85,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
 class BinaryObjectsToFilesNodeModel extends NodeModel {
@@ -166,11 +166,11 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Delete all the given files.
-     * 
-     * 
+     *
+     *
      * This method should be called, in case the execution got aborted. It will
      * delete all files referenced by the array.
-     * 
+     *
      * @param filenames Files that should be deleted.
      */
     private void cleanUp(final String[] filenames) {
@@ -186,8 +186,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Create a rearranger that adds the URI column.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @param filenames Set of files that have already been created
      * @param exec Context of this execution
@@ -212,7 +212,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             colSpec = new DataColumnSpecCreator(uriColName, URIDataCell.TYPE).createSpec();
             // Factory that creates the files and the corresponding URI cell
             CellFactory factory = new SingleCellFactory(colSpec) {
-                private int m_rownr = 0;
+                private long m_rownr = 0;
 
                 @Override
                 public DataCell getCell(final DataRow row) {
@@ -223,10 +223,9 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                  * {@inheritDoc}
                  */
                 @Override
-                public void setProgress(final int curRowNr, final int rowCount, final RowKey lastKey,
-                        final ExecutionMonitor exec2) {
-                    super.setProgress(curRowNr, rowCount, lastKey, exec2);
-                    // Save the row number for pattern creation
+                public void setProgress(final long curRowNr, final long rowCount, final RowKey lastKey,
+                    final ExecutionMonitor execMon) {
+                    super.setProgress(curRowNr, rowCount, lastKey, execMon);
                     m_rownr = curRowNr;
                 }
             };
@@ -241,8 +240,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Check if the settings are all valid.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -273,12 +272,12 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
     /**
      * Creates a file from the binary object, contained in the row.
-     * 
-     * 
+     *
+     *
      * This method creates a file out of the binary object, that is contained in
      * the row. The filename is either also extracted from the row or generated
      * by using the set pattern and the rows number.
-     * 
+     *
      * @param row Row with the needed data
      * @param rowNr Number of the row in the table
      * @param filenames Set of files that have already been created
@@ -286,7 +285,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * @param exec Context of this execution
      * @return Cell containing the URI to the created file
      */
-    private DataCell createFile(final DataRow row, final int rowNr, final Set<String> filenames,
+    private DataCell createFile(final DataRow row, final long rowNr, final Set<String> filenames,
             final DataTableSpec inSpec, final ExecutionContext exec) {
         String boColumn = m_bocolumn.getStringValue();
         int boIndex = inSpec.findColumnIndex(boColumn);
