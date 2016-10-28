@@ -56,7 +56,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -165,14 +164,22 @@ public final class RemoteFileChooserPanel {
             m_panel.setBorder(new TitledBorder(new EtchedBorder(), label));
         }
         NodeUtils.resetGBC(gbc);
-        gbc.insets = new Insets(5, 5, 5, 0);
+        if (border) {
+            gbc.insets = new Insets(5, 5, 5, 0); // no double insets between items (only left instead of left+right)
+        } else {
+            gbc.insets = new Insets(0, 0, 0, 5); // only space between components (right side)
+        }
         gbc.weightx = 1;
         m_panel.add(m_combobox, gbc);
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         ++gbc.gridx;
         m_panel.add(m_button, gbc);
-        gbc.insets = new Insets(5, 5, 5, 5);
+        if (border) {
+            gbc.insets = new Insets(5, 5, 5, 5); // add right insets
+        } else {
+            gbc.insets = new Insets(0, 0, 0, 0); // drop right insets
+        }
         ++gbc.gridx;
         m_panel.add(m_fvmbutton, gbc);
         // Initialize enabled states
@@ -236,7 +243,7 @@ public final class RemoteFileChooserPanel {
     public void setEnabled(final boolean enabled) {
         // Some components will only be enabled if replacement is not enabled
         final boolean replacement = m_fvmbutton.getFlowVariableModel().isVariableReplacementEnabled();
-        boolean browsable = true;
+        boolean browsable = false;
         if (m_connectionInformation != null) {
             final Protocol protocol = RemoteFileHandlerRegistry.getProtocol(m_connectionInformation.getProtocol());
             if (protocol != null) {
