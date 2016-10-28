@@ -152,8 +152,9 @@ public class SCPRemoteFile extends RemoteFile<SSHConnection> {
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("rawtypes")
     @Override
-    public void write(final RemoteFile<SSHConnection> file, final ExecutionContext exec) throws Exception {
+    public void write(final RemoteFile file, final ExecutionContext exec) throws Exception {
         final byte[] buffer = new byte[1024];
         final SCPChannel scp = new SCPChannel();
         // Open direct output stream

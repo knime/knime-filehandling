@@ -122,12 +122,13 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
             final BufferedDataTable table = (BufferedDataTable)inObjects[1];
             final int sourceIndex = table.getDataTableSpec().findColumnIndex(source);
             final int targetIndex = table.getDataTableSpec().findColumnIndex(target);
-            int i = 0;
-            final int rows = table.getRowCount();
+            long i = 0L;
+            final long rowCount = table.size();
             // Process each row
             for (final DataRow row : table) {
                 exec.checkCanceled();
-                exec.setProgress((double)i / rows);
+                exec.setProgress(String.format("Row %d/%d (\"%s\")", i, rowCount, row.getKey()));
+                ExecutionContext subContext = exec.createSubExecutionContext(1.0 / rowCount);
                 // Skip missing values
                 if (!row.getCell(sourceIndex).isMissing() && !row.getCell(targetIndex).isMissing()) {
                     ConnectionInformation connectionInformation;
@@ -155,14 +156,16 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                             RemoteFileFactory.createRemoteFile(targetUri, connectionInformation, monitor);
                     targetFile.mkDirs(false);
                     // Copy file
-                    copy(sourceUri, sourceFile, targetFile, outContainer, monitor, exec);
+                    copy(sourceUri, sourceFile, targetFile, outContainer, monitor, subContext);
                     i++;
                 }
+                subContext.setProgress(1.0);
+                i += 1L;
             }
-            outContainer.close();
         } finally {
             // Close connections
             monitor.closeAll();
+            outContainer.close();
         }
         return new PortObject[]{outContainer.getTable()};
     }

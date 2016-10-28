@@ -50,6 +50,7 @@ package org.knime.base.filehandling.upload2;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
@@ -59,6 +60,7 @@ import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.RemoteFile;
 import org.knime.base.filehandling.remote.files.RemoteFileFactory;
+import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
@@ -120,8 +122,6 @@ public class UploadNodeModel extends NodeModel {
             // Get table with source URIs
             final BufferedDataTable table = (BufferedDataTable)inObjects[1];
             final int index = table.getDataTableSpec().findColumnIndex(source);
-            int i = 0;
-            final int rows = table.getRowCount();
             // Create target folder
             String targetFolder = m_configuration.getTarget();
             if (!targetFolder.endsWith("/")) {
@@ -132,24 +132,29 @@ public class UploadNodeModel extends NodeModel {
             final RemoteFile<? extends Connection> folder =
                     RemoteFileFactory.createRemoteFile(folderUri, m_connectionInformation, monitor);
             folder.mkDirs(true);
+            final long rowCount = table.size();
+            long rowIndex = 0L;
             // Process each row
             for (final DataRow row : table) {
                 // Skip missing values
-                if (!row.getCell(index).isMissing()) {
-                    exec.checkCanceled();
-                    exec.setProgress((double)i / rows);
+                exec.checkCanceled();
+                final long curRowNum = rowIndex + 1; // needs to be final for lambda expression
+                exec.setMessage(() -> String.format("Row %d/%d (\"%s\")", curRowNum, rowCount, row.getKey()));
+                ExecutionContext subExecutionContext = exec.createSubExecutionContext(1.0 / rowCount);
+                DataCell cell = row.getCell(index);
+                if (!cell.isMissing()) {
                     // Get source URI
-                    final URI uri = ((URIDataValue)row.getCell(index)).getURIContent().getURI();
+                    final URI uri = ((URIDataValue)cell).getURIContent().getURI();
                     // Create source file (no connection information supported)
-                    final RemoteFile<Connection> sourceFile =
-                            RemoteFileFactory.createRemoteFile(uri, null, null);
+                    final RemoteFile<Connection> sourceFile = RemoteFileFactory.createRemoteFile(uri, null, null);
                     // Upload file
-                    upload(uri, sourceFile, folder, outContainer, monitor, exec);
-                    i++;
+                    upload(uri, sourceFile, folder, outContainer, monitor, subExecutionContext);
                 }
+                subExecutionContext.setProgress(1.0);
+                rowIndex += 1;
             }
-            outContainer.close();
         } finally {
+            outContainer.close();
             // Close connections
             monitor.closeAll();
         }
