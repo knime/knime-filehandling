@@ -193,6 +193,11 @@ public class ConnectionInformation implements Serializable {
         connectionInformation.setKeyfile(input.readUTF());
         connectionInformation.setKnownHosts(input.readUTF());
         connectionInformation.setTimeout(input.readInt());
+        try{
+            connectionInformation.setUseKerberos(input.readBoolean());
+        } catch (Exception e) {
+            connectionInformation.setUseKerberos(false); //new option in 3.2
+        }
         return connectionInformation;
     }
 
