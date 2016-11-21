@@ -415,7 +415,7 @@ public final class RemoteFileChooser {
                     m_defaultRemoteFileTreeNodes.add(new RemoteFileTreeNode(file, name, currentPath, isDirectory));
                 }
             }
-            
+
             return null;
         }
 
@@ -508,8 +508,10 @@ public final class RemoteFileChooser {
             } catch (FileNotFoundException e) {
                 LOGGER.warn("Unable to locate files in " + m_parentNode.getFullName() + ". Check name and permissions.");
                 m_nodes = new RemoteFileTreeNode[0];
+            } catch (Exception e) {
+                LOGGER.warn(e.getMessage(), e);
+                throw e;
             }
-
             m_success = true;
             return null;
         }
