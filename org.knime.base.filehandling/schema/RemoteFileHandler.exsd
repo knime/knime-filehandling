@@ -52,10 +52,10 @@
          <attribute name="RemoteFileHandler" type="string" use="required">
             <annotation>
                <documentation>
-                  Specify a class that implements the org.knime.base.filehandling.remote.RemoteFileHandler interface.
+                  Specify a class that implements the org.knime.base.filehandling.remote.files.RemoteFileHandler interface.
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn=":org.knime.base.filehandling.remote.RemoteFileHandler"/>
+                  <meta.attribute kind="java" basedOn=":org.knime.base.filehandling.remote.files.RemoteFileHandler"/>
                </appInfo>
             </annotation>
          </attribute>
@@ -71,32 +71,8 @@
       </documentation>
    </annotation>
 
-   <annotation>
-      <appInfo>
-         <meta.section type="examples"/>
-      </appInfo>
-      <documentation>
-         [Enter extension point usage example here.]
-      </documentation>
-   </annotation>
 
-   <annotation>
-      <appInfo>
-         <meta.section type="apiinfo"/>
-      </appInfo>
-      <documentation>
-         [Enter API information here.]
-      </documentation>
-   </annotation>
 
-   <annotation>
-      <appInfo>
-         <meta.section type="implementation"/>
-      </appInfo>
-      <documentation>
-         [Enter information about supplied implementation of this extension point.]
-      </documentation>
-   </annotation>
 
 
 </schema>
