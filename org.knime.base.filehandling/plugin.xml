@@ -70,6 +70,9 @@
       <RemoteFileHandler
             RemoteFileHandler="org.knime.base.filehandling.remote.files.SSHRemoteFileHandler">
       </RemoteFileHandler>
+      <RemoteFileHandler
+            RemoteFileHandler="org.knime.base.filehandling.remote.files.KnimeRemoteFileHandler">
+      </RemoteFileHandler>
    </extension>
    <extension
          point="org.knime.core.NodeFactoryClassMapper">

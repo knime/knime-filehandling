@@ -104,10 +104,6 @@ public class ListDirectoryNodeModel extends NodeModel {
 
     private Pattern m_regExpPattern;
 
-    private int m_analyzedFiles;
-
-    private int m_currentRowID;
-
     /**
      * Constructor for the node model.
      */
@@ -128,7 +124,10 @@ public class ListDirectoryNodeModel extends NodeModel {
         final BufferedDataContainer outContainer = exec.createDataContainer(outSpec);
         try {
             URI directoryUri;
-            if (m_connectionInformation != null) {
+            if (m_configuration.getDirectory().startsWith("knime://")) {
+            	// We also handle knime:// URIs, see AP-4648
+                directoryUri = new URI(m_configuration.getDirectory());
+            } else if (m_connectionInformation != null) {
                 exec.setProgress("Connecting to " + m_connectionInformation.toURI());
                 // Generate URI to the directory
                 directoryUri =
@@ -231,8 +230,6 @@ public class ListDirectoryNodeModel extends NodeModel {
             throw new IllegalStateException("Unknown filter: " + filter);
             // transform wildcard to regExp.
         }
-        m_analyzedFiles = 0;
-        m_currentRowID = 0;
         List<RemoteFile<? extends Connection>> filteredFiles = new ArrayList<RemoteFile<? extends Connection>>();
         for (RemoteFile<?> f : files) {
             try {

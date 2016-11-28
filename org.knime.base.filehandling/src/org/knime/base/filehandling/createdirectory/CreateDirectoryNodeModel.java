@@ -103,7 +103,11 @@ public class CreateDirectoryNodeModel extends NodeModel {
         try {
             // Generate URI to the target folder
             URI folderUri;
-            if (m_connectionInformation != null) {
+            if (m_configuration.getTarget().startsWith("knime://")) {
+            	// We also handle knime:// URIs, see AP-4648
+                String separator = m_configuration.getTarget().endsWith("/") ? "" : "/";
+                folderUri = new URI(m_configuration.getTarget() + separator + NodeUtils.encodePath(m_configuration.getName()));
+            } else if (m_connectionInformation != null) {
                 // Create remote URI
                 folderUri =
                         new URI(m_connectionInformation.toURI().toString()
