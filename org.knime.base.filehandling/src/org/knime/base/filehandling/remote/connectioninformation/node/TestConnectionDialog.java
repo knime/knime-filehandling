@@ -55,11 +55,13 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.Connection;
@@ -226,13 +228,14 @@ public class TestConnectionDialog {
          */
         @Override
         protected Void doInBackgroundWithContext() throws Exception {
+            final ConnectionMonitor<? extends Connection> monitor = new ConnectionMonitor<>();
             try {
-                final ConnectionMonitor<? extends Connection> monitor = new ConnectionMonitor<>();
                 final RemoteFile<? extends Connection> file =
                         RemoteFileFactory.createRemoteFile(m_connectionInformation.toURI(),
                                                                      m_connectionInformation, monitor);
-                monitor.closeAll();
-                if (file != null) {
+                 if (file != null) {
+                     //perform a simple operation to check that the connection really exists and is valid
+                     file.exists();
                     m_success = true;
                 } else {
                     m_success = false;
@@ -242,6 +245,8 @@ public class TestConnectionDialog {
                 NodeLogger.getLogger(getClass()).warn("Couldn't connect", e);
                 m_error = e.getMessage();
                 m_success = false;
+            } finally {
+                monitor.closeAll();
             }
             return null;
         }
