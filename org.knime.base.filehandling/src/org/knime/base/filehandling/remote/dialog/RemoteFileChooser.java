@@ -563,7 +563,11 @@ public final class RemoteFileChooser {
                     // Search for a matching child
                     for (RemoteFileTreeNode node : m_nodes) {
                         if (m_defaultPath.startsWith(node.getFullName())) {
-                            return;
+                        	if (m_defaultPath.matches(node.getFullName())){
+                                m_tree.setSelectionPath(new TreePath(m_treemodel.getPathToRoot(node)));
+                                m_tree.setEnabled(true);
+                        	}
+                        	return;
                         }
                     }
 
