@@ -65,9 +65,12 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.Protocol;
@@ -154,6 +157,30 @@ public final class RemoteFileChooserPanel {
             @Override
             public void stateChanged(final ChangeEvent e) {
                 setEnabled(m_panel.isEnabled());
+                if (fvm.isVariableReplacementEnabled() && fvm.getVariableValue().isPresent()) {
+                    // if the location is overwritten by a variable show its value
+                    setSelection(fvm.getVariableValue().get().getStringValue());
+                }
+            }
+        });
+        parentPanel.addAncestorListener(new AncestorListener() {
+            @Override
+            public void ancestorRemoved(final AncestorEvent event) {
+            }
+
+            @Override
+            public void ancestorMoved(final AncestorEvent event) {
+            }
+
+            @Override
+            public void ancestorAdded(final AncestorEvent event) {
+                if (fvm.isVariableReplacementEnabled() && fvm.getVariableValue().isPresent()) {
+                    String newPath = fvm.getVariableValue().get().getStringValue();
+                    String oldPath = getSelection();
+                    if (!StringUtils.equals(newPath, oldPath)) {
+                        setSelection(newPath);
+                    }
+                }
             }
         });
         m_fvmbutton = new FlowVariableModelButton(fvm);
