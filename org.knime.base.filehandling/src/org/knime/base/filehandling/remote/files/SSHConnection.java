@@ -47,11 +47,13 @@
  */
 package org.knime.base.filehandling.remote.files;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URL;
 
 import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.node.util.CheckUtils;
 import org.knime.core.util.FileUtil;
 import org.knime.core.util.KnimeEncryption;
 
@@ -87,6 +89,7 @@ public class SSHConnection extends Connection {
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("null")
     @Override
     public void open() throws Exception {
         if (m_connectionInformation == null) {
@@ -105,7 +108,9 @@ public class SSHConnection extends Connection {
         String keyfile = m_connectionInformation.getKeyfile();
         if (!StringUtils.isEmpty(keyfile)) {
             if (keyfile.startsWith("knime://")) {
-                keyfile = FileUtil.getFileFromURL(new URL(keyfile)).getAbsolutePath();
+                File fileFromURL = FileUtil.getFileFromURL(new URL(keyfile));
+                CheckUtils.checkState(fileFromURL != null, "Can't resolve key file path from URL \"%s\"", keyfile);
+                keyfile = fileFromURL.getAbsolutePath();
             }
             if (password == null) {
                 jsch.addIdentity(keyfile);
