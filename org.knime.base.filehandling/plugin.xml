@@ -6,6 +6,7 @@
    <extension-point id="RemoteFileHandler" name="Remote File Handler" schema="schema/RemoteFileHandler.exsd"/>
    <extension point="org.knime.workbench.repository.nodes">
    <node category-path="/io/filehandling" deprecated="true" factory-class="org.knime.base.filehandling.filemetainfo.FileMetaInfoNodeFactory"/>
+   <node category-path="/io/filehandling" deprecated="false" factory-class="org.knime.base.filehandling.filemetainfo2.FileMetaInfo2NodeFactory" />
    <node category-path="/io/filehandling" factory-class="org.knime.base.filehandling.findmimetype.FindMIMETypeNodeFactory" />
    <node category-path="/io/filehandling" factory-class="org.knime.base.filehandling.listmimetypes.ListMIMETypesNodeFactory" />
    <node category-path="/io/filehandling/zip" factory-class="org.knime.base.filehandling.zip2.ZipNodeFactory" />
