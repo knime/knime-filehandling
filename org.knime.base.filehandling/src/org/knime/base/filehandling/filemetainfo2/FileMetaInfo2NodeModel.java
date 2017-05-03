@@ -52,7 +52,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.Calendar;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.apache.commons.io.FileUtils;
 import org.knime.base.filehandling.NodeUtils;
@@ -65,11 +67,11 @@ import org.knime.core.data.DataType;
 import org.knime.core.data.container.AbstractCellFactory;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
-import org.knime.core.data.date.DateAndTimeCell;
 import org.knime.core.data.def.BooleanCell;
 import org.knime.core.data.def.BooleanCell.BooleanCellFactory;
 import org.knime.core.data.def.LongCell;
 import org.knime.core.data.def.StringCell;
+import org.knime.core.data.time.localdatetime.LocalDateTimeCellFactory;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
@@ -89,7 +91,7 @@ import org.knime.core.util.FileUtil;
  *
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
  */
-class FileMetaInfoNodeModel extends NodeModel {
+class FileMetaInfo2NodeModel extends NodeModel {
 
     private SettingsModelString m_uricolumn;
 
@@ -100,7 +102,7 @@ class FileMetaInfoNodeModel extends NodeModel {
     /**
      * Constructor for the node model.
      */
-    protected FileMetaInfoNodeModel() {
+    protected FileMetaInfo2NodeModel() {
         super(1, 1);
         m_uricolumn = SettingsFactory.createURIColumnSettings();
         m_abortifnotlocal = SettingsFactory.createAbortIfNotLocalSettings();
@@ -217,13 +219,8 @@ class FileMetaInfoNodeModel extends NodeModel {
                     cells[Attributes.HUMANSIZE.getPosition()] = new StringCell(humansize);
                     // Last modified
                     long modifyDate = file.lastModified();
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.setTimeInMillis(modifyDate);
-                    cells[Attributes.MODIFIED.getPosition()] =
-                            new DateAndTimeCell(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
-                                    calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY),
-                                    calendar.get(Calendar.MINUTE), calendar.get(Calendar.SECOND),
-                                    calendar.get(Calendar.MILLISECOND));
+                    LocalDateTime ldt = Instant.ofEpochMilli(modifyDate).atZone(ZoneId.systemDefault()).toLocalDateTime();
+                    cells[Attributes.MODIFIED.getPosition()] = LocalDateTimeCellFactory.create(ldt);
                     // Permissions
                     String permissions = "";
                     permissions += file.canRead() ? "r" : "";

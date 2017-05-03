@@ -48,10 +48,10 @@
 package org.knime.base.filehandling.filemetainfo2;
 
 import org.knime.core.data.DataType;
-import org.knime.core.data.date.DateAndTimeCell;
 import org.knime.core.data.def.BooleanCell;
 import org.knime.core.data.def.LongCell;
 import org.knime.core.data.def.StringCell;
+import org.knime.core.data.time.localdatetime.LocalDateTimeCellFactory;
 
 /**
  * Enums for attributes.
@@ -84,7 +84,7 @@ enum Attributes {
     /**
      * Last time the file was modified.
      */
-    MODIFIED(4, "Last modified", DateAndTimeCell.TYPE),
+    MODIFIED(4, "Last modified", LocalDateTimeCellFactory.TYPE),
 
     /**
      * Read, write and execute permissions for the file.
