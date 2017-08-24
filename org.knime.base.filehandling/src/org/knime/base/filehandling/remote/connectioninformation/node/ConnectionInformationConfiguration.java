@@ -47,6 +47,7 @@
  */
 package org.knime.base.filehandling.remote.connectioninformation.node;
 
+import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.Protocol;
 import org.knime.core.node.InvalidSettingsException;
@@ -74,7 +75,10 @@ class ConnectionInformationConfiguration {
 
     private String m_authenticationmethod;
 
-    private String m_password;
+    private String m_passwordPlain;
+
+    /** added in 3.4.1, see AP-7807. */
+    private String m_passwordEncrypted;
 
     private String m_keyfile;
 
@@ -155,17 +159,26 @@ class ConnectionInformationConfiguration {
     }
 
     /**
-     * @return the password
+     * @return the password, i.e. the "plain" password when set or otherwise the encrypted password (but then decrypted)
      */
     String getPassword() {
-        return m_password;
+        // the plain password is not set by the dialog but only set either via flow variable
+        // or when loading an old workflow (< 3.4.1); then the plain password takes precedence
+        return isPasswordPlainSet() ? m_passwordPlain : m_passwordEncrypted;
     }
 
     /**
-     * @param password the password to set
+     * @return <code>true</code> if a plain password is set, ie either by flow variable or when loading old workflows.
      */
-    void setPassword(final String password) {
-        m_password = password;
+    boolean isPasswordPlainSet() {
+        return StringUtils.isNotEmpty(m_passwordPlain);
+    }
+
+    /**
+     * @param passwordEncrypted the password to be encrypted
+     */
+    void setPasswordEncrypted(final String passwordEncrypted) {
+        m_passwordEncrypted = passwordEncrypted;
     }
 
     /**
@@ -313,7 +326,10 @@ class ConnectionInformationConfiguration {
         settings.addString("host", m_host);
         settings.addInt("port", m_port);
         settings.addString("authenticationmethod", m_authenticationmethod);
-        settings.addString("password", m_password);
+        // m_passwordPlain is usually empty, except when loaded from
+        // an old workflow (<3.4.1) or when controlled via flow variable.
+        settings.addString("password", m_passwordPlain);
+        settings.addPassword("xpassword", ">$:g~l63t(uc1[y#[u", m_passwordEncrypted); // added in 3.4.1
         // Only save if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             settings.addString("keyfile", m_keyfile);
@@ -339,7 +355,14 @@ class ConnectionInformationConfiguration {
         m_host = settings.getString("host", "");
         m_port = settings.getInt("port", m_protocol.getPort());
         m_authenticationmethod = settings.getString("authenticationmethod", AuthenticationMethod.PASSWORD.getName());
-        m_password = settings.getString("password", "");
+        m_passwordPlain = settings.getString("password", "");
+        if (StringUtils.isNotEmpty(m_passwordPlain)) {
+            m_passwordEncrypted = m_passwordPlain;
+            m_passwordPlain = null;
+        } else {
+            // added in 3.4.1
+            m_passwordEncrypted = settings.getPassword("xpassword", ">$:g~l63t(uc1[y#[u", null);
+        }
         // Only load if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             m_keyfile = settings.getString("keyfile", "");
@@ -368,14 +391,22 @@ class ConnectionInformationConfiguration {
         m_port = settings.getInt("port");
         m_authenticationmethod = settings.getString("authenticationmethod");
         validate(m_authenticationmethod, "authenticationmethod");
-        m_password = settings.getString("password");
+        m_passwordPlain = settings.getString("password");
+        if (StringUtils.isNotEmpty(m_passwordPlain)) {
+            m_passwordEncrypted = m_passwordPlain;
+            m_passwordPlain = null;
+        } else {
+            // added in 3.4.1
+            m_passwordEncrypted = settings.getPassword("xpassword", ">$:g~l63t(uc1[y#[u", null);
+        }
+
         // Only validate if the authentication method is set to password
         if (m_authenticationmethod.equals(AuthenticationMethod.PASSWORD.getName())) {
             if (m_useworkflowcredentials) {
                 validate(m_workflowcredentials, "workflowcredentials");
             } else {
                 validate(m_user, "user");
-                validate(m_password, "password");
+                validate(getPassword(), "password");
             }
         }
         // Only load if the protocol supports keyfiles
@@ -411,7 +442,7 @@ class ConnectionInformationConfiguration {
      * @throws InvalidSettingsException If the string is null or empty
      */
     private void validate(final String string, final String settingName) throws InvalidSettingsException {
-        if (string == null || string.length() == 0) {
+        if (StringUtils.isEmpty(string)) {
             throw new InvalidSettingsException(settingName + " missing");
         }
     }
