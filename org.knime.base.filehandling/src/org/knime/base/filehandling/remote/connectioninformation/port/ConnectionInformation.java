@@ -47,9 +47,6 @@
  */
 package org.knime.base.filehandling.remote.connectioninformation.port;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -156,52 +153,6 @@ public class ConnectionInformation implements Serializable {
      */
     public static ConnectionInformation load(final ModelContentRO model) throws InvalidSettingsException {
         return new ConnectionInformation(model);
-    }
-
-    /**
-     * Serializes this object.
-     *
-     *
-     * @param output The output to save in
-     * @throws IOException If an error occurs
-     * @noreference Not to be called by client
-     */
-    public void save(final DataOutput output) throws IOException {
-        output.writeUTF(m_protocol);
-        output.writeUTF(m_host);
-        output.writeInt(m_port);
-        output.writeUTF(m_user);
-        output.writeUTF(m_password);
-        output.writeUTF(m_keyfile);
-        output.writeUTF(m_knownHosts);
-        output.writeInt(m_timeout);
-        output.writeBoolean(m_useKerberos);
-    }
-
-    /**
-     * Deserialize this object.
-     *
-     * @param input The input to load from
-     * @return The created <code>ConnectionInformation</code> object
-     * @throws IOException If an error occurs
-     * @noreference Not to be called by client
-     */
-    public static ConnectionInformation load(final DataInput input) throws IOException {
-        final ConnectionInformation connectionInformation = new ConnectionInformation();
-        connectionInformation.setProtocol(input.readUTF());
-        connectionInformation.setHost(input.readUTF());
-        connectionInformation.setPort(input.readInt());
-        connectionInformation.setUser(input.readUTF());
-        connectionInformation.setPassword(input.readUTF());
-        connectionInformation.setKeyfile(input.readUTF());
-        connectionInformation.setKnownHosts(input.readUTF());
-        connectionInformation.setTimeout(input.readInt());
-        try{
-            connectionInformation.setUseKerberos(input.readBoolean());
-        } catch (Exception e) {
-            connectionInformation.setUseKerberos(false); //new option in 3.2
-        }
-        return connectionInformation;
     }
 
     /**
