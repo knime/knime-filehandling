@@ -115,7 +115,10 @@ public class ConnectionInformation implements Serializable {
         this.setHost(model.getString("host"));
         this.setPort(model.getInt("port"));
         this.setUser(model.getString("user"));
-        this.setPassword(model.getString("password"));
+        // saved encrypted as of 3.4.1; see AP-7807, AP-7809, AP-7810
+        String pass = model.containsKey("xpassword") ?
+            model.getPassword("xpassword", "}l?>mn0am8ty1m<+nf") : model.getString("password");
+        this.setPassword(pass);
         this.setKeyfile(model.getString("keyfile"));
         this.setKnownHosts(model.getString("knownhosts"));
         this.setTimeout(model.getInt("timeout", 30000)); // new option in 2.10
@@ -134,7 +137,7 @@ public class ConnectionInformation implements Serializable {
         model.addString("host", m_host);
         model.addInt("port", m_port);
         model.addString("user", m_user);
-        model.addString("password", m_password);
+        model.addPassword("xpassword", "}l?>mn0am8ty1m<+nf", m_password);
         model.addString("keyfile", m_keyfile);
         model.addString("knownhosts", m_knownHosts);
         model.addInt("timeout", m_timeout);
