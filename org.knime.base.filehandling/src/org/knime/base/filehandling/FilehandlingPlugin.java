@@ -50,11 +50,15 @@ package org.knime.base.filehandling;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Optional;
 
+import org.eclipse.core.net.proxy.IProxyData;
+import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
 /**
  * @author Patrick Winter, KNIME.com, Zurich, Switzerland
@@ -67,10 +71,9 @@ public final class FilehandlingPlugin extends Plugin {
     // The shared instance
     private static FilehandlingPlugin plugin;
 
-    /**
-     * The constructor.
-     */
-    public FilehandlingPlugin() {
+    @Override
+    public void start(final BundleContext context) throws Exception {
+        super.start(context);
         plugin = this;
     }
 
@@ -106,5 +109,18 @@ public final class FilehandlingPlugin extends Plugin {
         Bundle utilBundle = Platform.getBundle("org.knime.core.util");
         URL mimeFile = utilBundle.getResource("META-INF/mime.types");
         return mimeFile.openStream();
+    }
+
+    /**
+     * @since 3.5
+     */
+    public Optional<IProxyData> getSocks5ProxyData() {
+        ServiceReference<IProxyService> proxyServiceRef =
+                getBundle().getBundleContext().getServiceReference(IProxyService.class);
+        if (proxyServiceRef != null) {
+            IProxyService service = getBundle().getBundleContext().getService(proxyServiceRef);
+            return Optional.ofNullable(service.getProxyData(IProxyData.SOCKS_PROXY_TYPE));
+        }
+        return Optional.empty();
     }
 }

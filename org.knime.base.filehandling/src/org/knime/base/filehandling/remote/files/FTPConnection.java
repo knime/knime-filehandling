@@ -45,8 +45,14 @@
 
 package org.knime.base.filehandling.remote.files;
 
-import it.sauronsoftware.ftp4j.FTPClient;
+import java.util.Optional;
+
+import org.eclipse.core.net.proxy.IProxyData;
+import org.knime.base.filehandling.FilehandlingPlugin;
 import org.knime.core.util.KnimeEncryption;
+
+import it.sauronsoftware.ftp4j.FTPClient;
+import it.sauronsoftware.ftp4j.connectors.SOCKS5Connector;
 
 /**
  * Connection over FTP.
@@ -93,6 +99,19 @@ public class FTPConnection extends Connection {
             password = KnimeEncryption.decrypt(password);
         } else {
             password = "";
+        }
+        Optional<IProxyData> socks5ProxyData = FilehandlingPlugin.getDefault().getSocks5ProxyData();
+        // WIP - this doesn't seem to work (yet) and it's unclear what *Connector to use (there are 4 kinds)
+        if (socks5ProxyData.isPresent()) {
+            IProxyData proxyData = socks5ProxyData.get();
+            SOCKS5Connector socks5Connector;
+            if (proxyData.isRequiresAuthentication()) {
+                socks5Connector = new SOCKS5Connector(proxyData.getHost(), proxyData.getPort(),
+                    proxyData.getUserId(), proxyData.getPassword());
+            } else {
+                socks5Connector = new SOCKS5Connector(proxyData.getHost(), proxyData.getPort());
+            }
+            m_client.setConnector(socks5Connector);
         }
         // Open connection
         m_client.connect(host, port);
