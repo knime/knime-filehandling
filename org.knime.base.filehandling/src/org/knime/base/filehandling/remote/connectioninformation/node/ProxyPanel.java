@@ -1,8 +1,7 @@
 /*
  * ------------------------------------------------------------------------
- *
  *  Copyright by KNIME GmbH, Konstanz, Germany
- *  Website: http://www.knime.org; Email: contact@knime.org
+ *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License, Version 3, as
@@ -44,7 +43,7 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Oct 9, 2017 (ferry): created
+ *   Oct 9, 2017 (ferry.abt): created
  */
 package org.knime.base.filehandling.remote.connectioninformation.node;
 
@@ -69,127 +68,133 @@ import javax.swing.border.TitledBorder;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationConfiguration.FTPProxyConfiguration;
-import org.knime.core.node.NotConfigurableException;
 import org.knime.core.util.KnimeEncryption;
 
+/**
+ * Panel to configure proxies for the Remote File Handling Nodes. Currently only supports FTP proxy.
+ *
+ * @author ferry.abt
+ */
 class ProxyPanel extends JPanel {
     private static final long serialVersionUID = 1131321798685469208L;
 
-    private final ConnectionInformationNodeDialog dialog;
+    private final ConnectionInformationNodeDialog m_dialog;
 
-    private final JCheckBox useFTPProxyChecker;
+    private final JCheckBox m_useFTPProxyChecker;
 
-    private final JLabel hostLabel;
+    private final JLabel m_hostLabel;
 
-    private final JTextField host;
+    private final JTextField m_hostTextField;
 
-    private final JLabel portLabel;
+    private final JLabel m_portLabel;
 
-    private final SpinnerModel portModel;
+    private final SpinnerModel m_portModel;
 
-    private final JSpinner port;
+    private final JSpinner m_portSpinner;
 
-    private final JCheckBox authChecker;
+    private final JCheckBox m_authChecker;
 
-    private final JCheckBox useWorkflowCredChecker;
+    private final JCheckBox m_useWorkflowCredChecker;
 
-    private final JComboBox<String> workflowCredentials;
+    private final JComboBox<String> m_workflowCredCombo;
 
-    private final JLabel userLabel;
+    private final JLabel m_userLabel;
 
-    private final JTextField user;
+    private final JTextField m_userTextField;
 
-    private final JLabel passwordLabel;
+    private final JLabel m_passwordLabel;
 
-    private final JPasswordField password;
+    private final JPasswordField m_passwordField;
 
-    private final JPanel workflowCredentialsPanel;
+    private final JPanel m_workflowCredentialsPanel;
 
-    private UpdateListener listener;
+    private final UpdateListener enabledUpdatelistener;
 
     /**
+     * Creates a settings tab for proxy settings for a {@link ConnectionInformationNodeDialog}
      *
+     * @param dialog this tab belongs to
      */
-    ProxyPanel(final ConnectionInformationNodeDialog pDialog) {
-        dialog = pDialog;
-        useFTPProxyChecker = new JCheckBox("Use FTP Proxy");
-        hostLabel = new JLabel("Host:");
-        host = new JTextField();
-        portLabel = new JLabel("Port:");
-        portModel = new SpinnerNumberModel(21, 0, 65535, 1);
-        port = new JSpinner(portModel);
-        authChecker = new JCheckBox("User Authentication");
-        useWorkflowCredChecker = new JCheckBox();
-        workflowCredentials = new JComboBox<>();
-        userLabel = new JLabel("User:");
-        user = new JTextField();
-        passwordLabel = new JLabel("Password:");
-        password = new JPasswordField();
+    ProxyPanel(final ConnectionInformationNodeDialog dialog) {
+        m_dialog = dialog;
+        m_useFTPProxyChecker = new JCheckBox("Use FTP Proxy");
+        m_hostLabel = new JLabel("Host:");
+        m_hostTextField = new JTextField();
+        m_portLabel = new JLabel("Port:");
+        m_portModel = new SpinnerNumberModel(21, 0, 65535, 1);
+        m_portSpinner = new JSpinner(m_portModel);
+        m_authChecker = new JCheckBox("User Authentication");
+        m_useWorkflowCredChecker = new JCheckBox();
+        m_workflowCredCombo = new JComboBox<>();
+        m_userLabel = new JLabel("User:");
+        m_userTextField = new JTextField();
+        m_passwordLabel = new JLabel("Password:");
+        m_passwordField = new JPasswordField();
 
-        workflowCredentialsPanel = new JPanel(new GridBagLayout());
+        m_workflowCredentialsPanel = new JPanel(new GridBagLayout());
 
-        listener = new UpdateListener();
-        useFTPProxyChecker.addActionListener(listener);
-        authChecker.addActionListener(listener);
-        useWorkflowCredChecker.addActionListener(listener);
-        listener.actionPerformed(null);
+        enabledUpdatelistener = new UpdateListener();
+        m_useFTPProxyChecker.addActionListener(enabledUpdatelistener);
+        m_authChecker.addActionListener(enabledUpdatelistener);
+        m_useWorkflowCredChecker.addActionListener(enabledUpdatelistener);
+        enabledUpdatelistener.actionPerformed(null);
+
         initLayout();
     }
 
-    /**
-     */
     private void initLayout() {
         final GridBagConstraints gbc = new GridBagConstraints();
 
         //credentials panel
         NodeUtils.resetGBC(gbc);
-        workflowCredentialsPanel.add(useWorkflowCredChecker, gbc);
+        m_workflowCredentialsPanel.add(m_useWorkflowCredChecker, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
-        workflowCredentialsPanel.add(workflowCredentials, gbc);
-        workflowCredentialsPanel.setBorder(new TitledBorder(new EtchedBorder(), "Workflow credentials"));
+        m_workflowCredentialsPanel.add(m_workflowCredCombo, gbc);
+        m_workflowCredentialsPanel.setBorder(new TitledBorder(new EtchedBorder(), "Workflow credentials"));
 
-        // FTP proxy panel
+        // ftp proxy panel
         final JPanel ftpProxyPanel = new JPanel(new GridBagLayout());
         ftpProxyPanel.setBorder(new TitledBorder(new EtchedBorder(), "FTP Proxy"));
         NodeUtils.resetGBC(gbc);
-        ftpProxyPanel.add(useFTPProxyChecker, gbc);
+        ftpProxyPanel.add(m_useFTPProxyChecker, gbc);
         gbc.gridy++;
-        ftpProxyPanel.add(hostLabel, gbc);
+        ftpProxyPanel.add(m_hostLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
-        ftpProxyPanel.add(host, gbc);
+        ftpProxyPanel.add(m_hostTextField, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.weightx = 0;
-        ftpProxyPanel.add(portLabel, gbc);
+        ftpProxyPanel.add(m_portLabel, gbc);
         gbc.gridx++;
         gbc.fill = GridBagConstraints.NONE;
-        ftpProxyPanel.add(port, gbc);
+        ftpProxyPanel.add(m_portSpinner, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.gridwidth = 2;
-        ftpProxyPanel.add(authChecker, gbc);
+        ftpProxyPanel.add(m_authChecker, gbc);
         gbc.gridy++;
         gbc.fill = GridBagConstraints.BOTH;
-        ftpProxyPanel.add(workflowCredentialsPanel, gbc);
+        ftpProxyPanel.add(m_workflowCredentialsPanel, gbc);
         gbc.gridwidth = 1;
         gbc.gridy++;
-        ftpProxyPanel.add(userLabel, gbc);
+        ftpProxyPanel.add(m_userLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
-        ftpProxyPanel.add(user, gbc);
+        ftpProxyPanel.add(m_userTextField, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.weightx = 0;
-        ftpProxyPanel.add(passwordLabel, gbc);
+        ftpProxyPanel.add(m_passwordLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
-        ftpProxyPanel.add(password, gbc);
+        ftpProxyPanel.add(m_passwordField, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.gridwidth = 2;
         gbc.weighty = 1;
+        //empty panel to eat up space
         ftpProxyPanel.add(new JPanel(), gbc);
 
         // Outer Panel
@@ -197,43 +202,59 @@ class ProxyPanel extends JPanel {
         add(ftpProxyPanel);
     }
 
-    void load(final FTPProxyConfiguration config) throws NotConfigurableException {
-        useFTPProxyChecker.setSelected(config.isUseFTPProxy());
-        host.setText(config.getFtpProxyHost());
-        port.getModel().setValue(config.getFtpProxyPort());
-        authChecker.setSelected(config.isUserAuth());
-        useWorkflowCredChecker.setSelected(config.isUseWorkflowCredentials());
-        final Collection<String> credentials = dialog.getCredentialsNames();
-        workflowCredentials.removeAllItems();
+    /**
+     * loads the ftp-proxy defined by the {@code FTPProxyConfiguration} into the dialog
+     *
+     * @param config defining an ftp-proxy
+     */
+    void load(final FTPProxyConfiguration config) {
+        m_useFTPProxyChecker.setSelected(config.isUseFTPProxy());
+        m_hostTextField.setText(config.getFtpProxyHost());
+        m_portSpinner.getModel().setValue(config.getFtpProxyPort());
+        m_authChecker.setSelected(config.isUserAuth());
+        final Collection<String> credentials = m_dialog.getCredentialsNames();
+        m_workflowCredCombo.removeAllItems();
         for (final String credential : credentials) {
-            workflowCredentials.addItem(credential);
+            m_workflowCredCombo.addItem(credential);
         }
-        user.setText(config.getFtpProxyUser());
+        if (credentials.size() > 0) {
+            m_useWorkflowCredChecker.setSelected(config.isUseWorkflowCredentials());
+        }
+        m_workflowCredCombo.setSelectedItem(config.getFtpProxyWorkflowCredentials());
+        m_userTextField.setText(config.getFtpProxyUser());
         try {
-            password.setText(KnimeEncryption.decrypt(config.getPassword()));
+            m_passwordField.setText(KnimeEncryption.decrypt(config.getPassword()));
         } catch (final Exception e) {
             //Leave empty
         }
-        listener.actionPerformed(null);
+        enabledUpdatelistener.actionPerformed(null);
     }
 
+    /**
+     * @param config to store the settings entered by the user into
+     */
     void createConfig(final FTPProxyConfiguration config) {
-        config.setUseFTPProxy(useFTPProxyChecker.isSelected());
-        config.setFtpProxyHost(host.getText());
-        config.setFtpProxyPort((int)port.getModel().getValue());
-        config.setUserAuth(authChecker.isSelected());
-        config.setUseWorkflowCredentials(useWorkflowCredChecker.isSelected());
-        config.setFtpProxyWorkflowCredentials((String)workflowCredentials.getSelectedItem());
-        config.setFtpProxyUser(user.getText());
+        config.setUseFTPProxy(m_useFTPProxyChecker.isSelected());
+        config.setFtpProxyHost(m_hostTextField.getText());
+        config.setFtpProxyPort((int)m_portSpinner.getModel().getValue());
+        config.setUserAuth(m_authChecker.isSelected());
+        config.setUseWorkflowCredentials(m_useWorkflowCredChecker.isSelected());
+        config.setFtpProxyWorkflowCredentials((String)m_workflowCredCombo.getSelectedItem());
+        config.setFtpProxyUser(m_userTextField.getText());
         try {
-            if (password.getPassword().length > 0) {
-                config.setPassword(KnimeEncryption.encrypt(password.getPassword()));
+            if (m_passwordField.getPassword().length > 0) {
+                config.setPassword(KnimeEncryption.encrypt(m_passwordField.getPassword()));
             }
         } catch (final Exception e) {
             //Do not change password
         }
     }
 
+    /**
+     * {@link ActionListener} that sets the enabled state of the different settings depending on the checkboxes
+     *
+     * @author ferry.abt
+     */
     private class UpdateListener implements ActionListener {
 
         /**
@@ -241,22 +262,25 @@ class ProxyPanel extends JPanel {
          */
         @Override
         public void actionPerformed(final ActionEvent e) {
-            boolean status = useFTPProxyChecker.isSelected();
-            boolean useAuthentication = authChecker.isSelected();
-            boolean useCredentials = useWorkflowCredChecker.isSelected();
+            boolean status = m_useFTPProxyChecker.isSelected();
+            m_hostLabel.setEnabled(status);
+            m_hostTextField.setEnabled(status);
+            m_portLabel.setEnabled(status);
+            m_portSpinner.setEnabled(status);
+            m_authChecker.setEnabled(status);
 
-            hostLabel.setEnabled(status);
-            host.setEnabled(status);
-            portLabel.setEnabled(status);
-            port.setEnabled(status);
-            authChecker.setEnabled(status);
-            workflowCredentialsPanel.setEnabled(status && useAuthentication);
-            useWorkflowCredChecker.setEnabled(status && useAuthentication);
-            workflowCredentials.setEnabled(status && useAuthentication && useCredentials);
-            userLabel.setEnabled(status && useAuthentication && !useCredentials);
-            user.setEnabled(status && useAuthentication && !useCredentials);
-            passwordLabel.setEnabled(status && useAuthentication && !useCredentials);
-            password.setEnabled(status && useAuthentication && !useCredentials);
+            if (status) {
+                status = status & m_authChecker.isSelected();
+            }
+            m_workflowCredentialsPanel.setEnabled(status);
+            m_useWorkflowCredChecker.setEnabled(status);
+
+            boolean useCredentials = m_useWorkflowCredChecker.isSelected();
+            m_workflowCredCombo.setEnabled(status && useCredentials);
+            m_userLabel.setEnabled(status && !useCredentials);
+            m_userTextField.setEnabled(status && !useCredentials);
+            m_passwordLabel.setEnabled(status && !useCredentials);
+            m_passwordField.setEnabled(status && !useCredentials);
         }
 
     }

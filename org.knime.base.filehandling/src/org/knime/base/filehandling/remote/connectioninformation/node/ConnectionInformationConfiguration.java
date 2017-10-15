@@ -94,7 +94,7 @@ class ConnectionInformationConfiguration {
 
     private int m_timeout = 30000;
 
-    private FTPProxyConfiguration m_ftpProxy = new FTPProxyConfiguration();
+    private final FTPProxyConfiguration m_ftpProxy = new FTPProxyConfiguration();
 
     /**
      * Create uninitialized configuration to a certain protocol.
@@ -246,7 +246,11 @@ class ConnectionInformationConfiguration {
         m_timeout = timeout;
     }
 
-    FTPProxyConfiguration getFTPProxy(){
+    /**
+     *
+     * @return the ftp-proxy configuration. Empty (never {@code null}!) if not configured.
+     */
+    FTPProxyConfiguration getFTPProxy() {
         return m_ftpProxy;
     }
 
@@ -318,7 +322,7 @@ class ConnectionInformationConfiguration {
         }
         connectionInformation.setTimeout(getTimeout());
         connectionInformation.setUseKerberos(AuthenticationMethod.KERBEROS.getName().equals(authenticationMethod));
-        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol) && m_ftpProxy.isUseFTPProxy()){
+        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol) && m_ftpProxy.isUseFTPProxy()) {
             connectionInformation.setFTPProxy(m_ftpProxy.getConnectionInformation(credentialsProvider));
         }
         return connectionInformation;
@@ -351,7 +355,7 @@ class ConnectionInformationConfiguration {
             settings.addString("knownhosts", m_knownhosts);
         }
         settings.addInt("timeout", m_timeout);
-        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)){
+        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
             m_ftpProxy.save(settings);
         }
     }
@@ -387,7 +391,7 @@ class ConnectionInformationConfiguration {
             m_knownhosts = settings.getString("knownhosts", "");
         }
         m_timeout = settings.getInt("timeout", 30000); // new option in 2.10
-        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)){
+        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
             m_ftpProxy.load(settings);
         }
     }
@@ -448,7 +452,7 @@ class ConnectionInformationConfiguration {
             }
         }
         m_timeout = settings.getInt("timeout", 30000); // new option in 2.10
-        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)){
+        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
             m_ftpProxy.loadAndValidate(settings);
         }
     }
@@ -467,26 +471,41 @@ class ConnectionInformationConfiguration {
         }
     }
 
-    class FTPProxyConfiguration{
+    /**
+     * Class to store a ftp-proxy configuration. If no proxy is configured (default configuration)
+     * {@link #isUseFTPProxy()} returns {@code false}. <b>Do not call any getter methods if {@link #isUseFTPProxy()}
+     * returns {@code false}!</b>
+     *
+     * @author ferry.abt
+     */
+    class FTPProxyConfiguration {
 
-        private boolean m_useFTPProxy;
-        private String m_ftpProxyHost;
-        private int m_ftpProxyPort;
-        private boolean m_userAuth;
-        private boolean m_useWorkflowCredentials;
-        private String m_ftpProxyWorkflowCredentials;
-        private String m_ftpProxyUser;
-        private String m_password;
+        private boolean m_useFTPProxy = false;
+
+        private String m_ftpProxyHost = "";
+
+        private int m_ftpProxyPort = 21;
+
+        private boolean m_userAuth = false;
+
+        private boolean m_useWorkflowCredentials = false;
+
+        private String m_ftpProxyWorkflowCredentials = "";
+
+        private String m_ftpProxyUser = "";
+
+        private String m_password = "";
 
         /**
-         * @return the m_useFTPProxy
+         * @return true if an ftp-proxy should be used
          */
         boolean isUseFTPProxy() {
             return m_useFTPProxy;
         }
 
         /**
-         * @return
+         * @return an ftp-proxy configuration in the form of a {@link ConnectionInformation}-object to be passed via a
+         *         {@code ConnectionInformationPort}.
          */
         ConnectionInformation getConnectionInformation(final CredentialsProvider credentialsProvider) {
             final ConnectionInformation connectionInformation = new ConnectionInformation();
@@ -498,7 +517,8 @@ class ConnectionInformationConfiguration {
                     final ICredentials credentials = credentialsProvider.get(m_ftpProxyWorkflowCredentials);
                     connectionInformation.setUser(credentials.getLogin());
                     try {
-                        connectionInformation.setPassword(KnimeEncryption.encrypt(credentials.getPassword().toCharArray()));
+                        connectionInformation
+                            .setPassword(KnimeEncryption.encrypt(credentials.getPassword().toCharArray()));
                     } catch (final Exception e) {
                         // Set no password
                     }
@@ -509,145 +529,186 @@ class ConnectionInformationConfiguration {
                 }
             }
             return connectionInformation;
-
         }
 
         /**
-         * @param m_useFTPProxy the m_useFTPProxy to set
+         * @param useFTPProxy should an ftp-proxy be used (default: {@code false})
          */
         void setUseFTPProxy(final boolean useFTPProxy) {
             this.m_useFTPProxy = useFTPProxy;
         }
 
         /**
-         * @return the m_ftpProxyHost
+         * @return the host of the ftp-proxy
          */
         String getFtpProxyHost() {
             return m_ftpProxyHost;
         }
 
         /**
-         * @param m_ftpProxyHost the m_ftpProxyHost to set
+         * @param host of the ftp-proxy (default: {@code ""})
          */
-        void setFtpProxyHost(final String ftpProxyHost) {
-            this.m_ftpProxyHost = ftpProxyHost;
+        void setFtpProxyHost(final String host) {
+            this.m_ftpProxyHost = host;
         }
 
         /**
-         * @return the m_ftpProxyPort
+         * @return the port of the ftp-proxy
          */
         int getFtpProxyPort() {
             return m_ftpProxyPort;
         }
 
         /**
-         * @param m_ftpProxyPort the m_ftpProxyPort to set
+         * @param port of the ftp-proxy (default: {@code 21})
          */
-        void setFtpProxyPort(final int ftpProxyPort) {
-            this.m_ftpProxyPort = ftpProxyPort;
+        void setFtpProxyPort(final int port) {
+            this.m_ftpProxyPort = port;
         }
 
         /**
-         * @return the m_userAuth
+         * @return whether an authentication for the ftp-proxy is configured
          */
         boolean isUserAuth() {
             return m_userAuth;
         }
 
         /**
-         * @param m_userAuth the m_userAuth to set
+         * @param userAuth whether an authentication is required for the ftp-proxy (default: {@code false})
          */
         void setUserAuth(final boolean userAuth) {
             this.m_userAuth = userAuth;
         }
 
         /**
-         * @return the m_useWorkflowCredentials
+         * @return whether workflow credentials should be used for the ftp-proxy authentication
          */
         boolean isUseWorkflowCredentials() {
             return m_useWorkflowCredentials;
         }
 
         /**
-         * @param m_useWorkflowCredentials the m_useWorkflowCredentials to set
+         * @param useWorkflowCredentials whether workflow credentials should be used for the ftp-proxy authentication
+         *            (default: {@code false})
          */
         void setUseWorkflowCredentials(final boolean useWorkflowCredentials) {
             this.m_useWorkflowCredentials = useWorkflowCredentials;
         }
 
         /**
-         * @return the m_ftpProxyWorkflowCredentials
+         * @return the workflow credentials
          */
         String getFtpProxyWorkflowCredentials() {
             return m_ftpProxyWorkflowCredentials;
         }
 
         /**
-         * @param m_ftpProxyWorkflowCredentials the m_ftpProxyWorkflowCredentials to set
+         * @param workflowCredentials to be used for the ftp-proxy (default: {@code ""})
          */
-        void setFtpProxyWorkflowCredentials(final String ftpProxyWorkflowCredentials) {
-            this.m_ftpProxyWorkflowCredentials = ftpProxyWorkflowCredentials;
+        void setFtpProxyWorkflowCredentials(final String workflowCredentials) {
+            this.m_ftpProxyWorkflowCredentials = workflowCredentials;
         }
 
         /**
-         * @return the m_ftpProxyUser
+         * @return the user for the authentication for the ftp-proxy
          */
         String getFtpProxyUser() {
             return m_ftpProxyUser;
         }
 
         /**
-         * @param m_ftpProxyUser the m_ftpProxyUser to set
+         * @param user for the authentication for the ftp-proxy (default: {@code ""})
          */
-        void setFtpProxyUser(final String ftpProxyUser) {
-            this.m_ftpProxyUser = ftpProxyUser;
+        void setFtpProxyUser(final String user) {
+            this.m_ftpProxyUser = user;
         }
 
         /**
-         * @return the m_password
+         * @return the password for the authentication of the ftp-proxy
          */
         String getPassword() {
             return m_password;
         }
 
         /**
-         * @param m_password the m_password to set
+         * @param password for the authentication of the ftp-proxy (default: {@code ""})
          */
         void setPassword(final String password) {
             this.m_password = password;
         }
 
+        private static final String KEY_PROXY_SETTINGS = "ftp-proxy";
+
+        private static final String KEY_USE_PROXY = "useFTPProxy";
+
+        private static final String KEY_HOST = "ftpProxyHost";
+
+        private static final String KEY_PORT = "ftpProxyPort";
+
+        private static final String KEY_USE_USER_AUTH = "ftpProxyUserAuth";
+
+        private static final String KEY_USE_WF_CRED = "ftpProxyUseWFCred";
+
+        private static final String KEY_WF_CRED = "ftpProxyWFCred";
+
+        private static final String KEY_USER = "ftpProxyUser";
+
+        private static final String KEY_PASSWORD = "ftpProxyPassword";
+
+        /**
+         *
+         * @param settings -object to store the settings into. Creates sub-settings with the key "ftp-proxy".
+         */
         void save(final NodeSettingsWO settings) {
-            final NodeSettingsWO proxySettings = settings.addNodeSettings("proxy");
-            proxySettings.addBoolean("useFTPProxy", m_useFTPProxy);
-            proxySettings.addString("ftpHost", m_ftpProxyHost);
-            proxySettings.addInt("ftpPort", m_ftpProxyPort);
-            proxySettings.addBoolean("ftpUserAuth", m_userAuth);
-            proxySettings.addBoolean("ftpUseWFCred", m_useWorkflowCredentials);
-            proxySettings.addString("ftpWorkflowCredentials", m_ftpProxyWorkflowCredentials);
-            proxySettings.addString("ftpUser", m_ftpProxyUser);
-            proxySettings.addPassword("ftpPassword", ">$:g~l63t(uc1[y#[u", m_password);
+            final NodeSettingsWO proxySettings = settings.addNodeSettings(KEY_PROXY_SETTINGS);
+            proxySettings.addBoolean(KEY_USE_PROXY, m_useFTPProxy);
+            proxySettings.addString(KEY_HOST, m_ftpProxyHost);
+            proxySettings.addInt(KEY_PORT, m_ftpProxyPort);
+            proxySettings.addBoolean(KEY_USE_USER_AUTH, m_userAuth);
+            proxySettings.addBoolean(KEY_USE_WF_CRED, m_useWorkflowCredentials);
+            proxySettings.addString(KEY_WF_CRED, m_ftpProxyWorkflowCredentials);
+            proxySettings.addString(KEY_USER, m_ftpProxyUser);
+            proxySettings.addPassword(KEY_PASSWORD, ">$:g~l63t(uc1[y#[u", m_password);
         }
 
+        /**
+         *
+         * @param settings -object to read the settings from the contained sub-settings "ftp-proxy".
+         */
         void load(final NodeSettingsRO settings) {
             NodeSettingsRO proxySettings;
             try {
-                proxySettings = settings.getNodeSettings("proxy");
+                proxySettings = settings.getNodeSettings(KEY_PROXY_SETTINGS);
             } catch (InvalidSettingsException e) {
-                proxySettings = new NodeSettings("proxy");
+                proxySettings = new NodeSettings(KEY_PROXY_SETTINGS);
             }
-            m_useFTPProxy = proxySettings.getBoolean("useFTPProxy", false);
-            m_ftpProxyHost = proxySettings.getString("ftpHost", "");
-            m_ftpProxyPort = proxySettings.getInt("ftpPort", 21);
-            m_userAuth = proxySettings.getBoolean("ftpUserAuth", false);
-            m_useWorkflowCredentials = proxySettings.getBoolean("ftpUseWFCred", false);
-            m_ftpProxyUser = proxySettings.getString("ftpUser", "");
-            m_password = proxySettings.getPassword("ftpPassword", ">$:g~l63t(uc1[y#[u", "");
+            m_useFTPProxy = proxySettings.getBoolean(KEY_USE_PROXY, false);
+            m_ftpProxyHost = proxySettings.getString(KEY_HOST, "");
+            m_ftpProxyPort = proxySettings.getInt(KEY_PORT, 21);
+            m_userAuth = proxySettings.getBoolean(KEY_USE_USER_AUTH, false);
+            m_useWorkflowCredentials = proxySettings.getBoolean(KEY_USE_WF_CRED, false);
+            m_ftpProxyWorkflowCredentials = proxySettings.getString(KEY_WF_CRED, "");
+            m_ftpProxyUser = proxySettings.getString(KEY_USER, "");
+            m_password = proxySettings.getPassword(KEY_PASSWORD, ">$:g~l63t(uc1[y#[u", "");
         }
 
-        void loadAndValidate(final NodeSettingsRO settings){
-            //TODO different than load?
+        /**
+         * @see {@link #load(NodeSettingsRO)}
+         * @see {@link ConnectionInformationConfiguration#loadAndValidate(NodeSettingsRO)}
+         * @param settings -object to read the settings from the contained sub-settings "ftp-proxy".
+         * @throws InvalidSettingsException
+         */
+        void loadAndValidate(final NodeSettingsRO settings) throws InvalidSettingsException {
             load(settings);
+            if (m_useFTPProxy) {
+                validate(m_ftpProxyHost, "ftp-proxy host");
+                if (m_ftpProxyPort < 0 || m_ftpProxyPort > 65535) {
+                    throw new InvalidSettingsException("Invalid ftp-proxy port number: " + m_ftpProxyPort);
+                }
+                if (m_useWorkflowCredentials) {
+                    validate(m_ftpProxyWorkflowCredentials, "ftp-proxy workflowcredentials");
+                }
+            }
         }
     }
 }

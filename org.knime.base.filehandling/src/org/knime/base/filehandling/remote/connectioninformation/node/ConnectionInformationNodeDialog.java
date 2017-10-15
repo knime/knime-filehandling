@@ -216,7 +216,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
         addTab("Options", initLayout());
 
-        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
+        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
             m_proxyTab = new ProxyPanel(this);
             addTab("Proxy Settings", m_proxyTab);
         }
@@ -536,7 +536,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         if (m_protocol.hasUserDefinedTimeoutSupport()) {
             config.setTimeout((Integer) m_timeout.getValue());
         }
-        if(m_proxyTab != null){
+        if (m_proxyTab != null) {
             m_proxyTab.createConfig(config.getFTPProxy());
         }
         return config;
@@ -590,7 +590,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             m_timeout.setValue(config.getTimeout());
         }
         updateEnabledState();
-        if(m_proxyTab != null){
+        if (m_proxyTab != null) {
             m_proxyTab.load(config.getFTPProxy());
         }
     }

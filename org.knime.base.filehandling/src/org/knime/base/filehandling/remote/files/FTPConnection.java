@@ -98,8 +98,9 @@ public class FTPConnection extends Connection {
             password = "";
         }
         ConnectionInformation ftpProxy = m_ftpRemoteFile.getConnectionInformation().getFTPProxy();
-        if(ftpProxy!= null){
-            FTPProxyConnector proxyConnector = new FTPProxyConnector(ftpProxy.getHost(), ftpProxy.getPort(),ftpProxy.getUser(),ftpProxy.getPassword());
+        if (ftpProxy != null) {
+            FTPProxyConnector proxyConnector = new FTPProxyConnector(ftpProxy.getHost(), ftpProxy.getPort(),
+                ftpProxy.getUser(), ftpProxy.getPassword());
             m_client.setConnector(proxyConnector);
         }
         // Open connection

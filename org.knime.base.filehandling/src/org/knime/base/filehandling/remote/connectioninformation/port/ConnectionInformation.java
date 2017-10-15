@@ -122,8 +122,8 @@ public class ConnectionInformation implements Serializable {
         this.setKnownHosts(model.getString("knownhosts"));
         this.setTimeout(model.getInt("timeout", 30000)); // new option in 2.10
         this.setUseKerberos(model.getBoolean("kerberos", false)); //new option in 3.2
-        if(model.containsKey("ftpProxy")){
-            this.setFTPProxy(new ConnectionInformation());
+        if (model.containsKey("ftpProxy")) {
+            setFTPProxy(new ConnectionInformation());
             ModelContentRO proxyModelContent = model.getModelContent("ftpProxy");
             m_ftpProxy.setHost(proxyModelContent.getString("host"));
             m_ftpProxy.setPort(proxyModelContent.getInt("port"));
@@ -149,7 +149,7 @@ public class ConnectionInformation implements Serializable {
         model.addString("knownhosts", m_knownHosts);
         model.addInt("timeout", m_timeout);
         model.addBoolean("kerberos", m_useKerberos);
-        if(m_ftpProxy != null){
+        if (m_ftpProxy != null) {
             m_ftpProxy.save(model.addModelContent("ftpProxy"));
         }
     }
@@ -426,7 +426,7 @@ public class ConnectionInformation implements Serializable {
     }
 
     /**
-     * @param proxyInfo
+     * @param proxyInfo containing the necessary information to connect to an ftp-proxy
      * @since 3.5
      */
     public void setFTPProxy(final ConnectionInformation proxyInfo) {
@@ -434,7 +434,7 @@ public class ConnectionInformation implements Serializable {
     }
 
     /**
-     * @return the m_ftpProxy
+     * @return the ftp-proxy configured for this connection. {@code null} if non configured.
      * @since 3.5
      */
     public ConnectionInformation getFTPProxy() {
