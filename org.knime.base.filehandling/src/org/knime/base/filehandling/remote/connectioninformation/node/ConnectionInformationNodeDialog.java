@@ -496,9 +496,6 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         config.save(settings);
         m_knownhosts.addToHistory();
         m_keyfile.addToHistory();
-        if(m_proxyTab != null){
-            m_proxyTab.save(settings);
-        }
     }
 
     /**
@@ -538,6 +535,9 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         }
         if (m_protocol.hasUserDefinedTimeoutSupport()) {
             config.setTimeout((Integer) m_timeout.getValue());
+        }
+        if(m_proxyTab != null){
+            m_proxyTab.createConfig(config.getFTPProxy());
         }
         return config;
     }
@@ -591,7 +591,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         }
         updateEnabledState();
         if(m_proxyTab != null){
-            m_proxyTab.load(settings);
+            m_proxyTab.load(config.getFTPProxy());
         }
     }
 

@@ -49,8 +49,10 @@ package org.knime.base.filehandling.remote.connectioninformation.node;
 
 import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.files.FTPRemoteFileHandler;
 import org.knime.base.filehandling.remote.files.Protocol;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.CredentialsProvider;
@@ -91,6 +93,8 @@ class ConnectionInformationConfiguration {
     private String m_workflowcredentials;
 
     private int m_timeout = 30000;
+
+    private FTPProxyConfiguration m_ftpProxy = new FTPProxyConfiguration();
 
     /**
      * Create uninitialized configuration to a certain protocol.
@@ -242,6 +246,10 @@ class ConnectionInformationConfiguration {
         m_timeout = timeout;
     }
 
+    FTPProxyConfiguration getFTPProxy(){
+        return m_ftpProxy;
+    }
+
     /**
      * @return the useworkflowcredentials
      */
@@ -310,6 +318,9 @@ class ConnectionInformationConfiguration {
         }
         connectionInformation.setTimeout(getTimeout());
         connectionInformation.setUseKerberos(AuthenticationMethod.KERBEROS.getName().equals(authenticationMethod));
+        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)){
+            connectionInformation.setFTPProxy(m_ftpProxy.getConnectionInformation(credentialsProvider));
+        }
         return connectionInformation;
     }
 
@@ -340,6 +351,9 @@ class ConnectionInformationConfiguration {
             settings.addString("knownhosts", m_knownhosts);
         }
         settings.addInt("timeout", m_timeout);
+        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)){
+            m_ftpProxy.save(settings);
+        }
     }
 
     /**
@@ -373,6 +387,9 @@ class ConnectionInformationConfiguration {
             m_knownhosts = settings.getString("knownhosts", "");
         }
         m_timeout = settings.getInt("timeout", 30000); // new option in 2.10
+        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)){
+            m_ftpProxy.load(settings);
+        }
     }
 
     /**
@@ -431,6 +448,9 @@ class ConnectionInformationConfiguration {
             }
         }
         m_timeout = settings.getInt("timeout", 30000); // new option in 2.10
+        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)){
+            m_ftpProxy.loadAndValidate(settings);
+        }
     }
 
     /**
@@ -447,4 +467,187 @@ class ConnectionInformationConfiguration {
         }
     }
 
+    class FTPProxyConfiguration{
+
+        private boolean m_useFTPProxy;
+        private String m_ftpProxyHost;
+        private int m_ftpProxyPort;
+        private boolean m_userAuth;
+        private boolean m_useWorkflowCredentials;
+        private String m_ftpProxyWorkflowCredentials;
+        private String m_ftpProxyUser;
+        private String m_password;
+
+        /**
+         * @return the m_useFTPProxy
+         */
+        boolean isUseFTPProxy() {
+            return m_useFTPProxy;
+        }
+
+        /**
+         * @return
+         */
+        ConnectionInformation getConnectionInformation(final CredentialsProvider credentialsProvider) {
+            final ConnectionInformation connectionInformation = new ConnectionInformation();
+            connectionInformation.setHost(m_ftpProxyHost);
+            connectionInformation.setPort(m_ftpProxyPort);
+            if (m_userAuth) {
+                if (m_useWorkflowCredentials) {
+                    // Use credentials
+                    final ICredentials credentials = credentialsProvider.get(m_ftpProxyWorkflowCredentials);
+                    connectionInformation.setUser(credentials.getLogin());
+                    try {
+                        connectionInformation.setPassword(KnimeEncryption.encrypt(credentials.getPassword().toCharArray()));
+                    } catch (final Exception e) {
+                        // Set no password
+                    }
+                } else {
+                    // Use direct settings
+                    connectionInformation.setUser(m_ftpProxyUser);
+                    connectionInformation.setPassword(m_password);
+                }
+            }
+            return connectionInformation;
+
+        }
+
+        /**
+         * @param m_useFTPProxy the m_useFTPProxy to set
+         */
+        void setUseFTPProxy(final boolean useFTPProxy) {
+            this.m_useFTPProxy = useFTPProxy;
+        }
+
+        /**
+         * @return the m_ftpProxyHost
+         */
+        String getFtpProxyHost() {
+            return m_ftpProxyHost;
+        }
+
+        /**
+         * @param m_ftpProxyHost the m_ftpProxyHost to set
+         */
+        void setFtpProxyHost(final String ftpProxyHost) {
+            this.m_ftpProxyHost = ftpProxyHost;
+        }
+
+        /**
+         * @return the m_ftpProxyPort
+         */
+        int getFtpProxyPort() {
+            return m_ftpProxyPort;
+        }
+
+        /**
+         * @param m_ftpProxyPort the m_ftpProxyPort to set
+         */
+        void setFtpProxyPort(final int ftpProxyPort) {
+            this.m_ftpProxyPort = ftpProxyPort;
+        }
+
+        /**
+         * @return the m_userAuth
+         */
+        boolean isUserAuth() {
+            return m_userAuth;
+        }
+
+        /**
+         * @param m_userAuth the m_userAuth to set
+         */
+        void setUserAuth(final boolean userAuth) {
+            this.m_userAuth = userAuth;
+        }
+
+        /**
+         * @return the m_useWorkflowCredentials
+         */
+        boolean isUseWorkflowCredentials() {
+            return m_useWorkflowCredentials;
+        }
+
+        /**
+         * @param m_useWorkflowCredentials the m_useWorkflowCredentials to set
+         */
+        void setUseWorkflowCredentials(final boolean useWorkflowCredentials) {
+            this.m_useWorkflowCredentials = useWorkflowCredentials;
+        }
+
+        /**
+         * @return the m_ftpProxyWorkflowCredentials
+         */
+        String getFtpProxyWorkflowCredentials() {
+            return m_ftpProxyWorkflowCredentials;
+        }
+
+        /**
+         * @param m_ftpProxyWorkflowCredentials the m_ftpProxyWorkflowCredentials to set
+         */
+        void setFtpProxyWorkflowCredentials(final String ftpProxyWorkflowCredentials) {
+            this.m_ftpProxyWorkflowCredentials = ftpProxyWorkflowCredentials;
+        }
+
+        /**
+         * @return the m_ftpProxyUser
+         */
+        String getFtpProxyUser() {
+            return m_ftpProxyUser;
+        }
+
+        /**
+         * @param m_ftpProxyUser the m_ftpProxyUser to set
+         */
+        void setFtpProxyUser(final String ftpProxyUser) {
+            this.m_ftpProxyUser = ftpProxyUser;
+        }
+
+        /**
+         * @return the m_password
+         */
+        String getPassword() {
+            return m_password;
+        }
+
+        /**
+         * @param m_password the m_password to set
+         */
+        void setPassword(final String password) {
+            this.m_password = password;
+        }
+
+        void save(final NodeSettingsWO settings) {
+            final NodeSettingsWO proxySettings = settings.addNodeSettings("proxy");
+            proxySettings.addBoolean("useFTPProxy", m_useFTPProxy);
+            proxySettings.addString("ftpHost", m_ftpProxyHost);
+            proxySettings.addInt("ftpPort", m_ftpProxyPort);
+            proxySettings.addBoolean("ftpUserAuth", m_userAuth);
+            proxySettings.addBoolean("ftpUseWFCred", m_useWorkflowCredentials);
+            proxySettings.addString("ftpWorkflowCredentials", m_ftpProxyWorkflowCredentials);
+            proxySettings.addString("ftpUser", m_ftpProxyUser);
+            proxySettings.addPassword("ftpPassword", ">$:g~l63t(uc1[y#[u", m_password);
+        }
+
+        void load(final NodeSettingsRO settings) {
+            NodeSettingsRO proxySettings;
+            try {
+                proxySettings = settings.getNodeSettings("proxy");
+            } catch (InvalidSettingsException e) {
+                proxySettings = new NodeSettings("proxy");
+            }
+            m_useFTPProxy = proxySettings.getBoolean("useFTPProxy", false);
+            m_ftpProxyHost = proxySettings.getString("ftpHost", "");
+            m_ftpProxyPort = proxySettings.getInt("ftpPort", 21);
+            m_userAuth = proxySettings.getBoolean("ftpUserAuth", false);
+            m_useWorkflowCredentials = proxySettings.getBoolean("ftpUseWFCred", false);
+            m_ftpProxyUser = proxySettings.getString("ftpUser", "");
+            m_password = proxySettings.getPassword("ftpPassword", ">$:g~l63t(uc1[y#[u", "");
+        }
+
+        void loadAndValidate(final NodeSettingsRO settings){
+            //TODO different than load?
+            load(settings);
+        }
+    }
 }

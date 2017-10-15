@@ -68,10 +68,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 import org.knime.base.filehandling.NodeUtils;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettings;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
+import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationConfiguration.FTPProxyConfiguration;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.util.KnimeEncryption;
 
@@ -108,6 +105,8 @@ class ProxyPanel extends JPanel {
 
     private final JPanel workflowCredentialsPanel;
 
+    private UpdateListener listener;
+
     /**
      *
      */
@@ -129,7 +128,7 @@ class ProxyPanel extends JPanel {
 
         workflowCredentialsPanel = new JPanel(new GridBagLayout());
 
-        UpdateListener listener = new UpdateListener();
+        listener = new UpdateListener();
         useFTPProxyChecker.addActionListener(listener);
         authChecker.addActionListener(listener);
         useWorkflowCredChecker.addActionListener(listener);
@@ -198,45 +197,37 @@ class ProxyPanel extends JPanel {
         add(ftpProxyPanel);
     }
 
-    void load(final NodeSettingsRO settings) throws NotConfigurableException {
-        NodeSettingsRO proxySettings;
-        try {
-            proxySettings = settings.getNodeSettings("proxy");
-        } catch (InvalidSettingsException e) {
-            proxySettings = new NodeSettings("proxy");
-        }
-        useFTPProxyChecker.setSelected(proxySettings.getBoolean("useFTPProxy", false));
-        host.setText(proxySettings.getString("ftpHost", ""));
-        port.getModel().setValue(proxySettings.getInt("ftpPort", 21));
-        authChecker.setSelected(proxySettings.getBoolean("ftpUseAuth", false));
-        useWorkflowCredChecker.setSelected(proxySettings.getBoolean("ftpUseWFCred", false));
+    void load(final FTPProxyConfiguration config) throws NotConfigurableException {
+        useFTPProxyChecker.setSelected(config.isUseFTPProxy());
+        host.setText(config.getFtpProxyHost());
+        port.getModel().setValue(config.getFtpProxyPort());
+        authChecker.setSelected(config.isUserAuth());
+        useWorkflowCredChecker.setSelected(config.isUseWorkflowCredentials());
         final Collection<String> credentials = dialog.getCredentialsNames();
         workflowCredentials.removeAllItems();
         for (final String credential : credentials) {
             workflowCredentials.addItem(credential);
         }
-        user.setText(proxySettings.getString("ftpUser", ""));
+        user.setText(config.getFtpProxyUser());
         try {
-            password
-                .setText(KnimeEncryption.decrypt(proxySettings.getPassword("ftpPassword", ">$:g~l63t(uc1[y#[u", "")));
+            password.setText(KnimeEncryption.decrypt(config.getPassword()));
         } catch (final Exception e) {
             //Leave empty
         }
+        listener.actionPerformed(null);
     }
 
-    void save(final NodeSettingsWO settings) throws InvalidSettingsException {
-        final NodeSettingsWO proxySettings = settings.addNodeSettings("proxy");
-        proxySettings.addBoolean("useFTPProxy", useFTPProxyChecker.isSelected());
-        proxySettings.addString("ftpHost", host.getText());
-        proxySettings.addInt("ftpPort", (int)port.getModel().getValue());
-        proxySettings.addBoolean("ftpUseAuth", authChecker.isSelected());
-        proxySettings.addBoolean("ftpUseWFCred", useWorkflowCredChecker.isSelected());
-        proxySettings.addString("ftpWorkflowCredentials", (String)workflowCredentials.getSelectedItem());
-        proxySettings.addString("ftpUser", user.getText());
+    void createConfig(final FTPProxyConfiguration config) {
+        config.setUseFTPProxy(useFTPProxyChecker.isSelected());
+        config.setFtpProxyHost(host.getText());
+        config.setFtpProxyPort((int)port.getModel().getValue());
+        config.setUserAuth(authChecker.isSelected());
+        config.setUseWorkflowCredentials(useWorkflowCredChecker.isSelected());
+        config.setFtpProxyWorkflowCredentials((String)workflowCredentials.getSelectedItem());
+        config.setFtpProxyUser(user.getText());
         try {
             if (password.getPassword().length > 0) {
-                proxySettings.addPassword("ftpPassword", ">$:g~l63t(uc1[y#[u",
-                    KnimeEncryption.encrypt(password.getPassword()));
+                config.setPassword(KnimeEncryption.encrypt(password.getPassword()));
             }
         } catch (final Exception e) {
             //Do not change password

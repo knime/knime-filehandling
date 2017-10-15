@@ -94,6 +94,8 @@ public class ConnectionInformation implements Serializable {
 
     private boolean m_useKerberos;
 
+    private ConnectionInformation m_ftpProxy = null;
+
     /**
      * Parameterless constructor.
      */
@@ -120,6 +122,14 @@ public class ConnectionInformation implements Serializable {
         this.setKnownHosts(model.getString("knownhosts"));
         this.setTimeout(model.getInt("timeout", 30000)); // new option in 2.10
         this.setUseKerberos(model.getBoolean("kerberos", false)); //new option in 3.2
+        if(model.containsKey("ftpProxy")){
+            this.setFTPProxy(new ConnectionInformation());
+            ModelContentRO proxyModelContent = model.getModelContent("ftpProxy");
+            m_ftpProxy.setHost(proxyModelContent.getString("host"));
+            m_ftpProxy.setPort(proxyModelContent.getInt("port"));
+            m_ftpProxy.setUser(proxyModelContent.getString("user"));
+            m_ftpProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
+        }
     }
 
 
@@ -139,6 +149,9 @@ public class ConnectionInformation implements Serializable {
         model.addString("knownhosts", m_knownHosts);
         model.addInt("timeout", m_timeout);
         model.addBoolean("kerberos", m_useKerberos);
+        if(m_ftpProxy != null){
+            m_ftpProxy.save(model.addModelContent("ftpProxy"));
+        }
     }
 
     /**
@@ -410,6 +423,22 @@ public class ConnectionInformation implements Serializable {
      */
     public boolean useKerberos() {
         return m_useKerberos;
+    }
+
+    /**
+     * @param proxyInfo
+     * @since 3.5
+     */
+    public void setFTPProxy(final ConnectionInformation proxyInfo) {
+        m_ftpProxy = proxyInfo;
+    }
+
+    /**
+     * @return the m_ftpProxy
+     * @since 3.5
+     */
+    public ConnectionInformation getFTPProxy() {
+        return m_ftpProxy;
     }
 
     /** {@inheritDoc} */
