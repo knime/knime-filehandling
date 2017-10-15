@@ -217,7 +217,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         addTab("Options", initLayout());
 
         if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-            m_proxyTab = new ProxyPanel();
+            m_proxyTab = new ProxyPanel(this);
             addTab("Proxy Settings", m_proxyTab);
         }
     }

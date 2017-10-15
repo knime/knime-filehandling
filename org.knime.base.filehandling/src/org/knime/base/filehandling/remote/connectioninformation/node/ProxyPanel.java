@@ -52,6 +52,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
@@ -68,12 +69,16 @@ import javax.swing.border.TitledBorder;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
+import org.knime.core.util.KnimeEncryption;
 
 class ProxyPanel extends JPanel {
     private static final long serialVersionUID = 1131321798685469208L;
+
+    private final ConnectionInformationNodeDialog dialog;
 
     private final JCheckBox useFTPProxyChecker;
 
@@ -91,7 +96,7 @@ class ProxyPanel extends JPanel {
 
     private final JCheckBox useWorkflowCredChecker;
 
-    private final JComboBox workflowCredentials;
+    private final JComboBox<String> workflowCredentials;
 
     private final JLabel userLabel;
 
@@ -106,7 +111,8 @@ class ProxyPanel extends JPanel {
     /**
      *
      */
-    ProxyPanel() {
+    ProxyPanel(final ConnectionInformationNodeDialog pDialog) {
+        dialog = pDialog;
         useFTPProxyChecker = new JCheckBox("Use FTP Proxy");
         hostLabel = new JLabel("Host:");
         host = new JTextField();
@@ -115,7 +121,7 @@ class ProxyPanel extends JPanel {
         port = new JSpinner(portModel);
         authChecker = new JCheckBox("User Authentication");
         useWorkflowCredChecker = new JCheckBox();
-        workflowCredentials = new JComboBox();
+        workflowCredentials = new JComboBox<>();
         userLabel = new JLabel("User:");
         user = new JTextField();
         passwordLabel = new JLabel("Password:");
@@ -193,23 +199,48 @@ class ProxyPanel extends JPanel {
     }
 
     void load(final NodeSettingsRO settings) throws NotConfigurableException {
+        NodeSettingsRO proxySettings;
         try {
-            final NodeSettingsRO proxySettings = settings.getNodeSettings("proxy");
-            useFTPProxyChecker.setSelected(proxySettings.getBoolean("useFTPProxy", false));
-            host.setText(proxySettings.getString("ftpHost",""));
-            port.getModel().setValue(proxySettings.getInt("ftpPort", 21));
-            authChecker.setSelected(proxySettings.getBoolean("ftpUseAuth",false));
-            useWorkflowCredChecker.setSelected(proxySettings.getBoolean("ftpUseWFCred",false));
-            //TODO get credentials
-            user.setText(proxySettings.getString("ftpUser", ""));
-            //TODO get password
+            proxySettings = settings.getNodeSettings("proxy");
         } catch (InvalidSettingsException e) {
-            // TODO defaults
+            proxySettings = new NodeSettings("proxy");
+        }
+        useFTPProxyChecker.setSelected(proxySettings.getBoolean("useFTPProxy", false));
+        host.setText(proxySettings.getString("ftpHost", ""));
+        port.getModel().setValue(proxySettings.getInt("ftpPort", 21));
+        authChecker.setSelected(proxySettings.getBoolean("ftpUseAuth", false));
+        useWorkflowCredChecker.setSelected(proxySettings.getBoolean("ftpUseWFCred", false));
+        final Collection<String> credentials = dialog.getCredentialsNames();
+        workflowCredentials.removeAllItems();
+        for (final String credential : credentials) {
+            workflowCredentials.addItem(credential);
+        }
+        user.setText(proxySettings.getString("ftpUser", ""));
+        try {
+            password
+                .setText(KnimeEncryption.decrypt(proxySettings.getPassword("ftpPassword", ">$:g~l63t(uc1[y#[u", "")));
+        } catch (final Exception e) {
+            //Leave empty
         }
     }
 
     void save(final NodeSettingsWO settings) throws InvalidSettingsException {
-        //TODO save everything
+        final NodeSettingsWO proxySettings = settings.addNodeSettings("proxy");
+        proxySettings.addBoolean("useFTPProxy", useFTPProxyChecker.isSelected());
+        proxySettings.addString("ftpHost", host.getText());
+        proxySettings.addInt("ftpPort", (int)port.getModel().getValue());
+        proxySettings.addBoolean("ftpUseAuth", authChecker.isSelected());
+        proxySettings.addBoolean("ftpUseWFCred", useWorkflowCredChecker.isSelected());
+        proxySettings.addString("ftpWorkflowCredentials", (String)workflowCredentials.getSelectedItem());
+        proxySettings.addString("ftpUser", user.getText());
+        try {
+            if (password.getPassword().length > 0) {
+                proxySettings.addPassword("ftpPassword", ">$:g~l63t(uc1[y#[u",
+                    KnimeEncryption.encrypt(password.getPassword()));
+            }
+        } catch (final Exception e) {
+            //Do not change password
+        }
     }
 
     private class UpdateListener implements ActionListener {
