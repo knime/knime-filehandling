@@ -318,7 +318,7 @@ class ConnectionInformationConfiguration {
         }
         connectionInformation.setTimeout(getTimeout());
         connectionInformation.setUseKerberos(AuthenticationMethod.KERBEROS.getName().equals(authenticationMethod));
-        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)){
+        if(FTPRemoteFileHandler.PROTOCOL.equals(m_protocol) && m_ftpProxy.isUseFTPProxy()){
             connectionInformation.setFTPProxy(m_ftpProxy.getConnectionInformation(credentialsProvider));
         }
         return connectionInformation;
