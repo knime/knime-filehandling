@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -98,7 +98,7 @@ import org.knime.core.util.KnimeEncryption;
  * <code>NodeDialog</code> for the node.
  *
  *
- * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  * @since 2.11
  */
 public class ConnectionInformationNodeDialog extends NodeDialogPane {
@@ -436,7 +436,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * Listener that updates the states of the UI elements.
      *
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private class UpdateListener implements ChangeListener {
 
@@ -454,7 +454,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * Listener that opens the test connection dialog.
      *
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private class TestConnectionListener implements ActionListener {
 

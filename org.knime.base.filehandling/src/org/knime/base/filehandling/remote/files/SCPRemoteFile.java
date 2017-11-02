@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -67,7 +67,7 @@ import com.jcraft.jsch.Session;
  * Implementation of the SCP remote file.
  *
  *
- * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  * @deprecated use {@link SFTPRemoteFile} instead
  */
 @Deprecated
@@ -248,7 +248,7 @@ public class SCPRemoteFile extends RemoteFile<SSHConnection> {
      * SCP channel to handle the start and closing of SCP data transfer.
      *
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private class SCPChannel {
 
@@ -445,7 +445,7 @@ public class SCPRemoteFile extends RemoteFile<SSHConnection> {
      * Input stream wrapper for SCP.
      *
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private class SCPInputStream extends InputStream {
 
@@ -574,7 +574,7 @@ public class SCPRemoteFile extends RemoteFile<SSHConnection> {
      * the size. Will write the bytes to a temporary file and write the file to
      * SCP on <code>close()</code>.
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private class SCPOutputStream extends OutputStream {
 

@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -73,7 +73,7 @@ import org.knime.core.util.SwingWorkerWithContext;
 
 /**
  *
- * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  * @since 2.11
  */
 public class TestConnectionDialog {
@@ -215,7 +215,7 @@ public class TestConnectionDialog {
      * Swing worker that tests the connection information.
      *
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private class TestWorker extends SwingWorkerWithContext<Void, Void> {
 

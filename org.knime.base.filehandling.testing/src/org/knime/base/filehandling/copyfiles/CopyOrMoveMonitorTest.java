@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -63,7 +63,7 @@ import org.knime.core.util.FileUtil;
  * <code>isNewFile()</code> and <code>rollback()</code> methods work correctly.
  *
  *
- * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 public class CopyOrMoveMonitorTest {
     private File m_tempDir;
@@ -190,7 +190,7 @@ public class CopyOrMoveMonitorTest {
      * time, so the same directory can differ over time.
      *
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private static class SimpleDirectoryComparer {
 

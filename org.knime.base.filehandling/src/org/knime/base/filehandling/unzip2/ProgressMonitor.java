@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@
  * ------------------------------------------------------------------------
  * 
  * History
- *   Oct 10, 2013 (Patrick Winter, KNIME.com AG, Zurich, Switzerland): created
+ *   Oct 10, 2013 (Patrick Winter, KNIME AG, Zurich, Switzerland): created
  */
 package org.knime.base.filehandling.unzip2;
 
@@ -53,7 +53,7 @@ import org.knime.core.node.ExecutionContext;
  * Class that monitors the progress of a node and updates the progress of the
  * execution context.
  * 
- * @author Patrick Winter, KNIME.com AG, Zurich, Switzerland, KNIME.com, Zurich,
+ * @author Patrick Winter, KNIME AG, Zurich, Switzerland, KNIME.com, Zurich,
  *         Switzerland
  */
 final class ProgressMonitor {

@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -87,7 +87,7 @@ import org.knime.core.util.SwingWorkerWithContext;
  * Dialog that presents the file structure of a remote folder in a tree.
  *
  *
- * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 public final class RemoteFileChooser {
 
@@ -376,7 +376,7 @@ public final class RemoteFileChooser {
      * Worker that loads the root node and initializes the tree with it.
      *
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private class InitWorker extends SwingWorkerWithContext<Void, Void> {
 
@@ -464,7 +464,7 @@ public final class RemoteFileChooser {
      * background.
      *
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private class RemoteFileTreeNodeWorker extends SwingWorkerWithContext<Void, Void> {
 
@@ -593,7 +593,7 @@ public final class RemoteFileChooser {
      * Extended tree node that uses lazy loading.
      *
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private class RemoteFileTreeNode extends DefaultMutableTreeNode {
 

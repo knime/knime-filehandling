@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -93,7 +93,7 @@ import org.knime.core.util.FileUtil;
 /**
  * This is the model implementation.
  *
- * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 class ZipNodeModel extends NodeModel {
     private static final boolean IS_WINDOWS = Platform.OS_WIN32.equals(Platform.getOS());

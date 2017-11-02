@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------
- *  Copyright by KNIME GmbH, Konstanz, Germany
+ *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -87,7 +87,7 @@ import org.knime.core.node.workflow.FlowVariable;
  * <code>NodeDialog</code> for the node.
  *
  *
- * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+ * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 @Deprecated
 public class DownloadNodeDialog extends NodeDialogPane {
@@ -290,7 +290,7 @@ public class DownloadNodeDialog extends NodeDialogPane {
      * Listener that updates the enabled state of the components.
      *
      *
-     * @author Patrick Winter, KNIME.com, Zurich, Switzerland
+     * @author Patrick Winter, KNIME AG, Zurich, Switzerland
      */
     private class UpdateListener implements ActionListener {
 
