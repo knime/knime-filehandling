@@ -85,8 +85,8 @@ public class KnimeRemoteFileHandler implements RemoteFileHandler<Connection> {
         File localFile = ResolverUtil.resolveURItoLocalFile(uri);
         if(localFile!=null) {
             return new FileRemoteFile(localFile.toURI());
-        } else if (("knime.workflow".equals(uri.getHost())) && uri.getPath().startsWith("/../")
-            || "knime.mountpoint".contentEquals(uri.getHost())) {
+        } else if (("knime.workflow".equals(uri.getHost()) && uri.getPath().startsWith("/../"))
+            || "knime.mountpoint".equals(uri.getHost())) {
             return new KnimeRemoteFile(uri);
         } else {
             throw new IOException("Only local \"knime://\" files are supported.");

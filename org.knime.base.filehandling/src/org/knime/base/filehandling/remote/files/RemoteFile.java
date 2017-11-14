@@ -250,7 +250,7 @@ public abstract class RemoteFile<C extends Connection> implements Comparable<Rem
      */
     public final String getFullName() throws Exception {
         String fullname = getPath();
-        if (!isDirectory() && exists()) {
+        if (exists() && !isDirectory()) {
             // Append name to path
             fullname += getName();
         }
@@ -272,9 +272,14 @@ public abstract class RemoteFile<C extends Connection> implements Comparable<Rem
         // Default implementation using just the URI
         String path = getURI().getPath();
         if (path != null) {
-            if (!isDirectory()) {
+            if (exists()) {
+                if (!isDirectory()) {
+                    path = FilenameUtils.getFullPath(path);
+                }
+            } else if (!path.endsWith("/")) {
                 path = FilenameUtils.getFullPath(path);
             }
+
             if (!path.endsWith("/")) {
                 path += "/";
             }

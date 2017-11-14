@@ -62,7 +62,10 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 
 /**
- * @author Christian Dietz, KNIME GmbH
+ * {@link KnimeRemoteFile} for URIs with knime:// protocol. Currently, knime://knime.workflow and
+ * knime://knime.mountpoint are supported.
+ *
+ * @author Christian Dietz, KNIME, Konstanz, Germany
  * @since 3.5
  */
 public class KnimeRemoteFile extends RemoteFile<Connection> {
@@ -155,7 +158,11 @@ public class KnimeRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public boolean delete() throws Exception {
-        return makeRestCall((s) -> s.delete(getURI().toURL()));
+        makeRestCall((s) -> {
+            s.delete(getURI().toURL());
+            return null;
+        });
+        return true;
     }
 
     /**
@@ -171,7 +178,11 @@ public class KnimeRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public boolean mkDir() throws Exception {
-        return makeRestCall((s) -> s.mkDir(getURI().toURL()));
+        makeRestCall((s) -> {
+            s.mkDir(getURI().toURL());
+            return null;
+        });
+        return true;
     }
 
     /**
