@@ -89,7 +89,7 @@ public class KnimeRemoteFileHandler implements RemoteFileHandler<Connection> {
             || "knime.mountpoint".equals(uri.getHost())) {
             return new KnimeRemoteFile(uri);
         } else {
-            throw new IOException("Only local \"knime://\" files are supported.");
+            throw new IOException("Unsupported host: " + uri.getHost() + ".");
         }
     }
 }
