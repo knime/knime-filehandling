@@ -49,7 +49,7 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 import org.knime.core.util.KnimeEncryption;
 
 import it.sauronsoftware.ftp4j.FTPClient;
-import it.sauronsoftware.ftp4j.connectors.FTPProxyConnector;
+import it.sauronsoftware.ftp4j.connectors.HTTPTunnelConnector;
 
 /**
  * Connection over FTP.
@@ -99,7 +99,7 @@ public class FTPConnection extends Connection {
         }
         ConnectionInformation ftpProxy = m_ftpRemoteFile.getConnectionInformation().getFTPProxy();
         if (ftpProxy != null) {
-            FTPProxyConnector proxyConnector = new FTPProxyConnector(ftpProxy.getHost(), ftpProxy.getPort(),
+            HTTPTunnelConnector proxyConnector = new HTTPTunnelConnector(ftpProxy.getHost(), ftpProxy.getPort(),
                 ftpProxy.getUser(), ftpProxy.getPassword());
             m_client.setConnector(proxyConnector);
         }
