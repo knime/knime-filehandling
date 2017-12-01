@@ -81,7 +81,6 @@ import javax.swing.event.ChangeListener;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
-import org.knime.base.filehandling.remote.files.FTPRemoteFileHandler;
 import org.knime.base.filehandling.remote.files.Protocol;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
@@ -151,8 +150,6 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     private final JSpinner m_timeout;
 
-    private ProxyPanel m_proxyTab;
-
     /**
      * New pane for configuring the node dialog.
      *
@@ -215,11 +212,6 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_testconnection.addActionListener(new TestConnectionListener());
 
         addTab("Options", initLayout());
-
-        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-            m_proxyTab = new ProxyPanel(this);
-            addTab("Proxy Settings", m_proxyTab);
-        }
     }
 
     /**
@@ -536,9 +528,6 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         if (m_protocol.hasUserDefinedTimeoutSupport()) {
             config.setTimeout((Integer) m_timeout.getValue());
         }
-        if (m_proxyTab != null) {
-            m_proxyTab.createConfig(config.getFTPProxy());
-        }
         return config;
     }
 
@@ -590,9 +579,6 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             m_timeout.setValue(config.getTimeout());
         }
         updateEnabledState();
-        if (m_proxyTab != null) {
-            m_proxyTab.load(config.getFTPProxy());
-        }
     }
 
 }
