@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Oct 30, 2012 (Patrick Winter): created
  */
@@ -49,6 +49,9 @@ package org.knime.base.filehandling.zip2;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.InvalidPathException;
 
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -57,6 +60,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang.StringUtils;
 import org.knime.core.data.StringValue;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.FlowVariableModel;
@@ -70,11 +74,12 @@ import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelectio
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.util.FileUtil;
 
 /**
  * <code>NodeDialog</code> for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 public class ZipNodeDialog extends NodeDialogPane {
@@ -153,6 +158,8 @@ public class ZipNodeDialog extends NodeDialogPane {
                         targetFvm);
         m_target.setBorderTitle("Output file:");
         panel.add(m_target.getComponentPanel(), gbc);
+        m_target.addChangeListener(e -> setEnabledStateOfIfExistButtonGroup());
+
         // Path handling
         gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
@@ -194,9 +201,32 @@ public class ZipNodeDialog extends NodeDialogPane {
     }
 
     /**
+     * Updates the enabled state of the button group 'If file exists...'.
+     *
+     * If the selected file points to a remote location (its path resolves to null),
+     * only overwrite is allowed and the button group should be disabled.
+     */
+    private void setEnabledStateOfIfExistButtonGroup() {
+        String selectedFile = ((SettingsModelString) m_target.getModel()).getStringValue();
+        if (!StringUtils.isEmpty(selectedFile)) {
+            try {
+                boolean isRemoteDestination = FileUtil.resolveToPath(FileUtil.toURL(selectedFile)) == null;
+                if (isRemoteDestination) {
+                    m_ifexists.getButton(OverwritePolicy.OVERWRITE.getName()).doClick();
+                    m_ifexists.getModel().setEnabled(false);
+                } else {
+                    m_ifexists.getModel().setEnabled(true);
+                }
+            } catch (IOException | URISyntaxException | InvalidPathException ex) {
+                // ignore
+            }
+        }
+    }
+
+    /**
      * Checks if the prefix component should be enabled.
-     * 
-     * 
+     *
+     *
      * @return true if the prefix component should be enabled
      */
     private boolean isPrefixEnabled(final SettingsModelString pathhandling, final FlowVariableModel prefixFvm) {
