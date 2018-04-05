@@ -13,38 +13,64 @@
             This node configures the connection information that will be used to
             connect to a remote host.
         </intro>
-        <option name="Host">
-            Address of the host.
-        </option>
-        <option name="Port">
-            Port of the service.
-        </option>
-        <option name="Authentication">
-            Method of authentication.
-            <br/>
-            <b>None</b>
-            <br/>
-            Do not authenticate.
-            <br />
-            <b>Password</b>
-            <br />
-            Use username and password to authenticate.
-        </option>
-        <option name="Workflow credentials">
-            Use workflow credentials to determine user
-            and password.
-        </option>
-        <option name="User">
-            Name of the user.
-        </option>
-        <option name="Password">
-            Password of the user or to the keyfile, if
-            authentication via keyfile is
-            selected.
-        </option>
-        <option name="Test connection">
-            Open dialog that test the current connection.
-        </option>
+		<tab name="Options">
+	        <option name="Host">
+	            Address of the host.
+	        </option>
+	        <option name="Port">
+	            Port of the service.
+	        </option>
+	        <option name="Authentication">
+	            Method of authentication.
+	            <br/>
+	            <b>None</b>
+	            <br/>
+	            Do not authenticate.
+	            <br />
+	            <b>Password</b>
+	            <br />
+	            Use username and password to authenticate.
+	        </option>
+	        <option name="Workflow credentials">
+	            Use workflow credentials to determine user
+	            and password.
+	        </option>
+	        <option name="User">
+	            Name of the user.
+	        </option>
+	        <option name="Password">
+	            Password of the user or to the keyfile, if
+	            authentication via keyfile is
+	            selected.
+	        </option>
+	        <option name="Test connection">
+	            Open dialog that test the current connection.
+	        </option>
+        </tab>
+        <tab name="Proxy Settings">
+	        <option name="Use FTP Proxy">
+	            Select (and provide information) to use an ftp-proxy service
+	            to tunnel the ftp connection through (via the <i>SITE</i> command).
+	        </option>
+	        <option name="Host">
+	            Address of the ftp-proxy.
+	        </option>
+	        <option name="Port">
+	            Port of the service.
+	        </option>
+	        <option name="User Authentication">
+	            Whether the service demands authentication (anonymous included)
+	        </option>
+	        <option name="Workflow credentials">
+	            Use workflow credentials to determine user and password.
+	        </option>
+	        <option name="User">
+	            Name of the user.
+	        </option>
+	        <option name="Password">
+	            Password of the user.
+	        </option>
+        </tab>
     </fullDescription>
 
     <ports>
