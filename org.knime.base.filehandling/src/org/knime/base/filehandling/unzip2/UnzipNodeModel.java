@@ -397,16 +397,20 @@ class UnzipNodeModel extends NodeModel {
      *
      *
      * @return Output table spec
+     * @throws InvalidSettingsException If the specified output is neither a Location nor an URI.
      */
-    private DataTableSpec createOutSpec() {
-        DataColumnSpec columnSpec = null;
+    private DataTableSpec createOutSpec() throws InvalidSettingsException {
+        DataColumnSpec columnSpec;
         String output = m_output.getStringValue();
         if (output.equals(OutputSelection.LOCATION.getName())) {
             columnSpec = new DataColumnSpecCreator("Location", StringCell.TYPE).createSpec();
-        }
-        if (output.equals(OutputSelection.URI.getName())) {
+        } else if (output.equals(OutputSelection.URI.getName())) {
             columnSpec = new DataColumnSpecCreator("URI", URIDataCell.TYPE).createSpec();
+        } else {
+            throw new InvalidSettingsException("'Output...' is neither 'Location' nor 'URI'. Please check flow"
+                + " variables overrides.");
         }
+
         return new DataTableSpec(columnSpec);
     }
 
