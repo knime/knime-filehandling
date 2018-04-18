@@ -48,6 +48,7 @@
 package org.knime.base.filehandling.unzip2;
 
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -219,6 +220,8 @@ class UnzipNodeModel extends NodeModel {
                     rowID++;
                 }
             }
+        } catch(EOFException e) {
+            throw new InvalidSettingsException("The end of the archive has been reached unexpectedly. The archive might be corrupted.", e);
         } catch (ArchiveException e) {
             // Uncompress single file
             String name = new File(textToPath(m_source.getStringValue())).getName();
