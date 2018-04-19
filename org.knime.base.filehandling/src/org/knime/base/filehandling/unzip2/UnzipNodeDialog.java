@@ -41,24 +41,30 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.unzip2;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.InvalidPathException;
+
 import javax.swing.JFileChooser;
 
+import org.apache.commons.lang.StringUtils;
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
 import org.knime.core.node.defaultnodesettings.DialogComponentFileChooser;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.util.FileUtil;
 
 /**
  * <code>NodeDialog</code> for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 class UnzipNodeDialog extends DefaultNodeSettingsPane {
@@ -75,6 +81,8 @@ class UnzipNodeDialog extends DefaultNodeSettingsPane {
 
     private FlowVariableModel m_targetdirectoryFvm;
 
+    private DialogComponentButtonGroup m_ifExistsButtons;
+
     /**
      * New pane for configuring the node dialog.
      */
@@ -82,6 +90,8 @@ class UnzipNodeDialog extends DefaultNodeSettingsPane {
         super();
         m_source = SettingsFactory.createSourceSettings();
         m_targetdirectory = SettingsFactory.createTargetDirectorySettings();
+        m_targetdirectory.addChangeListener(e -> setEnabledStateOfIfExistButtonGroup());
+
         m_output = SettingsFactory.createOutputSettings();
         m_ifexists = SettingsFactory.createIfExistsSettings();
         m_sourceFvm = super.createFlowVariableModel(m_source);
@@ -101,8 +111,31 @@ class UnzipNodeDialog extends DefaultNodeSettingsPane {
         addDialogComponent(new DialogComponentButtonGroup(m_output, false, "Output...",
                 OutputSelection.getAllSettings()));
         // Overwrite policy
-        addDialogComponent(new DialogComponentButtonGroup(m_ifexists, false, "If a file exists...",
-                OverwritePolicy.getAllSettings()));
+        m_ifExistsButtons = new DialogComponentButtonGroup(m_ifexists, false, "If a file exists...",
+            OverwritePolicy.getAllSettings());
+        addDialogComponent(m_ifExistsButtons);
     }
 
+    /**
+     * Updates the enabled state of the button group 'If file exists...'.
+     *
+     * If the selected file points to a remote location (its path resolves to null),
+     * only overwrite is allowed and the button group should be disabled.
+     */
+    private void setEnabledStateOfIfExistButtonGroup() {
+        String selectedFile = m_targetdirectory.getStringValue();
+        if (!StringUtils.isEmpty(selectedFile)) {
+            try {
+                boolean isRemoteDestination = FileUtil.resolveToPath(FileUtil.toURL(selectedFile)) == null;
+                if (isRemoteDestination) {
+                    m_ifexists.setEnabled(false);
+                    m_ifexists.setStringValue(OverwritePolicy.OVERWRITE.getName());
+                } else {
+                    m_ifexists.setEnabled(true);
+                }
+            } catch (IOException | URISyntaxException | InvalidPathException ex) {
+                // ignore
+            }
+        }
+    }
 }
