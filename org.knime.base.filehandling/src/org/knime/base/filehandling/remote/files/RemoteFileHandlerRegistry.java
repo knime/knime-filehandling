@@ -147,7 +147,18 @@ public final class RemoteFileHandlerRegistry {
      * @return {@link Protocol} to the name
      */
     public static Protocol getProtocol(final String protocolName) {
-        final RemoteFileHandler<? extends Connection> handler = getRemoteFileHandler(protocolName);
+        return getProtocol(protocolName, getRemoteFileHandler(protocolName));
+    }
+
+    /**
+     * Get the correspondent protocol to the name.
+     * @param protocolName The name of the protocol
+     * @param handler the {@link RemoteFileHandler} that shall be used.
+     * @return {@link Protocol} to the name
+     *
+     * @since 3.6
+     */
+    public static Protocol getProtocol(final String protocolName, final RemoteFileHandler<? extends Connection> handler) {
         if (handler == null) {
             return null;
         }
@@ -159,6 +170,7 @@ public final class RemoteFileHandlerRegistry {
         }
         return null;
     }
+
     /**
      * @return Array with all protocol names
      */
@@ -183,7 +195,9 @@ public final class RemoteFileHandlerRegistry {
         final Protocol[] protocols = handler.getSupportedProtocols();
         for (final Protocol protocol : protocols) {
             if (containsHandler(protocol.getName())) {
-                throw new IllegalArgumentException("Duplicate handler found for protocol:" + protocol.getName());
+                /* As the remote file handler can be accessed via the connection information this error is rather obsolete. */
+                // throw new IllegalArgumentException("Duplicate handler found for protocol:" + protocol.getName());
+                return;
             }
             m_handlerCache.put(protocol.getName(), handler);
         }

@@ -82,13 +82,16 @@ public final class RemoteFileFactory {
                     throws Exception {
         String schemeCaps = CheckUtils.checkArgumentNotNull(uri, "URI must not be null").getScheme();
         final String scheme = CheckUtils.checkArgumentNotNull(schemeCaps).toLowerCase();
+
+        RemoteFileHandler<C> handler;
         if (connectionInformation != null) {
             // Check if the connection information fit to the URI
             connectionInformation.fitsToURI(uri);
+            handler = (RemoteFileHandler<C>)connectionInformation.getRemoteFileHandler();
+        } else {
+            handler = (RemoteFileHandler<C>)RemoteFileHandlerRegistry.getRemoteFileHandler(scheme);
         }
 
-        final RemoteFileHandler<C> handler =
-                (RemoteFileHandler<C>)RemoteFileHandlerRegistry.getRemoteFileHandler(scheme);
         if (handler == null) {
             throw new Exception("No RemoteFileHandler found for scheme: " + scheme);
         }

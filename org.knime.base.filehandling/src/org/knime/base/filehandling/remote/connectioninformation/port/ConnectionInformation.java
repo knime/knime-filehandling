@@ -484,4 +484,15 @@ public class ConnectionInformation implements Serializable {
         return toURI().toString();
     }
 
+    /**
+     * Creates a remote file.
+     *
+     * @return Remote file for the connection.
+     *
+     * @since 3.6
+     */
+    public RemoteFileHandler<?> getRemoteFileHandler() {
+        return RemoteFileHandlerRegistry.getRemoteFileHandler(m_protocol);
+    }
+
 }

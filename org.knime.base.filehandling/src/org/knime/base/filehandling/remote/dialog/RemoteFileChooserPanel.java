@@ -272,7 +272,8 @@ public final class RemoteFileChooserPanel {
         final boolean replacement = m_fvmbutton.getFlowVariableModel().isVariableReplacementEnabled();
         boolean browsable = false;
         if (m_connectionInformation != null) {
-            final Protocol protocol = RemoteFileHandlerRegistry.getProtocol(m_connectionInformation.getProtocol());
+            final Protocol protocol = RemoteFileHandlerRegistry.getProtocol(m_connectionInformation.getProtocol(),
+                m_connectionInformation.getRemoteFileHandler());
             if (protocol != null) {
                 browsable = protocol.hasBrowseSupport();
             }
