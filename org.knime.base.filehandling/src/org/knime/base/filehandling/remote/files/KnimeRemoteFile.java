@@ -148,7 +148,7 @@ public class KnimeRemoteFile extends RemoteFile<Connection> {
         final RemoteFile<Connection>[] files = new RemoteFile[urls.size()];
         int i = 0;
         for (final URL url : urls) {
-            files[++i] = new KnimeRemoteFile(url.toURI());
+            files[i++] = new KnimeRemoteFile(url.toURI());
         }
         return files;
     }
