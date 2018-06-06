@@ -151,10 +151,16 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                     } catch (final Exception e) {
                         connectionInformation = null;
                     }
+                    // Create parent directories if not existent.
+                    final URI folderUri =
+                            new URI(targetUri.getScheme(), targetUri.getAuthority(), FilenameUtils.getFullPath(targetUri.getPath()), targetUri.getQuery(), targetUri.getFragment());
+                    final RemoteFile<? extends Connection> folder =
+                            RemoteFileFactory.createRemoteFile(folderUri, m_connectionInformation, monitor);
+                    folder.mkDirs(true);
+
                     // Create target file
                     final RemoteFile<Connection> targetFile =
                             RemoteFileFactory.createRemoteFile(targetUri, connectionInformation, monitor);
-                    targetFile.mkDirs(false);
                     // Copy file
                     copy(sourceUri, sourceFile, targetFile, outContainer, monitor, subContext);
                     i++;
