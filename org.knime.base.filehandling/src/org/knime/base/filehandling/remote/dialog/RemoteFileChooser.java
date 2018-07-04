@@ -559,34 +559,40 @@ public final class RemoteFileChooser {
          */
         private void selectDefaultPath() {
             try {
-                if (m_defaultPath != null && m_defaultPath.startsWith(m_parentNode.getFullName())) {
-                    // Search for a matching child
-                    for (RemoteFileTreeNode node : m_nodes) {
-                        if (m_defaultPath.startsWith(node.getFullName())) {
-                        	if (m_defaultPath.matches(node.getFullName())){
-                                m_tree.setSelectionPath(new TreePath(m_treemodel.getPathToRoot(node)));
-                                m_tree.setEnabled(true);
-                        	}
-                        	return;
+                if (m_defaultPath != null) {
+                    if (m_defaultPath.startsWith(m_parentNode.getFullName())) {
+
+                        // Search for a matching child
+                        for (RemoteFileTreeNode node : m_nodes) {
+                            if (m_defaultPath.startsWith(node.getFullName())) {
+                                if (m_defaultPath.matches(node.getFullName())) {
+                                    m_tree.setSelectionPath(new TreePath(m_treemodel.getPathToRoot(node)));
+                                    m_tree.setEnabled(true);
+                                }
+                                return;
+                            }
                         }
-                    }
 
-                    // No child matched, parent node is the last possible selection on path
-                    m_tree.setExpandsSelectedPaths(true);
-                    m_tree.setSelectionPath(new TreePath(m_treemodel.getPathToRoot(m_parentNode)));
-                    if (!m_parentNode.isLeaf()) {
-                        m_tree.expandPath(new TreePath(m_treemodel.getPathToRoot(m_parentNode)));
-                    }
-                    m_tree.setEnabled(true);
-                    m_defaultPath = null;
+                        // No child matched, parent node is the last possible selection on path
+                        m_tree.setExpandsSelectedPaths(true);
+                        m_tree.setSelectionPath(new TreePath(m_treemodel.getPathToRoot(m_parentNode)));
+                        if (!m_parentNode.isLeaf()) {
+                            m_tree.expandPath(new TreePath(m_treemodel.getPathToRoot(m_parentNode)));
+                        }
+                        m_tree.setEnabled(true);
+                        m_defaultPath = null;
 
+                    } else {
+                        JOptionPane.showMessageDialog(m_parent, "Path should start with " + m_parentNode.getFullName(),
+                            "Invalid path", JOptionPane.ERROR_MESSAGE);
+                        m_tree.setEnabled(true);
+                    }
                 }
             } catch (Exception e) {
                 // Whoops, default path select failed. Show at least the (unselected) tree.
                 m_tree.setEnabled(true);
             }
         }
-
     }
 
     /**
