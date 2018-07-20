@@ -191,7 +191,7 @@ public class ConnectionInformation implements Serializable {
             }
         }
         if (!supportedProtocol) {
-            throw new Exception("Protocol " + scheme + " incompatible with connection information protcol "
+            throw new Exception("Protocol \"" + scheme + "\" incompatible with connection information protocol "
                     + getProtocol());
         }
         // Host
