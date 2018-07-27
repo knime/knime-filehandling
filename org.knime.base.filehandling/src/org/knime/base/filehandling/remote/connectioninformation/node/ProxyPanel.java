@@ -67,20 +67,20 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 import org.knime.base.filehandling.NodeUtils;
-import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationConfiguration.FTPProxyConfiguration;
+import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationConfiguration.ProxyConfiguration;
 import org.knime.core.util.KnimeEncryption;
 
 /**
- * Panel to configure proxies for the Remote File Handling Nodes. Currently only supports FTP proxy.
+ * Panel to configure proxies for the Remote File Handling Nodes.
  *
- * @author ferry.abt
+ * @author Ferry Abt, KNIME GmbH, Konstanz
  */
 class ProxyPanel extends JPanel {
     private static final long serialVersionUID = 1131321798685469208L;
 
     private final ConnectionInformationNodeDialog m_dialog;
 
-    private final JCheckBox m_useFTPProxyChecker;
+    private final JCheckBox m_useProxyChecker;
 
     private final JLabel m_hostLabel;
 
@@ -110,14 +110,17 @@ class ProxyPanel extends JPanel {
 
     private final UpdateListener enabledUpdatelistener;
 
+    private final String m_protocol;
+
     /**
      * Creates a settings tab for proxy settings for a {@link ConnectionInformationNodeDialog}
      *
      * @param dialog this tab belongs to
      */
-    ProxyPanel(final ConnectionInformationNodeDialog dialog) {
+    ProxyPanel(final ConnectionInformationNodeDialog dialog, final String protocol) {
         m_dialog = dialog;
-        m_useFTPProxyChecker = new JCheckBox("Use FTP Proxy");
+        m_protocol = protocol;
+        m_useProxyChecker = new JCheckBox("Use " + m_protocol + " Proxy");
         m_hostLabel = new JLabel("Host:");
         m_hostTextField = new JTextField();
         m_portLabel = new JLabel("Port:");
@@ -134,7 +137,7 @@ class ProxyPanel extends JPanel {
         m_workflowCredentialsPanel = new JPanel(new GridBagLayout());
 
         enabledUpdatelistener = new UpdateListener();
-        m_useFTPProxyChecker.addActionListener(enabledUpdatelistener);
+        m_useProxyChecker.addActionListener(enabledUpdatelistener);
         m_authChecker.addActionListener(enabledUpdatelistener);
         m_useWorkflowCredChecker.addActionListener(enabledUpdatelistener);
         enabledUpdatelistener.actionPerformed(null);
@@ -155,9 +158,9 @@ class ProxyPanel extends JPanel {
 
         // ftp proxy panel
         final JPanel ftpProxyPanel = new JPanel(new GridBagLayout());
-        ftpProxyPanel.setBorder(new TitledBorder(new EtchedBorder(), "FTP Proxy"));
+        ftpProxyPanel.setBorder(new TitledBorder(new EtchedBorder(), m_protocol + " Proxy"));
         NodeUtils.resetGBC(gbc);
-        ftpProxyPanel.add(m_useFTPProxyChecker, gbc);
+        ftpProxyPanel.add(m_useProxyChecker, gbc);
         gbc.gridy++;
         ftpProxyPanel.add(m_hostLabel, gbc);
         gbc.gridx++;
@@ -203,14 +206,14 @@ class ProxyPanel extends JPanel {
     }
 
     /**
-     * loads the ftp-proxy defined by the {@code FTPProxyConfiguration} into the dialog
+     * loads the proxy defined by the {@code ProxyConfiguration} into the dialog
      *
-     * @param config defining an ftp-proxy
+     * @param config defining a proxy
      */
-    void load(final FTPProxyConfiguration config) {
-        m_useFTPProxyChecker.setSelected(config.isUseFTPProxy());
-        m_hostTextField.setText(config.getFtpProxyHost());
-        m_portSpinner.getModel().setValue(config.getFtpProxyPort());
+    void load(final ProxyConfiguration config) {
+        m_useProxyChecker.setSelected(config.isUseProxy());
+        m_hostTextField.setText(config.getProxyHost());
+        m_portSpinner.getModel().setValue(config.getProxyPort());
         m_authChecker.setSelected(config.isUserAuth());
         final Collection<String> credentials = m_dialog.getCredentialsNames();
         m_workflowCredCombo.removeAllItems();
@@ -220,8 +223,8 @@ class ProxyPanel extends JPanel {
         if (credentials.size() > 0) {
             m_useWorkflowCredChecker.setSelected(config.isUseWorkflowCredentials());
         }
-        m_workflowCredCombo.setSelectedItem(config.getFtpProxyWorkflowCredentials());
-        m_userTextField.setText(config.getFtpProxyUser());
+        m_workflowCredCombo.setSelectedItem(config.getProxyWorkflowCredentials());
+        m_userTextField.setText(config.getProxyUser());
         try {
             m_passwordField.setText(KnimeEncryption.decrypt(config.getPassword()));
         } catch (final Exception e) {
@@ -233,14 +236,14 @@ class ProxyPanel extends JPanel {
     /**
      * @param config to store the settings entered by the user into
      */
-    void createConfig(final FTPProxyConfiguration config) {
-        config.setUseFTPProxy(m_useFTPProxyChecker.isSelected());
-        config.setFtpProxyHost(m_hostTextField.getText());
-        config.setFtpProxyPort((int)m_portSpinner.getModel().getValue());
+    void createConfig(final ProxyConfiguration config) {
+        config.setUseProxy(m_useProxyChecker.isSelected());
+        config.setProxyHost(m_hostTextField.getText());
+        config.setProxyPort((int)m_portSpinner.getModel().getValue());
         config.setUserAuth(m_authChecker.isSelected());
         config.setUseWorkflowCredentials(m_useWorkflowCredChecker.isSelected());
-        config.setFtpProxyWorkflowCredentials((String)m_workflowCredCombo.getSelectedItem());
-        config.setFtpProxyUser(m_userTextField.getText());
+        config.setProxyWorkflowCredentials((String)m_workflowCredCombo.getSelectedItem());
+        config.setProxyUser(m_userTextField.getText());
         try {
             if (m_passwordField.getPassword().length > 0) {
                 config.setPassword(KnimeEncryption.encrypt(m_passwordField.getPassword()));
@@ -262,7 +265,7 @@ class ProxyPanel extends JPanel {
          */
         @Override
         public void actionPerformed(final ActionEvent e) {
-            boolean status = m_useFTPProxyChecker.isSelected();
+            boolean status = m_useProxyChecker.isSelected();
             m_hostLabel.setEnabled(status);
             m_hostTextField.setEnabled(status);
             m_portLabel.setEnabled(status);

@@ -55,12 +55,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.util.KnimeEncryption;
@@ -221,14 +220,14 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
      * @throws Exception If communication did not work
      */
     private HttpResponse getResponse() throws Exception {
-        final HttpParams params = new BasicHttpParams();
+        org.apache.http.client.config.RequestConfig.Builder requestBuilder = RequestConfig.custom();
         if (getConnectionInformation() != null) {
-            HttpConnectionParams.setConnectionTimeout(params, getConnectionInformation().getTimeout());
-            HttpConnectionParams.setSoTimeout(params, getConnectionInformation().getTimeout());
+            requestBuilder.setConnectTimeout(getConnectionInformation().getTimeout());
+            requestBuilder.setSocketTimeout(getConnectionInformation().getTimeout());
         }
 
         // Create request
-        final DefaultHttpClient client = new DefaultHttpClient(params);
+        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
 
         final HttpGet request;
         // If user info is given in the URI use HTTP basic authentication
@@ -243,13 +242,15 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
             final Credentials credentials = new UsernamePasswordCredentials(getURI().getUserInfo(), password);
 
             final AuthScope scope = new AuthScope(getURI().getHost(), port);
-            client.getCredentialsProvider().setCredentials(scope, credentials);
+            BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(scope, credentials);
+            clientBuilder.setDefaultCredentialsProvider(credentialsProvider);
             request = new HttpGet(getURI());
-            request.addHeader(BasicScheme.authenticate(credentials, "UTF-8", false));
+            request.addHeader(new BasicScheme().authenticate(credentials, request, null));
         } else {
             request = new HttpGet(getURI());
         }
         // Return response
-        return client.execute(request);
+        return clientBuilder.build().execute(request);
     }
 }

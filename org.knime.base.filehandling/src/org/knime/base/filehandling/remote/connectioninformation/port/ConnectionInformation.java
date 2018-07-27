@@ -96,6 +96,10 @@ public class ConnectionInformation implements Serializable {
 
     private ConnectionInformation m_ftpProxy = null;
 
+    private ConnectionInformation m_httpProxy = null;
+
+    private ConnectionInformation m_httpsProxy = null;
+
     /**
      * Parameterless constructor.
      */
@@ -130,6 +134,22 @@ public class ConnectionInformation implements Serializable {
             m_ftpProxy.setUser(proxyModelContent.getString("user"));
             m_ftpProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
         }
+        if (model.containsKey("httpProxy")) {
+            setHTTPProxy(new ConnectionInformation());
+            ModelContentRO proxyModelContent = model.getModelContent("httpProxy");
+            m_ftpProxy.setHost(proxyModelContent.getString("host"));
+            m_ftpProxy.setPort(proxyModelContent.getInt("port"));
+            m_ftpProxy.setUser(proxyModelContent.getString("user"));
+            m_ftpProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
+        }
+        if (model.containsKey("httpsProxy")) {
+            setHTTPSProxy(new ConnectionInformation());
+            ModelContentRO proxyModelContent = model.getModelContent("httpsProxy");
+            m_ftpProxy.setHost(proxyModelContent.getString("host"));
+            m_ftpProxy.setPort(proxyModelContent.getInt("port"));
+            m_ftpProxy.setUser(proxyModelContent.getString("user"));
+            m_ftpProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
+        }
     }
 
 
@@ -151,6 +171,12 @@ public class ConnectionInformation implements Serializable {
         model.addBoolean("kerberos", m_useKerberos);
         if (m_ftpProxy != null) {
             m_ftpProxy.save(model.addModelContent("ftpProxy"));
+        }
+        if (m_httpProxy != null) {
+            m_httpProxy.save(model.addModelContent("httpProxy"));
+        }
+        if (m_httpsProxy != null) {
+            m_httpsProxy.save(model.addModelContent("httpsProxy"));
         }
     }
 
@@ -439,6 +465,38 @@ public class ConnectionInformation implements Serializable {
      */
     public ConnectionInformation getFTPProxy() {
         return m_ftpProxy;
+    }
+
+    /**
+     * @param proxyInfo containing the necessary information to connect to an http-proxy
+     * @since 3.6
+     */
+    public void setHTTPProxy(final ConnectionInformation proxyInfo) {
+        m_httpProxy = proxyInfo;
+    }
+
+    /**
+     * @return the http-proxy configured for this connection. {@code null} if non configured.
+     * @since 3.6
+     */
+    public ConnectionInformation getHTTPProxy() {
+        return m_httpProxy;
+    }
+
+    /**
+     * @param proxyInfo containing the necessary information to connect to an https-proxy
+     * @since 3.6
+     */
+    public void setHTTPSProxy(final ConnectionInformation proxyInfo) {
+        m_httpsProxy = proxyInfo;
+    }
+
+    /**
+     * @return the https-proxy configured for this connection. {@code null} if non configured.
+     * @since 3.6
+     */
+    public ConnectionInformation getHTTPSProxy() {
+        return m_httpsProxy;
     }
 
     /** {@inheritDoc} */

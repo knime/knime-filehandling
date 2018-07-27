@@ -82,6 +82,7 @@ import javax.swing.event.ChangeListener;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.FTPRemoteFileHandler;
+import org.knime.base.filehandling.remote.files.HTTPRemoteFileHandler;
 import org.knime.base.filehandling.remote.files.Protocol;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
@@ -217,7 +218,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         addTab("Options", initLayout());
 
         if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-            m_proxyTab = new ProxyPanel(this);
+            m_proxyTab = new ProxyPanel(this, "FTP");
+            addTab("Proxy Settings", m_proxyTab);
+        } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
+            m_proxyTab = new ProxyPanel(this, "HTTP");
             addTab("Proxy Settings", m_proxyTab);
         }
     }
@@ -537,7 +541,13 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             config.setTimeout((Integer) m_timeout.getValue());
         }
         if (m_proxyTab != null) {
-            m_proxyTab.createConfig(config.getFTPProxy());
+            if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
+                m_proxyTab.createConfig(config.getFTPProxy());
+            } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
+                m_proxyTab.createConfig(config.getHTTPProxy());
+            }else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
+                m_proxyTab.createConfig(config.getHTTPSProxy());
+            }
         }
         return config;
     }
@@ -591,7 +601,13 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         }
         updateEnabledState();
         if (m_proxyTab != null) {
-            m_proxyTab.load(config.getFTPProxy());
+            if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
+                m_proxyTab.load(config.getFTPProxy());
+            } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
+                m_proxyTab.load(config.getHTTPProxy());
+            }else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
+                m_proxyTab.load(config.getHTTPSProxy());
+            }
         }
     }
 
