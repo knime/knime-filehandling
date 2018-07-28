@@ -259,7 +259,6 @@ class ConnectionInformationConfiguration {
     }
 
     /**
-     *
      * @return the http-proxy configuration. Empty (never {@code null}!) if not configured.
      */
     HTTPProxyConfiguration getHTTPProxy() {
@@ -267,7 +266,6 @@ class ConnectionInformationConfiguration {
     }
 
     /**
-     *
      * @return the https-proxy configuration. Empty (never {@code null}!) if not configured.
      */
     HTTPSProxyConfiguration getHTTPSProxy() {

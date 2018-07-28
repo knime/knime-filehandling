@@ -116,6 +116,7 @@ class ProxyPanel extends JPanel {
      * Creates a settings tab for proxy settings for a {@link ConnectionInformationNodeDialog}
      *
      * @param dialog this tab belongs to
+     * @param protocol for which this node is for (e.g. HTTP, HTTPS, etc)
      */
     ProxyPanel(final ConnectionInformationNodeDialog dialog, final String protocol) {
         m_dialog = dialog;

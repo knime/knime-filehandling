@@ -548,7 +548,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
                 m_proxyTab.createConfig(config.getFTPProxy());
             } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
                 m_proxyTab.createConfig(config.getHTTPProxy());
-            }else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
+            } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
                 m_proxyTab.createConfig(config.getHTTPSProxy());
             }
         }
@@ -608,7 +608,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
                 m_proxyTab.load(config.getFTPProxy());
             } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
                 m_proxyTab.load(config.getHTTPProxy());
-            }else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
+            } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
                 m_proxyTab.load(config.getHTTPSProxy());
             }
         }
