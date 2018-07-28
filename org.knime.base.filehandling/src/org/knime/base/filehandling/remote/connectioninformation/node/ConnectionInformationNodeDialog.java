@@ -223,6 +223,9 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
             m_proxyTab = new ProxyPanel(this, "HTTP");
             addTab("Proxy Settings", m_proxyTab);
+        } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
+            m_proxyTab = new ProxyPanel(this, "HTTPS");
+            addTab("Proxy Settings", m_proxyTab);
         }
     }
 

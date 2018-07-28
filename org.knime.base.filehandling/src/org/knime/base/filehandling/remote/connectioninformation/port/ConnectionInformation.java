@@ -137,18 +137,18 @@ public class ConnectionInformation implements Serializable {
         if (model.containsKey("httpProxy")) {
             setHTTPProxy(new ConnectionInformation());
             ModelContentRO proxyModelContent = model.getModelContent("httpProxy");
-            m_ftpProxy.setHost(proxyModelContent.getString("host"));
-            m_ftpProxy.setPort(proxyModelContent.getInt("port"));
-            m_ftpProxy.setUser(proxyModelContent.getString("user"));
-            m_ftpProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
+            m_httpProxy.setHost(proxyModelContent.getString("host"));
+            m_httpProxy.setPort(proxyModelContent.getInt("port"));
+            m_httpProxy.setUser(proxyModelContent.getString("user"));
+            m_httpProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
         }
         if (model.containsKey("httpsProxy")) {
             setHTTPSProxy(new ConnectionInformation());
             ModelContentRO proxyModelContent = model.getModelContent("httpsProxy");
-            m_ftpProxy.setHost(proxyModelContent.getString("host"));
-            m_ftpProxy.setPort(proxyModelContent.getInt("port"));
-            m_ftpProxy.setUser(proxyModelContent.getString("user"));
-            m_ftpProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
+            m_httpsProxy.setHost(proxyModelContent.getString("host"));
+            m_httpsProxy.setPort(proxyModelContent.getInt("port"));
+            m_httpsProxy.setUser(proxyModelContent.getString("user"));
+            m_httpsProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
         }
     }
 

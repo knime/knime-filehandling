@@ -386,6 +386,10 @@ class ConnectionInformationConfiguration {
         settings.addInt("timeout", m_timeout);
         if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
             m_ftpProxy.save(settings);
+        } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
+            m_httpProxy.save(settings);
+        } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
+            m_httpsProxy.save(settings);
         }
     }
 
@@ -422,6 +426,10 @@ class ConnectionInformationConfiguration {
         m_timeout = settings.getInt("timeout", 30000); // new option in 2.10
         if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
             m_ftpProxy.load(settings);
+        } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
+            m_httpProxy.load(settings);
+        } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
+            m_httpsProxy.load(settings);
         }
     }
 
@@ -483,6 +491,10 @@ class ConnectionInformationConfiguration {
         m_timeout = settings.getInt("timeout", 30000); // new option in 2.10
         if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
             m_ftpProxy.loadAndValidate(settings);
+        } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
+            m_httpProxy.loadAndValidate(settings);
+        } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
+            m_httpsProxy.loadAndValidate(settings);
         }
     }
 
@@ -709,7 +721,7 @@ class ConnectionInformationConfiguration {
         void loadProxySettings(final NodeSettingsRO proxySettings) {
             setUseProxy(proxySettings.getBoolean(KEY_USE_PROXY, false));
             setProxyHost(proxySettings.getString(KEY_HOST, ""));
-            setProxyPort(proxySettings.getInt(KEY_PORT, 21));
+            setProxyPort(proxySettings.getInt(KEY_PORT, m_proxyPort));
             setUserAuth(proxySettings.getBoolean(KEY_USE_USER_AUTH, false));
             setUseWorkflowCredentials(proxySettings.getBoolean(KEY_USE_WF_CRED, false));
             setProxyWorkflowCredentials(proxySettings.getString(KEY_WF_CRED, ""));

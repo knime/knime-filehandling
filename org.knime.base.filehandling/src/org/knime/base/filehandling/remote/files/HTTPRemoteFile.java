@@ -51,6 +51,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -221,14 +222,33 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
      */
     private HttpResponse getResponse() throws Exception {
         org.apache.http.client.config.RequestConfig.Builder requestBuilder = RequestConfig.custom();
+        BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         if (getConnectionInformation() != null) {
             requestBuilder.setConnectTimeout(getConnectionInformation().getTimeout());
             requestBuilder.setSocketTimeout(getConnectionInformation().getTimeout());
+            if (HTTPRemoteFileHandler.HTTP_PROTOCOL.getName().equals(getConnectionInformation().getProtocol())
+                && getConnectionInformation().getHTTPProxy() != null) {
+                ConnectionInformation proxy = getConnectionInformation().getHTTPProxy();
+                HttpHost proxyHost = new HttpHost(proxy.getHost(), proxy.getPort());
+                requestBuilder.setProxy(proxyHost);
+                if (proxy.getUser() != null) {
+                    credentialsProvider.setCredentials(new AuthScope(proxy.getHost(), proxy.getPort()),
+                        new UsernamePasswordCredentials(proxy.getUser(), proxy.getPassword()));
+                }
+            } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.getName().equals(getConnectionInformation().getProtocol())
+                && getConnectionInformation().getHTTPSProxy() != null) {
+                ConnectionInformation proxy = getConnectionInformation().getHTTPSProxy();
+                HttpHost proxyHost = new HttpHost(proxy.getHost(), proxy.getPort());
+                requestBuilder.setProxy(proxyHost);
+                if (proxy.getUser() != null) {
+                    credentialsProvider.setCredentials(new AuthScope(proxy.getHost(), proxy.getPort()),
+                        new UsernamePasswordCredentials(proxy.getUser(), proxy.getPassword()));
+                }
+            }
         }
 
         // Create request
         HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-
         final HttpGet request;
         // If user info is given in the URI use HTTP basic authentication
         if (getURI().getUserInfo() != null && getURI().getUserInfo().length() > 0) {
@@ -242,7 +262,6 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
             final Credentials credentials = new UsernamePasswordCredentials(getURI().getUserInfo(), password);
 
             final AuthScope scope = new AuthScope(getURI().getHost(), port);
-            BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
             credentialsProvider.setCredentials(scope, credentials);
             clientBuilder.setDefaultCredentialsProvider(credentialsProvider);
             request = new HttpGet(getURI());
@@ -250,6 +269,7 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
         } else {
             request = new HttpGet(getURI());
         }
+        request.setConfig(requestBuilder.build());
         // Return response
         return clientBuilder.build().execute(request);
     }
