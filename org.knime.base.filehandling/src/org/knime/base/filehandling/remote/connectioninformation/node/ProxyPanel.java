@@ -157,52 +157,52 @@ class ProxyPanel extends JPanel {
         m_workflowCredentialsPanel.setBorder(new TitledBorder(new EtchedBorder(), "Workflow credentials"));
 
         // ftp proxy panel
-        final JPanel ftpProxyPanel = new JPanel(new GridBagLayout());
-        ftpProxyPanel.setBorder(new TitledBorder(new EtchedBorder(), m_protocol + " Proxy"));
+        final JPanel proxyPanel = new JPanel(new GridBagLayout());
+        proxyPanel.setBorder(new TitledBorder(new EtchedBorder(), m_protocol + " Proxy"));
         NodeUtils.resetGBC(gbc);
-        ftpProxyPanel.add(m_useProxyChecker, gbc);
+        proxyPanel.add(m_useProxyChecker, gbc);
         gbc.gridy++;
-        ftpProxyPanel.add(m_hostLabel, gbc);
+        proxyPanel.add(m_hostLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
-        ftpProxyPanel.add(m_hostTextField, gbc);
+        proxyPanel.add(m_hostTextField, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.weightx = 0;
-        ftpProxyPanel.add(m_portLabel, gbc);
+        proxyPanel.add(m_portLabel, gbc);
         gbc.gridx++;
         gbc.fill = GridBagConstraints.NONE;
-        ftpProxyPanel.add(m_portSpinner, gbc);
+        proxyPanel.add(m_portSpinner, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.gridwidth = 2;
-        ftpProxyPanel.add(m_authChecker, gbc);
+        proxyPanel.add(m_authChecker, gbc);
         gbc.gridy++;
         gbc.fill = GridBagConstraints.BOTH;
-        ftpProxyPanel.add(m_workflowCredentialsPanel, gbc);
+        proxyPanel.add(m_workflowCredentialsPanel, gbc);
         gbc.gridwidth = 1;
         gbc.gridy++;
-        ftpProxyPanel.add(m_userLabel, gbc);
+        proxyPanel.add(m_userLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
-        ftpProxyPanel.add(m_userTextField, gbc);
+        proxyPanel.add(m_userTextField, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.weightx = 0;
-        ftpProxyPanel.add(m_passwordLabel, gbc);
+        proxyPanel.add(m_passwordLabel, gbc);
         gbc.gridx++;
         gbc.weightx = 1;
-        ftpProxyPanel.add(m_passwordField, gbc);
+        proxyPanel.add(m_passwordField, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.gridwidth = 2;
         gbc.weighty = 1;
         //empty panel to eat up space
-        ftpProxyPanel.add(new JPanel(), gbc);
+        proxyPanel.add(new JPanel(), gbc);
 
         // Outer Panel
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        add(ftpProxyPanel);
+        add(proxyPanel);
     }
 
     /**
