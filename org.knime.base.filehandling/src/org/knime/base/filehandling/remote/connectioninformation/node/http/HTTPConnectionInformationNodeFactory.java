@@ -100,7 +100,7 @@ public class HTTPConnectionInformationNodeFactory extends NodeFactory<Connection
      */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new ConnectionInformationNodeDialog(HTTPRemoteFileHandler.HTTP_PROTOCOL);
+        return new ConnectionInformationNodeDialog(HTTPRemoteFileHandler.HTTP_PROTOCOL, true);
     }
 
 }

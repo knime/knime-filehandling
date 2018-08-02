@@ -67,7 +67,6 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 import org.knime.base.filehandling.NodeUtils;
-import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationConfiguration.ProxyConfiguration;
 import org.knime.core.util.KnimeEncryption;
 
 /**
@@ -110,18 +109,15 @@ class ProxyPanel extends JPanel {
 
     private final UpdateListener enabledUpdatelistener;
 
-    private final String m_protocol;
-
     /**
      * Creates a settings tab for proxy settings for a {@link ConnectionInformationNodeDialog}
      *
      * @param dialog this tab belongs to
      * @param protocol for which this node is for (e.g. HTTP, HTTPS, etc)
      */
-    ProxyPanel(final ConnectionInformationNodeDialog dialog, final String protocol) {
+    ProxyPanel(final ConnectionInformationNodeDialog dialog) {
         m_dialog = dialog;
-        m_protocol = protocol;
-        m_useProxyChecker = new JCheckBox("Use " + m_protocol + " Proxy");
+        m_useProxyChecker = new JCheckBox("Use proxy");
         m_hostLabel = new JLabel("Host:");
         m_hostTextField = new JTextField();
         m_portLabel = new JLabel("Port:");
@@ -159,7 +155,6 @@ class ProxyPanel extends JPanel {
 
         // ftp proxy panel
         final JPanel proxyPanel = new JPanel(new GridBagLayout());
-        proxyPanel.setBorder(new TitledBorder(new EtchedBorder(), m_protocol + " Proxy"));
         NodeUtils.resetGBC(gbc);
         proxyPanel.add(m_useProxyChecker, gbc);
         gbc.gridy++;

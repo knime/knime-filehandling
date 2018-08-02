@@ -16,20 +16,6 @@
             </message_arguments>
         </filter>
     </resource>
-    <resource path="src/org/knime/base/filehandling/remote/connectioninformation/port/ConnectionInformation.java" type="org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation">
-        <filter comment="dead code (not called anywhere)" id="338792546">
-            <message_arguments>
-                <message_argument value="org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation"/>
-                <message_argument value="load(DataInput)"/>
-            </message_arguments>
-        </filter>
-        <filter comment="dead code (not called anywhere)" id="338792546">
-            <message_arguments>
-                <message_argument value="org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation"/>
-                <message_argument value="save(DataOutput)"/>
-            </message_arguments>
-        </filter>
-    </resource>
     <resource path="src/org/knime/base/filehandling/remote/files/RemoteFile.java" type="org.knime.base.filehandling.remote.files.RemoteFile">
         <filter id="336793632">
             <message_arguments>

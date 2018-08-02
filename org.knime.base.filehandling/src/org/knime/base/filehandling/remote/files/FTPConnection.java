@@ -97,7 +97,7 @@ public class FTPConnection extends Connection {
         } else {
             password = "";
         }
-        ConnectionInformation ftpProxy = m_ftpRemoteFile.getConnectionInformation().getFTPProxy();
+        ConnectionInformation ftpProxy = m_ftpRemoteFile.getConnectionInformation().getProxy();
         if (ftpProxy != null) {
             HTTPTunnelConnector proxyConnector = new HTTPTunnelConnector(ftpProxy.getHost(), ftpProxy.getPort(),
                 ftpProxy.getUser(), ftpProxy.getPassword());

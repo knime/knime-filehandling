@@ -100,7 +100,7 @@ public class FTPConnectionInformationNodeFactory extends NodeFactory<ConnectionI
      */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new ConnectionInformationNodeDialog(FTPRemoteFileHandler.PROTOCOL);
+        return new ConnectionInformationNodeDialog(FTPRemoteFileHandler.PROTOCOL, true);
     }
 
 }

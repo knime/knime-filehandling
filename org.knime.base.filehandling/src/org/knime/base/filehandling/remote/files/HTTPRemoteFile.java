@@ -229,11 +229,8 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
         if (connInfo != null) {
             requestBuilder.setConnectTimeout(connInfo.getTimeout());
             requestBuilder.setSocketTimeout(connInfo.getTimeout());
-            String protocol = connInfo.getProtocol();
-            if ("http".equals(protocol) && connInfo.getHTTPProxy() != null) {
-                configureProxy(connInfo.getHTTPProxy(), requestBuilder, credentialsProvider);
-            } else if ("https".equals(protocol) && connInfo.getHTTPSProxy() != null) {
-                configureProxy(connInfo.getHTTPSProxy(), requestBuilder, credentialsProvider);
+            if (connInfo.getProxy() != null) {
+                configureProxy(connInfo.getProxy(), requestBuilder, credentialsProvider);
             }
         }
 

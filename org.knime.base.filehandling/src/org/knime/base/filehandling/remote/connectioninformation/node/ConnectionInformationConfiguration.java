@@ -50,10 +50,8 @@ package org.knime.base.filehandling.remote.connectioninformation.node;
 import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.FTPRemoteFileHandler;
-import org.knime.base.filehandling.remote.files.HTTPRemoteFileHandler;
 import org.knime.base.filehandling.remote.files.Protocol;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.CredentialsProvider;
@@ -95,11 +93,7 @@ class ConnectionInformationConfiguration {
 
     private int m_timeout = 30000;
 
-    private final FTPProxyConfiguration m_ftpProxy = new FTPProxyConfiguration();
-
-    private final HTTPProxyConfiguration m_httpProxy = new HTTPProxyConfiguration();
-
-    private final HTTPSProxyConfiguration m_httpsProxy = new HTTPSProxyConfiguration();
+    private ProxyConfiguration m_proxy = new ProxyConfiguration();
 
     /**
      * Create uninitialized configuration to a certain protocol.
@@ -109,6 +103,11 @@ class ConnectionInformationConfiguration {
      */
     ConnectionInformationConfiguration(final Protocol protocol) {
         m_protocol = protocol;
+        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
+            m_proxy = new FTPProxyConfiguration();
+        } else {
+            m_proxy = new ProxyConfiguration();
+        }
     }
 
     /**
@@ -251,25 +250,10 @@ class ConnectionInformationConfiguration {
     }
 
     /**
-     *
-     * @return the ftp-proxy configuration. Empty (never {@code null}!) if not configured.
+     * @return the proxy configuration. Empty (never {@code null}!) if not configured.
      */
-    FTPProxyConfiguration getFTPProxy() {
-        return m_ftpProxy;
-    }
-
-    /**
-     * @return the http-proxy configuration. Empty (never {@code null}!) if not configured.
-     */
-    HTTPProxyConfiguration getHTTPProxy() {
-        return m_httpProxy;
-    }
-
-    /**
-     * @return the https-proxy configuration. Empty (never {@code null}!) if not configured.
-     */
-    HTTPSProxyConfiguration getHTTPSProxy() {
-        return m_httpsProxy;
+    ProxyConfiguration getProxy() {
+        return m_proxy;
     }
 
     /**
@@ -339,18 +323,8 @@ class ConnectionInformationConfiguration {
         }
         connectionInformation.setTimeout(getTimeout());
         connectionInformation.setUseKerberos(AuthenticationMethod.KERBEROS.getName().equals(authenticationMethod));
-        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-            if (m_ftpProxy.isUseProxy()) {
-                connectionInformation.setFTPProxy(m_ftpProxy.getConnectionInformation(credentialsProvider));
-            }
-        } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
-            if (m_httpProxy.isUseProxy()) {
-                connectionInformation.setHTTPProxy(m_httpProxy.getConnectionInformation(credentialsProvider));
-            }
-        } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
-            if (m_httpsProxy.isUseProxy()) {
-                connectionInformation.setHTTPSProxy(m_httpsProxy.getConnectionInformation(credentialsProvider));
-            }
+        if (m_proxy.isUseProxy()) {
+            connectionInformation.setProxy(m_proxy.getConnectionInformation(credentialsProvider));
         }
         return connectionInformation;
     }
@@ -382,13 +356,7 @@ class ConnectionInformationConfiguration {
             settings.addString("knownhosts", m_knownhosts);
         }
         settings.addInt("timeout", m_timeout);
-        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-            m_ftpProxy.save(settings);
-        } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
-            m_httpProxy.save(settings);
-        } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
-            m_httpsProxy.save(settings);
-        }
+        m_proxy.save(settings);
     }
 
     /**
@@ -422,13 +390,7 @@ class ConnectionInformationConfiguration {
             m_knownhosts = settings.getString("knownhosts", "");
         }
         m_timeout = settings.getInt("timeout", 30000); // new option in 2.10
-        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-            m_ftpProxy.load(settings);
-        } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
-            m_httpProxy.load(settings);
-        } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
-            m_httpsProxy.load(settings);
-        }
+        m_proxy.load(settings);
     }
 
     /**
@@ -487,13 +449,7 @@ class ConnectionInformationConfiguration {
             }
         }
         m_timeout = settings.getInt("timeout", 30000); // new option in 2.10
-        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-            m_ftpProxy.loadAndValidate(settings);
-        } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
-            m_httpProxy.loadAndValidate(settings);
-        } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
-            m_httpsProxy.loadAndValidate(settings);
-        }
+        m_proxy.loadAndValidate(settings);
     }
 
     /**
@@ -504,397 +460,10 @@ class ConnectionInformationConfiguration {
      * @param settingName The name of the setting
      * @throws InvalidSettingsException If the string is null or empty
      */
-    private void validate(final String string, final String settingName) throws InvalidSettingsException {
+    private static void validate(final String string, final String settingName) throws InvalidSettingsException {
         if (StringUtils.isEmpty(string)) {
             throw new InvalidSettingsException(settingName + " missing");
         }
     }
 
-    /**
-     * Class to store a proxy configuration. If no proxy is configured (default configuration) {@link #isUseProxy()}
-     * returns {@code false}. <b>Do not call any getter methods if {@link #isUseProxy()} returns {@code false}!</b>
-     *
-     * @author Ferry Abt, KNIME GmbH, Konstanz
-     */
-    abstract class ProxyConfiguration {
-
-        private boolean m_useProxy = false;
-
-        private String m_proxyHost = "";
-
-        private int m_proxyPort;
-
-        private boolean m_userAuth = false;
-
-        private boolean m_useWorkflowCredentials = false;
-
-        private String m_proxyWorkflowCredentials = "";
-
-        private String m_proxyUser = "";
-
-        private String m_password = "";
-
-        ProxyConfiguration(final int defaultPort) {
-            m_proxyPort = defaultPort;
-        }
-
-        /**
-         * @return true if a proxy should be used
-         */
-        boolean isUseProxy() {
-            return m_useProxy;
-        }
-
-        /**
-         * @param useProxy should a proxy be used (default: {@code false})
-         */
-        void setUseProxy(final boolean useProxy) {
-            this.m_useProxy = useProxy;
-        }
-
-        /**
-         * @return the host of the proxy
-         */
-        String getProxyHost() {
-            return m_proxyHost;
-        }
-
-        /**
-         * @param host of the proxy (default: {@code ""})
-         */
-        void setProxyHost(final String host) {
-            this.m_proxyHost = host;
-        }
-
-        /**
-         * @return the port of the proxy
-         */
-        int getProxyPort() {
-            return m_proxyPort;
-        }
-
-        /**
-         * @param port of the proxy
-         */
-        void setProxyPort(final int port) {
-            this.m_proxyPort = port;
-        }
-
-        /**
-         * @return whether an authentication for the proxy is configured
-         */
-        boolean isUserAuth() {
-            return m_userAuth;
-        }
-
-        /**
-         * @param userAuth whether an authentication is required for the proxy (default: {@code false})
-         */
-        void setUserAuth(final boolean userAuth) {
-            this.m_userAuth = userAuth;
-        }
-
-        /**
-         * @return whether workflow credentials should be used for the proxy authentication
-         */
-        boolean isUseWorkflowCredentials() {
-            return m_useWorkflowCredentials;
-        }
-
-        /**
-         * @param useWorkflowCredentials whether workflow credentials should be used for the proxy authentication
-         *            (default: {@code false})
-         */
-        void setUseWorkflowCredentials(final boolean useWorkflowCredentials) {
-            this.m_useWorkflowCredentials = useWorkflowCredentials;
-        }
-
-        /**
-         * @return the workflow credentials
-         */
-        String getProxyWorkflowCredentials() {
-            return m_proxyWorkflowCredentials;
-        }
-
-        /**
-         * @param workflowCredentials to be used for the proxy (default: {@code ""})
-         */
-        void setProxyWorkflowCredentials(final String workflowCredentials) {
-            this.m_proxyWorkflowCredentials = workflowCredentials;
-        }
-
-        /**
-         * @return the user for the authentication for the proxy
-         */
-        String getProxyUser() {
-            return m_proxyUser;
-        }
-
-        /**
-         * @param user for the authentication for the proxy (default: {@code ""})
-         */
-        void setProxyUser(final String user) {
-            this.m_proxyUser = user;
-        }
-
-        /**
-         * @return the password for the authentication of the proxy
-         */
-        String getPassword() {
-            return m_password;
-        }
-
-        /**
-         * @param password for the authentication of the proxy (default: {@code ""})
-         */
-        void setPassword(final String password) {
-            this.m_password = password;
-        }
-
-        /**
-         * @return a proxy configuration in the form of a {@link ConnectionInformation}-object to be passed via a
-         *         {@code ConnectionInformationPort}.
-         */
-        ConnectionInformation getConnectionInformation(final CredentialsProvider credentialsProvider) {
-            final ConnectionInformation connectionInformation = new ConnectionInformation();
-            connectionInformation.setHost(getProxyHost());
-            connectionInformation.setPort(getProxyPort());
-            if (isUserAuth()) {
-                if (isUseWorkflowCredentials()) {
-                    // Use credentials
-                    final ICredentials credentials = credentialsProvider.get(getProxyWorkflowCredentials());
-                    connectionInformation.setUser(credentials.getLogin());
-                    try {
-                        connectionInformation
-                            .setPassword(KnimeEncryption.encrypt(credentials.getPassword().toCharArray()));
-                    } catch (final Exception e) {
-                        // Set no password
-                    }
-                } else {
-                    // Use direct settings
-                    connectionInformation.setUser(getProxyUser());
-                    connectionInformation.setPassword(getPassword());
-                }
-            }
-            return connectionInformation;
-        }
-
-        private static final String KEY_USE_PROXY = "useProxy";
-
-        private static final String KEY_HOST = "proxyHost";
-
-        private static final String KEY_PORT = "proxyPort";
-
-        private static final String KEY_USE_USER_AUTH = "proxyUserAuth";
-
-        private static final String KEY_USE_WF_CRED = "proxyUseWFCred";
-
-        private static final String KEY_WF_CRED = "proxyWFCred";
-
-        private static final String KEY_USER = "proxyUser";
-
-        private static final String KEY_PASSWORD = "proxyPassword";
-
-        /**
-         *
-         * @param proxySettings sub-settings-object to store the settings into
-         */
-        void saveProxySettings(final NodeSettingsWO proxySettings) {
-            proxySettings.addBoolean(KEY_USE_PROXY, isUseProxy());
-            proxySettings.addString(KEY_HOST, getProxyHost());
-            proxySettings.addInt(KEY_PORT, getProxyPort());
-            proxySettings.addBoolean(KEY_USE_USER_AUTH, isUserAuth());
-            proxySettings.addBoolean(KEY_USE_WF_CRED, isUseWorkflowCredentials());
-            proxySettings.addString(KEY_WF_CRED, getProxyWorkflowCredentials());
-            proxySettings.addString(KEY_USER, getProxyUser());
-            proxySettings.addPassword(KEY_PASSWORD, ">$:g~l63t(uc1[y#[u", getPassword());
-        }
-
-        abstract void save(final NodeSettingsWO settings);
-
-        /**
-         *
-         * @param proxySettings sub-settings-object to read the settings from
-         */
-        void loadProxySettings(final NodeSettingsRO proxySettings) {
-            setUseProxy(proxySettings.getBoolean(KEY_USE_PROXY, false));
-            setProxyHost(proxySettings.getString(KEY_HOST, ""));
-            setProxyPort(proxySettings.getInt(KEY_PORT, m_proxyPort));
-            setUserAuth(proxySettings.getBoolean(KEY_USE_USER_AUTH, false));
-            setUseWorkflowCredentials(proxySettings.getBoolean(KEY_USE_WF_CRED, false));
-            setProxyWorkflowCredentials(proxySettings.getString(KEY_WF_CRED, ""));
-            setProxyUser(proxySettings.getString(KEY_USER, ""));
-            setPassword(proxySettings.getPassword(KEY_PASSWORD, ">$:g~l63t(uc1[y#[u", ""));
-        }
-
-        abstract void load(final NodeSettingsRO settings);
-
-        /**
-         * @see {@link #load(NodeSettingsRO)}
-         * @see {@link ConnectionInformationConfiguration#loadAndValidate(NodeSettingsRO)}
-         * @param settings -object to read the settings from the contained proxy-sub-settings.
-         * @throws InvalidSettingsException
-         */
-        void loadAndValidate(final NodeSettingsRO settings) throws InvalidSettingsException {
-            load(settings);
-            if (isUseProxy()) {
-                validate(getProxyHost(), "proxy host");
-                if (getProxyPort() < 0 || getProxyPort() > 65535) {
-                    throw new InvalidSettingsException("Invalid proxy port number: " + getProxyPort());
-                }
-                if (isUseWorkflowCredentials()) {
-                    validate(getProxyWorkflowCredentials(), "proxy workflowcredentials");
-                }
-            }
-        }
-
-    }
-
-    /**
-     * Class to store a ftp-proxy configuration. If no proxy is configured (default configuration) {@link #isUseProxy()}
-     * returns {@code false}. <b>Do not call any getter methods if {@link #isUseProxy()} returns {@code false}!</b>
-     *
-     * @author Ferry Abt, KNIME GmbH, Konstanz
-     */
-    class FTPProxyConfiguration extends ProxyConfiguration {
-
-        public FTPProxyConfiguration() {
-            super(21);
-        }
-
-        private static final String KEY_PROXY_SETTINGS = "ftp-proxy";
-
-        private static final String KEY_USE_PROXY = "useFTPProxy";
-
-        private static final String KEY_HOST = "ftpProxyHost";
-
-        private static final String KEY_PORT = "ftpProxyPort";
-
-        private static final String KEY_USE_USER_AUTH = "ftpProxyUserAuth";
-
-        private static final String KEY_USE_WF_CRED = "ftpProxyUseWFCred";
-
-        private static final String KEY_WF_CRED = "ftpProxyWFCred";
-
-        private static final String KEY_USER = "ftpProxyUser";
-
-        private static final String KEY_PASSWORD = "ftpProxyPassword";
-
-        /**
-         *
-         * @param settings -object to store the settings into. Creates sub-settings with the key "ftp-proxy".
-         */
-        @Override
-        void save(final NodeSettingsWO settings) {
-            final NodeSettingsWO proxySettings = settings.addNodeSettings(KEY_PROXY_SETTINGS);
-            saveProxySettings(proxySettings);
-        }
-
-        /**
-         *
-         * @param settings -object to read the settings from the contained sub-settings "ftp-proxy".
-         */
-        @Override
-        void load(final NodeSettingsRO settings) {
-            NodeSettingsRO proxySettings;
-            try {
-                proxySettings = settings.getNodeSettings(KEY_PROXY_SETTINGS);
-            } catch (InvalidSettingsException e) {
-                proxySettings = new NodeSettings(KEY_PROXY_SETTINGS);
-            }
-            if (proxySettings.containsKey(KEY_USE_PROXY)) {
-                setUseProxy(proxySettings.getBoolean(KEY_USE_PROXY, false));
-                setProxyHost(proxySettings.getString(KEY_HOST, ""));
-                setProxyPort(proxySettings.getInt(KEY_PORT, 21));
-                setUserAuth(proxySettings.getBoolean(KEY_USE_USER_AUTH, false));
-                setUseWorkflowCredentials(proxySettings.getBoolean(KEY_USE_WF_CRED, false));
-                setProxyWorkflowCredentials(proxySettings.getString(KEY_WF_CRED, ""));
-                setProxyUser(proxySettings.getString(KEY_USER, ""));
-                setPassword(proxySettings.getPassword(KEY_PASSWORD, ">$:g~l63t(uc1[y#[u", ""));
-            } else {
-                loadProxySettings(proxySettings);
-            }
-        }
-
-    }
-
-    /**
-     * Class to store a http-proxy configuration. If no proxy is configured (default configuration)
-     * {@link #isUseProxy()} returns {@code false}. <b>Do not call any getter methods if {@link #isUseProxy()} returns
-     * {@code false}!</b>
-     *
-     * @author Ferry Abt, KNIME GmbH, Konstanz
-     */
-    class HTTPProxyConfiguration extends ProxyConfiguration {
-
-        public HTTPProxyConfiguration() {
-            super(3128);
-        }
-
-        private static final String KEY_PROXY_SETTINGS = "http-proxy";
-
-        /**
-         *
-         * @param settings -object to store the settings into. Creates sub-settings with the key "http-proxy".
-         */
-        @Override
-        void save(final NodeSettingsWO settings) {
-            saveProxySettings(settings.addNodeSettings(KEY_PROXY_SETTINGS));
-        }
-
-        /**
-         *
-         * @param settings -object to read the settings from the contained sub-settings "http-proxy".
-         */
-        @Override
-        void load(final NodeSettingsRO settings) {
-            NodeSettingsRO proxySettings;
-            try {
-                proxySettings = settings.getNodeSettings(KEY_PROXY_SETTINGS);
-            } catch (InvalidSettingsException e) {
-                proxySettings = new NodeSettings(KEY_PROXY_SETTINGS);
-            }
-            loadProxySettings(proxySettings);
-        }
-    }
-
-    /**
-     * Class to store a https-proxy configuration. If no proxy is configured (default configuration)
-     * {@link #isUseProxy()} returns {@code false}. <b>Do not call any getter methods if {@link #isUseProxy()} returns
-     * {@code false}!</b>
-     *
-     * @author Ferry Abt, KNIME GmbH, Konstanz
-     */
-    class HTTPSProxyConfiguration extends ProxyConfiguration {
-
-        public HTTPSProxyConfiguration() {
-            super(3128);
-        }
-
-        private static final String KEY_PROXY_SETTINGS = "https-proxy";
-
-        /**
-         *
-         * @param settings -object to store the settings into. Creates sub-settings with the key "https-proxy".
-         */
-        @Override
-        void save(final NodeSettingsWO settings) {
-            saveProxySettings(settings.addNodeSettings(KEY_PROXY_SETTINGS));
-        }
-
-        /**
-         *
-         * @param settings -object to read the settings from the contained sub-settings "https-proxy".
-         */
-        @Override
-        void load(final NodeSettingsRO settings) {
-            NodeSettingsRO proxySettings;
-            try {
-                proxySettings = settings.getNodeSettings(KEY_PROXY_SETTINGS);
-            } catch (InvalidSettingsException e) {
-                proxySettings = new NodeSettings(KEY_PROXY_SETTINGS);
-            }
-            loadProxySettings(proxySettings);
-        }
-    }
 }

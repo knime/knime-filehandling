@@ -161,6 +161,18 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      * @param protocol The protocol of this connection information dialog
      */
     public ConnectionInformationNodeDialog(final Protocol protocol) {
+        this(protocol, false);
+    }
+
+    /**
+     * New pane for configuring the node dialog.
+     *
+     *
+     * @param protocol The protocol of this connection information dialog
+     * @param showProxyTab Whether to show a tab to allow proxy configuration
+     * @since 3.6
+     */
+    public ConnectionInformationNodeDialog(final Protocol protocol, final boolean showProxyTab) {
         m_protocol = protocol;
         // Host
         m_host = new JTextField();
@@ -217,14 +229,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
         addTab("Options", initLayout());
 
-        if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-            m_proxyTab = new ProxyPanel(this, "FTP");
-            addTab("Proxy Settings", m_proxyTab);
-        } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
-            m_proxyTab = new ProxyPanel(this, "HTTP");
-            addTab("Proxy Settings", m_proxyTab);
-        } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
-            m_proxyTab = new ProxyPanel(this, "HTTPS");
+        if (showProxyTab) {
+            m_proxyTab = new ProxyPanel(this);
             addTab("Proxy Settings", m_proxyTab);
         }
     }
@@ -544,13 +550,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             config.setTimeout((Integer) m_timeout.getValue());
         }
         if (m_proxyTab != null) {
-            if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-                m_proxyTab.createConfig(config.getFTPProxy());
-            } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
-                m_proxyTab.createConfig(config.getHTTPProxy());
-            } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
-                m_proxyTab.createConfig(config.getHTTPSProxy());
-            }
+            m_proxyTab.createConfig(config.getProxy());
         }
         return config;
     }
@@ -605,11 +605,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         updateEnabledState();
         if (m_proxyTab != null) {
             if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-                m_proxyTab.load(config.getFTPProxy());
-            } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)) {
-                m_proxyTab.load(config.getHTTPProxy());
-            } else if (HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
-                m_proxyTab.load(config.getHTTPSProxy());
+                m_proxyTab.load(config.getProxy());
+            } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)
+                || HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
+                m_proxyTab.load(config.getProxy());
             }
         }
     }

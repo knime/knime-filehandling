@@ -94,11 +94,7 @@ public class ConnectionInformation implements Serializable {
 
     private boolean m_useKerberos;
 
-    private ConnectionInformation m_ftpProxy = null;
-
-    private ConnectionInformation m_httpProxy = null;
-
-    private ConnectionInformation m_httpsProxy = null;
+    private ConnectionInformation m_proxy = null;
 
     /**
      * Parameterless constructor.
@@ -126,29 +122,18 @@ public class ConnectionInformation implements Serializable {
         this.setKnownHosts(model.getString("knownhosts"));
         this.setTimeout(model.getInt("timeout", 30000)); // new option in 2.10
         this.setUseKerberos(model.getBoolean("kerberos", false)); //new option in 3.2
+        ModelContentRO proxyModelContent = null;
         if (model.containsKey("ftpProxy")) {
-            setFTPProxy(new ConnectionInformation());
-            ModelContentRO proxyModelContent = model.getModelContent("ftpProxy");
-            m_ftpProxy.setHost(proxyModelContent.getString("host"));
-            m_ftpProxy.setPort(proxyModelContent.getInt("port"));
-            m_ftpProxy.setUser(proxyModelContent.getString("user"));
-            m_ftpProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
+            proxyModelContent = model.getModelContent("ftpProxy");
+        } else if (model.containsKey("proxy")) {
+            proxyModelContent = model.getModelContent("proxy");
         }
-        if (model.containsKey("httpProxy")) {
-            setHTTPProxy(new ConnectionInformation());
-            ModelContentRO proxyModelContent = model.getModelContent("httpProxy");
-            m_httpProxy.setHost(proxyModelContent.getString("host"));
-            m_httpProxy.setPort(proxyModelContent.getInt("port"));
-            m_httpProxy.setUser(proxyModelContent.getString("user"));
-            m_httpProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
-        }
-        if (model.containsKey("httpsProxy")) {
-            setHTTPSProxy(new ConnectionInformation());
-            ModelContentRO proxyModelContent = model.getModelContent("httpsProxy");
-            m_httpsProxy.setHost(proxyModelContent.getString("host"));
-            m_httpsProxy.setPort(proxyModelContent.getInt("port"));
-            m_httpsProxy.setUser(proxyModelContent.getString("user"));
-            m_httpsProxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
+        if (proxyModelContent != null) {
+            setProxy(new ConnectionInformation());
+            m_proxy.setHost(proxyModelContent.getString("host"));
+            m_proxy.setPort(proxyModelContent.getInt("port"));
+            m_proxy.setUser(proxyModelContent.getString("user"));
+            m_proxy.setPassword(proxyModelContent.getPassword("xpassword", "}l?>mn0am8ty1m<+nf"));
         }
     }
 
@@ -169,14 +154,8 @@ public class ConnectionInformation implements Serializable {
         model.addString("knownhosts", m_knownHosts);
         model.addInt("timeout", m_timeout);
         model.addBoolean("kerberos", m_useKerberos);
-        if (m_ftpProxy != null) {
-            m_ftpProxy.save(model.addModelContent("ftpProxy"));
-        }
-        if (m_httpProxy != null) {
-            m_httpProxy.save(model.addModelContent("httpProxy"));
-        }
-        if (m_httpsProxy != null) {
-            m_httpsProxy.save(model.addModelContent("httpsProxy"));
+        if (m_proxy != null) {
+            m_proxy.save(model.addModelContent("proxy"));
         }
     }
 
@@ -455,48 +434,34 @@ public class ConnectionInformation implements Serializable {
      * @param proxyInfo containing the necessary information to connect to an ftp-proxy
      * @since 3.5
      */
+    @Deprecated
     public void setFTPProxy(final ConnectionInformation proxyInfo) {
-        m_ftpProxy = proxyInfo;
+        m_proxy = proxyInfo;
     }
 
     /**
      * @return the ftp-proxy configured for this connection. {@code null} if non configured.
      * @since 3.5
      */
+    @Deprecated
     public ConnectionInformation getFTPProxy() {
-        return m_ftpProxy;
+        return m_proxy;
     }
 
     /**
-     * @param proxyInfo containing the necessary information to connect to an http-proxy
+     * @param proxyInfo containing the necessary information to connect to a proxy
      * @since 3.6
      */
-    public void setHTTPProxy(final ConnectionInformation proxyInfo) {
-        m_httpProxy = proxyInfo;
+    public void setProxy(final ConnectionInformation proxyInfo) {
+        m_proxy = proxyInfo;
     }
 
     /**
-     * @return the http-proxy configured for this connection. {@code null} if non configured.
+     * @return the proxy configured for this connection. {@code null} if non configured.
      * @since 3.6
      */
-    public ConnectionInformation getHTTPProxy() {
-        return m_httpProxy;
-    }
-
-    /**
-     * @param proxyInfo containing the necessary information to connect to an https-proxy
-     * @since 3.6
-     */
-    public void setHTTPSProxy(final ConnectionInformation proxyInfo) {
-        m_httpsProxy = proxyInfo;
-    }
-
-    /**
-     * @return the https-proxy configured for this connection. {@code null} if non configured.
-     * @since 3.6
-     */
-    public ConnectionInformation getHTTPSProxy() {
-        return m_httpsProxy;
+    public ConnectionInformation getProxy() {
+        return m_proxy;
     }
 
     /** {@inheritDoc} */

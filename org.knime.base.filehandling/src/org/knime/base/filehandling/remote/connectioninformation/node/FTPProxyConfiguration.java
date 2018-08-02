@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,67 +41,69 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
  *
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Aug 2, 2018 (ferry): created
  */
-package org.knime.base.filehandling.remote.connectioninformation.node.https;
+package org.knime.base.filehandling.remote.connectioninformation.node;
 
-import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeDialog;
-import org.knime.base.filehandling.remote.connectioninformation.node.ConnectionInformationNodeModel;
-import org.knime.base.filehandling.remote.files.HTTPRemoteFileHandler;
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
 
 /**
- * <code>NodeFactory</code> for node.
+ * Class to store a ftp-proxy configuration. If no proxy is configured (default configuration) {@link #isUseProxy()}
+ * returns {@code false}. <b>Do not call any getter methods if {@link #isUseProxy()} returns {@code false}!</b>
  *
- *
- * @author Patrick Winter, KNIME AG, Zurich, Switzerland
+ * @author Ferry Abt, KNIME GmbH, Konstanz
  */
-public class HTTPSConnectionInformationNodeFactory extends NodeFactory<ConnectionInformationNodeModel> {
+class FTPProxyConfiguration extends ProxyConfiguration {
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ConnectionInformationNodeModel createNodeModel() {
-        return new ConnectionInformationNodeModel(HTTPRemoteFileHandler.HTTPS_PROTOCOL);
+    public FTPProxyConfiguration() {
+        super(21);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int getNrNodeViews() {
-        return 0;
-    }
+    private static final String KEY_PROXY_SETTINGS = "ftp-proxy";
+
+    private static final String KEY_USE_PROXY = "useFTPProxy";
+
+    private static final String KEY_HOST = "ftpProxyHost";
+
+    private static final String KEY_PORT = "ftpProxyPort";
+
+    private static final String KEY_USE_USER_AUTH = "ftpProxyUserAuth";
+
+    private static final String KEY_USE_WF_CRED = "ftpProxyUseWFCred";
+
+    private static final String KEY_WF_CRED = "ftpProxyWFCred";
+
+    private static final String KEY_USER = "ftpProxyUser";
+
+    private static final String KEY_PASSWORD = "ftpProxyPassword";
 
     /**
-     * {@inheritDoc}
+     *
+     * @param settings -object to read the settings from the contained sub-settings "ftp-proxy".
      */
     @Override
-    public NodeView<ConnectionInformationNodeModel> createNodeView(final int viewIndex,
-            final ConnectionInformationNodeModel nodeModel) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new ConnectionInformationNodeDialog(HTTPRemoteFileHandler.HTTPS_PROTOCOL, true);
+    void load(final NodeSettingsRO settings) {
+        if (settings.containsKey(KEY_PROXY_SETTINGS)) {
+            try {
+                NodeSettingsRO proxySettings = settings.getNodeSettings(KEY_PROXY_SETTINGS);
+                setUseProxy(proxySettings.getBoolean(KEY_USE_PROXY, false));
+                setProxyHost(proxySettings.getString(KEY_HOST, ""));
+                setProxyPort(proxySettings.getInt(KEY_PORT, 21));
+                setUserAuth(proxySettings.getBoolean(KEY_USE_USER_AUTH, false));
+                setUseWorkflowCredentials(proxySettings.getBoolean(KEY_USE_WF_CRED, false));
+                setProxyWorkflowCredentials(proxySettings.getString(KEY_WF_CRED, ""));
+                setProxyUser(proxySettings.getString(KEY_USER, ""));
+                setPassword(proxySettings.getPassword(KEY_PASSWORD, ">$:g~l63t(uc1[y#[u", ""));
+            } catch (InvalidSettingsException e) {
+                super.load(settings);
+            }
+        } else {
+            super.load(settings);
+        }
     }
 
 }
