@@ -81,8 +81,6 @@ import javax.swing.event.ChangeListener;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
-import org.knime.base.filehandling.remote.files.FTPRemoteFileHandler;
-import org.knime.base.filehandling.remote.files.HTTPRemoteFileHandler;
 import org.knime.base.filehandling.remote.files.Protocol;
 import org.knime.core.node.FlowVariableModelButton;
 import org.knime.core.node.InvalidSettingsException;
@@ -92,6 +90,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.FilesHistoryPanel;
+import org.knime.core.node.util.FilesHistoryPanel.LocationValidation;
 import org.knime.core.node.workflow.FlowVariable;
 import org.knime.core.util.KnimeEncryption;
 
@@ -146,7 +145,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     private final JCheckBox m_useworkflowcredentials;
 
-    private final JComboBox m_workflowcredentials;
+    private final JComboBox<String> m_workflowcredentials;
 
     private JPanel m_workflowcredentialspanel;
 
@@ -200,7 +199,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         // Workflow credentials
         m_useworkflowcredentials = new JCheckBox();
         m_useworkflowcredentials.addChangeListener(new UpdateListener());
-        m_workflowcredentials = new JComboBox();
+        m_workflowcredentials = new JComboBox<>();
         // User
         m_userLabel = new JLabel("User:");
         m_user = new JTextField();
@@ -209,7 +208,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_password = new JPasswordField();
         // Keyfile
         m_keyfileLabel = new JLabel("Keyfile:");
-        m_keyfile = new FilesHistoryPanel("keyfileHistory", false);
+        m_keyfile = new FilesHistoryPanel("keyfileHistory", LocationValidation.None);
         m_keyfile.setSelectMode(JFileChooser.FILES_ONLY);
         m_keyfilefvm = new FlowVariableModelButton(createFlowVariableModel("keyfile", FlowVariable.Type.STRING));
         m_keyfilefvm.getFlowVariableModel().addChangeListener(new UpdateListener());
@@ -217,7 +216,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_useknownhosts = new JCheckBox("Use known hosts");
         m_useknownhosts.addChangeListener(new UpdateListener());
         m_knownhostsLabel = new JLabel("Known hosts:");
-        m_knownhosts = new FilesHistoryPanel("knownhostsHistory", false);
+        m_knownhosts = new FilesHistoryPanel("knownhostsHistory", LocationValidation.None);
         m_knownhosts.setSelectMode(JFileChooser.FILES_ONLY);
         m_knownhostsfvm = new FlowVariableModelButton(createFlowVariableModel("knownhosts", FlowVariable.Type.STRING));
         m_knownhostsfvm.getFlowVariableModel().addChangeListener(new UpdateListener());
@@ -550,7 +549,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             config.setTimeout((Integer) m_timeout.getValue());
         }
         if (m_proxyTab != null) {
-            m_proxyTab.createConfig(config.getProxy());
+            m_proxyTab.createConfig(config.getProxyConfiguration());
         }
         return config;
     }
@@ -604,12 +603,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         }
         updateEnabledState();
         if (m_proxyTab != null) {
-            if (FTPRemoteFileHandler.PROTOCOL.equals(m_protocol)) {
-                m_proxyTab.load(config.getProxy());
-            } else if (HTTPRemoteFileHandler.HTTP_PROTOCOL.equals(m_protocol)
-                || HTTPRemoteFileHandler.HTTPS_PROTOCOL.equals(m_protocol)) {
-                m_proxyTab.load(config.getProxy());
-            }
+            m_proxyTab.load(config.getProxyConfiguration());
         }
     }
 

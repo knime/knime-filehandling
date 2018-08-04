@@ -59,8 +59,8 @@ import org.knime.core.node.workflow.ICredentials;
 import org.knime.core.util.KnimeEncryption;
 
 /**
- * Class to store a proxy configuration. If no proxy is configured (default configuration) {@link #isUseProxy()}
- * returns {@code false}. <b>Do not call any getter methods if {@link #isUseProxy()} returns {@code false}!</b>
+ * Class to store a proxy configuration. If no proxy is configured (default configuration) {@code isUseProxy()}
+ * returns {@code false}. <b>Do not call any getter methods if {@code #isUseProxy()} returns {@code false}!</b>
  *
  * @author Ferry Abt, KNIME GmbH, Konstanz
  */

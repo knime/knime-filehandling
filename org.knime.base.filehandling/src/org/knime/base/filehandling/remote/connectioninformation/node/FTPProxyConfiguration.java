@@ -52,8 +52,8 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 
 /**
- * Class to store a ftp-proxy configuration. If no proxy is configured (default configuration) {@link #isUseProxy()}
- * returns {@code false}. <b>Do not call any getter methods if {@link #isUseProxy()} returns {@code false}!</b>
+ * Class to store a ftp-proxy configuration. If no proxy is configured (default configuration) {@code #isUseProxy()}
+ * returns {@code false}. <b>Do not call any getter methods if {@code #isUseProxy()} returns {@code false}!</b>
  *
  * @author Ferry Abt, KNIME GmbH, Konstanz
  */

@@ -252,7 +252,7 @@ class ConnectionInformationConfiguration {
     /**
      * @return the proxy configuration. Empty (never {@code null}!) if not configured.
      */
-    ProxyConfiguration getProxy() {
+    ProxyConfiguration getProxyConfiguration() {
         return m_proxy;
     }
 
