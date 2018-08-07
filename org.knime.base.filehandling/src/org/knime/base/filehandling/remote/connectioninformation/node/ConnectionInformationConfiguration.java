@@ -93,7 +93,7 @@ class ConnectionInformationConfiguration {
 
     private int m_timeout = 30000;
 
-    private ProxyConfiguration m_proxy = new ProxyConfiguration();
+    private final ProxyConfiguration m_proxy;
 
     /**
      * Create uninitialized configuration to a certain protocol.

@@ -123,6 +123,7 @@ public class ConnectionInformation implements Serializable {
         this.setTimeout(model.getInt("timeout", 30000)); // new option in 2.10
         this.setUseKerberos(model.getBoolean("kerberos", false)); //new option in 3.2
         ModelContentRO proxyModelContent = null;
+        //check for deprecated ftp-proxy settings to ensure backwards compatibility
         if (model.containsKey("ftpProxy")) {
             proxyModelContent = model.getModelContent("ftpProxy");
         } else if (model.containsKey("proxy")) {
