@@ -169,7 +169,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
      *
      * @param protocol The protocol of this connection information dialog
      * @param showProxyTab Whether to show a tab to allow proxy configuration
-     * @since 3.6
+     * @since 3.7
      */
     public ConnectionInformationNodeDialog(final Protocol protocol, final boolean showProxyTab) {
         m_protocol = protocol;

@@ -451,7 +451,7 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * @param proxyInfo containing the necessary information to connect to a proxy
-     * @since 3.6
+     * @since 3.7
      */
     public void setProxy(final ConnectionInformation proxyInfo) {
         m_proxy = proxyInfo;
@@ -459,7 +459,7 @@ public class ConnectionInformation implements Serializable {
 
     /**
      * @return the proxy configured for this connection. {@code null} if non configured.
-     * @since 3.6
+     * @since 3.7
      */
     public ConnectionInformation getProxy() {
         return m_proxy;
