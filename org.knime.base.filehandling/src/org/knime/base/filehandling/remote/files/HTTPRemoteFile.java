@@ -51,16 +51,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.eclipse.core.net.proxy.IProxyData;
+import org.eclipse.core.net.proxy.IProxyService;
+import org.knime.base.filehandling.FilehandlingPlugin;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.util.KnimeEncryption;
@@ -221,20 +226,32 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
      * @throws Exception If communication did not work
      */
     private HttpResponse getResponse() throws Exception {
-        final HttpParams params = new BasicHttpParams();
-        if (getConnectionInformation() != null) {
-            HttpConnectionParams.setConnectionTimeout(params, getConnectionInformation().getTimeout());
-            HttpConnectionParams.setSoTimeout(params, getConnectionInformation().getTimeout());
+        Builder requestBuilder = RequestConfig.custom();
+        BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        ConnectionInformation connInfo = getConnectionInformation();
+        if (connInfo != null) {
+            requestBuilder.setConnectTimeout(connInfo.getTimeout());
+            requestBuilder.setSocketTimeout(connInfo.getTimeout());
+
+            IProxyService proxyService = FilehandlingPlugin.getProxyService();
+            IProxyData[] proxyDataForHost = proxyService.select(getURI());
+
+            if (proxyDataForHost != null && proxyDataForHost.length > 0) {
+                /* As far as I can tell ProxyManager#select either returns null, an empty array or an array of
+                 * length one. Therefore this not so nice if-array[0] solution works */
+                configureProxy(proxyDataForHost[0], requestBuilder, credentialsProvider);
+            }
+
         }
 
         // Create request
-        final DefaultHttpClient client = new DefaultHttpClient(params);
+        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
 
         final HttpGet request;
         // If user info is given in the URI use HTTP basic authentication
-        if (getURI().getUserInfo() != null && getURI().getUserInfo().length() > 0) {
+        if (connInfo != null && getURI().getUserInfo() != null && getURI().getUserInfo().length() > 0) {
             // Decrypt password from the connection information
-            final String password = KnimeEncryption.decrypt(getConnectionInformation().getPassword());
+            final String password = KnimeEncryption.decrypt(connInfo.getPassword());
             // Get port (replacing it with the default port if necessary)
             int port = getURI().getPort();
             if (port < 0) {
@@ -242,14 +259,33 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
             }
             final Credentials credentials = new UsernamePasswordCredentials(getURI().getUserInfo(), password);
 
-            final AuthScope scope = new AuthScope(getURI().getHost(), port);
-            client.getCredentialsProvider().setCredentials(scope, credentials);
+            credentialsProvider.setCredentials(new AuthScope(getURI().getHost(), port), credentials);
+            clientBuilder.setDefaultCredentialsProvider(credentialsProvider);
             request = new HttpGet(getURI());
-            request.addHeader(BasicScheme.authenticate(credentials, "UTF-8", false));
+            request.addHeader(new BasicScheme().authenticate(credentials, request, null));
         } else {
             request = new HttpGet(getURI());
         }
+        request.setConfig(requestBuilder.build());
         // Return response
-        return client.execute(request);
+        return clientBuilder.build().execute(request);
+    }
+
+    /**
+     * Reads the proxy-data stored in {@code data} and updates the {@code requestBuilder} and
+     * {@code credentialsProvider} accordingly
+     *
+     * @param data
+     * @param requestBuilder
+     * @param credentialsProvider
+     */
+    private static final void configureProxy(final IProxyData data, final Builder requestBuilder,
+        final CredentialsProvider credentialsProvider) {
+        HttpHost proxyHost = new HttpHost(data.getHost(), data.getPort());
+        requestBuilder.setProxy(proxyHost);
+        if (data.isRequiresAuthentication()) {
+            credentialsProvider.setCredentials(new AuthScope(data.getHost(), data.getPort()),
+                new UsernamePasswordCredentials(data.getUserId(), data.getPassword()));
+        }
     }
 }

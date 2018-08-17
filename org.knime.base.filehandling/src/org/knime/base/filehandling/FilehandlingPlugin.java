@@ -51,10 +51,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
+import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
@@ -67,10 +70,17 @@ public final class FilehandlingPlugin extends Plugin {
     // The shared instance
     private static FilehandlingPlugin plugin;
 
+    @SuppressWarnings("rawtypes")
+    private static ServiceTracker proxyTracker;
+
     @Override
     public void start(final BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
+
+        proxyTracker = new ServiceTracker<>(FrameworkUtil.getBundle(this.getClass()).getBundleContext(),
+            IProxyService.class.getName(), null);
+        proxyTracker.open();
     }
 
     /**
@@ -82,6 +92,7 @@ public final class FilehandlingPlugin extends Plugin {
     @Override
     public void stop(final BundleContext context) throws Exception {
         plugin = null;
+        proxyTracker.close();
         super.stop(context);
     }
 
@@ -105,5 +116,13 @@ public final class FilehandlingPlugin extends Plugin {
         Bundle utilBundle = Platform.getBundle("org.knime.core.util");
         URL mimeFile = utilBundle.getResource("META-INF/mime.types");
         return mimeFile.openStream();
+    }
+
+    /**
+     * @return the Eclipse Proxy Service
+     * @since 3.7
+     */
+    public static IProxyService getProxyService() {
+        return (IProxyService) proxyTracker.getService();
     }
 }
