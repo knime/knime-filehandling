@@ -155,7 +155,7 @@ public class DownloadUploadFromListNodeModel extends NodeModel {
                     final URI folderUri =
                             new URI(targetUri.getScheme(), targetUri.getAuthority(), FilenameUtils.getFullPath(targetUri.getPath()), targetUri.getQuery(), targetUri.getFragment());
                     final RemoteFile<? extends Connection> folder =
-                            RemoteFileFactory.createRemoteFile(folderUri, m_connectionInformation, monitor);
+                            RemoteFileFactory.createRemoteFile(folderUri, connectionInformation, monitor);
                     folder.mkDirs(true);
 
                     // Create target file
