@@ -94,6 +94,8 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
 
     private Long m_modifiedCache = null;
 
+    private boolean m_usingRoot = false;
+
     private void resetCache() {
         // Empty cache
         m_pathCache = null;
@@ -202,6 +204,9 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                 String path = internalGetPath();
                 path = path.substring(0, path.length() - 1);
                 name = FilenameUtils.getName(path);
+            } else if (getURI().getPath().endsWith("/")) {
+                String path = getURI().getPath();
+                name = FilenameUtils.getName(path.substring(0, path.length() - 1));
             } else {
                 // Use name from URI
                 name = FilenameUtils.getName(getURI().getPath());
@@ -597,12 +602,14 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
             m_channel = (ChannelSftp)session.openChannel("sftp");
             m_channel.connect();
         }
+
         // Check if path is initialized
-        if (m_path == null) {
+        if (m_path == null || m_usingRoot) {
             boolean pathSet = false;
             String path = getURI().getPath();
             // If URI has path
             if (path != null && !path.isEmpty()) {
+                path = !path.equals("/") && path.endsWith("/") ? path.substring(0, path.length()-1) : path;
                 if (cd(path)) {
                     // Path points to directory
                     m_path = path;
@@ -622,6 +629,9 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                     }
                 }
             }
+
+            m_usingRoot = !pathSet;
+
             if (!pathSet) {
                 // Use root directory
                 String oldDir;
