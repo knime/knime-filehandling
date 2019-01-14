@@ -53,11 +53,13 @@ import java.net.URL;
 
 import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.util.FileUtil;
 import org.knime.core.util.KnimeEncryption;
 
 import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Logger;
 import com.jcraft.jsch.Session;
 
 /**
@@ -73,6 +75,7 @@ public class SSHConnection extends Connection {
     private Session m_session;
 
     private final ConnectionInformation m_connectionInformation;
+
 
     /**
      * Create a SSH connection to the given URI.
@@ -103,6 +106,20 @@ public class SSHConnection extends Connection {
         if (password != null) {
             password = KnimeEncryption.decrypt(password);
         }
+        // Set node logger as JSch logger
+        NodeLogger logger = NodeLogger.getLogger(this.getClass());
+        JSch.setLogger(new Logger() {
+
+            @Override
+            public void log(final int level, final String message) {
+                logger.info(message);
+            }
+
+            @Override
+            public boolean isEnabled(final int level) {
+                return true;
+            }
+        });
         final JSch jsch = new JSch();
         // Use keyfile if available
         String keyfile = m_connectionInformation.getKeyfile();
