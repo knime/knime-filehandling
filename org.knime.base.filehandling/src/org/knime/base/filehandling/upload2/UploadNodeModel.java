@@ -195,7 +195,12 @@ public class UploadNodeModel extends NodeModel {
         }
 
         // Generate URI to the target
-        final URI targetUri = new URI(folder.getURI() + NodeUtils.encodePath(name));
+        String folderURI = folder.getURI().toString();
+        final String namePath = NodeUtils.encodePath(name);
+        if (folderURI.endsWith("/") && namePath.startsWith("/")) {
+            folderURI = folderURI.substring(0, folderURI.length()-1);
+        }
+        final URI targetUri = new URI(folderURI + namePath);
         // Create target file
         final RemoteFile<Connection> target =
                 RemoteFileFactory.createRemoteFile(targetUri, m_connectionInformation, monitor);
