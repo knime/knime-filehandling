@@ -279,7 +279,7 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
         if (m_existsCache == null) {
             // In case of the root directory there is no ls entry available but
             // isDirectory returns true
-            m_existsCache = getLsEntry() != null || internalIsDirectory();
+            m_existsCache = !m_usingRoot && (getLsEntry() != null || internalIsDirectory());
         }
         return m_existsCache;
     }
@@ -569,6 +569,10 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
             }
         }
         try {
+            // AP-11477: Resetting the cache and getting the lsEntry before folder creation prevents pipe error
+            // when creating lots of intermediate folders when uploading files.
+            resetCache();
+            getLsEntry();
             openChannel();
             m_channel.mkdir(getName() + "/");
             resetCache();

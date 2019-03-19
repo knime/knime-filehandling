@@ -195,12 +195,12 @@ public class UploadNodeModel extends NodeModel {
         }
 
         // Generate URI to the target
-        String folderURI = folder.getURI().toString();
+        String baseFolderURI = folder.getURI().toString();
         final String namePath = NodeUtils.encodePath(name);
-        if (folderURI.endsWith("/") && namePath.startsWith("/")) {
-            folderURI = folderURI.substring(0, folderURI.length()-1);
+        if (baseFolderURI.endsWith("/") && namePath.startsWith("/")) {
+            baseFolderURI = baseFolderURI.substring(0, baseFolderURI.length()-1);
         }
-        final URI targetUri = new URI(folderURI + namePath);
+        final URI targetUri = new URI(baseFolderURI + namePath);
         // Create target file
         final RemoteFile<Connection> target =
                 RemoteFileFactory.createRemoteFile(targetUri, m_connectionInformation, monitor);
@@ -219,7 +219,10 @@ public class UploadNodeModel extends NodeModel {
             boolean failure = false;
             try {
                 if (mkDirs) {
-                    target.mkDirs(false);
+                    URI parentFolderUri = targetUri.resolve(".");
+                    final RemoteFile<Connection> parentFile =
+                            RemoteFileFactory.createRemoteFile(parentFolderUri, m_connectionInformation, monitor);
+                    parentFile.mkDirs(true);
                 }
                 if (overwritePolicy.equals(OverwritePolicy.OVERWRITE.getName())) {
                     // Policy overwrite:
