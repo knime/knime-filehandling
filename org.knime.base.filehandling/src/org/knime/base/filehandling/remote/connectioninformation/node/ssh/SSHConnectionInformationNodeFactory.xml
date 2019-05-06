@@ -46,7 +46,8 @@
             selected.
         </option>
         <option name="Keyfile">
-            Location of the keyfile.
+            Location of the keyfile. Note that the key file has to be in OpenSSH
+            key file format.
         </option>
         <option name="Use known hosts">
             Only connect if this host is part of the set
