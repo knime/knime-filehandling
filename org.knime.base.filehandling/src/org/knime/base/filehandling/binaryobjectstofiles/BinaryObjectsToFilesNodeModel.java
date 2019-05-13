@@ -53,10 +53,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.io.FilenameUtils;
+import org.apache.http.client.utils.URIBuilder;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -69,9 +76,9 @@ import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.data.container.SingleCellFactory;
-import org.knime.core.data.uri.URIContent;
 import org.knime.core.data.uri.URIDataCell;
 import org.knime.core.data.uri.URIDataValue;
+import org.knime.core.data.uri.UriCellFactory;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -82,6 +89,8 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.util.FileUtil;
+import org.knime.core.util.pathresolve.ResolverUtil;
 
 /**
  * This is the model implementation.
@@ -91,19 +100,21 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  */
 class BinaryObjectsToFilesNodeModel extends NodeModel {
 
-    private SettingsModelString m_bocolumn;
+    private final SettingsModelString m_bocolumn;
 
-    private SettingsModelString m_filenamehandling;
+    private final SettingsModelString m_filenamehandling;
 
-    private SettingsModelString m_targetcolumn;
+    private final SettingsModelString m_targetcolumn;
 
-    private SettingsModelString m_outputdirectory;
+    private final SettingsModelString m_outputdirectory;
 
-    private SettingsModelString m_namepattern;
+    private final SettingsModelString m_namepattern;
 
-    private SettingsModelBoolean m_removebocolumn;
+    private final SettingsModelBoolean m_removebocolumn;
 
-    private SettingsModelString m_ifexists;
+    private final SettingsModelString m_ifexists;
+
+    private final Charset m_charset = StandardCharsets.UTF_8;
 
     /**
      * Constructor for the node model.
@@ -125,60 +136,57 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
             throws Exception {
+
         // Check settings only if filename handling is generate
         if (m_filenamehandling.getStringValue().equals(FilenameHandling.GENERATE.getName())) {
-            // Does the output directory exist?
-            File outputdirectory = new File(m_outputdirectory.getStringValue());
-            if (!outputdirectory.isDirectory()) {
-                throw new InvalidSettingsException("Output directory \"" + outputdirectory.getAbsoluteFile()
-                        + "\" does not exist");
-            }
+            getOutputDirectory(getOutputURI());
         }
-        BufferedDataTable out = null;
+
         // HashSet for duplicate checking and cleanup
-        Set<String> filenames = new HashSet<String>();
+        final Set<String> filenames = new HashSet<>();
         // Only append if no target column is used (target column would be
         // identical)
-        boolean appenduricolumn = !m_filenamehandling.getStringValue().equals(FilenameHandling.FROMCOLUMN.getName());
+        final boolean appenduricolumn =
+                !m_filenamehandling.getStringValue().equals(FilenameHandling.FROMCOLUMN.getName());
         try {
             // If the columns do not get appended the create file method will
             // not be called by the rearranger so it has to happen manually
             if (!appenduricolumn) {
-                int rows = inData[0].getRowCount();
+                final long rows = inData[0].size();
                 int i = 0;
                 // Create the file for each row
-                for (DataRow row : inData[0]) {
+                for (final DataRow row : inData[0]) {
                     exec.checkCanceled();
                     exec.setProgress((double)i / rows);
                     createFile(row, i, filenames, inData[0].getDataTableSpec(), exec);
                     i++;
                 }
             }
-            ColumnRearranger rearranger = createColumnRearranger(inData[0].getDataTableSpec(), filenames, exec);
-            out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
-        } catch (Exception e) {
+
+            final ColumnRearranger rearranger = createColumnRearranger(inData[0].getDataTableSpec(), filenames, exec);
+            final BufferedDataTable out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
+            return new BufferedDataTable[]{out};
+        } catch (final Exception e) {
             // In case of exception, delete all created files
             cleanUp(filenames.toArray(new String[filenames.size()]));
             throw e;
         }
-        return new BufferedDataTable[]{out};
     }
 
     /**
      * Delete all the given files.
      *
      *
-     * This method should be called, in case the execution got aborted. It will
-     * delete all files referenced by the array.
+     * This method should be called, in case the execution got aborted. It will delete all files referenced by the
+     * array.
      *
      * @param filenames Files that should be deleted.
      */
-    private void cleanUp(final String[] filenames) {
+    private static void cleanUp(final String[] filenames) {
         for (int i = 0; i < filenames.length; i++) {
             try {
-                File file = new File(filenames[i]);
-                file.delete();
-            } catch (Exception e) {
+                Files.delete(Paths.get(filenames[i]));
+            } catch (final Exception e) {
                 // If one file fails, the others should still be deleted
             }
         }
@@ -191,32 +199,36 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * @param inSpec Specification of the input table
      * @param filenames Set of files that have already been created
      * @param exec Context of this execution
-     * @return Rearranger that will add a column for the URIs to the created
-     *         files (if necessary).
+     * @return Rearranger that will add a column for the URIs to the created files (if necessary).
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec, final Set<String> filenames,
-            final ExecutionContext exec) throws InvalidSettingsException {
+        final ExecutionContext exec) throws InvalidSettingsException {
         // Check settings for correctness
         checkSettings(inSpec);
-        ColumnRearranger rearranger = new ColumnRearranger(inSpec);
+        final ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec colSpec;
         // Only append if no target column is used (target column would be
         // identical)
-        boolean appenduricolumn = !m_filenamehandling.getStringValue().equals(FilenameHandling.FROMCOLUMN.getName());
+        final boolean appenduricolumn =
+                !m_filenamehandling.getStringValue().equals(FilenameHandling.FROMCOLUMN.getName());
         // Append URI column if filehandling is not from column. This will also
         // call the create file method
         if (appenduricolumn) {
             // Create column for the URI of the files
-            String uriColName = DataTableSpec.getUniqueColumnName(inSpec, "URI");
+            final String uriColName = DataTableSpec.getUniqueColumnName(inSpec, "URI");
             colSpec = new DataColumnSpecCreator(uriColName, URIDataCell.TYPE).createSpec();
             // Factory that creates the files and the corresponding URI cell
-            CellFactory factory = new SingleCellFactory(colSpec) {
+            final CellFactory factory = new SingleCellFactory(colSpec) {
                 private long m_rownr = 0;
 
                 @Override
                 public DataCell getCell(final DataRow row) {
-                    return createFile(row, m_rownr, filenames, inSpec, exec);
+                    try {
+                        return createFile(row, m_rownr, filenames, inSpec, exec);
+                    } catch (final IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
 
                 /**
@@ -247,36 +259,63 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      */
     @SuppressWarnings("unchecked")
     private void checkSettings(final DataTableSpec inSpec) throws InvalidSettingsException {
-        String bocolumn = m_bocolumn.getStringValue();
+        final String bocolumn = m_bocolumn.getStringValue();
         NodeUtils.checkColumnSelection(inSpec, "Binary object", bocolumn, BinaryObjectDataValue.class);
         // Check settings only if filename handling is from column
         if (m_filenamehandling.getStringValue().equals(FilenameHandling.FROMCOLUMN.getName())) {
-            String targetcolumn = m_targetcolumn.getStringValue();
+            final String targetcolumn = m_targetcolumn.getStringValue();
             NodeUtils.checkColumnSelection(inSpec, "Target", targetcolumn, URIDataValue.class);
         }
         // Check settings only if filename handling is generate
         if (m_filenamehandling.getStringValue().equals(FilenameHandling.GENERATE.getName())) {
             // Does the output directory exist?
-            File outputdirectory = new File(m_outputdirectory.getStringValue());
-            if (!outputdirectory.isDirectory()) {
-                throw new InvalidSettingsException("Output directory \"" + outputdirectory.getAbsoluteFile()
-                        + "\" does not exist");
+            try {
+                getOutputDirectory(getOutputURI());
+            } catch (final IOException e) {
+                throw new InvalidSettingsException("Could not create output directory: " + e.getMessage());
             }
+
             // Does the name pattern at least contain a '?'?
-            String pattern = m_namepattern.getStringValue();
+            final String pattern = m_namepattern.getStringValue();
             if (!pattern.contains("?")) {
                 throw new InvalidSettingsException("Pattern has to contain" + " a ?");
             }
         }
     }
 
+    private URI getOutputURI() throws IOException {
+        try {
+            // get uri
+            final URL uri = FileUtil.toURL(m_outputdirectory.getStringValue());
+            return uri.toURI();
+        } catch (InvalidPathException | URISyntaxException | IOException e) {
+            throw new IOException("Could not resolve the file: " + e.getMessage());
+        }
+    }
+
+    /**
+     * @return the outputdirectory
+     * @throws InvalidSettingsException
+     */
+    private static File getOutputDirectory(final URI uri) throws IOException {
+        final File outputdirectory = ResolverUtil.resolveURItoLocalFile(uri);
+
+        if (!outputdirectory.exists()) {
+            throw new IOException("Output directory \"" + outputdirectory.getAbsoluteFile() + "\" does not exist");
+        }
+        if (!outputdirectory.isDirectory()) {
+            throw new IOException(
+                "Specified path doesn't point to a directory: \"" + outputdirectory.getAbsoluteFile());
+        }
+        return outputdirectory;
+    }
+
     /**
      * Creates a file from the binary object, contained in the row.
      *
      *
-     * This method creates a file out of the binary object, that is contained in
-     * the row. The filename is either also extracted from the row or generated
-     * by using the set pattern and the rows number.
+     * This method creates a file out of the binary object, that is contained in the row. The filename is either also
+     * extracted from the row or generated by using the set pattern and the rows number.
      *
      * @param row Row with the needed data
      * @param rowNr Number of the row in the table
@@ -286,86 +325,93 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * @return Cell containing the URI to the created file
      */
     private DataCell createFile(final DataRow row, final long rowNr, final Set<String> filenames,
-            final DataTableSpec inSpec, final ExecutionContext exec) {
-        String boColumn = m_bocolumn.getStringValue();
-        int boIndex = inSpec.findColumnIndex(boColumn);
-        String filenameHandling = m_filenamehandling.getStringValue();
-        File outputDirectory = null;
-        String fromColumn = FilenameHandling.FROMCOLUMN.getName();
-        String generate = FilenameHandling.GENERATE.getName();
-        String ifExists = m_ifexists.getStringValue();
-        String filename = "";
-        // Assume missing binary object
+        final DataTableSpec inSpec, final ExecutionContext exec) throws IOException {
+        final String boColumn = m_bocolumn.getStringValue();
+        final int boIndex = inSpec.findColumnIndex(boColumn);
+
+        final String filenameHandling = m_filenamehandling.getStringValue();
+        final String fromColumn = FilenameHandling.FROMCOLUMN.getName();
+        final String generate = FilenameHandling.GENERATE.getName();
+        final String ifExists = m_ifexists.getStringValue();
+
+        // check for missing binary object
         DataCell uriCell = DataType.getMissingCell();
-        if (!row.getCell(boIndex).isMissing()) {
-            if (filenameHandling.equals(fromColumn)) {
-                // Get filename from table
-                int targetIndex = inSpec.findColumnIndex(m_targetcolumn.getStringValue());
-                if (row.getCell(targetIndex).isMissing()) {
-                    throw new RuntimeException("Filename in row \"" + row.getKey() + "\" is missing");
-                }
-                URI targetUri = ((URIDataCell)(row.getCell(targetIndex))).getURIContent().getURI();
-                if (!targetUri.getScheme().equals("file")) {
-                    throw new RuntimeException("This node only supports the protocol \"file\"");
-                }
-                // Absolute path in filename, no preceding directory
-                filename = targetUri.getPath();
+        if (row.getCell(boIndex).isMissing()) {
+            return uriCell;
+        }
+
+        // create filename and output folder
+        String filename = "";
+        File outputDirectory; // internal output directory, we may not report it to the user!
+
+        URI targetUri = null; // user supplied
+
+        if (filenameHandling.equals(fromColumn)) {
+            // Get filename from table
+            final int targetIndex = inSpec.findColumnIndex(m_targetcolumn.getStringValue());
+            if (row.getCell(targetIndex).isMissing()) {
+                throw new IOException("Filename in row \"" + row.getKey() + "\" is missing");
             }
-            if (filenameHandling.equals(generate)) {
-                // Generate filename using pattern, by replacing the ? with the
-                // row number
-                filename = m_namepattern.getStringValue().replace("?", "" + rowNr);
-                outputDirectory = new File(m_outputdirectory.getStringValue());
+            targetUri = ((URIDataCell)(row.getCell(targetIndex))).getURIContent().getURI();
+
+            // Absolute path in filename, no preceding directory
+            filename = ResolverUtil.resolveURItoLocalFile(targetUri).getAbsolutePath();
+        } else if (filenameHandling.equals(generate)) {
+            // Generate filename using pattern, by replacing the ? with the
+            // row number
+            filename = m_namepattern.getStringValue().replace("?", "" + rowNr);
+            targetUri = getOutputURI();
+        } else {
+            throw new IllegalArgumentException("Invalid filename handling setting!");
+        }
+
+        outputDirectory = getOutputDirectory(targetUri);
+
+        // create the output file
+        try {
+            final File file = new File(outputDirectory, filename);
+            // Check if a file with the same name has already been created
+            // (only possible with use of the target column)
+            if (filenames.contains(file.getAbsolutePath())) {
+                throw new IOException("Duplicate entry \"" + file.getAbsolutePath() + "\" in the target column");
             }
-            try {
-                File file = new File(outputDirectory, filename);
-                // Check if a file with the same name has already been created
-                // (only possible with use of the target column)
-                if (filenames.contains(file.getAbsolutePath())) {
-                    throw new RuntimeException("Duplicate entry \"" + file.getAbsolutePath()
-                            + "\" in the target column");
+            // Check if a file with the same name already exists (but was
+            // not created by this execution)
+            if (file.exists()) {
+                // Abort if policy is abort
+                if (ifExists.equals(OverwritePolicy.ABORT.getName())) {
+                    throw new IOException(
+                        "File \"" + targetUri.toString() + "/" + filename + "\" exists, overwrite policy: \"" + ifExists + "\"");
                 }
-                // Check if a file with the same name already exists (but was
-                // not created by this execution)
-                if (file.exists()) {
-                    // Abort if policy is abort
-                    if (ifExists.equals(OverwritePolicy.ABORT.getName())) {
-                        throw new RuntimeException("File \"" + file.getAbsolutePath()
-                                + "\" exists, overwrite policy: \"" + ifExists + "\"");
-                    }
-                    // Remove if policy is overwrite
-                    if (ifExists.equals(OverwritePolicy.OVERWRITE.getName())) {
-                        if (!file.delete()) {
-                            throw new RuntimeException("File " + file + " could not be deleted");
-                        }
-                    }
+                // Remove if policy is overwrite
+                if (ifExists.equals(OverwritePolicy.OVERWRITE.getName())) {
+                    Files.delete(file.toPath());
                 }
-                byte[] buffer = new byte[1024];
-                file.getParentFile().mkdirs();
-                if (!file.createNewFile()) {
-                    throw new RuntimeException("File " + file + " could not be created");
-                }
-                // Add file to created files
-                filenames.add(file.getAbsolutePath());
-                // Get input stream from the binary object
-                BinaryObjectDataValue bocell = (BinaryObjectDataValue)row.getCell(boIndex);
-                InputStream input = bocell.openInputStream();
-                OutputStream output = new FileOutputStream(file);
+            }
+            final byte[] buffer = new byte[1024];
+            file.getParentFile().mkdirs();
+            if (!file.createNewFile()) {
+                throw new IOException("File " + file + " could not be created");
+            }
+            // Add file to created files
+            filenames.add(file.getAbsolutePath());
+            // Get input stream from the binary object
+            final BinaryObjectDataValue bocell = (BinaryObjectDataValue)row.getCell(boIndex);
+            try (InputStream input = bocell.openInputStream(); final OutputStream output = new FileOutputStream(file)) {
                 int length;
                 // Copy data from binary object to file
                 while ((length = input.read(buffer)) > 0) {
                     exec.checkCanceled();
                     output.write(buffer, 0, length);
                 }
-                input.close();
-                output.close();
-                // Create cell with the URI information
-                URI uri = file.getAbsoluteFile().toURI();
-                String extension = FilenameUtils.getExtension(uri.getPath());
-                uriCell = new URIDataCell(new URIContent(uri, extension));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
+
+            // Create cell with the URI information
+            final String newPath = targetUri.getPath() + "/" + filename;
+            final URI outputURI = new URIBuilder(targetUri).setPath(newPath).setCharset(m_charset).build();
+            uriCell = UriCellFactory.create(outputURI.toString());
+        } catch (final Exception e) {
+            throw new IOException(e);
         }
         return uriCell;
     }
@@ -384,7 +430,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
         // createColumnRearranger will check the settings
-        DataTableSpec outSpec = createColumnRearranger(inSpecs[0], null, null).createSpec();
+        final DataTableSpec outSpec = createColumnRearranger(inSpecs[0], null, null).createSpec();
         return new DataTableSpec[]{outSpec};
     }
 
@@ -434,8 +480,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec)
+            throws IOException, CanceledExecutionException {
         // Not used
     }
 
@@ -443,8 +489,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec)
+            throws IOException, CanceledExecutionException {
         // Not used
     }
 
