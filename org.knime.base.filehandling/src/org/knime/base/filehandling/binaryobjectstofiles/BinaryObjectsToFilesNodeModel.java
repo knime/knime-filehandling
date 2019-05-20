@@ -100,6 +100,8 @@ import org.knime.core.util.pathresolve.ResolverUtil;
  */
 class BinaryObjectsToFilesNodeModel extends NodeModel {
 
+    private static final Charset CHARSET = StandardCharsets.UTF_8;
+
     private final SettingsModelString m_bocolumn;
 
     private final SettingsModelString m_filenamehandling;
@@ -113,8 +115,6 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     private final SettingsModelBoolean m_removebocolumn;
 
     private final SettingsModelString m_ifexists;
-
-    private final Charset m_charset = StandardCharsets.UTF_8;
 
     /**
      * Constructor for the node model.
@@ -335,15 +335,12 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         final String ifExists = m_ifexists.getStringValue();
 
         // check for missing binary object
-        DataCell uriCell = DataType.getMissingCell();
         if (row.getCell(boIndex).isMissing()) {
-            return uriCell;
+            return DataType.getMissingCell();
         }
 
         // create filename and output folder
         String filename = "";
-        File outputDirectory; // internal output directory, we may not report it to the user!
-
         URI targetUri = null; // user supplied
 
         if (filenameHandling.equals(fromColumn)) {
@@ -365,7 +362,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             throw new IllegalArgumentException("Invalid filename handling setting!");
         }
 
-        outputDirectory = getOutputDirectory(targetUri);
+        // internal output directory, we may not report it to the user!
+        final File outputDirectory = getOutputDirectory(targetUri);
 
         // create the output file
         try {
@@ -380,8 +378,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             if (file.exists()) {
                 // Abort if policy is abort
                 if (ifExists.equals(OverwritePolicy.ABORT.getName())) {
-                    throw new IOException(
-                        "File \"" + targetUri.toString() + "/" + filename + "\" exists, overwrite policy: \"" + ifExists + "\"");
+                    throw new IOException("File \"" + targetUri.toString() + "/" + filename
+                        + "\" exists, overwrite policy: \"" + ifExists + "\"");
                 }
                 // Remove if policy is overwrite
                 if (ifExists.equals(OverwritePolicy.OVERWRITE.getName())) {
@@ -408,12 +406,11 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
             // Create cell with the URI information
             final String newPath = targetUri.getPath() + "/" + filename;
-            final URI outputURI = new URIBuilder(targetUri).setPath(newPath).setCharset(m_charset).build();
-            uriCell = UriCellFactory.create(outputURI.toString());
+            final URI outputURI = new URIBuilder(targetUri).setPath(newPath).setCharset(CHARSET).build();
+            return UriCellFactory.create(outputURI.toString());
         } catch (final Exception e) {
             throw new IOException(e);
         }
-        return uriCell;
     }
 
     /**
