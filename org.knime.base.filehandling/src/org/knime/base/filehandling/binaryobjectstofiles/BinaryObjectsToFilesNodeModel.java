@@ -54,7 +54,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -89,7 +88,6 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
-import org.knime.core.util.FileUtil;
 import org.knime.core.util.pathresolve.ResolverUtil;
 
 /**
@@ -139,7 +137,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
         // Check settings only if filename handling is generate
         if (m_filenamehandling.getStringValue().equals(FilenameHandling.GENERATE.getName())) {
-            getOutputDirectory(getOutputURI());
+            getOutputDirectory(getOutputDirectoryURI());
         }
 
         // HashSet for duplicate checking and cleanup
@@ -270,7 +268,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         if (m_filenamehandling.getStringValue().equals(FilenameHandling.GENERATE.getName())) {
             // Does the output directory exist?
             try {
-                getOutputDirectory(getOutputURI());
+                getOutputDirectory(getOutputDirectoryURI());
             } catch (final IOException e) {
                 throw new InvalidSettingsException("Could not create output directory: " + e.getMessage());
             }
@@ -283,12 +281,20 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         }
     }
 
-    private URI getOutputURI() throws IOException {
+    private URI getOutputDirectoryURI() throws IOException {
         try {
-            // get uri
-            final URL uri = FileUtil.toURL(m_outputdirectory.getStringValue());
-            return uri.toURI();
-        } catch (InvalidPathException | URISyntaxException | IOException e) {
+            String path = m_outputdirectory.getStringValue().replaceAll(" ", "%20");
+            if (!path.endsWith("/")) {
+                path = path + "/";
+            }
+
+            URI uri = new URI(path);
+            if (uri.getScheme() == null) {
+                uri = Paths.get(path).toAbsolutePath().toUri();
+            }
+
+            return uri;
+        } catch (InvalidPathException | URISyntaxException e) {
             throw new IOException("Could not resolve the file: " + e.getMessage());
         }
     }
@@ -343,6 +349,9 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         String filename = "";
         URI targetUri = null; // user supplied
 
+        // internal output directory, we may not report it to the user!
+        final File outputDirectory;
+
         if (filenameHandling.equals(fromColumn)) {
             // Get filename from table
             final int targetIndex = inSpec.findColumnIndex(m_targetcolumn.getStringValue());
@@ -353,17 +362,17 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
             // Absolute path in filename, no preceding directory
             filename = ResolverUtil.resolveURItoLocalFile(targetUri).getAbsolutePath();
+            outputDirectory = null;
         } else if (filenameHandling.equals(generate)) {
             // Generate filename using pattern, by replacing the ? with the
             // row number
             filename = m_namepattern.getStringValue().replace("?", "" + rowNr);
-            targetUri = getOutputURI();
+            targetUri = getOutputDirectoryURI();
+
+            outputDirectory = getOutputDirectory(targetUri);
         } else {
             throw new IllegalArgumentException("Invalid filename handling setting!");
         }
-
-        // internal output directory, we may not report it to the user!
-        final File outputDirectory = getOutputDirectory(targetUri);
 
         // create the output file
         try {
@@ -378,8 +387,15 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             if (file.exists()) {
                 // Abort if policy is abort
                 if (ifExists.equals(OverwritePolicy.ABORT.getName())) {
-                    throw new IOException("File \"" + targetUri.toString() + "/" + filename
-                        + "\" exists, overwrite policy: \"" + ifExists + "\"");
+                    String message;
+                    if (filenameHandling.equals(fromColumn)) {
+                        message =
+                                "File \"" + targetUri.toString() + "\" exists, but overwrite policy: \"" + ifExists + "\"";
+                    } else {
+                        message = "File \"" + targetUri.toString() + "/" + filename
+                                + "\" exists, but overwrite policy: \"" + ifExists + "\"";
+                    }
+                    throw new IOException(message);
                 }
                 // Remove if policy is overwrite
                 if (ifExists.equals(OverwritePolicy.OVERWRITE.getName())) {
@@ -405,8 +421,15 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             }
 
             // Create cell with the URI information
-            final String newPath = targetUri.getPath() + "/" + filename;
-            final URI outputURI = new URIBuilder(targetUri).setPath(newPath).setCharset(CHARSET).build();
+
+            URI outputURI;
+            if (filenameHandling.equals(fromColumn)) {
+                outputURI = targetUri;
+            } else {
+                final String newPath = getOutputDirectoryURI().getPath() + filename;
+                outputURI = new URIBuilder(targetUri).setPath(newPath).setCharset(CHARSET).build();
+            }
+
             return UriCellFactory.create(outputURI.toString());
         } catch (final Exception e) {
             throw new IOException(e);
