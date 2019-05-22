@@ -52,8 +52,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -133,7 +135,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      */
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
-            throws Exception {
+        throws Exception {
 
         // Check settings only if filename handling is generate
         if (m_filenamehandling.getStringValue().equals(FilenameHandling.GENERATE.getName())) {
@@ -145,7 +147,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         // Only append if no target column is used (target column would be
         // identical)
         final boolean appenduricolumn =
-                !m_filenamehandling.getStringValue().equals(FilenameHandling.FROMCOLUMN.getName());
+            !m_filenamehandling.getStringValue().equals(FilenameHandling.FROMCOLUMN.getName());
         try {
             // If the columns do not get appended the create file method will
             // not be called by the rearranger so it has to happen manually
@@ -209,7 +211,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         // Only append if no target column is used (target column would be
         // identical)
         final boolean appenduricolumn =
-                !m_filenamehandling.getStringValue().equals(FilenameHandling.FROMCOLUMN.getName());
+            !m_filenamehandling.getStringValue().equals(FilenameHandling.FROMCOLUMN.getName());
         // Append URI column if filehandling is not from column. This will also
         // call the create file method
         if (appenduricolumn) {
@@ -281,16 +283,26 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         }
     }
 
+    /**
+     * @return the URI of the output directory
+     * @throws IOException
+     */
     private URI getOutputDirectoryURI() throws IOException {
         try {
+            // first we assume an URI
             String path = m_outputdirectory.getStringValue().replaceAll(" ", "%20");
+
+            // we append a /
             if (!path.endsWith("/")) {
                 path = path + "/";
             }
 
-            URI uri = new URI(path);
-            if (uri.getScheme() == null) {
-                uri = Paths.get(path).toAbsolutePath().toUri();
+            URI uri;
+            try {
+                uri = new URL(path).toURI();
+            } catch (MalformedURLException e) {
+                // fall back to path resolution
+                uri = Paths.get(m_outputdirectory.getStringValue()).toAbsolutePath().toUri();
             }
 
             return uri;
@@ -390,10 +402,10 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
                     String message;
                     if (filenameHandling.equals(fromColumn)) {
                         message =
-                                "File \"" + targetUri.toString() + "\" exists, but overwrite policy: \"" + ifExists + "\"";
+                            "File \"" + targetUri.toString() + "\" exists, but overwrite policy: \"" + ifExists + "\"";
                     } else {
                         message = "File \"" + targetUri.toString() + "/" + filename
-                                + "\" exists, but overwrite policy: \"" + ifExists + "\"";
+                            + "\" exists, but overwrite policy: \"" + ifExists + "\"";
                     }
                     throw new IOException(message);
                 }
@@ -501,7 +513,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      */
     @Override
     protected void loadInternals(final File internDir, final ExecutionMonitor exec)
-            throws IOException, CanceledExecutionException {
+        throws IOException, CanceledExecutionException {
         // Not used
     }
 
@@ -510,7 +522,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      */
     @Override
     protected void saveInternals(final File internDir, final ExecutionMonitor exec)
-            throws IOException, CanceledExecutionException {
+        throws IOException, CanceledExecutionException {
         // Not used
     }
 
