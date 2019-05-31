@@ -69,7 +69,7 @@ import org.knime.core.node.port.PortObjectSpec;
  * Dialog component to choose a file from a remote location.
  *
  * @author Noemi Balassa
- * @since 3.8
+ * @since 4.0
  */
 public class DialogComponentRemoteFileChooser extends DialogComponent {
 
