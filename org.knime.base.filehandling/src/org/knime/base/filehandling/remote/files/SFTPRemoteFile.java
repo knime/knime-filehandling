@@ -471,7 +471,7 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                 if (internalIsDirectory()) {
                     m_channel.cd("..");
                     // Delete inner files first
-                    recursiveRemoveDirectory(getName() + File.separator);
+                    recursiveRemoveDirectory(getName() + "/");
                     resetCache();
                     result = result && !internalExists();
                 } else {
@@ -496,7 +496,7 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
             for (ChannelSftp.LsEntry entry : dirList) {
                 if (!(entry.getFilename().equals(".") || entry.getFilename().equals(".."))) {
                     if (entry.getAttrs().isDir()) {
-                        recursiveRemoveDirectory(directory + entry.getFilename() + File.separator);
+                        recursiveRemoveDirectory(directory + entry.getFilename() + "/");
                     } else {
                         m_channel.rm(directory + entry.getFilename());
                     }
