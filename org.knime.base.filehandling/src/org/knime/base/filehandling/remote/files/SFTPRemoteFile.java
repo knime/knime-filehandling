@@ -647,7 +647,10 @@ public class SFTPRemoteFile extends RemoteFile<SSHConnection> {
                 }
             }
 
-            m_usingRoot = !pathSet;
+            // There is no path so we assume that the path is root, to fulfill
+            // SFTPRemoteFileTest#testOpenChannelWithoutPath
+            // Which expects an empty path to be equal to root.
+            m_usingRoot = !(path != null && path.isEmpty()) && !pathSet;
 
             if (!pathSet) {
                 // Use root directory
