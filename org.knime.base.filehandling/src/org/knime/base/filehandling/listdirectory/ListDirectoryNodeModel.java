@@ -50,6 +50,7 @@ package org.knime.base.filehandling.listdirectory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -86,6 +87,7 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.core.util.FileUtil;
 import org.knime.core.util.MutableInteger;
 
 /**
@@ -126,7 +128,8 @@ public class ListDirectoryNodeModel extends NodeModel {
             URI directoryUri;
             if (m_configuration.getDirectory().startsWith("knime://")) {
             	// We also handle knime:// URIs, see AP-4648
-                directoryUri = new URI(m_configuration.getDirectory());
+                URL encodedDirectory = FileUtil.toURL(m_configuration.getDirectory());
+                directoryUri = new URI(encodedDirectory.toString());
             } else if (m_connectionInformation != null) {
                 exec.setProgress("Connecting to " + m_connectionInformation.toURI());
                 // Generate URI to the directory
