@@ -153,7 +153,7 @@ public class UploadNodeDialog extends NodeDialogPane {
         m_prefix = new FilesHistoryPanel("prefixHistory", false);
         m_prefix.setSelectMode(JFileChooser.DIRECTORIES_ONLY);
         m_prefixfvm =
-                new FlowVariableModelButton(createFlowVariableModel("truncatedirectory", FlowVariable.Type.STRING));
+                new FlowVariableModelButton(createFlowVariableModel("prefix", FlowVariable.Type.STRING));
         m_prefixfvm.getFlowVariableModel().addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(final ChangeEvent e) {
