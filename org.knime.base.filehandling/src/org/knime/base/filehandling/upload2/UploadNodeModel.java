@@ -50,6 +50,7 @@ package org.knime.base.filehandling.upload2;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.io.FilenameUtils;
@@ -188,7 +189,7 @@ public class UploadNodeModel extends NodeModel {
             mkDirs = false;
         } else if (pathHandling.equals(PathHandling.TRUNCATE_PREFIX.getName())) {
             String prefix = m_configuration.getPrefix();
-            prefix = new File(prefix).toURI().getPath();
+            prefix = Pattern.quote(new File(prefix).toURI().getPath());
             // AP-12160 No longer encode the prefix, so that the prefix can actually match.
             // For windows paths under linux this can lead to regex problems.
             // Before nothing was matched in that case. To keep that behavior but give more
