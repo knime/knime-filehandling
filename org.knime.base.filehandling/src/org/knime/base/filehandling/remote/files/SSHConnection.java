@@ -47,13 +47,13 @@
  */
 package org.knime.base.filehandling.remote.files;
 
-import java.io.File;
 import java.net.URI;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
-import org.knime.core.node.util.CheckUtils;
 import org.knime.core.util.FileUtil;
 import org.knime.core.util.KnimeEncryption;
 
@@ -105,18 +105,16 @@ public class SSHConnection extends Connection {
         }
         final JSch jsch = new JSch();
         // Use keyfile if available
-        String keyfile = m_connectionInformation.getKeyfile();
+        final String keyfile = m_connectionInformation.getKeyfile();
         if (!StringUtils.isEmpty(keyfile)) {
-            if (keyfile.startsWith("knime://")) {
-                File fileFromURL = FileUtil.getFileFromURL(new URL(keyfile));
-                CheckUtils.checkState(fileFromURL != null, "Can't resolve key file path from URL \"%s\"", keyfile);
-                keyfile = fileFromURL.getAbsolutePath();
-            }
+            final URL url = FileUtil.toURL(keyfile);
+            final byte[] keyFileByteArray = IOUtils.toByteArray(url.openConnection().getInputStream());
             if (password == null) {
-                jsch.addIdentity(keyfile);
+                jsch.addIdentity(null, keyFileByteArray, null, null);
             } else {
-                jsch.addIdentity(keyfile, password);
+                jsch.addIdentity(null, keyFileByteArray, null, password.getBytes(StandardCharsets.UTF_8));
             }
+
         }
         // Set known hosts if available
         final String knownHosts = m_connectionInformation.getKnownHosts();
