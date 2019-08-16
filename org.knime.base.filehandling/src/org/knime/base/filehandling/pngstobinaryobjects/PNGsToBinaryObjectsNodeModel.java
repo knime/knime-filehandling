@@ -139,7 +139,7 @@ class PNGsToBinaryObjectsNodeModel extends NodeModel {
         ColumnRearranger rearranger = new ColumnRearranger(inSpec);
         DataColumnSpec colSpec = new DataColumnSpecCreator(columnName, BinaryObjectDataCell.TYPE).createSpec();
         // Factory that creates a column with binary objects
-        CellFactory factory = new SingleCellFactory(colSpec) {
+        final CellFactory factory = new SingleCellFactory(true, colSpec) {
             @Override
             public DataCell getCell(final DataRow row) {
                 return createBOCell(row, inSpec, bocellfactory);
