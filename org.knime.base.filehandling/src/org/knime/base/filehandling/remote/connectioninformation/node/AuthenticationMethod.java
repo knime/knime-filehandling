@@ -78,6 +78,7 @@ public enum AuthenticationMethod {
 
     /**
      * Use Token.
+     * @since 4.1
      */
     TOKEN("Token", "Token");
 

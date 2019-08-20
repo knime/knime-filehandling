@@ -220,6 +220,7 @@ public class Protocol {
 
     /**
      * @return <code>true</code> if the protocol supports token based authentication
+     * @since 4.1
      */
     public boolean hasTokenSupport() {
         return m_tokenSupport;

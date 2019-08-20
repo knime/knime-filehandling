@@ -312,6 +312,7 @@ public class ConnectionInformation implements Serializable {
      * Token may be <code>null</code> to disable authentication via token.
      *
      * @param token the encrypted token or <code>null</code>
+     * @since 4.1
      */
     public void setToken(final String token) {
         m_token = token;
@@ -419,6 +420,7 @@ public class ConnectionInformation implements Serializable {
      * Get the encrypted token. Use {@link KnimeEncryption} to decrypt the token.
      *
      * @return the token password
+     * @since 4.1
      */
     public String getToken() {
         return m_token;
