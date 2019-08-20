@@ -86,6 +86,8 @@ public class Protocol {
 
     private final boolean m_kerberosSupport;
 
+    private final boolean m_tokenSupport;
+
     /**
      * Create a protocol.
      *
@@ -103,8 +105,34 @@ public class Protocol {
      * @param kerberorsSupport <code>true</code> if the protocol supports Kerberos based authentication
      */
     public Protocol(final String name, final int port, final boolean authNoneSupport, final boolean keyfileSupport,
+            final boolean knownhostsSupport, final boolean testSupport, final boolean browseSupport,
+            final boolean userTimeoutSupport, final boolean passwordSupport, final boolean kerberorsSupport) {
+        this(name, port, authNoneSupport, keyfileSupport, knownhostsSupport, testSupport, browseSupport,
+            userTimeoutSupport, passwordSupport, kerberorsSupport, false);
+    }
+
+    /**
+     * Create a protocol.
+     *
+     *
+     * @param name The name
+     * @param port The default port
+     * @param authNoneSupport If the authentication method none is supported
+     * @param keyfileSupport If authentication via keyfile is supported
+     * @param knownhostsSupport If use of known hosts is supported
+     * @param testSupport If the testing of the connection is supported
+     * @param browseSupport If this protocol supports browsing
+     * @param userTimeoutSupport <code>true</code> if the user can change the connection's timeout, <code>false</code>
+     *            otherwise
+     * @param passwordSupport <code>true</code> if the protocol supports password based authentication
+     * @param kerberorsSupport <code>true</code> if the protocol supports Kerberos based authentication
+     * @param tokenSupport <code>true</code> if the protocol support token based authentication
+     * @since 4.1
+     */
+    public Protocol(final String name, final int port, final boolean authNoneSupport, final boolean keyfileSupport,
                      final boolean knownhostsSupport, final boolean testSupport, final boolean browseSupport,
-                     final boolean userTimeoutSupport, final boolean passwordSupport, final boolean kerberorsSupport) {
+                     final boolean userTimeoutSupport, final boolean passwordSupport, final boolean kerberorsSupport,
+                     final boolean tokenSupport) {
         m_name = name.toLowerCase();
         m_port = port;
         m_authNoneSupport = authNoneSupport;
@@ -115,6 +143,7 @@ public class Protocol {
         m_userTimeoutSupport = userTimeoutSupport;
         m_passwordSupport = passwordSupport;
         m_kerberosSupport = kerberorsSupport;
+        m_tokenSupport = tokenSupport;
     }
 
     /**
@@ -187,5 +216,12 @@ public class Protocol {
      */
     public boolean hasKerberosSupport() {
         return m_kerberosSupport;
+    }
+
+    /**
+     * @return <code>true</code> if the protocol supports token based authentication
+     */
+    public boolean hasTokenSupport() {
+        return m_tokenSupport;
     }
 }

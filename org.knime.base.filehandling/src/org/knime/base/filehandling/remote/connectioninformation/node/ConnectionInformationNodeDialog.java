@@ -117,6 +117,8 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
 
     private final JRadioButton m_authKerberos;
 
+    private final JRadioButton m_authToken;
+
     private final ButtonGroup m_authmethod;
 
     private final JLabel m_userLabel;
@@ -126,6 +128,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
     private final JLabel m_passwordLabel;
 
     private final JPasswordField m_password;
+
+    private final JLabel m_tokenLabel;
+
+    private final JPasswordField m_token;
 
     private final JLabel m_keyfileLabel;
 
@@ -179,11 +185,15 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         m_authKerberos = new JRadioButton(AuthenticationMethod.KERBEROS.getLabel());
         m_authKerberos.setActionCommand(AuthenticationMethod.KERBEROS.getName());
         m_authKerberos.addChangeListener(new UpdateListener());
+        m_authToken = new JRadioButton(AuthenticationMethod.TOKEN.getLabel());
+        m_authToken.setActionCommand(AuthenticationMethod.TOKEN.getName());
+        m_authToken.addChangeListener(new UpdateListener());
         m_authmethod = new ButtonGroup();
         m_authmethod.add(m_authnone);
         m_authmethod.add(m_authpassword);
         m_authmethod.add(m_authkeyfile);
         m_authmethod.add(m_authKerberos);
+        m_authmethod.add(m_authToken);
         // Workflow credentials
         m_useworkflowcredentials = new JCheckBox();
         m_useworkflowcredentials.addChangeListener(new UpdateListener());
@@ -194,6 +204,9 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         // Password
         m_passwordLabel = new JLabel("Password:");
         m_password = new JPasswordField();
+        // Token
+        m_tokenLabel = new JLabel("Token:");
+        m_token = new JPasswordField();
         // Keyfile
         m_keyfileLabel = new JLabel("Keyfile:");
         m_keyfile = new FilesHistoryPanel("keyfileHistory", false);
@@ -257,6 +270,11 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         if (m_protocol.hasKerberosSupport()) {
             gbc.gridx++;
             authenticationPanel.add(m_authKerberos);
+            authenticationMethodCount++;
+        }
+        if (m_protocol.hasTokenSupport()) {
+            gbc.gridx++;
+            authenticationPanel.add(m_authToken);
             authenticationMethodCount++;
         }
         // Workflow credentials
@@ -337,6 +355,15 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             gbc.weightx = 1;
             panel.add(m_password, gbc);
         }
+        if (m_protocol.hasTokenSupport()) {
+            gbc.gridx = 0;
+            gbc.weightx = 0;
+            gbc.gridy++;
+            panel.add(m_tokenLabel, gbc);
+            gbc.gridx++;
+            gbc.weightx = 1;
+            panel.add(m_token, gbc);
+        }
         if (m_protocol.hasKeyfileSupport()) {
             gbc.gridx = 0;
             gbc.weightx = 0;
@@ -389,6 +416,10 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         final boolean usePassword =
                 selectedAuthMethod != null ? selectedAuthMethod.getActionCommand()
                         .equals(AuthenticationMethod.PASSWORD.getName()) : false;
+        // If a token should be used
+        final boolean useToken =
+                selectedAuthMethod != null ? selectedAuthMethod.getActionCommand()
+                        .equals(AuthenticationMethod.TOKEN.getName()) : false;
         // If a keyfile should be used
         final boolean useKeyfile =
                 selectedAuthMethod != null ? selectedAuthMethod.getActionCommand()
@@ -396,10 +427,12 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         // Check if credentials are available
         final boolean credentialsAvailable = m_workflowcredentials.getItemCount() > 0;
         // Check if credentials can be selected
-        final boolean credentialsSelectable = (usePassword || useKeyfile) && credentialsAvailable;
+        final boolean credentialsSelectable = (usePassword || useToken || useKeyfile) && credentialsAvailable;
         // Check if the user and password have to be set manually
         final boolean manualCredentials = (usePassword || useKeyfile)
                 && !m_useworkflowcredentials.isSelected();
+        // Check if the token have to be set manually
+        final boolean manualToken = useToken && !m_useworkflowcredentials.isSelected();
         // Disable workflow credentials if auth method is none or no credentials
         // are available
         m_workflowcredentialspanel.setEnabled(credentialsSelectable);
@@ -411,6 +444,9 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         // Password should be enabled if the password or the keyfile get used
         m_passwordLabel.setEnabled(manualCredentials);
         m_password.setEnabled(manualCredentials);
+        // Token should be enabled if the token option was selected and no credentials are provided
+        m_tokenLabel.setEnabled(manualToken);
+        m_token.setEnabled(manualToken);
         // Do this only if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             final boolean keyfileReplacement = m_keyfilefvm.getFlowVariableModel().isVariableReplacementEnabled();
@@ -524,6 +560,16 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
         } catch (final Exception e) {
             // Do not change password
         }
+        // Only save if the protocol supports tokens
+        if (m_protocol.hasTokenSupport()) {
+            try {
+                if (m_token.getPassword().length > 0) {
+                    config.setTokenEncrypted(KnimeEncryption.encrypt(m_token.getPassword()));
+                }
+            } catch (final Exception e) {
+                throw new InvalidSettingsException("Unable to encrypt token", e);
+            }
+        }
         // Only save if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             config.setKeyfile(m_keyfile.getSelectedFile());
@@ -576,6 +622,14 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             m_password.setText(KnimeEncryption.decrypt(config.getPassword()));
         } catch (final Exception e) {
             // Leave empty
+        }
+        // Only load if the protocol supports tokens
+        if (m_protocol.hasTokenSupport()) {
+            try {
+                m_token.setText(KnimeEncryption.decrypt(config.getToken()));
+            } catch (final Exception e) {
+                // Leave empty if token decryption fails
+            }
         }
         // Only load if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {

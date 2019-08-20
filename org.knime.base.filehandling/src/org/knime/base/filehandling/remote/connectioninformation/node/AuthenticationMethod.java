@@ -74,7 +74,12 @@ public enum AuthenticationMethod {
     /**
      * Use Kerberos.
      */
-    KERBEROS("Kerberos", "Kerberos");
+    KERBEROS("Kerberos", "Kerberos"),
+
+    /**
+     * Use Token.
+     */
+    TOKEN("Token", "Token");
 
     private final String m_name;
     private final String m_label;
@@ -106,7 +111,7 @@ public enum AuthenticationMethod {
      * @return Array of all authentication method settings
      */
     static String[] getAllSettings() {
-        return new String[]{NONE.getName(), PASSWORD.getName(), KEYFILE.getName(), KERBEROS.getName()};
+        return new String[]{NONE.getName(), PASSWORD.getName(), KEYFILE.getName(), KERBEROS.getName(), TOKEN.getName()};
     }
 
 }

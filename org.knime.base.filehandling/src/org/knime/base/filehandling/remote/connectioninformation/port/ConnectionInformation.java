@@ -86,6 +86,8 @@ public class ConnectionInformation implements Serializable {
 
     private String m_password = null;
 
+    private String m_token = null;
+
     private String m_keyfile = null;
 
     private String m_knownHosts = null;
@@ -93,6 +95,8 @@ public class ConnectionInformation implements Serializable {
     private int m_timeout = 30000;
 
     private boolean m_useKerberos;
+
+    private boolean m_useToken;
 
     private ConnectionInformation m_ftpProxy = null;
 
@@ -118,6 +122,8 @@ public class ConnectionInformation implements Serializable {
         String pass = model.containsKey("xpassword") ?
             model.getPassword("xpassword", "}l?>mn0am8ty1m<+nf") : model.getString("password");
         this.setPassword(pass);
+        this.setUseToken(model.getBoolean("token", false)); // new option in 4.1
+        this.setToken(model.getPassword("xtoken", "}l?>mn0am8ty1m<+nf", "")); // new option in 4.1
         this.setKeyfile(model.getString("keyfile"));
         this.setKnownHosts(model.getString("knownhosts"));
         this.setTimeout(model.getInt("timeout", 30000)); // new option in 2.10
@@ -145,6 +151,8 @@ public class ConnectionInformation implements Serializable {
         model.addInt("port", m_port);
         model.addString("user", m_user);
         model.addPassword("xpassword", "}l?>mn0am8ty1m<+nf", m_password);
+        model.addBoolean("token", m_useToken);
+        model.addPassword("xtoken", "}l?>mn0am8ty1m<+nf", m_token);
         model.addString("keyfile", m_keyfile);
         model.addString("knownhosts", m_knownHosts);
         model.addInt("timeout", m_timeout);
@@ -213,7 +221,7 @@ public class ConnectionInformation implements Serializable {
         // User
         final String user = uri.getUserInfo();
         // User might not be used
-        if (!m_useKerberos && StringUtils.isNotEmpty(user) && StringUtils.isNotEmpty(m_user) && !user.equals(m_user)) {
+        if (!m_useKerberos && !m_useToken && StringUtils.isNotEmpty(user) && StringUtils.isNotEmpty(m_user) && !user.equals(m_user)) {
             throw new Exception("User incompatible");
         }
     }
@@ -299,6 +307,17 @@ public class ConnectionInformation implements Serializable {
     }
 
     /**
+     * Set the token. The token must be encrypted by the {@link KnimeEncryption} class.
+     *
+     * Token may be <code>null</code> to disable authentication via token.
+     *
+     * @param token the encrypted token or <code>null</code>
+     */
+    public void setToken(final String token) {
+        m_token = token;
+    }
+
+    /**
      * Set the keyfile.
      *
      *
@@ -337,6 +356,14 @@ public class ConnectionInformation implements Serializable {
      */
     public void setUseKerberos(final boolean useKerberos) {
         m_useKerberos = useKerberos;
+    }
+
+    /**
+     * @param useToken <code>true</code> if token should be used
+     * @since 4.1
+     */
+    public void setUseToken(final boolean useToken) {
+        m_useToken = useToken;
     }
 
     /**
@@ -389,6 +416,15 @@ public class ConnectionInformation implements Serializable {
     }
 
     /**
+     * Get the encrypted token. Use {@link KnimeEncryption} to decrypt the token.
+     *
+     * @return the token password
+     */
+    public String getToken() {
+        return m_token;
+    }
+
+    /**
      * Get the keyfile.
      *
      *
@@ -426,6 +462,14 @@ public class ConnectionInformation implements Serializable {
     }
 
     /**
+     * @return <code>true</code> if Token should be used
+     * @since 4.1
+     */
+    public boolean useToken() {
+        return m_useToken;
+    }
+
+    /**
      * @param proxyInfo containing the necessary information to connect to an ftp-proxy
      * @since 3.5
      */
@@ -450,6 +494,8 @@ public class ConnectionInformation implements Serializable {
         hcb.append(m_port);
         hcb.append(m_user);
         hcb.append(m_password);
+        hcb.append(m_useToken);
+        hcb.append(m_token);
         hcb.append(m_keyfile);
         hcb.append(m_knownHosts);
         hcb.append(m_useKerberos);
@@ -472,6 +518,8 @@ public class ConnectionInformation implements Serializable {
         eqBuilder.append(m_port, ci.m_port);
         eqBuilder.append(m_user, ci.m_user);
         eqBuilder.append(m_password, ci.m_password);
+        eqBuilder.append(m_useToken, ci.m_useToken);
+        eqBuilder.append(m_token, ci.m_token);
         eqBuilder.append(m_keyfile, ci.m_keyfile);
         eqBuilder.append(m_knownHosts, ci.m_knownHosts);
         eqBuilder.append(m_useKerberos, ci.m_useKerberos);

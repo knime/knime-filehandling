@@ -82,6 +82,8 @@ class ConnectionInformationConfiguration {
     /** added in 3.4.1, see AP-7807. */
     private String m_passwordEncrypted;
 
+    private String m_tokenEncrypted;
+
     private String m_keyfile;
 
     private boolean m_useknownhosts;
@@ -183,6 +185,20 @@ class ConnectionInformationConfiguration {
      */
     void setPasswordEncrypted(final String passwordEncrypted) {
         m_passwordEncrypted = passwordEncrypted;
+    }
+
+    /**
+     * @return the encrypted token
+     */
+    String getToken() {
+        return m_tokenEncrypted;
+    }
+
+    /**
+     * @param tokenEncrypted the encrypted token
+     */
+    void setTokenEncrypted(final String tokenEncrypted) {
+        m_tokenEncrypted = tokenEncrypted;
     }
 
     /**
@@ -297,7 +313,20 @@ class ConnectionInformationConfiguration {
         connectionInformation.setHost(getHost());
         connectionInformation.setPort(getPort());
         final String authenticationMethod = getAuthenticationmethod();
-        if (!authenticationMethod.equals(AuthenticationMethod.NONE.getName())) {
+        if (authenticationMethod.equals(AuthenticationMethod.TOKEN.getName())) {
+            if (m_useworkflowcredentials) {
+                try {
+                    final ICredentials credentials = credentialsProvider.get(m_workflowcredentials);
+                    connectionInformation.setUseToken(true);
+                    connectionInformation.setToken(KnimeEncryption.encrypt(credentials.getPassword().toCharArray()));
+                } catch (final Exception e) {
+                    // Password encryption failed
+                }
+            } else {
+                connectionInformation.setUseToken(true);
+                connectionInformation.setToken(getToken());
+            }
+        } else if (!authenticationMethod.equals(AuthenticationMethod.NONE.getName())) {
             if (m_useworkflowcredentials) {
                 // Use credentials
                 final ICredentials credentials = credentialsProvider.get(m_workflowcredentials);
@@ -345,6 +374,10 @@ class ConnectionInformationConfiguration {
         // an old workflow (<3.4.1) or when controlled via flow variable.
         settings.addString("password", m_passwordPlain);
         settings.addPassword("xpassword", ">$:g~l63t(uc1[y#[u", m_passwordEncrypted); // added in 3.4.1
+        // Only save if the protocol support tokens
+        if (m_protocol.hasTokenSupport()) {
+            settings.addPassword("xtoken", ">$:g~l63t(uc1[y#[u", m_tokenEncrypted); // added in 4.1
+        }
         // Only save if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             settings.addString("keyfile", m_keyfile);
@@ -380,6 +413,10 @@ class ConnectionInformationConfiguration {
         } else {
             // added in 3.4.1
             m_passwordEncrypted = settings.getPassword("xpassword", ">$:g~l63t(uc1[y#[u", null);
+        }
+        // Only load if the protocol supports tokens
+        if (m_protocol.hasTokenSupport()) {
+            m_tokenEncrypted = settings.getPassword("xtoken", ">$:g~l63t(uc1[y#[u", ""); // new option in 4.1
         }
         // Only load if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
@@ -430,6 +467,17 @@ class ConnectionInformationConfiguration {
                 validate(getPassword(), "password");
             }
         }
+
+        // Only validate if the authentication method is set to token
+        if (m_authenticationmethod.equals(AuthenticationMethod.TOKEN.getName())) {
+            m_tokenEncrypted = settings.getPassword("xtoken", ">$:g~l63t(uc1[y#[u", ""); // new option in 4.1
+            if (m_useworkflowcredentials) {
+                validate(m_workflowcredentials, "workflowcredentials");
+            } else {
+                validate(getToken(), "token");
+            }
+        }
+
         // Only load if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
             m_keyfile = settings.getString("keyfile");
