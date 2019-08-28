@@ -391,7 +391,7 @@ public class ConnectionInformationNodeDialog extends NodeDialogPane {
             gbc.gridx = 0;
             gbc.gridy++;
             gbc.weightx = 0;
-            panel.add(new JLabel("Timeout:   "), gbc);
+            panel.add(new JLabel("Timeout (ms):"), gbc);
             gbc.gridx++;
             gbc.fill = GridBagConstraints.NONE;
             panel.add(m_timeout, gbc);
