@@ -44,56 +44,65 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Sep 2, 2019 (bjoern): created
+ *   Sep 16, 2019 (Tobias Urhaug, KNIME GmbH, Berlin, Germany): created
  */
-package org.knime.filehandling.core.connections.base;
+package org.knime.filehandling.core.connections.knime;
 
-import java.nio.file.Path;
-import java.util.Objects;
+import java.io.File;
+import java.nio.file.Paths;
+
+import javax.swing.filechooser.FileSystemView;
+import javax.swing.filechooser.FileView;
+
+import org.knime.core.node.util.AbstractJFileChooserBrowser;
 
 /**
  *
- * @author Bjoern Lohrmann, KNIME GmbH
+ * @author Tobias Urhaug, KNIME GmbH, Berlin, Germany
  */
-public class GenericPathUtil {
+public class KNIMEFileSystemBrowser extends AbstractJFileChooserBrowser {
 
-    public static boolean startsWith(final Path base, final Path other) {
-        if (!Objects.equals(base.getRoot(), other.getRoot())) {
-            return false;
-        }
 
-        if (base.getNameCount() < other.getNameCount()) {
-            return false;
-        }
+    private final String m_location;
+    private final FileSystemView m_fileSystemView;
 
-        for (int i = 0; i < other.getNameCount(); i++) {
-            if (!base.getName(i).equals(other.getName(i))) {
-                return false;
-            }
-        }
+    public KNIMEFileSystemBrowser(final String location, final KNIMEFileSystem fileSystem) {
+        m_location = location;
+        m_fileSystemView = new KNIMEFileSystemView(Paths.get(m_location), fileSystem);
+    }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isCompatible() {
+        // TODO Auto-generated method stub
         return true;
     }
 
-    public static boolean endsWith(final Path base, final Path other) {
-        if (base.getRoot() == null && other.getRoot() != null) {
-            return false;
-        }
-
-        if (base.getNameCount() < other.getNameCount()) {
-            return false;
-        }
-
-        int baseIndex = base.getNameCount() - 1;
-        int otherIndex = other.getNameCount() - 1;
-        while (otherIndex >= 0) {
-            if (!base.getName(baseIndex).equals(other.getName(otherIndex))) {
-                return false;
-            }
-
-            otherIndex--;
-            baseIndex--;
-        }
-        return true;
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected FileSystemView getFileSystemView() {
+        return m_fileSystemView;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected FileView getFileView() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected File createFileFromPath(final String filePath) {
+        return m_fileSystemView.createFileObject(filePath);
+    }
+
 }

@@ -55,6 +55,7 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.IOException;
 import java.util.Optional;
 
 import javax.swing.Box;
@@ -79,8 +80,14 @@ import org.knime.core.node.util.FileSystemBrowser.DialogType;
 import org.knime.core.node.util.FileSystemBrowser.FileSelectionMode;
 import org.knime.core.node.util.LocalFileSystemBrowser;
 import org.knime.core.node.workflow.FlowVariable.Type;
+import org.knime.core.node.workflow.NodeContext;
+import org.knime.core.node.workflow.WorkflowContext;
+import org.knime.core.node.workflow.WorkflowManager;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
+import org.knime.filehandling.core.connections.knime.KNIMEFileSystem;
+import org.knime.filehandling.core.connections.knime.KNIMEFileSystemBrowser;
+import org.knime.filehandling.core.connections.knime.KNIMEFileSystemProvider;
 import org.knime.filehandling.core.defaultnodesettings.FileSystemChoice.Choice;
 import org.knime.filehandling.core.filefilter.FileFilter.FilterType;
 import org.knime.filehandling.core.filefilter.FileFilterDialog;
@@ -153,6 +160,8 @@ public class DialogComponentFileChooser2 extends DialogComponent {
     /** Flag to temporarily disable event processing from Swing components or the settings model */
     private boolean m_ignoreUpdates;
 
+    private String m_workflowLocation;
+
     /** String used for file system connection label. */
     private static final String CONNECTION_LABEL = "Read from: ";
 
@@ -222,6 +231,7 @@ public class DialogComponentFileChooser2 extends DialogComponent {
         m_statusMessageSwingWorker = null;
 
         initLayout();
+        setWorkflowLocation();
 
         // Fill combo boxes
         updateConnectionsCombo();
@@ -314,6 +324,20 @@ public class DialogComponentFileChooser2 extends DialogComponent {
         return knimeConnectionPanel;
     }
 
+    private void setWorkflowLocation() {
+        NodeContext nodeContext = NodeContext.getContext();
+        WorkflowContext workflowContext = null;
+        if (nodeContext != null) {
+            workflowContext =
+                nodeContext.getContextObjectForClass(WorkflowManager.class)
+                    .map(wfm -> wfm.getContext())
+                    .orElse(null);
+        }
+        if (workflowContext != null) {
+            m_workflowLocation = workflowContext.getCurrentLocation().toString();
+        }
+    }
+
     /** Add event handlers for UI components */
     private void addEventHandlers() {
         m_connections.addActionListener(e -> handleUIChange());
@@ -351,7 +375,39 @@ public class DialogComponentFileChooser2 extends DialogComponent {
                     m_fileHistoryPanel.setBrowseable(false);
                 }
             }
-        } else {
+        } else if (fsChoice.getType() == Choice.KNIME_FS) {
+            KNIMEFileSystemProvider knimeFileSystemProvider = new KNIMEFileSystemProvider();
+            try (KNIMEFileSystem knimeFileSystem = new KNIMEFileSystem(knimeFileSystemProvider)) {
+                m_fileHistoryPanel.setFileSystemBrowser(new KNIMEFileSystemBrowser(m_workflowLocation, knimeFileSystem));
+            } catch (IOException ex) {
+                // TODO Auto-generated catch block
+            }
+        }
+
+
+
+//        else if (fsChoice.getType() == Choice.KNIME_FS) {
+//            KNIMEConnection connection = (KNIMEConnection)m_knimeConnections.getSelectedItem();
+//            if (connection.getType().equals(KNIMEConnection.Type.WORKFLOW_RELATIVE)) {
+//                m_fileHistoryPanel.setFileSystemBrowser(new LocalFileSystemBrowser());
+//
+//                String selectedFile = m_fileHistoryPanel.getSelectedFile();
+//                if (selectedFile == null || selectedFile.isEmpty()) {
+//                    m_fileHistoryPanel.setSelectedFile(m_workflowLocation);
+//                }
+//            }
+//
+//            // TODO TU: implement KNIME file system here?
+//
+//            // If relative connection, use local file system
+//
+//            // If mountpoint-absolute connection, use server remote file system
+//
+//
+//        }
+
+
+        else {
             m_fileHistoryPanel.setFileSystemBrowser(new LocalFileSystemBrowser());
         }
 
@@ -558,6 +614,31 @@ public class DialogComponentFileChooser2 extends DialogComponent {
             KNIMEConnection connection = (KNIMEConnection)m_knimeConnections.getModel().getSelectedItem();
             model.setKNIMEFileSystem(connection.getId());
         }
+
+
+//        String selectedFile = m_fileHistoryPanel.getSelectedFile();
+//        if (selectedFile != null && !selectedFile.isEmpty() && m_workflowLocation != null) {
+//            Path selectedFilePath= Paths.get(selectedFile);
+//            Path workflowLocationPath = Paths.get(m_workflowLocation);
+//
+//            String path = selectedFilePath.toString();
+//            if (!selectedFilePath.equals(workflowLocationPath)) {
+//                path = workflowLocationPath.relativize(selectedFilePath).toString();
+//            }
+//
+//            try {
+//                URL url = FileUtil.toURL(path);
+//                model.setPathOrURL(url.toString());
+//            } catch (InvalidPathException | MalformedURLException ex) {
+//                // TODO Auto-generated catch block
+//            }
+//
+//        } else {
+//            model.setPathOrURL(m_fileHistoryPanel.getSelectedFile());
+//        }
+
+
+
         model.setPathOrURL(m_fileHistoryPanel.getSelectedFile());
         model.setIncludeSubfolders(m_includeSubfolders.isEnabled() && m_includeSubfolders.isSelected());
         model.setFilterFiles(m_filterFiles.isEnabled() && m_filterFiles.isSelected());

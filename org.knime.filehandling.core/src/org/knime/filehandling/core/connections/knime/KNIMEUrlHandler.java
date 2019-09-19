@@ -44,56 +44,29 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Sep 2, 2019 (bjoern): created
+ *   Sep 5, 2019 (Tobias Urhaug, KNIME GmbH, Berlin, Germany): created
  */
-package org.knime.filehandling.core.connections.base;
+package org.knime.filehandling.core.connections.knime;
 
-import java.nio.file.Path;
-import java.util.Objects;
+import java.net.URI;
+import java.net.URL;
 
 /**
  *
- * @author Bjoern Lohrmann, KNIME GmbH
+ * @author Tobias Urhaug, KNIME GmbH, Berlin, Germany
  */
-public class GenericPathUtil {
+public interface KNIMEUrlHandler {
 
-    public static boolean startsWith(final Path base, final Path other) {
-        if (!Objects.equals(base.getRoot(), other.getRoot())) {
-            return false;
-        }
+    /**
+     * @param uri
+     * @return the resolved URL
+     */
+    public URI resolveKNIMEURI(final URI uri);
 
-        if (base.getNameCount() < other.getNameCount()) {
-            return false;
-        }
+    /**
+     * @param url
+     * @return the resolved URL
+     */
+    public URL resolveKNIMEURL(final URL url);
 
-        for (int i = 0; i < other.getNameCount(); i++) {
-            if (!base.getName(i).equals(other.getName(i))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public static boolean endsWith(final Path base, final Path other) {
-        if (base.getRoot() == null && other.getRoot() != null) {
-            return false;
-        }
-
-        if (base.getNameCount() < other.getNameCount()) {
-            return false;
-        }
-
-        int baseIndex = base.getNameCount() - 1;
-        int otherIndex = other.getNameCount() - 1;
-        while (otherIndex >= 0) {
-            if (!base.getName(baseIndex).equals(other.getName(otherIndex))) {
-                return false;
-            }
-
-            otherIndex--;
-            baseIndex--;
-        }
-        return true;
-    }
 }
