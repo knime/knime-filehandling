@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./dirwatcher.png" type="LoopStart">
+    <name>Directory Watcher Loop Start</name>
+
+    <shortDescription>
+        Watches a directory for changes and starts a loop iteration when some occur.
+    </shortDescription>
+
+    <fullDescription>
+        <intro>
+        	This node monitors a directory for file changes (creation, deletion, and modification) and executes a loop iteration
+        	once such changes are detected. The output table of the node contains the event type, the absolute file path, and the path
+        	relative to the monitored directory.
+        </intro>
+		<option name="Local Path">The path to the local directory which should be monitored for changes.</option>
+		<option name="End Criterion">
+			Determines when to stop the loop execution.
+			<ul>
+				<li><b>Duration:</b>Stop after the specified time interval.
+					If this option is selected, the node may output an empty table after the time is up.</li>
+				<li><b>Number of Events:</b>Stop after the specified number of events have been detected.</li>
+				<li><b>Number of Loops:</b>Stop after the specified number of iterations. One iteration can have multiple events.</li>
+			</ul>
+		</option>
+		<option name="Events">The event types to monitor.</option>
+		<option name="Extensions / expression:">Define the file extension(s),
+			a wildcard pattern or a regular expression for the filter. For
+			multiple extensions ";" acts as the separator. This option is 
+			ignored	if no filter is selected.
+        </option>
+
+		<option name="case sensitive:">If checked the filter is case sensitive.</option>
+    </fullDescription>
+
+    <ports>
+        <outPort name="Change events" index="0">
+            Table containing events that occurred in the last polling period.
+        </outPort>
+    </ports>
+</knimeNode>

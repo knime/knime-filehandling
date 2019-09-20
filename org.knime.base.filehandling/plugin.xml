@@ -36,6 +36,11 @@
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.deletefiles.DeleteFilesNodeFactory"  />
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.createdirectory.CreateDirectoryNodeFactory"  />
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.listdirectory.ListDirectoryNodeFactory"  />
+   <node
+         category-path="/io/filehandling"
+         deprecated="false"
+         factory-class="org.knime.base.filehandling.dirwatcher.DirWatcherNodeFactory">
+   </node>
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category
