@@ -48,6 +48,7 @@
  */
 package org.knime.filehandling.core.connections.knime;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -67,13 +68,28 @@ public class KNIMEFileSystem extends FileSystem {
 
     private final FileSystemProvider m_fileSystemProvider;
 
-    private Path m_workflowLocation;
+    private String m_base;
+    private String m_knimeURLType;
 
     /**
      * @param fileSystemProvider
      */
     public KNIMEFileSystem(final KNIMEFileSystemProvider fileSystemProvider) {
         m_fileSystemProvider = fileSystemProvider;
+    }
+
+    /**
+     * @param fileSystemProvider
+     * @param base
+     * @param knimeURLType
+     */
+    public KNIMEFileSystem(
+            final KNIMEFileSystemProvider fileSystemProvider,
+            final String base,
+            final String knimeURLType) {
+        m_fileSystemProvider = fileSystemProvider;
+        m_base = base;
+        m_knimeURLType = knimeURLType;
     }
 
     /**
@@ -115,8 +131,7 @@ public class KNIMEFileSystem extends FileSystem {
      */
     @Override
     public String getSeparator() {
-        // TODO Auto-generated method stub
-        return null;
+        return File.pathSeparator;
     }
 
     /**
@@ -176,6 +191,14 @@ public class KNIMEFileSystem extends FileSystem {
     @Override
     public WatchService newWatchService() throws IOException {
         throw new UnsupportedOperationException();
+    }
+
+    public String getKNIMEURLType() {
+        return m_knimeURLType;
+    }
+
+    public String getBase() {
+        return m_base.toString();
     }
 
 }

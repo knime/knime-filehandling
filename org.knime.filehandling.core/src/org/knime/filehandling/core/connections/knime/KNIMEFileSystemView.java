@@ -54,6 +54,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -67,12 +68,24 @@ import javax.swing.filechooser.FileSystemView;
  */
 public class KNIMEFileSystemView extends FileSystemView {
 
-    private final Path m_base;
+    /**
+     * The base of this file system view, can either be a workflow, node, or a mount point location.
+     */
+    private final Path m_basePath;
+    /**
+     * The type of KNIME URL that is used for this view (Workflow relative, Node relative or Mount Point relative).
+     */
+    private final String m_knimeURLType;
+    private final String m_baseString;
     private final FileSystem m_fileSystem;
     private final Set<Path> m_rootDirectories;
 
-    public KNIMEFileSystemView(final Path base, final KNIMEFileSystem fileSystem) {
-        m_base = new KNIMEPath(fileSystem, base);
+    public KNIMEFileSystemView(final KNIMEFileSystem fileSystem) {
+        m_baseString = fileSystem.getBase();
+        m_basePath = Paths.get(fileSystem.getBase());
+        m_knimeURLType = fileSystem.getKNIMEURLType();
+//        Path emptyRelativePath = Paths.get("");
+//        m_base = new KNIMEPath(fileSystem, emptyRelativePath);
         m_fileSystem = fileSystem;
         m_rootDirectories = new LinkedHashSet<>();
         m_fileSystem.getRootDirectories().forEach(m_rootDirectories::add);
@@ -83,16 +96,26 @@ public class KNIMEFileSystemView extends FileSystemView {
      */
     @Override
     public File getDefaultDirectory() {
-        return new NioFile(m_base.toString());
+        return new NioFile(m_baseString);
     }
 
     @Override
     public File getHomeDirectory() {
-        return new NioFile(m_base.toString());
+        return new NioFile(m_baseString);
     }
 
     @Override
     public File createFileObject(final String path) {
+
+        // Resolve the path here!!
+        Path input = Paths.get(path);
+
+        if (!input.isAbsolute()) {
+            Path resolved = m_basePath.resolve(input);
+            Path normalized = resolved.normalize();
+            return new NioFile(normalized);
+        }
+
         return new NioFile(path);
     }
 
@@ -107,6 +130,20 @@ public class KNIMEFileSystemView extends FileSystemView {
             return m_rootDirectories.stream().anyMatch(p -> p.equals(f.toPath()));
         }
         return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public File getParentDirectory(final File dir) {
+        // TODO Auto-generated method stub
+
+        String path = dir.getPath();
+
+
+
+        return super.getParentDirectory(dir);
     }
 
     /**
@@ -200,7 +237,7 @@ public class KNIMEFileSystemView extends FileSystemView {
             if (m_path.isAbsolute()) {
                 return m_path.toString();
             } else {
-                return m_path.resolve(m_base).toString();
+                return m_path.resolve(m_baseString).toString();
             }
         }
 

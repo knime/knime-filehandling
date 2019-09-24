@@ -88,6 +88,7 @@ import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.connections.knime.KNIMEFileSystem;
 import org.knime.filehandling.core.connections.knime.KNIMEFileSystemBrowser;
 import org.knime.filehandling.core.connections.knime.KNIMEFileSystemProvider;
+import org.knime.filehandling.core.connections.knime.KNIMEFileSystemView;
 import org.knime.filehandling.core.defaultnodesettings.FileSystemChoice.Choice;
 import org.knime.filehandling.core.filefilter.FileFilter.FilterType;
 import org.knime.filehandling.core.filefilter.FileFilterDialog;
@@ -160,7 +161,7 @@ public class DialogComponentFileChooser2 extends DialogComponent {
     /** Flag to temporarily disable event processing from Swing components or the settings model */
     private boolean m_ignoreUpdates;
 
-    private String m_workflowLocation;
+    private String m_baseLocation;
 
     /** String used for file system connection label. */
     private static final String CONNECTION_LABEL = "Read from: ";
@@ -334,7 +335,7 @@ public class DialogComponentFileChooser2 extends DialogComponent {
                     .orElse(null);
         }
         if (workflowContext != null) {
-            m_workflowLocation = workflowContext.getCurrentLocation().toString();
+            m_baseLocation = workflowContext.getCurrentLocation().toString();
         }
     }
 
@@ -377,35 +378,16 @@ public class DialogComponentFileChooser2 extends DialogComponent {
             }
         } else if (fsChoice.getType() == Choice.KNIME_FS) {
             KNIMEFileSystemProvider knimeFileSystemProvider = new KNIMEFileSystemProvider();
-            try (KNIMEFileSystem knimeFileSystem = new KNIMEFileSystem(knimeFileSystemProvider)) {
-                m_fileHistoryPanel.setFileSystemBrowser(new KNIMEFileSystemBrowser(m_workflowLocation, knimeFileSystem));
+            KNIMEConnection knimeConnection = (KNIMEConnection)m_knimeConnections.getSelectedItem();
+
+            // TODO TU: Create the file system from the provider?
+
+            try (KNIMEFileSystem knimeFileSystem = new KNIMEFileSystem(knimeFileSystemProvider, m_baseLocation, knimeConnection.toString())) {
+                m_fileHistoryPanel.setFileSystemBrowser(new KNIMEFileSystemBrowser(new KNIMEFileSystemView(knimeFileSystem)));
             } catch (IOException ex) {
                 // TODO Auto-generated catch block
             }
         }
-
-
-
-//        else if (fsChoice.getType() == Choice.KNIME_FS) {
-//            KNIMEConnection connection = (KNIMEConnection)m_knimeConnections.getSelectedItem();
-//            if (connection.getType().equals(KNIMEConnection.Type.WORKFLOW_RELATIVE)) {
-//                m_fileHistoryPanel.setFileSystemBrowser(new LocalFileSystemBrowser());
-//
-//                String selectedFile = m_fileHistoryPanel.getSelectedFile();
-//                if (selectedFile == null || selectedFile.isEmpty()) {
-//                    m_fileHistoryPanel.setSelectedFile(m_workflowLocation);
-//                }
-//            }
-//
-//            // TODO TU: implement KNIME file system here?
-//
-//            // If relative connection, use local file system
-//
-//            // If mountpoint-absolute connection, use server remote file system
-//
-//
-//        }
-
 
         else {
             m_fileHistoryPanel.setFileSystemBrowser(new LocalFileSystemBrowser());

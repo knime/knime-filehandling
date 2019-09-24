@@ -169,6 +169,10 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
     @Override
     public SeekableByteChannel newByteChannel(final Path path, final Set<? extends OpenOption> options, final FileAttribute<?>... attrs)
         throws IOException {
+
+        // TODO TU: Resolve the KNIMEPath here?
+
+
         // TODO Auto-generated method stub
         return null;
     }

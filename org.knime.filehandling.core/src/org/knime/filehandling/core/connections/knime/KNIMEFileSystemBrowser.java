@@ -49,7 +49,6 @@
 package org.knime.filehandling.core.connections.knime;
 
 import java.io.File;
-import java.nio.file.Paths;
 
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.filechooser.FileView;
@@ -62,13 +61,11 @@ import org.knime.core.node.util.AbstractJFileChooserBrowser;
  */
 public class KNIMEFileSystemBrowser extends AbstractJFileChooserBrowser {
 
-
-    private final String m_location;
+    // TODO TU: Figure out which member variables are actually needed...
     private final FileSystemView m_fileSystemView;
 
-    public KNIMEFileSystemBrowser(final String location, final KNIMEFileSystem fileSystem) {
-        m_location = location;
-        m_fileSystemView = new KNIMEFileSystemView(Paths.get(m_location), fileSystem);
+    public KNIMEFileSystemBrowser(final KNIMEFileSystemView fileSystemView) {
+        m_fileSystemView = fileSystemView;
     }
 
     /**
@@ -76,7 +73,6 @@ public class KNIMEFileSystemBrowser extends AbstractJFileChooserBrowser {
      */
     @Override
     public boolean isCompatible() {
-        // TODO Auto-generated method stub
         return true;
     }
 

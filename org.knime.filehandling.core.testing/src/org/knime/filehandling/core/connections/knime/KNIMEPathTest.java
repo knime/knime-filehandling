@@ -324,4 +324,22 @@ public class KNIMEPathTest {
 	}
 	
 	
+	
+	@Test
+	public void constructor() {
+		Path base = Paths.get("C:/my-workspace/my-workflow");
+		Path emptyRelativePath = Paths.get("");
+		String knimeURLType = "workflow-relative";
+//		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, base, emptyRelativePath, knimeURLType);
+		
+//		String string = knimePath.toString();
+		
+//		Files.createFile(path, attrs)
+		
+//		System.out.println(string);
+		
+		
+	}
+	
+	
 }

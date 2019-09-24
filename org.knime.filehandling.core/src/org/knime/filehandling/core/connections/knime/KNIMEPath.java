@@ -63,7 +63,9 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.knime.filehandling.core.connections.base.GenericPathUtil;
 import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
 import org.knime.workbench.explorer.filesystem.ExplorerFileSystem;
@@ -87,6 +89,11 @@ public class KNIMEPath implements Path {
     private boolean m_isAbsolute;
 
 
+
+    private String m_knimeUrlType;
+    private Path m_relativePath;
+
+
     public KNIMEPath (final KNIMEFileSystem fileSystem, final String first, final String... more) {
         m_fileSystem = fileSystem;
 
@@ -95,28 +102,28 @@ public class KNIMEPath implements Path {
 
         m_isAbsolute = false;
 
+        String replaceAll = first.replaceAll("\\\\", "/");
+        String[] pathComponentsArray = UnixStylePathUtil.toPathComponentsArray(replaceAll);
+        m_pathComponents = ArrayUtils.addAll(pathComponentsArray, more);
+
         m_path = Paths.get(first, more);
-        m_pathComponents = pathComponentsArray();
+
+        Path base = Paths.get(fileSystem.getBase());
+
+//        Path relativize = base.relativize(m_path);
+
+//        m_pathComponents = pathComponentsArray();
     }
 
-    public KNIMEPath (final KNIMEFileSystem fileSystem, final URL url) {
+    public KNIMEPath(
+            final KNIMEFileSystem fileSystem,
+            final Path relativePath) {
         m_fileSystem = fileSystem;
-
-        m_knimeURL = url;
-        m_resolvedURL = null; //To be resolved with ExplorerURLS....
-
-        m_pathComponents = null; //Created from the resolved URL
-
-        m_isAbsolute = false;
-    }
-
-    public KNIMEPath(final KNIMEFileSystem fileSystem, final Path path) {
-        m_fileSystem = fileSystem;
-        m_knimeURL = null;
-        m_resolvedURL = null;
-        m_path = path;
+        m_relativePath = relativePath;
+        m_knimeUrlType = m_fileSystem.getKNIMEURLType();
+        m_path = relativePath;
         m_pathComponents = pathComponentsArray();
-        m_isAbsolute = path.isAbsolute();
+        m_isAbsolute = relativePath.isAbsolute();
     }
 
     /**
@@ -347,7 +354,7 @@ public class KNIMEPath implements Path {
     @Override
     public Path resolve(final String other) {
         // TODO Auto-generated method stub
-        return null;
+        return this;
     }
 
     /**
@@ -473,7 +480,9 @@ public class KNIMEPath implements Path {
 
     @Override
     public String toString() {
-        return m_path.toString();
+        return Arrays.stream(m_pathComponents).collect(Collectors.joining("/"));
+
+//        return m_path.toString();
     }
 
 }
