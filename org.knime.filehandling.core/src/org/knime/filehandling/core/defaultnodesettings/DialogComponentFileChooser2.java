@@ -56,6 +56,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 import javax.swing.Box;
@@ -383,7 +384,7 @@ public class DialogComponentFileChooser2 extends DialogComponent {
             // TODO TU: Create the file system from the provider?
 
             try (KNIMEFileSystem knimeFileSystem = new KNIMEFileSystem(knimeFileSystemProvider, m_baseLocation, knimeConnection.toString())) {
-                m_fileHistoryPanel.setFileSystemBrowser(new KNIMEFileSystemBrowser(new KNIMEFileSystemView(knimeFileSystem)));
+                m_fileHistoryPanel.setFileSystemBrowser(new KNIMEFileSystemBrowser(new KNIMEFileSystemView(knimeFileSystem), Paths.get(m_baseLocation)));
             } catch (IOException ex) {
                 // TODO Auto-generated catch block
             }
@@ -596,31 +597,6 @@ public class DialogComponentFileChooser2 extends DialogComponent {
             KNIMEConnection connection = (KNIMEConnection)m_knimeConnections.getModel().getSelectedItem();
             model.setKNIMEFileSystem(connection.getId());
         }
-
-
-//        String selectedFile = m_fileHistoryPanel.getSelectedFile();
-//        if (selectedFile != null && !selectedFile.isEmpty() && m_workflowLocation != null) {
-//            Path selectedFilePath= Paths.get(selectedFile);
-//            Path workflowLocationPath = Paths.get(m_workflowLocation);
-//
-//            String path = selectedFilePath.toString();
-//            if (!selectedFilePath.equals(workflowLocationPath)) {
-//                path = workflowLocationPath.relativize(selectedFilePath).toString();
-//            }
-//
-//            try {
-//                URL url = FileUtil.toURL(path);
-//                model.setPathOrURL(url.toString());
-//            } catch (InvalidPathException | MalformedURLException ex) {
-//                // TODO Auto-generated catch block
-//            }
-//
-//        } else {
-//            model.setPathOrURL(m_fileHistoryPanel.getSelectedFile());
-//        }
-
-
-
         model.setPathOrURL(m_fileHistoryPanel.getSelectedFile());
         model.setIncludeSubfolders(m_includeSubfolders.isEnabled() && m_includeSubfolders.isSelected());
         model.setFilterFiles(m_filterFiles.isEnabled() && m_filterFiles.isSelected());

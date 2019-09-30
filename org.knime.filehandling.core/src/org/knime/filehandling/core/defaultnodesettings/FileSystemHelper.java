@@ -59,6 +59,7 @@ import java.util.Optional;
 import org.knime.core.node.FSConnectionFlowVariableProvider;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
+import org.knime.filehandling.core.connections.knime.KNIMEFileSystemProvider;
 import org.knime.filehandling.core.connections.url.URIFileSystemProvider;
 
 /**
@@ -92,7 +93,9 @@ public class FileSystemHelper {
                 break;
             case KNIME_FS:
                 // FIXME: Return correct FileSystem
-                toReturn = FileSystems.getDefault();
+                URI uri = URI.create(settings.getPathOrURL());
+//                toReturn = KNIMEFileSystemProvider.getInstance().newFileSystem(path, null);
+                toReturn = KNIMEFileSystemProvider.getInstance().getFileSystem(uri);
                 break;
             case FLOW_VARIABLE_FS:
                 final String flowVariableName = choice.getId();

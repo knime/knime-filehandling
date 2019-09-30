@@ -337,6 +337,8 @@ public final class SettingsModelFileChooser2 extends SettingsModel implements Cl
      * @return The path of the selected file or folder
      */
     public String getPathOrURL() {
+//        String knimeURL = "knime://knime.workflow/";
+//        return knimeURL + m_pathOrURL;
         return m_pathOrURL;
     }
 
@@ -437,11 +439,6 @@ public final class SettingsModelFileChooser2 extends SettingsModel implements Cl
     }
 
     @Override
-    protected void saveSettingsForDialog(final NodeSettingsWO settings) throws InvalidSettingsException {
-        saveSettingsForModel(settings);
-    }
-
-    @Override
     protected void validateSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
         final Config config = settings.getConfig(m_configName);
         //FIXME Check whether KNIME Mountpoint is valid
@@ -480,6 +477,26 @@ public final class SettingsModelFileChooser2 extends SettingsModel implements Cl
         }
 
         notifyChangeListeners();
+    }
+
+    @Override
+    protected void saveSettingsForDialog(final NodeSettingsWO settings) throws InvalidSettingsException {
+        final Config config = settings.addConfig(m_configName);
+        config.addString(FILE_SYSTEM_KEY, getFileSystem());
+        config.addString(KNIME_FILESYSTEM_KEY, getKNIMEFileSystem());
+
+
+        String knimeURL = "knime://knime.workflow/";
+        String selected = getPathOrURL();
+        config.addString(PATH_OR_URL_KEY, knimeURL + selected);
+
+
+
+        config.addBoolean(INCLUDE_SUBFOLDERS_KEY, getIncludeSubfolders());
+        config.addBoolean(FILTER_FILES_KEY, getFilterFiles());
+        config.addString(FILTER_MODE_KEY, getFilterMode());
+        config.addString(FILTER_EXPRESSION_KEY, getFilterExpression());
+        config.addBoolean(FILTER_CASE_SENSITIVE_KEY, getCaseSensitive());
     }
 
     @Override

@@ -48,7 +48,6 @@
  */
 package org.knime.filehandling.core.connections.knime;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -60,15 +59,22 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Collections;
 import java.util.Set;
 
+import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
+
 /**
  *
  * @author Tobias Urhaug, KNIME GmbH, Berlin, Germany
  */
 public class KNIMEFileSystem extends FileSystem {
 
+    private static final String SEPERATOR = UnixStylePathUtil.SEPARATOR;
+
     private final FileSystemProvider m_fileSystemProvider;
 
-    private String m_base;
+    /**
+     * The base location of this File System, may be a workflow, node, or mount point location.
+     */
+    private String m_baseLocation;
     private String m_knimeURLType;
 
     /**
@@ -88,7 +94,7 @@ public class KNIMEFileSystem extends FileSystem {
             final String base,
             final String knimeURLType) {
         m_fileSystemProvider = fileSystemProvider;
-        m_base = base;
+        m_baseLocation = base;
         m_knimeURLType = knimeURLType;
     }
 
@@ -131,7 +137,7 @@ public class KNIMEFileSystem extends FileSystem {
      */
     @Override
     public String getSeparator() {
-        return File.pathSeparator;
+        return SEPERATOR;
     }
 
     /**
@@ -149,7 +155,7 @@ public class KNIMEFileSystem extends FileSystem {
     @Override
     public Iterable<FileStore> getFileStores() {
         // TODO Auto-generated method stub
-        return null;
+        return Collections.emptyList();
     }
 
     /**
@@ -198,7 +204,7 @@ public class KNIMEFileSystem extends FileSystem {
     }
 
     public String getBase() {
-        return m_base.toString();
+        return m_baseLocation.toString();
     }
 
 }

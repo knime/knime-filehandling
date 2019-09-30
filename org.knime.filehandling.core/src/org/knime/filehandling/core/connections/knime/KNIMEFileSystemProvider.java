@@ -81,6 +81,8 @@ import org.knime.filehandling.core.connections.base.attributes.BasicFileAttribut
  */
 public class KNIMEFileSystemProvider extends FileSystemProvider {
 
+    private final static KNIMEFileSystemProvider SINGLETON_INSTANCE = new KNIMEFileSystemProvider();
+
     private static String LOCAL_KEY = "local-host";
     private static String SCHEME = "knime";
 
@@ -106,6 +108,10 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
         m_knimeURLHandler= knimeURLHandler;
     }
 
+    public static KNIMEFileSystemProvider getInstance() {
+        return SINGLETON_INSTANCE;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -120,6 +126,10 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
     @Override
     public FileSystem newFileSystem(final URI uri, final Map<String, ?> env) throws IOException {
         validate(uri);
+
+        // if a file system needs both a location and type, fetch these from env and instantiate FS accordingly.
+
+
         String key = keyOf(uri);
         if (!m_fileSystems.containsKey(key)) {
             FileSystem fileSystem = new KNIMEFileSystem(this);
@@ -169,10 +179,6 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
     @Override
     public SeekableByteChannel newByteChannel(final Path path, final Set<? extends OpenOption> options, final FileAttribute<?>... attrs)
         throws IOException {
-
-        // TODO TU: Resolve the KNIMEPath here?
-
-
         // TODO Auto-generated method stub
         return null;
     }

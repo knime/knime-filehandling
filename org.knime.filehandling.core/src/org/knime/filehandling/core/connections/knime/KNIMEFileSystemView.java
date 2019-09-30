@@ -50,17 +50,16 @@ package org.knime.filehandling.core.connections.knime;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.swing.filechooser.FileSystemView;
+
+import org.knime.filehandling.core.filechooser.NioFile;
 
 /**
  *
@@ -96,12 +95,12 @@ public class KNIMEFileSystemView extends FileSystemView {
      */
     @Override
     public File getDefaultDirectory() {
-        return new NioFile(m_baseString);
+        return new NioFile(m_baseString, m_fileSystem);
     }
 
     @Override
     public File getHomeDirectory() {
-        return new NioFile(m_baseString);
+        return new NioFile(m_baseString, m_fileSystem);
     }
 
     @Override
@@ -116,7 +115,7 @@ public class KNIMEFileSystemView extends FileSystemView {
             return new NioFile(normalized);
         }
 
-        return new NioFile(path);
+        return new NioFile(path, m_fileSystem);
     }
 
     @Override
@@ -137,11 +136,9 @@ public class KNIMEFileSystemView extends FileSystemView {
      */
     @Override
     public File getParentDirectory(final File dir) {
-        // TODO Auto-generated method stub
-
-        String path = dir.getPath();
-
-
+        if (dir != null) {
+            String path = dir.getPath();
+        }
 
         return super.getParentDirectory(dir);
     }
@@ -154,107 +151,5 @@ public class KNIMEFileSystemView extends FileSystemView {
         final Path newFolder = m_fileSystem.getPath(containingDir.getPath(), "newFolder/");
         Files.createDirectory(newFolder);
         return newFolder.toFile();
-    }
-
-    private final class NioFile extends File {
-
-        private static final long serialVersionUID = -5343680976176201255L;
-
-        private final Path m_path;
-
-        private NioFile(final Path p) {
-            super(p.toString());
-            m_path = p;
-        }
-
-        NioFile(final String pathname) {
-            super(pathname);
-            m_path = m_fileSystem.getPath(pathname);
-        }
-
-        public NioFile(final File parent, final String child) {
-            super(parent, child);
-            m_path = null;
-        }
-
-        @Override
-        public boolean exists() {
-            return Files.exists(m_path);
-        }
-
-        @Override
-        public boolean isDirectory() {
-            return Files.isDirectory(m_path);
-        }
-
-        @Override
-        public File getCanonicalFile() throws IOException {
-            return new NioFile(m_path.toString());
-        }
-
-        @Override
-        public File[] listFiles() {
-
-            final List<File> files = new ArrayList<>();
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(m_path)) {
-                directoryStream.iterator().forEachRemaining(p -> files.add(new NioFile(p.toString())));
-            } catch (final Exception ex) {
-                // Log ...
-            }
-            return files.toArray(new NioFile[files.size()]);
-        }
-
-        @Override
-        public String getPath() {
-            return m_path.toString();
-        }
-
-        @Override
-        public boolean canWrite() {
-            return Files.isWritable(m_path);
-        }
-
-        @Override
-        public long length() {
-            try {
-                return Files.size(m_path);
-            } catch (final IOException ex) {
-                return 0L;
-            }
-        }
-
-        @Override
-        public long lastModified() {
-            try {
-                return Files.getLastModifiedTime(m_path).toMillis();
-            } catch (final IOException ex) {
-                return 0L;
-            }
-        }
-
-        @Override
-        public String getAbsolutePath() {
-            if (m_path.isAbsolute()) {
-                return m_path.toString();
-            } else {
-                return m_path.resolve(m_baseString).toString();
-            }
-        }
-
-        @Override
-        public String getParent() {
-            return m_path.getParent() == null ? null : m_path.getParent().toString();
-        }
-
-        @Override
-        public File getParentFile() {
-            return getParent() == null ? null : new NioFile(getParent());
-        }
-
-        @Override
-        public String toString() {
-            return "Wrapping path: " + m_path.toString();
-        }
-
     }
 }

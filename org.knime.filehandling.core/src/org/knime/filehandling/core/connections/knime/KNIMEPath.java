@@ -107,12 +107,6 @@ public class KNIMEPath implements Path {
         m_pathComponents = ArrayUtils.addAll(pathComponentsArray, more);
 
         m_path = Paths.get(first, more);
-
-        Path base = Paths.get(fileSystem.getBase());
-
-//        Path relativize = base.relativize(m_path);
-
-//        m_pathComponents = pathComponentsArray();
     }
 
     public KNIMEPath(
@@ -398,8 +392,13 @@ public class KNIMEPath implements Path {
      */
     @Override
     public Path toAbsolutePath() {
-        // TODO Auto-generated method stub
-        return null;
+        if (!m_path.isAbsolute()) {
+
+
+        }
+
+
+        return m_path;
     }
 
     /**
