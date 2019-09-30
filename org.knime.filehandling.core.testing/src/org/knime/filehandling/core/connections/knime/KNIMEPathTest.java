@@ -5,77 +5,46 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.knime.core.util.FileUtil;
+import org.knime.filehandling.core.defaultnodesettings.KNIMEConnection;
 
 public class KNIMEPathTest {
 	
-	private MockKNIMEUrlHandler m_mockUrlHandler;
+	private KNIMEFileSystemProvider m_fsProvider;
 	private KNIMEFileSystem m_fileSystem;
+	private String m_fsBaseLocation;
+	private KNIMEConnection.Type m_knimeUrlType;
 	
 	@Before
 	public void setup() {
-		m_mockUrlHandler = new MockKNIMEUrlHandler();
-		m_fileSystem = new KNIMEFileSystem(null);
+		m_fsProvider = KNIMEFileSystemProvider.getInstance();
+		m_fsBaseLocation = "C:/";
+		m_knimeUrlType = KNIMEConnection.Type.WORKFLOW_RELATIVE;
+		m_fileSystem = new KNIMEFileSystem(m_fsProvider, m_fsBaseLocation, m_knimeUrlType);
 	}
 	
 	@Test
 	public void aPathsFileSystemCanBeRetrieved() throws MalformedURLException {
-		@SuppressWarnings("unused") // workflowURI present to illustrate the big picture
-		URI workflowURI = URI.create("file:///C:/my-workflows/workflow");
-		URL dataURL = URI.create("file:///C:/my-data/data.txt").toURL();
-		String workflowRelativePath = "knime://knime.workflow/../../my-data/data.txt";
-		URL workflowRelativeURL = FileUtil.toURL(workflowRelativePath);
-		
-		m_mockUrlHandler.mockResolve(workflowRelativeURL, dataURL);
-		
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, workflowRelativeURL, m_mockUrlHandler);
-		
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "../../my-data/data.txt");
 		assertTrue(knimePath.getFileSystem() == m_fileSystem);
 	}
 	
 	@Test
-	public void aResolvedKNIMEUrlIsAbsolute() throws MalformedURLException, URISyntaxException {
-		@SuppressWarnings("unused") // workflowURI present to illustrate the big picture
-		URI workflowURI = URI.create("file:///C:/my-workflows/workflow");
-		URL dataURL = URI.create("file:///C:/my-data/data.txt").toURL();
-		String workflowRelativePath = "knime://knime.workflow/../../my-data/data.txt";
-		URL workflowRelativeURL = FileUtil.toURL(workflowRelativePath);
-
-		m_mockUrlHandler.mockResolve(workflowRelativeURL, dataURL);
-		
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, workflowRelativeURL, m_mockUrlHandler);
-		
-		assertTrue(knimePath.isAbsolute());
+	public void aKNIMEPathIsNotAbsolute() throws MalformedURLException, URISyntaxException {
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "../../my-data/data.txt");
+		assertFalse(knimePath.isAbsolute());
 	}
 	
 	@Test
-	public void anAbsoluteNonKNIMEUrlIsAbsolute() throws MalformedURLException {
-		URL dataURL = URI.create("file:///C:/my-data/data.txt").toURL();
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, dataURL, m_mockUrlHandler);
-		assertTrue(knimePath.isAbsolute());
-	}
-	
-	@Test
-	public void aResolvedKNIMEUrlHasARoot() throws MalformedURLException {
-		@SuppressWarnings("unused") // workflowURI present to illustrate the big picture
-		URI workflowURI = URI.create("file:///C:/my-workflows/workflow");
-		URL dataURL = URI.create("file:///C:/my-data/data.txt").toURL();
-		String workflowRelativePath = "knime://knime.workflow/../../my-data/data.txt";
-		URL workflowRelativeURL = FileUtil.toURL(workflowRelativePath);
+	public void aKNIMEPathHasAnEmptyStringRoot() throws MalformedURLException {
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "../../my-data/data.txt");
 		
-		m_mockUrlHandler.mockResolve(workflowRelativeURL, dataURL);
-
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, workflowRelativeURL, m_mockUrlHandler);
-		
-		Path root = new KNIMEPath(m_fileSystem, Paths.get("C:/"));
+		Path root = new KNIMEPath(m_fileSystem, "figure out what to do here!!");
 
 		assertTrue(knimePath.getRoot().equals(root));
 		assertTrue(knimePath.getRoot() instanceof KNIMEPath);
@@ -83,131 +52,116 @@ public class KNIMEPathTest {
 	
 	@Test
 	public void aPathsFileNameCanBeRetreived() throws Exception {
-		@SuppressWarnings("unused") // workflowURI present to illustrate the big picture
-		URI workflowURI = URI.create("file:///C:/my-workflows/workflow");
-		URL dataURL = URI.create("file:///C:/my-data/data.txt").toURL();
-		String workflowRelativePath = "knime://knime.workflow/../../my-data/data.txt";
-		URL workflowRelativeURL = FileUtil.toURL(workflowRelativePath);
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "../../my-data/data.txt");
 		
-		m_mockUrlHandler.mockResolve(workflowRelativeURL, dataURL);
-		
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, workflowRelativeURL, m_mockUrlHandler);
-		
-		Path fileName = new KNIMEPath(m_fileSystem, Paths.get("data.txt"));
+		Path fileName = new KNIMEPath(m_fileSystem, "data.txt");
 		assertTrue(knimePath.getFileName().equals(fileName));
 		assertTrue(knimePath.getFileName() instanceof KNIMEPath);
 	}
 	
 	@Test
 	public void anyComponentNameCanBeRetrievedByItsIndex() throws Exception {
-		@SuppressWarnings("unused") // workflowURI present to illustrate the big picture
-		URI workflowURI = URI.create("file:///C:/my-workflows/workflow");
-		URL dataURL = URI.create("file:///C:/my-data/data.txt").toURL();
-		String workflowRelativePath = "knime://knime.workflow/../../my-data/data.txt";
-		URL workflowRelativeURL = FileUtil.toURL(workflowRelativePath);
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "../../my-data/data.txt");
 		
-		m_mockUrlHandler.mockResolve(workflowRelativeURL, dataURL);
-		
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, workflowRelativeURL, m_mockUrlHandler);
-		
-		Path firstComponent = new KNIMEPath(m_fileSystem, Paths.get("my-data"));
-		Path fileName = new KNIMEPath(m_fileSystem, Paths.get("data.txt"));
+		Path firstComponent = new KNIMEPath(m_fileSystem, "..");
+		Path secondComponent = new KNIMEPath(m_fileSystem, "..");
+		Path thirdComponent = new KNIMEPath(m_fileSystem, "my-data");
+		Path fileName = new KNIMEPath(m_fileSystem, "data.txt");
 		
 		assertEquals(firstComponent, knimePath.getName(0));
-		assertEquals(fileName, knimePath.getName(1));
+		assertEquals(secondComponent, knimePath.getName(1));
+		assertEquals(thirdComponent, knimePath.getName(2));
+		assertEquals(fileName, knimePath.getName(3));
 		
 		assertTrue(knimePath.getName(0) instanceof KNIMEPath);
 		assertTrue(knimePath.getName(1) instanceof KNIMEPath);
+		assertTrue(knimePath.getName(2) instanceof KNIMEPath);
+		assertTrue(knimePath.getName(3) instanceof KNIMEPath);
 	}
 	
 	@Test
 	public void pathComponentCount() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
-		KNIMEPath path = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
-
+		KNIMEPath path = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
 		assertEquals(4, path.getNameCount());
 
-		String stringRoot = "C:/";
-		KNIMEPath root = new KNIMEPath(m_fileSystem, Paths.get(stringRoot));
-
+		KNIMEPath root = new KNIMEPath(m_fileSystem, "");
 		assertEquals(0, root.getNameCount());
 	}
 	
 	@Test
 	public void aRootPathDoesNotHaveAParent() throws Exception {
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get("C:/"));
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "");
 		assertEquals(null, knimePath.getParent());
-		assertTrue(knimePath instanceof KNIMEPath);
 	}
 	
 	@Test
-	public void aParentContainsAllComponentsAfterTheRootAndBeforeTheFileName() {
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get("C:/my-folder/hello/world/data.txt"));
-		KNIMEPath parent = new KNIMEPath(m_fileSystem, Paths.get("my-folder/hello/world/"));
+	public void aParentContainsAllComponentsBeforeTheFileName() {
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
+		KNIMEPath parent = new KNIMEPath(m_fileSystem, "my-folder/hello/world/");
 		assertEquals(parent, knimePath.getParent());
 		assertTrue(knimePath instanceof KNIMEPath);
 	}
 	
 	@Test
 	public void aSubpathCanBeCreated() {
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get("C:/my-folder/hello/world/data.txt"));
-		KNIMEPath subpath = new KNIMEPath(m_fileSystem, Paths.get("hello/world/"));
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
+		KNIMEPath subpath = new KNIMEPath(m_fileSystem, "hello/world/");
 		assertEquals(subpath, knimePath.subpath(1, 3));
 		assertTrue(knimePath instanceof KNIMEPath);
 	}
 	
 	@Test
 	public void aSubpathEqualToTheWholePath() {
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get("C:/my-folder/hello/world/data.txt"));
-		KNIMEPath subpath = new KNIMEPath(m_fileSystem, Paths.get("my-folder/hello/world/data.txt"));
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
+		KNIMEPath subpath = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
 		assertEquals(subpath, knimePath.subpath(0, 4));
 		assertTrue(knimePath instanceof KNIMEPath);
 	}
 	
 	@Test
 	public void aSubpathEqualToASingleElement() {
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get("C:/my-folder/hello/world/data.txt"));
-		KNIMEPath subpath = new KNIMEPath(m_fileSystem, Paths.get("data.txt"));
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "/my-folder/hello/world/data.txt");
+		KNIMEPath subpath = new KNIMEPath(m_fileSystem, "data.txt");
 		assertEquals(subpath, knimePath.subpath(3, 4));
 		assertTrue(knimePath instanceof KNIMEPath);
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void aSubpathStartingBelowTheRangeThrowsException() {
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get("C:/my-folder/hello/world/data.txt"));
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
 
 		knimePath.subpath(-1, 4);
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void aSubpathStartingAboveTheRangeThrowsException() {
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get("C:/my-folder/hello/world/data.txt"));
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
 		
 		knimePath.subpath(0, 5);
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void aSubpathsEndIndexMustBeGreaterThanBeginIndex() {
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get("C:/my-folder/hello/world/data.txt"));
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
 		
 		knimePath.subpath(2, 2);
 	}
 	
 	@Test
 	public void aPathStartsWithItself() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
+		String stringPath = "my-folder/hello/world/data.txt";
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, stringPath);
 		
 		assertTrue(knimePath.startsWith(knimePath));
 		assertTrue(knimePath.startsWith(stringPath));
 	}
 	
 	@Test
-	public void aPathStartsWithItsRoot() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
-		String stringRoot = "C:/";
-		KNIMEPath path = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
-		KNIMEPath root = new KNIMEPath(m_fileSystem, Paths.get(stringRoot));
+	public void aPathStartsWithItsFirstComponent() {
+		String stringPath = "my-folder/hello/world/data.txt";
+		String stringRoot = "my-folder";
+		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
+		KNIMEPath root = new KNIMEPath(m_fileSystem, stringRoot);
 		
 		assertTrue(path.startsWith(root));
 		assertTrue(path.startsWith(stringRoot));
@@ -215,10 +169,10 @@ public class KNIMEPathTest {
 	
 	@Test
 	public void aPathStartsWithASubpathFromIndexZero() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
-		String stringSubPath = "C:/my-folder/hello";
-		KNIMEPath path = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
-		KNIMEPath subPath = new KNIMEPath(m_fileSystem, Paths.get(stringSubPath));
+		String stringPath = "my-folder/hello/world/data.txt";
+		String stringSubPath = "my-folder/hello";
+		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
+		KNIMEPath subPath = new KNIMEPath(m_fileSystem, stringSubPath);
 		
 		assertTrue(path.startsWith(subPath));
 		assertTrue(path.startsWith(stringSubPath));
@@ -226,10 +180,10 @@ public class KNIMEPathTest {
 	
 	@Test
 	public void aPathDoesNotStartWithAPathWithDifferentCompononents() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
-		String otherStringPath = "C:/other-folder/hello";
-		KNIMEPath path = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
-		KNIMEPath otherPath = new KNIMEPath(m_fileSystem, Paths.get(otherStringPath));
+		String stringPath = "my-folder/hello/world/data.txt";
+		String otherStringPath = "other-folder/hello";
+		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
+		KNIMEPath otherPath = new KNIMEPath(m_fileSystem, otherStringPath);
 		
 		assertFalse(path.startsWith(otherPath));
 		assertFalse(path.startsWith(otherStringPath));
@@ -237,18 +191,18 @@ public class KNIMEPathTest {
 	
 	@Test
 	public void aPathDoesNotStartWithAPathFromADifferentFileSystem() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
-		KNIMEPath path = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
+		String stringPath = "my-folder/hello/world/data.txt";
+		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
 		KNIMEFileSystem otherFileSystem = new KNIMEFileSystem(null);
-		KNIMEPath pathOnOtherFileSystem = new KNIMEPath(otherFileSystem, Paths.get(stringPath));
+		KNIMEPath pathOnOtherFileSystem = new KNIMEPath(otherFileSystem, stringPath);
 		
 		assertFalse(path.startsWith(pathOnOtherFileSystem));
 	}
 
 	@Test
 	public void aPathEndsWithItself() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
+		String stringPath = "my-folder/hello/world/data.txt";
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, stringPath);
 		
 		assertTrue(knimePath.endsWith(knimePath));
 		assertTrue(knimePath.endsWith(stringPath));
@@ -256,10 +210,10 @@ public class KNIMEPathTest {
 	
 	@Test
 	public void aPathEndsWithItsFileName() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
+		String stringPath = "my-folder/hello/world/data.txt";
 		String stringFileName = "data.txt";
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
-		KNIMEPath fileName = new KNIMEPath(m_fileSystem, Paths.get(stringFileName));
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, stringPath);
+		KNIMEPath fileName = new KNIMEPath(m_fileSystem, stringFileName);
 		
 		assertTrue(knimePath.endsWith(fileName));
 		assertTrue(knimePath.endsWith(stringFileName));
@@ -267,10 +221,10 @@ public class KNIMEPathTest {
 	
 	@Test
 	public void aPathEndsWithItsLastComponents() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
+		String stringPath = "my-folder/hello/world/data.txt";
 		String stringLastComponents = "hello/world/data.txt";
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
-		KNIMEPath lastComponents = new KNIMEPath(m_fileSystem, Paths.get(stringLastComponents));
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, stringPath);
+		KNIMEPath lastComponents = new KNIMEPath(m_fileSystem, stringLastComponents);
 		
 		assertTrue(knimePath.endsWith(lastComponents));
 		assertTrue(knimePath.endsWith(stringLastComponents));
@@ -278,10 +232,10 @@ public class KNIMEPathTest {
 	
 	@Test
 	public void aPathDoesNotEndWithADifferentFileName() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
+		String stringPath = "my-folder/hello/world/data.txt";
 		String stringDifferentFileName = "world/other-data.txt";
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
-		KNIMEPath differentFileNamePath = new KNIMEPath(m_fileSystem, Paths.get(stringDifferentFileName));
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, stringPath);
+		KNIMEPath differentFileNamePath = new KNIMEPath(m_fileSystem, stringDifferentFileName);
 		
 		assertFalse(knimePath.endsWith(differentFileNamePath));
 		assertFalse(knimePath.endsWith(stringDifferentFileName));
@@ -289,39 +243,71 @@ public class KNIMEPathTest {
 	
 	@Test
 	public void aPathDoesNotEndWithAPathFromADifferentFileSystem() {
-		String stringPath = "C:/my-folder/hello/world/data.txt";
-		KNIMEPath path = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
+		String stringPath = "my-folder/hello/world/data.txt";
+		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
 		KNIMEFileSystem otherFileSystem = new KNIMEFileSystem(null);
-		KNIMEPath pathOnOtherFileSystem = new KNIMEPath(otherFileSystem, Paths.get(stringPath));
+		KNIMEPath pathOnOtherFileSystem = new KNIMEPath(otherFileSystem, stringPath);
 		
 		assertFalse(path.endsWith(pathOnOtherFileSystem));
 	}
 	
 	@Test
 	public void normalize() {
-		String stringPath = "C:/my-folder/hello/../hello/world/data.txt";
-		String stringNormalizedPath = "C:/my-folder/hello/world/data.txt";
-		KNIMEPath path = new KNIMEPath(m_fileSystem, Paths.get(stringPath));
-		KNIMEPath normalizedPath = new KNIMEPath(m_fileSystem, Paths.get(stringNormalizedPath));
+		String stringPath = "my-folder/hello/../hello/world/data.txt";
+		String stringNormalizedPath = "my-folder/hello/world/data.txt";
+		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
+		KNIMEPath normalizedPath = new KNIMEPath(m_fileSystem, stringNormalizedPath);
 		
 		assertEquals(normalizedPath, path.normalize());
 	}
 	
-	@Test
-	public void resolve() {
+	@Test (expected = IllegalArgumentException.class)
+	public void pathsOnDifferentFileSystemCannotBeResolvedAgainstEachOther() {
+		String stringPath = "my-folder/hello/world/data.txt";
+		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
+		KNIMEPath pathOnDifferentFS = new KNIMEPath(new KNIMEFileSystem(null), stringPath);
 		
-		
-		Path path = Paths.get("C:/my-folder/hello/lol.txt");
-		Path path2 = Paths.get("helloooo/blah");
-
-		
-		Path resolve = path.resolve(path2);
-		
-		System.out.println(resolve);
-		System.out.println(path.getRoot());
-		
-		
+		path.resolve(pathOnDifferentFS);
 	}
+	
+	@Test
+	public void resolvingOtherPathAppendsIt() {
+		String firstStringPath = "my-folder/hello/";
+		KNIMEPath path = new KNIMEPath(m_fileSystem, firstStringPath);
+		String otherStringPath = "world/data.txt";
+		KNIMEPath otherPath = new KNIMEPath(m_fileSystem, otherStringPath);
+		
+		KNIMEPath expectedPath = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
+
+		assertEquals(expectedPath, path.resolve(otherPath));
+		assertEquals(expectedPath, path.resolve(otherStringPath));
+	}
+	
+	@Test
+	public void resolvingSibling() {
+		String firstStringPath = "my-folder/some-data.csv";
+		KNIMEPath path = new KNIMEPath(m_fileSystem, firstStringPath);
+		String otherStringPath = "other-folder/data.txt";
+		KNIMEPath otherPath = new KNIMEPath(m_fileSystem, otherStringPath);
+		
+		KNIMEPath expectedPath = new KNIMEPath(m_fileSystem, "my-folder/other-folder/data.txt");
+		
+		assertEquals(expectedPath, path.resolveSibling(otherPath));
+		assertEquals(expectedPath, path.resolveSibling(otherStringPath));
+	}
+	
+	@Test
+	public void relativize() {
+		KNIMEPath path = new KNIMEPath(m_fileSystem, "my-folder/");
+		KNIMEPath otherPath = new KNIMEPath(m_fileSystem, "my-folder/other-folder/data.txt");
+		
+		KNIMEPath expectedPath = new KNIMEPath(m_fileSystem, "other-folder/data.txt");
+		assertEquals(expectedPath, path.relativize(otherPath));
+	}
+	
+	
+	
+	// TODO TU: test if more contains a string with components more = path/to/the/destination
 	
 	
 	

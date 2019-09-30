@@ -94,6 +94,7 @@ public class FileSystemHelper {
             case KNIME_FS:
                 // FIXME: Return correct FileSystem
                 URI uri = URI.create(settings.getPathOrURL());
+                String knimeFileSystem = settings.getKNIMEFileSystem();
 //                toReturn = KNIMEFileSystemProvider.getInstance().newFileSystem(path, null);
                 toReturn = KNIMEFileSystemProvider.getInstance().getFileSystem(uri);
                 break;

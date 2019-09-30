@@ -145,6 +145,9 @@ public final class FileChooserHelper {
      */
     public final List<Path> getPaths() throws IOException {
 
+        // Resolve the KNIME URLs here
+
+
         final Path pathOrUrl;
         if (m_settings.getFileSystemChoice() == FileSystemChoice.getCustomFsUrlChoice()) {
             final URI uri = URI.create(m_settings.getPathOrURL());

@@ -71,10 +71,6 @@ public class KNIMEFileSystemView extends FileSystemView {
      * The base of this file system view, can either be a workflow, node, or a mount point location.
      */
     private final Path m_basePath;
-    /**
-     * The type of KNIME URL that is used for this view (Workflow relative, Node relative or Mount Point relative).
-     */
-    private final String m_knimeURLType;
     private final String m_baseString;
     private final FileSystem m_fileSystem;
     private final Set<Path> m_rootDirectories;
@@ -82,7 +78,6 @@ public class KNIMEFileSystemView extends FileSystemView {
     public KNIMEFileSystemView(final KNIMEFileSystem fileSystem) {
         m_baseString = fileSystem.getBase();
         m_basePath = Paths.get(fileSystem.getBase());
-        m_knimeURLType = fileSystem.getKNIMEURLType();
 //        Path emptyRelativePath = Paths.get("");
 //        m_base = new KNIMEPath(fileSystem, emptyRelativePath);
         m_fileSystem = fileSystem;

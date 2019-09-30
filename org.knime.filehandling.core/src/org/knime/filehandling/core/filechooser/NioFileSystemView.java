@@ -97,6 +97,10 @@ public class NioFileSystemView extends FileSystemView {
         this.m_fileSystem.getRootDirectories().forEach(m_rootDirectories::add);
     }
 
+    // Add KNIME Url constructor
+
+
+
     @Override
     public String getSystemTypeDescription(final File f) {
         return m_fileSystem.getPath(f.getPath()).toString();

@@ -383,7 +383,7 @@ public class DialogComponentFileChooser2 extends DialogComponent {
 
             // TODO TU: Create the file system from the provider?
 
-            try (KNIMEFileSystem knimeFileSystem = new KNIMEFileSystem(knimeFileSystemProvider, m_baseLocation, knimeConnection.toString())) {
+            try (KNIMEFileSystem knimeFileSystem = new KNIMEFileSystem(knimeFileSystemProvider, m_baseLocation, knimeConnection.getType())) {
                 m_fileHistoryPanel.setFileSystemBrowser(new KNIMEFileSystemBrowser(new KNIMEFileSystemView(knimeFileSystem), Paths.get(m_baseLocation)));
             } catch (IOException ex) {
                 // TODO Auto-generated catch block

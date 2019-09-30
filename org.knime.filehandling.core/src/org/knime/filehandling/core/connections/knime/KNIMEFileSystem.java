@@ -60,6 +60,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
+import org.knime.filehandling.core.defaultnodesettings.KNIMEConnection;
 
 /**
  *
@@ -75,7 +76,7 @@ public class KNIMEFileSystem extends FileSystem {
      * The base location of this File System, may be a workflow, node, or mount point location.
      */
     private String m_baseLocation;
-    private String m_knimeURLType;
+    private KNIMEConnection.Type m_knimeURLType;
 
     /**
      * @param fileSystemProvider
@@ -92,7 +93,7 @@ public class KNIMEFileSystem extends FileSystem {
     public KNIMEFileSystem(
             final KNIMEFileSystemProvider fileSystemProvider,
             final String base,
-            final String knimeURLType) {
+            final KNIMEConnection.Type knimeURLType) {
         m_fileSystemProvider = fileSystemProvider;
         m_baseLocation = base;
         m_knimeURLType = knimeURLType;
@@ -199,7 +200,7 @@ public class KNIMEFileSystem extends FileSystem {
         throw new UnsupportedOperationException();
     }
 
-    public String getKNIMEURLType() {
+    public KNIMEConnection.Type getKNIMEURLType() {
         return m_knimeURLType;
     }
 
