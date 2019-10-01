@@ -59,16 +59,18 @@ import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchEvent.Modifier;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.knime.filehandling.core.connections.base.GenericPathUtil;
 import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
 
 /**
+ * Path implementation needed for browsing KNIME mount points.
  *
  * @author Tobias Urhaug, KNIME GmbH, Berlin, Germany
  */
@@ -78,19 +80,32 @@ public class KNIMEPath implements Path {
     private final String[] m_pathComponents;
 
     private Path m_path;
-
-    private boolean m_hasRootComponent;
     private boolean m_isAbsolute;
 
-
+    /**
+     * Creates a new KNIMEPath.
+     *
+     * @param fileSystem the file system
+     * @param first first part of the path
+     * @param more subsequent parts of the path
+     */
     public KNIMEPath (final KNIMEFileSystem fileSystem, final String first, final String... more) {
         m_fileSystem = fileSystem;
-
         m_isAbsolute = false;
 
-        String unixSeperatedPath = first.replaceAll("\\\\", "/");
-        String[] pathComponentsArray = UnixStylePathUtil.toPathComponentsArray(unixSeperatedPath);
-        m_pathComponents = ArrayUtils.addAll(pathComponentsArray, more);
+        List<String> allInputStrings = new ArrayList<>();
+        allInputStrings.add(first);
+        allInputStrings.addAll(Arrays.asList(more));
+
+        List<String> pathComponents = //
+            allInputStrings.stream() //
+                .map(inputString -> inputString.replaceAll("\\\\", m_fileSystem.getSeparator())) //
+                .map(unixSeperatedInputString -> UnixStylePathUtil.toPathComponentsArray(unixSeperatedInputString)) //
+                .flatMap(componentsArray -> Arrays.stream(componentsArray)) //
+                .collect(Collectors.toList()); //
+
+        String[] pathComponentsArray = new String[pathComponents.size()];
+        m_pathComponents = pathComponents.toArray(pathComponentsArray);
 
         m_path = Paths.get(first, more);
     }
@@ -116,7 +131,7 @@ public class KNIMEPath implements Path {
      */
     @Override
     public Path getRoot() {
-        return new KNIMEPath(m_fileSystem, "");
+        return null;
     }
 
     /**
@@ -294,13 +309,10 @@ public class KNIMEPath implements Path {
         if (other.getFileSystem() != m_fileSystem) {
             throw new IllegalArgumentException("Cannot relativize paths across different file systems");
         }
+        KNIMEPath otherPath = (KNIMEPath) other;
 
-
-
-
-
-        // TODO Auto-generated method stub
-        return null;
+        Path relativized = m_path.relativize(otherPath.m_path);
+        return new KNIMEPath(m_fileSystem, relativized.toString());
     }
 
     /**
@@ -308,8 +320,24 @@ public class KNIMEPath implements Path {
      */
     @Override
     public URI toUri() {
-        // TODO Auto-generated method stub
-        return null;
+        String knimeURL = "";
+        switch (m_fileSystem.getKNIMEURLType()) {
+            case NODE_RELATIVE :
+                knimeURL = "knime://knime.node/";
+                break;
+            case WORKFLOW_RELATIVE :
+                knimeURL = "knime://knime.workflow/";
+                break;
+            case MOUNTPOINT_RELATIVE :
+                knimeURL = "knime://knime.mountpoint/";
+                break;
+            default :
+                // TODO handle mount point absolute paths
+                knimeURL = "";
+                break;
+        }
+
+        return URI.create(knimeURL + pathAsString());
     }
 
     /**
@@ -317,13 +345,7 @@ public class KNIMEPath implements Path {
      */
     @Override
     public Path toAbsolutePath() {
-        if (!m_path.isAbsolute()) {
-
-
-        }
-
-
-        return m_path;
+        return new KNIMEPath(m_fileSystem, m_fileSystem.getBase(), pathAsString());
     }
 
     /**
@@ -331,8 +353,7 @@ public class KNIMEPath implements Path {
      */
     @Override
     public Path toRealPath(final LinkOption... options) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return toAbsolutePath().normalize();
     }
 
     /**
@@ -340,17 +361,16 @@ public class KNIMEPath implements Path {
      */
     @Override
     public File toFile() {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public WatchKey register(final WatchService watcher, final Kind<?>[] events, final Modifier... modifiers) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+    public WatchKey register(final WatchService watcher, final Kind<?>[] events, final Modifier... modifiers)
+            throws IOException {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -358,8 +378,7 @@ public class KNIMEPath implements Path {
      */
     @Override
     public WatchKey register(final WatchService watcher, final Kind<?>... events) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -367,8 +386,12 @@ public class KNIMEPath implements Path {
      */
     @Override
     public Iterator<Path> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        List<Path> pathComponents = //
+            Arrays.stream(m_pathComponents) //
+                .map(pathComponent -> new KNIMEPath(m_fileSystem, pathComponent)) //
+                .collect(Collectors.toList()); //
+
+        return pathComponents.iterator();
     }
 
     /**
@@ -376,8 +399,12 @@ public class KNIMEPath implements Path {
      */
     @Override
     public int compareTo(final Path other) {
-        // TODO Auto-generated method stub
-        return 0;
+        if (other instanceof KNIMEPath) {
+            KNIMEPath otherPath = (KNIMEPath) other;
+            return m_path.compareTo(otherPath.m_path);
+        }
+
+        return -1;
     }
 
 

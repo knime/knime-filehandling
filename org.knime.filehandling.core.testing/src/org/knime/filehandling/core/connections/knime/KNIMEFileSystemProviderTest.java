@@ -14,7 +14,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-public class FileSystemProviderTest {
+public class KNIMEFileSystemProviderTest {
 	
 	@Test
 	public void createNewFileSystemFromKNIMEUri() throws IOException, URISyntaxException {
@@ -110,9 +110,7 @@ public class FileSystemProviderTest {
 		URI dataURI = URI.create("file:///C:/my-data/data.txt");
 		URI workflowRelativeDataURI = URI.create("knime://knime.workflow/../../my-data/data.txt");
 		
-		MockKNIMEUrlHandler mockHandler = new MockKNIMEUrlHandler();
-		mockHandler.mockResolve(workflowRelativeDataURI, dataURI);
-		KNIMEFileSystemProvider provider = new KNIMEFileSystemProvider(mockHandler);
+		KNIMEFileSystemProvider provider = new KNIMEFileSystemProvider();
 		
 		Map<String, ?> env = null;
 		provider.newFileSystem(workflowRelativeDataURI, env);

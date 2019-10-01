@@ -4,10 +4,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,13 +42,10 @@ public class KNIMEPathTest {
 	}
 	
 	@Test
-	public void aKNIMEPathHasAnEmptyStringRoot() throws MalformedURLException {
+	public void aKNIMEPathHasNoRoot() throws MalformedURLException {
 		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "../../my-data/data.txt");
-		
-		Path root = new KNIMEPath(m_fileSystem, "figure out what to do here!!");
 
-		assertTrue(knimePath.getRoot().equals(root));
-		assertTrue(knimePath.getRoot() instanceof KNIMEPath);
+		assertEquals(null, knimePath.getRoot());
 	}
 	
 	@Test
@@ -305,27 +303,71 @@ public class KNIMEPathTest {
 		assertEquals(expectedPath, path.relativize(otherPath));
 	}
 	
-	
-	
-	// TODO TU: test if more contains a string with components more = path/to/the/destination
-	
-	
-	
 	@Test
-	public void constructor() {
-		Path base = Paths.get("C:/my-workspace/my-workflow");
-		Path emptyRelativePath = Paths.get("");
-		String knimeURLType = "workflow-relative";
-//		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, base, emptyRelativePath, knimeURLType);
+	public void urisAreCreatedWithTheFileSystemsConnectionType() {
+		KNIMEFileSystem workflowRelativeFS = createFileSystemOfType(KNIMEConnection.Type.WORKFLOW_RELATIVE);
+		KNIMEPath path = new KNIMEPath(workflowRelativeFS, "my-folder/");
+		URI expectedURI = URI.create("knime://knime.workflow/my-folder");
+		assertEquals(expectedURI, path.toUri());
 		
-//		String string = knimePath.toString();
+		KNIMEFileSystem nodeRelativeFS = createFileSystemOfType(KNIMEConnection.Type.NODE_RELATIVE);
+		path = new KNIMEPath(nodeRelativeFS, "my-folder/");
+		expectedURI = URI.create("knime://knime.node/my-folder");
+		assertEquals(expectedURI, path.toUri());
 		
-//		Files.createFile(path, attrs)
-		
-//		System.out.println(string);
-		
-		
+		KNIMEFileSystem mountPointRelativeFS = createFileSystemOfType(KNIMEConnection.Type.MOUNTPOINT_RELATIVE);
+		path = new KNIMEPath(mountPointRelativeFS, "my-folder/");
+		expectedURI = URI.create("knime://knime.mountpoint/my-folder");
+		assertEquals(expectedURI, path.toUri());
 	}
 	
+	@Test
+	public void theAboslutePathIsResolvedAgainstTheFileSystemsBaseLocation() {
+		KNIMEPath path = new KNIMEPath(m_fileSystem, "my-folder/");
+		String expected = "C:/my-folder";
+		assertEquals(expected, path.toAbsolutePath().toString());
+	}
+	
+	@Test
+	public void toRealPathReturnesAbsoluteAndNormalizedPath() throws IOException {
+		String stringPath = "my-folder/hello/../hello/world/data.txt";
+		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
+		
+		KNIMEPath expected = new KNIMEPath(m_fileSystem, "C:/my-folder/hello/world/data.txt");
+		
+		assertEquals(expected, path.toRealPath());
+	}
+	
+	@Test(expected = UnsupportedOperationException.class)
+	public void toFileIsUnsupported() {
+		KNIMEPath path = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
+		path.toFile();
+	}
+	
+	@Test(expected = UnsupportedOperationException.class)
+	public void watchKeysAreUnsupported() throws IOException {
+		KNIMEPath path = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
+		path.register(null);
+	}
+	
+	@Test
+	public void moreContainsNameSeperatedPath() {
+		String first = "first";
+		String second = "second/folder";
+		String lastWindowsStyle = "windows\\data.txt";		
+		
+		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, first, second, lastWindowsStyle);
+		
+		assertEquals(5, knimePath.getNameCount());
+		assertEquals("first", knimePath.getName(0).toString());
+		assertEquals("second", knimePath.getName(1).toString());
+		assertEquals("folder", knimePath.getName(2).toString());
+		assertEquals("windows", knimePath.getName(3).toString());
+		assertEquals("data.txt", knimePath.getName(4).toString());
+	}
+
+	private KNIMEFileSystem createFileSystemOfType(KNIMEConnection.Type type) {
+		return new KNIMEFileSystem(m_fsProvider, m_fsBaseLocation, type);
+	}
 	
 }
