@@ -62,6 +62,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -78,6 +79,7 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.FileSystemBrowser.DialogType;
 import org.knime.core.node.util.FileSystemBrowser.FileSelectionMode;
 import org.knime.core.node.util.LocalFileSystemBrowser;
+import org.knime.core.node.workflow.FlowVariable;
 import org.knime.core.node.workflow.FlowVariable.Type;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
@@ -114,6 +116,9 @@ public class DialogComponentFileChooser2 extends DialogComponent {
     /** Card layout used to swap between different views (show KNIME file systems or not) */
     private final CardLayout m_connectionSettingsCardLayout = new CardLayout();
 
+    /** JPanel holding the folder and filter settings */
+    private JPanel m_folderAndFilterSettings = new JPanel();
+
     /** Label for the file system connection combo boxes */
     private final JLabel m_connectionLabel;
 
@@ -124,10 +129,10 @@ public class DialogComponentFileChooser2 extends DialogComponent {
     private final JComboBox<KNIMEConnection> m_knimeConnections;
 
     /** Check box to select whether to include sub folders while listing files in folders */
-    private final JCheckBox m_includeSubfolders;
+    private JCheckBox m_includeSubfolders;
 
     /** Check box to select whether to filter files or not */
-    private final JCheckBox m_filterFiles;
+    private JCheckBox m_filterFiles;
 
     /** Label for the {@code FilesHistoryPanel} */
     private final JLabel m_fileFolderLabel;
@@ -135,11 +140,17 @@ public class DialogComponentFileChooser2 extends DialogComponent {
     /** FilesHistoryPanel used to select a file or a folder */
     private final FilesHistoryPanel m_fileHistoryPanel;
 
+    /** {@link DialogType} defining whether the component is used to read or write */
+    private final DialogType m_dialogType;
+
+    /** {@link DialogType} defining whether the component is allowed to select files, folders or both */
+    private final FileSelectionMode m_fileSelectionMode;
+
     /** Button to open the dialog that contains options for file filtering */
-    private final JButton m_configureFilter;
+    private JButton m_configureFilter;
 
     /** Panel containing options for file filtering */
-    private final FileFilterPanel m_fileFilterPanel;
+    private FileFilterPanel m_fileFilterPanel;
 
     /** Extra dialog containing the file filter panel */
     private FileFilterDialog m_fileFilterDialog;
@@ -149,6 +160,9 @@ public class DialogComponentFileChooser2 extends DialogComponent {
 
     /** Swing worker used to do file scanning in the background */
     private StatusMessageSwingWorker m_statusMessageSwingWorker;
+
+    /** Swing worker used to do check if file/folder options are needed */
+    private FolderAndFilterPanelSwingWorker m_folderFilterPanelSwingWorker;
 
     /** Flag to temporarily disable event processing from Swing components or the settings model */
     private boolean m_ignoreUpdates;
@@ -180,16 +194,24 @@ public class DialogComponentFileChooser2 extends DialogComponent {
     /** String used as button label */
     private static final String CONFIGURE_BUTTON_LABEL = "Configure";
 
+    private Optional<String> m_exceptionMsg;
+
     /**
      * Creates a new instance of {@code DialogComponentFileChooser2}.
      *
      * @param settingsModel the settings model storing all the necessary information
      * @param historyId id used to store file history used by {@link FilesHistoryPanel}
      * @param dialogPane the {@link NodeDialogPane} this component is used for
-     * @param suffixes array of file suffixes used as defaults for file filtering options
+     * @param dialogType integer defining the dialog type. See {@link JFileChooser#OPEN_DIALOG} and
+     *            {@link JFileChooser#OPEN_DIALOG}.
+     * @param selectionMode integer defining whether the component is allowed to read files, directories or both. See
+     *            {@link JFileChooser#FILES_ONLY}, {@link JFileChooser#DIRECTORIES_ONLY} and
+     *            {@link JFileChooser#FILES_AND_DIRECTORIES}.
+     * @param suffixes array of file suffixes used as defaults for underlying FilesHistoryPanel and file filtering
+     *            options
      */
     public DialogComponentFileChooser2(final SettingsModelFileChooser2 settingsModel, final String historyId,
-        final NodeDialogPane dialogPane, final String... suffixes) {
+        final NodeDialogPane dialogPane, final int dialogType, final int selectionMode, final String... suffixes) {
         super(settingsModel);
 
         m_ignoreUpdates = false;
@@ -207,19 +229,23 @@ public class DialogComponentFileChooser2 extends DialogComponent {
 
         m_fileFolderLabel = new JLabel(FILE_FOLDER_LABEL);
 
+        m_dialogType = DialogType.fromJFileChooserCode(dialogType);
+        m_fileSelectionMode = FileSelectionMode.fromJFileChooserCode(selectionMode);
         m_fileHistoryPanel = new FilesHistoryPanel(m_pathFlowVariableModel, historyId, new LocalFileSystemBrowser(),
-            FileSelectionMode.FILES_AND_DIRECTORIES, DialogType.OPEN_DIALOG, suffixes);
+            m_fileSelectionMode, m_dialogType, suffixes);
 
-        m_includeSubfolders = new JCheckBox(INCLUDE_SUBFOLDERS_LABEL);
-        m_filterFiles = new JCheckBox(FILTER_FILES_LABEL);
-        m_configureFilter = new JButton(CONFIGURE_BUTTON_LABEL);
-        m_configureFilter.addActionListener(e -> showFileFilterConfigurationDialog());
-
-        m_fileFilterPanel = new FileFilterPanel(suffixes);
+        if (showFolderOptions()) {
+            m_includeSubfolders = new JCheckBox(INCLUDE_SUBFOLDERS_LABEL);
+            m_filterFiles = new JCheckBox(FILTER_FILES_LABEL);
+            m_configureFilter = new JButton(CONFIGURE_BUTTON_LABEL);
+            m_configureFilter.addActionListener(e -> showFileFilterConfigurationDialog());
+            m_fileFilterPanel = new FileFilterPanel(suffixes);
+        }
 
         m_statusMessage = new JLabel(EMPTY_STRING);
 
         m_statusMessageSwingWorker = null;
+        m_folderFilterPanelSwingWorker = null;
 
         initLayout();
 
@@ -264,20 +290,15 @@ public class DialogComponentFileChooser2 extends DialogComponent {
         gbc.insets = new Insets(5, 0, 5, 0);
         panel.add(m_fileHistoryPanel, gbc);
 
-        gbc.gridx = 1;
-        gbc.gridy++;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        panel.add(m_includeSubfolders, gbc);
-
-        gbc.gridx++;
-        panel.add(m_filterFiles, gbc);
-
-        gbc.gridx++;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(5, 0, 5, 0);
-        panel.add(m_configureFilter, gbc);
+        if (showFolderOptions()) {
+            gbc.gridx = 1;
+            gbc.gridy++;
+            gbc.gridwidth = 1;
+            gbc.weightx = 0;
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            initFolderAndFilterSettingsPanel();
+            panel.add(m_folderAndFilterSettings, gbc);
+        }
 
         gbc.gridx = 1;
         gbc.gridy++;
@@ -285,6 +306,32 @@ public class DialogComponentFileChooser2 extends DialogComponent {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         panel.add(m_statusMessage, gbc);
+
+    }
+
+    /** Initialize the folder and filter settings panel */
+    private final void initFolderAndFilterSettingsPanel() {
+        m_folderAndFilterSettings = new JPanel(new GridBagLayout());
+        final GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        m_folderAndFilterSettings.add(m_includeSubfolders, gbc);
+
+        gbc.gridx++;
+        m_folderAndFilterSettings.add(m_filterFiles, gbc);
+
+        gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(5, 0, 5, 0);
+        m_folderAndFilterSettings.add(m_configureFilter, gbc);
+
+        gbc.gridx++;
+        gbc.weightx = 1;
+        m_folderAndFilterSettings.add(Box.createHorizontalGlue(), gbc);
     }
 
     /** Initialize the file system connection panel layout */
@@ -319,8 +366,10 @@ public class DialogComponentFileChooser2 extends DialogComponent {
         m_connections.addActionListener(e -> handleUIChange());
         m_knimeConnections.addActionListener(e -> handleUIChange());
         m_fileHistoryPanel.addChangeListener(e -> handleUIChange());
-        m_includeSubfolders.addActionListener(e -> handleUIChange());
-        m_filterFiles.addActionListener(e -> handleUIChange());
+        if (showFolderOptions()) {
+            m_includeSubfolders.addActionListener(e -> handleUIChange());
+            m_filterFiles.addActionListener(e -> handleUIChange());
+        }
     }
 
     /** Method to update settings model */
@@ -329,7 +378,6 @@ public class DialogComponentFileChooser2 extends DialogComponent {
             return;
         }
         updateSettingsModel();
-        triggerStatusMessageUpdate();
         updateEnabledness();
         //FIXME put that in action listener
         updateFileHistoryPanel();
@@ -395,11 +443,6 @@ public class DialogComponentFileChooser2 extends DialogComponent {
             m_fileFolderLabel.setText(FILE_FOLDER_LABEL);
             m_fileHistoryPanel.setEnabled(true);
             m_fileHistoryPanel.setBrowseable(true);
-
-            m_includeSubfolders.setEnabled(true);
-            m_filterFiles.setEnabled(true);
-            m_configureFilter.setEnabled(m_filterFiles.isSelected());
-
         } else if (m_connections.getSelectedItem().equals(FileSystemChoice.getCustomFsUrlChoice())) {
             // Custom URLs are selected
             m_connectionSettingsCardLayout.show(m_connectionSettingsPanel, DEFAULT_CARD_VIEW_IDENTIFIER);
@@ -408,10 +451,6 @@ public class DialogComponentFileChooser2 extends DialogComponent {
             m_fileFolderLabel.setText(URL_LABEL);
             m_fileHistoryPanel.setEnabled(true);
             m_fileHistoryPanel.setBrowseable(false);
-
-            m_includeSubfolders.setEnabled(false);
-            m_filterFiles.setEnabled(false);
-            m_configureFilter.setEnabled(false);
         } else {
             // some flow variable connection is selected, or we are using the local FS
             m_connectionSettingsCardLayout.show(m_connectionSettingsPanel, DEFAULT_CARD_VIEW_IDENTIFIER);
@@ -420,28 +459,39 @@ public class DialogComponentFileChooser2 extends DialogComponent {
             m_fileFolderLabel.setText(FILE_FOLDER_LABEL);
             m_fileHistoryPanel.setEnabled(true);
             m_fileHistoryPanel.setBrowseable(true);
+        }
 
-            m_includeSubfolders.setEnabled(true);
-            m_filterFiles.setEnabled(true);
-            m_configureFilter.setEnabled(m_filterFiles.isSelected());
+        if (showFolderOptions()) {
+            triggerFolderOptionsEnablednessCheck();
         }
 
         getComponentPanel().repaint();
     }
 
+    /** Method to check the necessity of folder and filter panel. */
+    private void triggerFolderOptionsEnablednessCheck() {
+        if (m_folderFilterPanelSwingWorker != null) {
+            m_folderFilterPanelSwingWorker.cancel(true);
+            m_folderFilterPanelSwingWorker = null;
+        }
+
+        m_folderFilterPanelSwingWorker = new FolderAndFilterPanelSwingWorker(m_connectionFlowVariableProvider,
+            ((SettingsModelFileChooser2)getModel()).clone(), m_folderAndFilterSettings);
+        m_folderFilterPanelSwingWorker.execute();
+    }
+
     /** Method to update the status message */
     private void triggerStatusMessageUpdate() {
         if (m_statusMessageSwingWorker != null) {
+            m_exceptionMsg = m_statusMessageSwingWorker.getLatestWarning();
             m_statusMessageSwingWorker.cancel(true);
             m_statusMessageSwingWorker = null;
         }
 
-        final SettingsModelFileChooser2 model = (SettingsModelFileChooser2)getModel();
-        if (model.getPathOrURL() != null && !model.getPathOrURL().isEmpty()) {
-            m_statusMessageSwingWorker = new StatusMessageSwingWorker(m_connectionFlowVariableProvider,
-                ((SettingsModelFileChooser2)getModel()).clone(), m_statusMessage);
-            m_statusMessageSwingWorker.execute();
-        }
+        m_statusMessageSwingWorker = new StatusMessageSwingWorker(m_connectionFlowVariableProvider,
+            ((SettingsModelFileChooser2)getModel()).clone(), m_statusMessage, m_dialogType, m_fileSelectionMode);
+        m_statusMessageSwingWorker.execute();
+        m_exceptionMsg = m_statusMessageSwingWorker.getLatestWarning();
     }
 
     @Override
@@ -482,31 +532,37 @@ public class DialogComponentFileChooser2 extends DialogComponent {
         if ((pathOrUrl != null) && !pathOrUrl.equals(m_fileHistoryPanel.getSelectedFile())) {
             m_fileHistoryPanel.setSelectedFile(pathOrUrl);
         }
-        // sync sub folder check box
-        final boolean includeSubfolders = model.getIncludeSubfolders();
-        if (includeSubfolders != m_includeSubfolders.isSelected()) {
-            m_includeSubfolders.setSelected(includeSubfolders);
-        }
-        // sync filter files check box
-        final boolean filterFiles = model.getFilterFiles();
-        if (filterFiles != m_filterFiles.isSelected()) {
-            m_filterFiles.setSelected(filterFiles);
-        }
 
-        // sync filter mode combo box
-        final String filterMode = model.getFilterMode();
-        if ((filterMode != null) && !filterMode.equals(m_fileFilterPanel.getSelectedFilterType().getDisplayText())) {
-            m_fileFilterPanel.setFilterType(FilterType.fromDisplayText(filterMode));
-        }
-        // sync filter expression combo box
-        final String filterExpr = model.getFilterExpression();
-        if ((filterExpr != null) && !filterExpr.equals(m_fileFilterPanel.getSelectedFilterExpression())) {
-            m_fileFilterPanel.setFilterExpression(filterExpr);
-        }
-        // sync case sensitivity check box
-        final boolean caseSensitive = model.getCaseSensitive();
-        if (caseSensitive != m_fileFilterPanel.getCaseSensitive()) {
-            m_fileFilterPanel.setCaseSensitive(caseSensitive);
+        if (showFolderOptions()) {
+            // sync sub folder check box
+            final boolean includeSubfolders = model.getIncludeSubfolders();
+            if (includeSubfolders != m_includeSubfolders.isSelected()) {
+                m_includeSubfolders.setSelected(includeSubfolders);
+            }
+            // sync filter files check box
+            final boolean filterFiles = model.getFilterFiles();
+            if (filterFiles != m_filterFiles.isSelected()) {
+                m_filterFiles.setSelected(filterFiles);
+            }
+
+            // sync filter mode combo box
+            final String filterMode = model.getFilterMode();
+            if ((filterMode != null)
+                && !filterMode.equals(m_fileFilterPanel.getSelectedFilterType().getDisplayText())) {
+                m_fileFilterPanel.setFilterType(FilterType.fromDisplayText(filterMode));
+            }
+            // sync filter expression combo box
+            final String filterExpr = model.getFilterExpression();
+            if ((filterExpr != null) && !filterExpr.equals(m_fileFilterPanel.getSelectedFilterExpression())) {
+                m_fileFilterPanel.setFilterExpression(filterExpr);
+            }
+            // sync case sensitivity check box
+            final boolean caseSensitive = model.getCaseSensitive();
+            if (caseSensitive != m_fileFilterPanel.getCaseSensitive()) {
+                m_fileFilterPanel.setCaseSensitive(caseSensitive);
+            }
+
+            triggerFolderOptionsEnablednessCheck();
         }
 
         triggerStatusMessageUpdate();
@@ -559,14 +615,22 @@ public class DialogComponentFileChooser2 extends DialogComponent {
             model.setKNIMEFileSystem(connection.getId());
         }
         model.setPathOrURL(m_fileHistoryPanel.getSelectedFile());
-        model.setIncludeSubfolders(m_includeSubfolders.isEnabled() && m_includeSubfolders.isSelected());
-        model.setFilterFiles(m_filterFiles.isEnabled() && m_filterFiles.isSelected());
-        model.setFilterMode(m_fileFilterPanel.getSelectedFilterType().getDisplayText());
-        model.setFilterExpression(m_fileFilterPanel.getSelectedFilterExpression());
-        model.setCaseSensitive(m_fileFilterPanel.getCaseSensitive());
+        if (showFolderOptions()) {
+            model.setIncludeSubfolders(m_includeSubfolders.isEnabled() && m_includeSubfolders.isSelected());
+            model.setFilterFiles(m_filterFiles.isEnabled() && m_filterFiles.isSelected());
+            model.setFilterMode(m_fileFilterPanel.getSelectedFilterType().getDisplayText());
+            model.setFilterExpression(m_fileFilterPanel.getSelectedFilterExpression());
+            model.setCaseSensitive(m_fileFilterPanel.getCaseSensitive());
+        }
         m_ignoreUpdates = false;
 
         updateComponent();
+    }
+
+    private boolean showFolderOptions() {
+        return m_dialogType.equals(DialogType.OPEN_DIALOG)
+            && (m_fileSelectionMode.equals(FileSelectionMode.DIRECTORIES_ONLY)
+                || m_fileSelectionMode.equals(FileSelectionMode.FILES_AND_DIRECTORIES));
     }
 
     @Override
@@ -574,6 +638,9 @@ public class DialogComponentFileChooser2 extends DialogComponent {
         updateSettingsModel();
         //FIXME in case of KNIME connection check whether it is a valid connection
         m_fileHistoryPanel.addToHistory();
+        if (m_exceptionMsg.isPresent()) {
+            throw new InvalidSettingsException(m_exceptionMsg.get());
+        }
     }
 
     @Override
@@ -591,10 +658,23 @@ public class DialogComponentFileChooser2 extends DialogComponent {
             updateEnabledness();
         } else {
             // disable
-            m_includeSubfolders.setEnabled(enabled);
-            m_filterFiles.setEnabled(enabled);
-            m_configureFilter.setEnabled(enabled);
+            if (showFolderOptions()) {
+                m_includeSubfolders.setEnabled(enabled);
+                m_filterFiles.setEnabled(enabled);
+                m_configureFilter.setEnabled(enabled);
+            }
         }
+    }
+
+    /**
+     * Forces the given file extension when the user enters a path in the text field that does not end with the argument
+     * extension.
+     *
+     * @param forcedExtension optional parameter to force a file extension to be appended to the selected file name,
+     *            e.g. ".txt" (null and blanks not force any extension).
+     */
+    public final void setForceExtensionOnSave(final String forcedExtension) {
+        m_fileHistoryPanel.setForceExtensionOnSave(forcedExtension);
     }
 
     /**
@@ -603,8 +683,9 @@ public class DialogComponentFileChooser2 extends DialogComponent {
      * @return the currently selected path/url
      */
     public final String getSelectedPathOrUrl() {
-        if (m_pathFlowVariableModel.getVariableValue().isPresent()) {
-            return m_pathFlowVariableModel.getVariableValue().get().getStringValue();
+        final Optional<FlowVariable> variableValue = m_pathFlowVariableModel.getVariableValue();
+        if (variableValue.isPresent()) {
+            return variableValue.get().getStringValue();
         }
         return m_fileHistoryPanel.getSelectedFile();
     }
