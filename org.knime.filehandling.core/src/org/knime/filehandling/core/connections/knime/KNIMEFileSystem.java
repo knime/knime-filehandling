@@ -49,14 +49,15 @@
 package org.knime.filehandling.core.connections.knime;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.Collections;
 import java.util.Set;
 
 import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
@@ -69,34 +70,30 @@ import org.knime.filehandling.core.defaultnodesettings.KNIMEConnection;
 public class KNIMEFileSystem extends FileSystem {
 
     private static final String SEPERATOR = UnixStylePathUtil.SEPARATOR;
-
-    private final FileSystemProvider m_fileSystemProvider;
+    private final KNIMEFileSystemProvider m_fileSystemProvider;
 
     /**
      * The base location of this File System, may be a workflow, node, or mount point location.
      */
     private String m_baseLocation;
     private KNIMEConnection.Type m_knimeURLType;
-
-    /**
-     * @param fileSystemProvider
-     */
-    public KNIMEFileSystem(final KNIMEFileSystemProvider fileSystemProvider) {
-        m_fileSystemProvider = fileSystemProvider;
-    }
+    private final URI m_key;
 
     /**
      * @param fileSystemProvider
      * @param base
      * @param knimeURLType
+     * @param key
      */
     public KNIMEFileSystem(
             final KNIMEFileSystemProvider fileSystemProvider,
             final String base,
-            final KNIMEConnection.Type knimeURLType) {
+            final KNIMEConnection.Type knimeURLType,
+            final URI key) {
         m_fileSystemProvider = fileSystemProvider;
         m_baseLocation = base;
         m_knimeURLType = knimeURLType;
+        m_key = key;
     }
 
     /**
@@ -112,7 +109,7 @@ public class KNIMEFileSystem extends FileSystem {
      */
     @Override
     public void close() throws IOException {
-
+        m_fileSystemProvider.close(this);
     }
 
     /**
@@ -120,8 +117,7 @@ public class KNIMEFileSystem extends FileSystem {
      */
     @Override
     public boolean isOpen() {
-        // TODO Auto-generated method stub
-        return false;
+        return m_fileSystemProvider.isOpen(this);
     }
 
     /**
@@ -129,7 +125,6 @@ public class KNIMEFileSystem extends FileSystem {
      */
     @Override
     public boolean isReadOnly() {
-        // TODO Auto-generated method stub
         return false;
     }
 
@@ -146,8 +141,7 @@ public class KNIMEFileSystem extends FileSystem {
      */
     @Override
     public Iterable<Path> getRootDirectories() {
-        // TODO Auto-generated method stub
-        return Collections.emptyList();
+        return Paths.get(m_baseLocation).getFileSystem().getRootDirectories();
     }
 
     /**
@@ -155,8 +149,7 @@ public class KNIMEFileSystem extends FileSystem {
      */
     @Override
     public Iterable<FileStore> getFileStores() {
-        // TODO Auto-generated method stub
-        return Collections.emptyList();
+        return Paths.get(m_baseLocation).getFileSystem().getFileStores();
     }
 
     /**
@@ -164,8 +157,7 @@ public class KNIMEFileSystem extends FileSystem {
      */
     @Override
     public Set<String> supportedFileAttributeViews() {
-        // TODO Auto-generated method stub
-        return null;
+        return Paths.get(m_baseLocation).getFileSystem().supportedFileAttributeViews();
     }
 
     /**
@@ -200,12 +192,40 @@ public class KNIMEFileSystem extends FileSystem {
         throw new UnsupportedOperationException();
     }
 
-    public KNIMEConnection.Type getKNIMEURLType() {
+    /**
+     * Returns connection type of this file system. Can be workflow, node or mount point relative.
+     *
+     * @return the KNIME Connection Type of this file system.
+     */
+    public KNIMEConnection.Type getKNIMEConnectionType() {
         return m_knimeURLType;
     }
 
+    /**
+     * Returns the base location of this file system. Can be a workflow, node or local mount point location.
+     *
+     * @return the base location of this file system
+     */
     public String getBase() {
-        return m_baseLocation.toString();
+        return m_baseLocation != null ? m_baseLocation : "";
+    }
+
+    /**
+     * Returns the base location path of this file system. Can be a workflow, node or local mount point location.
+     *
+     * @return the base location path of this file system
+     */
+    public Path getBasePath() {
+        return m_baseLocation != null ? Paths.get(m_baseLocation.toString()) : null;
+    }
+
+    /**
+     * Returns the URI key of this file system.
+     *
+     * @return the URI key of this file system.
+     */
+    public URI getKey() {
+        return m_key;
     }
 
 }

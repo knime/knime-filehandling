@@ -58,22 +58,23 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
-import java.nio.file.attribute.FileTime;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.Validate;
-import org.knime.filehandling.core.connections.base.attributes.BasicFileAttributesImpl;
+import org.knime.filehandling.core.defaultnodesettings.KNIMEConnection;
+import org.knime.filehandling.core.defaultnodesettings.KNIMEConnection.Type;
 
 /**
  *
@@ -83,31 +84,15 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
 
     private final static KNIMEFileSystemProvider SINGLETON_INSTANCE = new KNIMEFileSystemProvider();
 
-    private static String LOCAL_KEY = "local-host";
-    private static String SCHEME = "knime";
+    private final static String SCHEME = "knime";
 
-    private final Map<String, FileSystem> m_fileSystems = new HashMap<>();
-    private final Set<String> m_localHosts =
-        new HashSet<String>(Arrays.asList("knime.node", "knime.workflow", "knime.mountpoint"));
-
-    private final KNIMEUrlHandler m_knimeURLHandler;
+    private final Map<URI, FileSystem> m_fileSystems = new HashMap<>();
 
     /**
+     * Returns the singleton instance of this provider.
      *
+     * @return the singleton instance of this provider
      */
-    public KNIMEFileSystemProvider() {
-        m_knimeURLHandler= null; // needs to be set to standard
-    }
-
-    /**
-     * Package private constructor for enabling tests to inject a mock KNIMEUrlHandler.
-     *
-     * @param knimeURLHandler the specific handler
-     */
-    KNIMEFileSystemProvider(final KNIMEUrlHandler knimeURLHandler) {
-        m_knimeURLHandler= knimeURLHandler;
-    }
-
     public static KNIMEFileSystemProvider getInstance() {
         return SINGLETON_INSTANCE;
     }
@@ -127,31 +112,44 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
     public FileSystem newFileSystem(final URI uri, final Map<String, ?> env) throws IOException {
         validate(uri);
 
-        // if a file system needs both a location and type, fetch these from env and instantiate FS accordingly.
+        String host = uri.getHost();
+        String base = uri.getPath();
 
-
-        String key = keyOf(uri);
-        if (!m_fileSystems.containsKey(key)) {
-            FileSystem fileSystem = new KNIMEFileSystem(this);
-            m_fileSystems.put(key, fileSystem);
-            return fileSystem;
+        if (base.startsWith("/")) {
+            base = base.substring(1);
         }
-        throw new FileSystemAlreadyExistsException();
+
+        Type type = getTypeFromUriHost(host);
+        KNIMEFileSystem knimeFileSystem = new KNIMEFileSystem(this, base, type, uri);
+
+        m_fileSystems.put(uri, knimeFileSystem);
+        return knimeFileSystem;
     }
 
     private void validate(final URI uri) {
         Validate.notNull(uri, "URI cannot be null");
+        if (m_fileSystems.containsKey(uri)) {
+            throw new FileSystemAlreadyExistsException();
+        }
         if (!uri.getScheme().equalsIgnoreCase(getScheme())) {
             throw new IllegalArgumentException("The URI must have scheme '" + getScheme() + "'");
         }
+        boolean isAbsolute = Paths.get(uri.getPath().substring(1)).isAbsolute();
+        Validate.isTrue(isAbsolute, "A File System can only be created from an absolute URI");
     }
 
-    private String keyOf(final URI uri) {
-        String host = uri.getHost();
-        if (m_localHosts.contains(host)) {
-            return LOCAL_KEY;
+    private static KNIMEConnection.Type getTypeFromUriHost(final String uriHost) {
+        switch (uriHost) {
+            case "knime.node" :
+                return KNIMEConnection.Type.NODE_RELATIVE;
+            case "knime.workflow" :
+                return KNIMEConnection.Type.WORKFLOW_RELATIVE ;
+            case  "knime.mountpoint" :
+                return KNIMEConnection.Type.MOUNTPOINT_RELATIVE;
+            default :
+                return KNIMEConnection.Type.MOUNTPOINT_ABSOLUTE;
         }
-        return host;
+
     }
 
     /**
@@ -159,7 +157,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public FileSystem getFileSystem(final URI uri) {
-        return m_fileSystems.get(keyOf(uri));
+        return m_fileSystems.get(uri);
     }
 
     /**
@@ -169,8 +167,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
     @Override
     public Path getPath(final URI uri) {
         FileSystem fileSystem = getFileSystem(uri);
-        URI resolvedURI = m_knimeURLHandler.resolveKNIMEURI(uri);
-        return fileSystem.getPath(resolvedURI.getPath());
+        return fileSystem.getPath(uri.getPath());
     }
 
     /**
@@ -179,8 +176,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
     @Override
     public SeekableByteChannel newByteChannel(final Path path, final Set<? extends OpenOption> options, final FileAttribute<?>... attrs)
         throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return Files.newByteChannel(toLocalPath(path), options);
     }
 
     /**
@@ -188,8 +184,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public DirectoryStream<Path> newDirectoryStream(final Path dir, final Filter<? super Path> filter) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return Files.newDirectoryStream(toLocalPath(dir), filter);
     }
 
     /**
@@ -197,8 +192,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
-        // TODO Auto-generated method stub
-
+        Files.createDirectories(toLocalPath(dir), attrs);
     }
 
     /**
@@ -206,8 +200,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public void delete(final Path path) throws IOException {
-        // TODO Auto-generated method stub
-
+        Files.delete(toLocalPath(path));
     }
 
     /**
@@ -215,8 +208,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public void copy(final Path source, final Path target, final CopyOption... options) throws IOException {
-        // TODO Auto-generated method stub
-
+        Files.copy(toLocalPath(source), toLocalPath(target), options);
     }
 
     /**
@@ -224,8 +216,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public void move(final Path source, final Path target, final CopyOption... options) throws IOException {
-        // TODO Auto-generated method stub
-
+        Files.move(toLocalPath(source), toLocalPath(target), options);
     }
 
     /**
@@ -233,8 +224,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public boolean isSameFile(final Path path, final Path path2) throws IOException {
-        // TODO Auto-generated method stub
-        return false;
+        return Files.isSameFile(toLocalPath(path), toLocalPath(path2));
     }
 
     /**
@@ -242,8 +232,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public boolean isHidden(final Path path) throws IOException {
-        // TODO Auto-generated method stub
-        return false;
+        return Files.isHidden(toLocalPath(path));
     }
 
     /**
@@ -251,8 +240,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public FileStore getFileStore(final Path path) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return Files.getFileStore(toLocalPath(path));
     }
 
     /**
@@ -260,8 +248,22 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        // TODO Auto-generated method stub
-
+        Path localPath = toLocalPath(path);
+        if (Arrays.asList(modes).contains(AccessMode.READ)) {
+            if (!Files.isReadable(localPath)) {
+                throw new IOException("Cannot read file: " + localPath);
+            }
+        }
+        if (Arrays.asList(modes).contains(AccessMode.WRITE)) {
+            if (!Files.isWritable(localPath)) {
+                throw new IOException("Cannot write file: " + localPath);
+            }
+        }
+        if (Arrays.asList(modes).contains(AccessMode.EXECUTE)) {
+            if (!Files.isExecutable(localPath)) {
+                throw new IOException("Cannot execute file: " + localPath);
+            }
+        }
     }
 
     /**
@@ -269,38 +271,16 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public <V extends FileAttributeView> V getFileAttributeView(final Path path, final Class<V> type, final LinkOption... options) {
-        // TODO Auto-generated method stub
-        return null;
+        return Files.getFileAttributeView(toLocalPath(path), type, options);
     }
 
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings("unchecked")
     @Override
     public <A extends BasicFileAttributes> A readAttributes(final Path path, final Class<A> type, final LinkOption... options)
         throws IOException {
-
-        FileTime lastModifiedTime = null;
-        FileTime lastAccessTime = null;
-        FileTime creationTime = null;
-        boolean isRegularFile = true;
-        boolean isDirectory = false;
-        boolean isSymbolicLink = false;
-        boolean isOther = !(isRegularFile || isDirectory || isSymbolicLink);
-        long size = 0;
-        Object fileKey = null;
-        return (A) new BasicFileAttributesImpl(
-            lastModifiedTime,
-            lastAccessTime,
-            creationTime,
-            isRegularFile,
-            isDirectory,
-            isSymbolicLink,
-            isOther,
-            size,
-            fileKey
-        );
+        return Files.readAttributes(toLocalPath(path), type, options);
     }
 
     /**
@@ -308,8 +288,7 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public Map<String, Object> readAttributes(final Path path, final String attributes, final LinkOption... options) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return Files.readAttributes(toLocalPath(path), attributes, options);
     }
 
     /**
@@ -317,8 +296,34 @@ public class KNIMEFileSystemProvider extends FileSystemProvider {
      */
     @Override
     public void setAttribute(final Path path, final String attribute, final Object value, final LinkOption... options) throws IOException {
-        // TODO Auto-generated method stub
+        Files.setAttribute(toLocalPath(path), attribute, value, options);
+    }
 
+    /**
+     * Closes the given file system.
+     *
+     * @param knimeFileSystem file system to be closed
+     */
+    public void close(final KNIMEFileSystem knimeFileSystem) {
+        m_fileSystems.remove(knimeFileSystem.getKey());
+    }
+
+    /**
+     * Checks whether a given file system is open or not.
+     *
+     * @param knimeFileSystem the file system
+     * @return true if the file system is open
+     */
+    public boolean isOpen(final KNIMEFileSystem knimeFileSystem) {
+        return m_fileSystems.containsKey(knimeFileSystem.getKey());
+    }
+
+    private static Path toLocalPath(final Path path) {
+        if (path instanceof KNIMEPath) {
+            return((KNIMEPath) path).toLocalPath();
+        } else {
+            throw new IllegalArgumentException("Input path must be an instance of KNIMEPath");
+        }
     }
 
 }

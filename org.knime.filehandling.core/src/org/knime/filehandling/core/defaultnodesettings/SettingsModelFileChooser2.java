@@ -337,8 +337,6 @@ public final class SettingsModelFileChooser2 extends SettingsModel implements Cl
      * @return The path of the selected file or folder
      */
     public String getPathOrURL() {
-//        String knimeURL = "knime://knime.workflow/";
-//        return knimeURL + m_pathOrURL;
         return m_pathOrURL;
     }
 

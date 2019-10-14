@@ -53,6 +53,7 @@ import static java.lang.String.format;
 import java.awt.Color;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -107,8 +108,10 @@ class StatusMessageSwingWorker extends SwingWorker<Pair<Color, String>, Pair<Col
      *
      * @param the label to update
      */
-    StatusMessageSwingWorker(final FSConnectionFlowVariableProvider connectionFlowVariableProvider,
-        final SettingsModelFileChooser2 settingsModel, final JLabel statusMessageLabel) {
+    StatusMessageSwingWorker(
+            final FSConnectionFlowVariableProvider connectionFlowVariableProvider,
+            final SettingsModelFileChooser2 settingsModel,
+            final JLabel statusMessageLabel) {
         m_connectionFlowVariableProvider = connectionFlowVariableProvider;
         m_settingsModel = settingsModel;
         m_statusMessageLabel = statusMessageLabel;
@@ -127,8 +130,9 @@ class StatusMessageSwingWorker extends SwingWorker<Pair<Color, String>, Pair<Col
 
         // get file systems
         final FileChooserHelper helper;
-        try {
-            helper = new FileChooserHelper(m_connectionFlowVariableProvider, m_settingsModel);
+        try (FileSystem fileSystem =
+                FileSystemHelper.retrieveFileSystem(m_connectionFlowVariableProvider, m_settingsModel)) {
+            helper = new FileChooserHelper(fileSystem, m_settingsModel);
         } catch (Exception e) {
             final String msg = "Could not get file system: " + ExceptionUtil.getDeepestErrorMessage(e, true);
             LOGGER.debug(msg, e);

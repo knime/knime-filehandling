@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -12,6 +13,7 @@ import java.nio.file.Path;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
 import org.knime.filehandling.core.defaultnodesettings.KNIMEConnection;
 
 public class KNIMEPathTest {
@@ -20,13 +22,15 @@ public class KNIMEPathTest {
 	private KNIMEFileSystem m_fileSystem;
 	private String m_fsBaseLocation;
 	private KNIMEConnection.Type m_knimeUrlType;
+	private URI m_key;
 	
 	@Before
 	public void setup() {
 		m_fsProvider = KNIMEFileSystemProvider.getInstance();
 		m_fsBaseLocation = "C:/";
 		m_knimeUrlType = KNIMEConnection.Type.WORKFLOW_RELATIVE;
-		m_fileSystem = new KNIMEFileSystem(m_fsProvider, m_fsBaseLocation, m_knimeUrlType);
+		m_key = URI.create("knime://knime.workflow/dummy/key/uri");
+		m_fileSystem = new KNIMEFileSystem(m_fsProvider, m_fsBaseLocation, m_knimeUrlType, m_key);
 	}
 	
 	@Test
@@ -191,7 +195,7 @@ public class KNIMEPathTest {
 	public void aPathDoesNotStartWithAPathFromADifferentFileSystem() {
 		String stringPath = "my-folder/hello/world/data.txt";
 		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
-		KNIMEFileSystem otherFileSystem = new KNIMEFileSystem(null);
+		KNIMEFileSystem otherFileSystem = new KNIMEFileSystem(null, null, null, null);
 		KNIMEPath pathOnOtherFileSystem = new KNIMEPath(otherFileSystem, stringPath);
 		
 		assertFalse(path.startsWith(pathOnOtherFileSystem));
@@ -243,7 +247,7 @@ public class KNIMEPathTest {
 	public void aPathDoesNotEndWithAPathFromADifferentFileSystem() {
 		String stringPath = "my-folder/hello/world/data.txt";
 		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
-		KNIMEFileSystem otherFileSystem = new KNIMEFileSystem(null);
+		KNIMEFileSystem otherFileSystem = new KNIMEFileSystem(null, null, null, null);
 		KNIMEPath pathOnOtherFileSystem = new KNIMEPath(otherFileSystem, stringPath);
 		
 		assertFalse(path.endsWith(pathOnOtherFileSystem));
@@ -263,7 +267,7 @@ public class KNIMEPathTest {
 	public void pathsOnDifferentFileSystemCannotBeResolvedAgainstEachOther() {
 		String stringPath = "my-folder/hello/world/data.txt";
 		KNIMEPath path = new KNIMEPath(m_fileSystem, stringPath);
-		KNIMEPath pathOnDifferentFS = new KNIMEPath(new KNIMEFileSystem(null), stringPath);
+		KNIMEPath pathOnDifferentFS = new KNIMEPath(new KNIMEFileSystem(null, null, null, null), stringPath);
 		
 		path.resolve(pathOnDifferentFS);
 	}
@@ -338,10 +342,13 @@ public class KNIMEPathTest {
 		assertEquals(expected, path.toRealPath());
 	}
 	
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void toFileIsUnsupported() {
 		KNIMEPath path = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
-		path.toFile();
+		File file = path.toFile();
+		
+		String unixStylePath = UnixStylePathUtil.asUnixStylePath(file.getPath());
+		assertEquals("my-folder/hello/world/data.txt", unixStylePath);
 	}
 	
 	@Test(expected = UnsupportedOperationException.class)
@@ -365,9 +372,9 @@ public class KNIMEPathTest {
 		assertEquals("windows", knimePath.getName(3).toString());
 		assertEquals("data.txt", knimePath.getName(4).toString());
 	}
-
+	
 	private KNIMEFileSystem createFileSystemOfType(KNIMEConnection.Type type) {
-		return new KNIMEFileSystem(m_fsProvider, m_fsBaseLocation, type);
+		return new KNIMEFileSystem(m_fsProvider, m_fsBaseLocation, type, m_key);
 	}
 	
 }

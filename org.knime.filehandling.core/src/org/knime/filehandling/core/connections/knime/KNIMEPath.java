@@ -104,9 +104,7 @@ public class KNIMEPath implements Path {
                 .flatMap(componentsArray -> Arrays.stream(componentsArray)) //
                 .collect(Collectors.toList()); //
 
-        String[] pathComponentsArray = new String[pathComponents.size()];
-        m_pathComponents = pathComponents.toArray(pathComponentsArray);
-
+        m_pathComponents = pathComponents.toArray(new String[pathComponents.size()]);
         m_path = Paths.get(first, more);
     }
 
@@ -321,7 +319,7 @@ public class KNIMEPath implements Path {
     @Override
     public URI toUri() {
         String knimeURL = "";
-        switch (m_fileSystem.getKNIMEURLType()) {
+        switch (m_fileSystem.getKNIMEConnectionType()) {
             case NODE_RELATIVE :
                 knimeURL = "knime://knime.node/";
                 break;
@@ -345,7 +343,11 @@ public class KNIMEPath implements Path {
      */
     @Override
     public Path toAbsolutePath() {
-        return new KNIMEPath(m_fileSystem, m_fileSystem.getBase(), pathAsString());
+        if (m_path.isAbsolute()) {
+            return new KNIMEPath(m_fileSystem, pathAsString());
+        } else {
+            return new KNIMEPath(m_fileSystem, m_fileSystem.getBase(), pathAsString());
+        }
     }
 
     /**
@@ -361,7 +363,7 @@ public class KNIMEPath implements Path {
      */
     @Override
     public File toFile() {
-        throw new UnsupportedOperationException();
+        return new File(pathAsString());
     }
 
     /**
@@ -432,6 +434,15 @@ public class KNIMEPath implements Path {
     @Override
     public String toString() {
         return pathAsString();
+    }
+
+    /**
+     * Creates a Path using the JVMs deafault file system.
+     *
+     * @return a local equivalent of this path
+     */
+    public Path toLocalPath() {
+        return Paths.get(pathAsString());
     }
 
 }

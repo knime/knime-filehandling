@@ -56,6 +56,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
 import java.nio.file.Paths;
 import java.util.Optional;
 
@@ -86,11 +88,13 @@ import org.knime.core.node.workflow.WorkflowContext;
 import org.knime.core.node.workflow.WorkflowManager;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
+import org.knime.filehandling.core.connections.knime.KNIMEFSKeyFactory;
 import org.knime.filehandling.core.connections.knime.KNIMEFileSystem;
 import org.knime.filehandling.core.connections.knime.KNIMEFileSystemBrowser;
 import org.knime.filehandling.core.connections.knime.KNIMEFileSystemProvider;
 import org.knime.filehandling.core.connections.knime.KNIMEFileSystemView;
 import org.knime.filehandling.core.defaultnodesettings.FileSystemChoice.Choice;
+import org.knime.filehandling.core.filechooser.NioFileSystemView;
 import org.knime.filehandling.core.filefilter.FileFilter.FilterType;
 import org.knime.filehandling.core.filefilter.FileFilterDialog;
 import org.knime.filehandling.core.filefilter.FileFilterPanel;
@@ -328,6 +332,7 @@ public class DialogComponentFileChooser2 extends DialogComponent {
 
     private void setWorkflowLocation() {
         NodeContext nodeContext = NodeContext.getContext();
+
         WorkflowContext workflowContext = null;
         if (nodeContext != null) {
             workflowContext =
@@ -378,22 +383,28 @@ public class DialogComponentFileChooser2 extends DialogComponent {
                 }
             }
         } else if (fsChoice.getType() == Choice.KNIME_FS) {
-            KNIMEFileSystemProvider knimeFileSystemProvider = new KNIMEFileSystemProvider();
             KNIMEConnection knimeConnection = (KNIMEConnection)m_knimeConnections.getSelectedItem();
-
-            // TODO TU: Create the file system from the provider?
-
-            try (KNIMEFileSystem knimeFileSystem = new KNIMEFileSystem(knimeFileSystemProvider, m_baseLocation, knimeConnection.getType())) {
-                m_fileHistoryPanel.setFileSystemBrowser(new KNIMEFileSystemBrowser(new KNIMEFileSystemView(knimeFileSystem), Paths.get(m_baseLocation)));
+            try (FileSystem fileSystem = getFileSystem(knimeConnection)) {
+                NioFileSystemView fsView = new KNIMEFileSystemView((KNIMEFileSystem) fileSystem);
+                m_fileHistoryPanel.setFileSystemBrowser(new KNIMEFileSystemBrowser(fsView, Paths.get(m_baseLocation)));
             } catch (IOException ex) {
-                // TODO Auto-generated catch block
+                LOGGER.debug("Exception when creating or closing the file system:", ex);
             }
-        }
-
-        else {
+        } else {
             m_fileHistoryPanel.setFileSystemBrowser(new LocalFileSystemBrowser());
         }
+    }
 
+    @SuppressWarnings("resource")
+    private static FileSystem getFileSystem(final KNIMEConnection knimeConnection) throws IOException {
+        URI fileSystemKey = KNIMEFSKeyFactory.keyOf(knimeConnection.getType());
+        KNIMEFileSystemProvider provider = KNIMEFileSystemProvider.getInstance();
+        FileSystem fileSystem = provider.getFileSystem(fileSystemKey);
+        if (fileSystem == null) {
+            fileSystem = provider.newFileSystem(fileSystemKey, null);
+        }
+
+        return fileSystem;
     }
 
     /** Method called if file filter configuration button is clicked */

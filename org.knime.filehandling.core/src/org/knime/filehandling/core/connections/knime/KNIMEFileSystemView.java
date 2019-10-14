@@ -49,102 +49,31 @@
 package org.knime.filehandling.core.connections.knime;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
-import javax.swing.filechooser.FileSystemView;
 
 import org.knime.filehandling.core.filechooser.NioFile;
+import org.knime.filehandling.core.filechooser.NioFileSystemView;
 
 /**
+ * This class is needed to handle the creation of file objects resolved against the file systems base location.
  *
  * @author Tobias Urhaug, KNIME GmbH, Berlin, Germany
  */
-public class KNIMEFileSystemView extends FileSystemView {
+public class KNIMEFileSystemView extends NioFileSystemView {
 
     /**
-     * The base of this file system view, can either be a workflow, node, or a mount point location.
+     * Constructs a new KNIME File System View.
+     *
+     * @param fileSystem the file system to wrap the view around
      */
-    private final Path m_basePath;
-    private final String m_baseString;
-    private final FileSystem m_fileSystem;
-    private final Set<Path> m_rootDirectories;
-
     public KNIMEFileSystemView(final KNIMEFileSystem fileSystem) {
-        m_baseString = fileSystem.getBase();
-        m_basePath = Paths.get(fileSystem.getBase());
-//        Path emptyRelativePath = Paths.get("");
-//        m_base = new KNIMEPath(fileSystem, emptyRelativePath);
-        m_fileSystem = fileSystem;
-        m_rootDirectories = new LinkedHashSet<>();
-        m_fileSystem.getRootDirectories().forEach(m_rootDirectories::add);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public File getDefaultDirectory() {
-        return new NioFile(m_baseString, m_fileSystem);
-    }
-
-    @Override
-    public File getHomeDirectory() {
-        return new NioFile(m_baseString, m_fileSystem);
+        super(fileSystem, fileSystem.getBasePath());
     }
 
     @Override
     public File createFileObject(final String path) {
-
-        // Resolve the path here!!
         Path input = Paths.get(path);
-
-        if (!input.isAbsolute()) {
-            Path resolved = m_basePath.resolve(input);
-            Path normalized = resolved.normalize();
-            return new NioFile(normalized);
-        }
-
-        return new NioFile(path, m_fileSystem);
-    }
-
-    @Override
-    public Boolean isTraversable(final File f) {
-        return Boolean.valueOf(f.isDirectory());
-    }
-
-    @Override
-    public boolean isRoot(final File f) {
-        if (f != null) {
-            return m_rootDirectories.stream().anyMatch(p -> p.equals(f.toPath()));
-        }
-        return false;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public File getParentDirectory(final File dir) {
-        if (dir != null) {
-            String path = dir.getPath();
-        }
-
-        return super.getParentDirectory(dir);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public File createNewFolder(final File containingDir) throws IOException {
-        final Path newFolder = m_fileSystem.getPath(containingDir.getPath(), "newFolder/");
-        Files.createDirectory(newFolder);
-        return newFolder.toFile();
+        return new NioFile(m_base.resolve(input).normalize());
     }
 }

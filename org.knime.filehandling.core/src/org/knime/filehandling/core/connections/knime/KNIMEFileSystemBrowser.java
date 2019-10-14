@@ -48,24 +48,20 @@
  */
 package org.knime.filehandling.core.connections.knime;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javax.swing.filechooser.FileSystemView;
-import javax.swing.filechooser.FileView;
-
-import org.knime.core.node.util.AbstractJFileChooserBrowser;
 import org.knime.filehandling.core.defaultnodesettings.FilesHistoryPanel;
+import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
+import org.knime.filehandling.core.filechooser.NioFileSystemView;
 
 /**
  * A KNIME File System Browser allowing the {@link FilesHistoryPanel} to browse a KNIME File System.
  *
  * @author Tobias Urhaug, KNIME GmbH, Berlin, Germany
  */
-public class KNIMEFileSystemBrowser extends AbstractJFileChooserBrowser {
+public class KNIMEFileSystemBrowser extends NioFileSystemBrowser {
 
-    private final KNIMEFileSystemView m_fileSystemView;
     private final Path m_baseLocation;
 
     /**
@@ -74,42 +70,9 @@ public class KNIMEFileSystemBrowser extends AbstractJFileChooserBrowser {
      * @param fileSystemView the view of the file system
      * @param baseLocation the base location, i.e. workflow location or mount point location
      */
-    public KNIMEFileSystemBrowser(final KNIMEFileSystemView fileSystemView, final Path baseLocation) {
-        m_fileSystemView = fileSystemView;
+    public KNIMEFileSystemBrowser(final NioFileSystemView fileSystemView, final Path baseLocation) {
+        super(fileSystemView);
         m_baseLocation = baseLocation;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isCompatible() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected FileSystemView getFileSystemView() {
-        return m_fileSystemView;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected FileView getFileView() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected File createFileFromPath(final String filePath) {
-        return m_fileSystemView.createFileObject(filePath);
     }
 
     /**

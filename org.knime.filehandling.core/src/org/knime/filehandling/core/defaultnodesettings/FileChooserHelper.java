@@ -49,20 +49,26 @@
 package org.knime.filehandling.core.defaultnodesettings;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.knime.core.node.FSConnectionFlowVariableProvider;
 import org.knime.core.util.Pair;
+import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
+import org.knime.filehandling.core.connections.knime.KNIMEFSKeyFactory;
 import org.knime.filehandling.core.filefilter.FileFilter;
+import org.knime.workbench.explorer.ExplorerURLStreamHandler;
 
 /**
  * Class used to scan files in directories.
@@ -85,18 +91,16 @@ public final class FileChooserHelper {
 
     /**
      * Creates a new instance of {@link FileChooserHelper}.
-     *
-     * @param provider the {@link FSConnectionFlowVariableProvider} used to retrieve a file system from a flow variable
-     *            if necessary
+     * @param fileSystem
      * @param settings the settings object containing necessary information about e.g. file filtering
      * @throws IOException thrown when the file system could not be retrieved.
      */
-    public FileChooserHelper(final FSConnectionFlowVariableProvider provider, final SettingsModelFileChooser2 settings)
+    public FileChooserHelper(final FileSystem fileSystem, final SettingsModelFileChooser2 settings)
         throws IOException {
 
         m_filter = settings.getFilterFiles() ? Optional.of(new FileFilter(settings)) : Optional.empty();
         m_settings = settings;
-        m_fileSystem = FileSystemHelper.retrieveFileSystem(provider, settings);
+        m_fileSystem = fileSystem;
     }
 
     /**
@@ -109,6 +113,54 @@ public final class FileChooserHelper {
     }
 
     /**
+     * Returns a list of {@link Path} if the input String represents a directory its contents are scanned, otherwise the
+     * list contains the file, if it is readable.
+     *
+     * @return a list of path to read
+     * @throws IOException if an I/O error occurs
+     */
+    public final List<Path> getPaths() throws IOException {
+        final Path pathOrUrl = resolveSelectedPathOrUrl();
+        return Files.isDirectory(pathOrUrl) ? scanDirectoryTree() : Collections.singletonList(pathOrUrl);
+    }
+
+    private Path resolveSelectedPathOrUrl() throws IOException, MalformedURLException {
+        final Path pathOrUrl;
+        String selectedPath = m_settings.getPathOrURL();
+        FileSystemChoice fileSystemChoice = m_settings.getFileSystemChoice();
+        if (fileSystemChoice == FileSystemChoice.getCustomFsUrlChoice()) {
+            final URI uri = URI.create(selectedPath);
+            pathOrUrl = m_fileSystem.provider().getPath(uri);
+        } else if (fileSystemChoice == FileSystemChoice.getKnimeFsChoice()) {
+            pathOrUrl = resolveKNIMERelativePath(selectedPath);
+        } else {
+            pathOrUrl = m_fileSystem.getPath(selectedPath);
+        }
+        return pathOrUrl;
+    }
+
+    private Path resolveKNIMERelativePath(final String selectedPath) throws IOException, MalformedURLException {
+
+        // TODO TU: this does not work right now, hard code to workflow until fixed!
+        String fsType;
+        String knimeFileSystem = m_settings.getKNIMEFileSystem();
+        if (knimeFileSystem.equals("some-knime-relative-system")) {
+            fsType = "this-needs-to-be-implemented";
+        } else {
+            fsType = KNIMEFSKeyFactory.WORKFLOW_RELATIVE_FS;
+        }
+
+        String unixStyleSelectedPath = UnixStylePathUtil.asUnixStylePath(selectedPath);
+        URI uri = URI.create(fsType + unixStyleSelectedPath);
+        URL resolvedKNIMEURL = ExplorerURLStreamHandler.resolveKNIMEURL(uri.toURL());
+        try {
+            return Paths.get(resolvedKNIMEURL.toURI());
+        } catch (URISyntaxException ex) {
+            throw new IOException("The resolved KNIME URL could not be mapped to URI: " + resolvedKNIMEURL, ex);
+        }
+    }
+
+    /**
      * Assumes that the file specified in the settings model is a folder, scans the folder for files matching the filter
      * from the settings model, and returns a list of matching {@link Path}s.
      *
@@ -117,12 +169,22 @@ public final class FileChooserHelper {
      */
     public final List<Path> scanDirectoryTree() throws IOException {
         setCounts(0, 0);
-        final Path dirPath = m_fileSystem.getPath(m_settings.getPathOrURL());
-        final boolean includeSubfolders = m_settings.getIncludeSubfolders();
+
+        final Path dirPath;
+        final String selectedPath = m_settings.getPathOrURL();
+        final FileSystemChoice fileSystemChoice = m_settings.getFileSystemChoice();
+        if (fileSystemChoice == FileSystemChoice.getKnimeFsChoice()) {
+            dirPath = resolveKNIMERelativePath(selectedPath);
+        } else {
+            dirPath = m_fileSystem.getPath(selectedPath);
+        }
 
         final List<Path> paths;
-        try (final Stream<Path> stream = includeSubfolders
-            ? Files.walk(dirPath, Integer.MAX_VALUE, FileVisitOption.FOLLOW_LINKS) : Files.list(dirPath)) {
+        try (final Stream<Path> stream =
+                m_settings.getIncludeSubfolders()
+                    ? Files.walk(dirPath, Integer.MAX_VALUE, FileVisitOption.FOLLOW_LINKS)
+                    : Files.list(dirPath))
+        {
             if (m_filter.isPresent()) {
                 final FileFilter filter = m_filter.get();
                 filter.resetCount();
@@ -134,37 +196,6 @@ public final class FileChooserHelper {
             }
         }
         return paths;
-    }
-
-    /**
-     * Returns a list of {@link Path} if the input String represents a directory its contents are scanned, otherwise the
-     * list contains the file, if it is readable.
-     *
-     * @return a list of path to read
-     * @throws IOException if an I/O error occurs
-     */
-    public final List<Path> getPaths() throws IOException {
-
-        // Resolve the KNIME URLs here
-
-
-        final Path pathOrUrl;
-        if (m_settings.getFileSystemChoice() == FileSystemChoice.getCustomFsUrlChoice()) {
-            final URI uri = URI.create(m_settings.getPathOrURL());
-            pathOrUrl = m_fileSystem.provider().getPath(uri);
-        } else {
-            pathOrUrl = m_fileSystem.getPath(m_settings.getPathOrURL());
-        }
-
-        final List<Path> toReturn;
-
-        if (Files.isDirectory(pathOrUrl)) {
-            toReturn = scanDirectoryTree();
-        } else {
-            toReturn = Collections.singletonList(pathOrUrl);
-        }
-
-        return toReturn;
     }
 
     /**
