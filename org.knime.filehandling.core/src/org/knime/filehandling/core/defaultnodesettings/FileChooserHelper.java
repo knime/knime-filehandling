@@ -68,7 +68,7 @@ import org.knime.core.util.Pair;
 import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
 import org.knime.filehandling.core.connections.knime.KNIMEFSKeyFactory;
 import org.knime.filehandling.core.filefilter.FileFilter;
-import org.knime.workbench.explorer.ExplorerURLStreamHandler;
+import org.knime.filehandling.core.util.MountPointIDProviderService;
 
 /**
  * Class used to scan files in directories.
@@ -136,6 +136,7 @@ public final class FileChooserHelper {
         } else {
             pathOrUrl = m_fileSystem.getPath(selectedPath);
         }
+
         return pathOrUrl;
     }
 
@@ -152,7 +153,7 @@ public final class FileChooserHelper {
 
         String unixStyleSelectedPath = UnixStylePathUtil.asUnixStylePath(selectedPath);
         URI uri = URI.create(fsType + unixStyleSelectedPath);
-        URL resolvedKNIMEURL = ExplorerURLStreamHandler.resolveKNIMEURL(uri.toURL());
+        URL resolvedKNIMEURL = MountPointIDProviderService.instance().resolveKNIMEURL(uri.toURL());
         try {
             return Paths.get(resolvedKNIMEURL.toURI());
         } catch (URISyntaxException ex) {
