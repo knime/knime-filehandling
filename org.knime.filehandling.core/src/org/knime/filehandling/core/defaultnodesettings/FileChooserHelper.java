@@ -51,13 +51,10 @@ package org.knime.filehandling.core.defaultnodesettings;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -65,10 +62,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.knime.core.util.Pair;
-import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
-import org.knime.filehandling.core.connections.knime.KNIMEFSKeyFactory;
 import org.knime.filehandling.core.filefilter.FileFilter;
-import org.knime.filehandling.core.util.MountPointIDProviderService;
 
 /**
  * Class used to scan files in directories.
@@ -132,33 +126,12 @@ public final class FileChooserHelper {
             final URI uri = URI.create(selectedPath);
             pathOrUrl = m_fileSystem.provider().getPath(uri);
         } else if (fileSystemChoice == FileSystemChoice.getKnimeFsChoice()) {
-            pathOrUrl = resolveKNIMERelativePath(selectedPath);
+            pathOrUrl = m_fileSystem.getPath(selectedPath);
         } else {
             pathOrUrl = m_fileSystem.getPath(selectedPath);
         }
 
         return pathOrUrl;
-    }
-
-    private Path resolveKNIMERelativePath(final String selectedPath) throws IOException, MalformedURLException {
-
-        // TODO TU: this does not work right now, hard code to workflow until fixed!
-        String fsType;
-        String knimeFileSystem = m_settings.getKNIMEFileSystem();
-        if (knimeFileSystem.equals("some-knime-relative-system")) {
-            fsType = "this-needs-to-be-implemented";
-        } else {
-            fsType = KNIMEFSKeyFactory.WORKFLOW_RELATIVE_FS;
-        }
-
-        String unixStyleSelectedPath = UnixStylePathUtil.asUnixStylePath(selectedPath);
-        URI uri = URI.create(fsType + unixStyleSelectedPath);
-        URL resolvedKNIMEURL = MountPointIDProviderService.instance().resolveKNIMEURL(uri.toURL());
-        try {
-            return Paths.get(resolvedKNIMEURL.toURI());
-        } catch (URISyntaxException ex) {
-            throw new IOException("The resolved KNIME URL could not be mapped to URI: " + resolvedKNIMEURL, ex);
-        }
     }
 
     /**
@@ -173,12 +146,7 @@ public final class FileChooserHelper {
 
         final Path dirPath;
         final String selectedPath = m_settings.getPathOrURL();
-        final FileSystemChoice fileSystemChoice = m_settings.getFileSystemChoice();
-        if (fileSystemChoice == FileSystemChoice.getKnimeFsChoice()) {
-            dirPath = resolveKNIMERelativePath(selectedPath);
-        } else {
-            dirPath = m_fileSystem.getPath(selectedPath);
-        }
+        dirPath = m_fileSystem.getPath(selectedPath);
 
         final List<Path> paths;
         try (final Stream<Path> stream =

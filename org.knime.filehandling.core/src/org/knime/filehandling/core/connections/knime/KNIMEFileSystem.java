@@ -76,7 +76,7 @@ public class KNIMEFileSystem extends FileSystem {
      * The base location of this File System, may be a workflow, node, or mount point location.
      */
     private String m_baseLocation;
-    private KNIMEConnection.Type m_knimeURLType;
+    private KNIMEConnection.Type m_knimeConnectionType;
     private final URI m_key;
 
     /**
@@ -92,7 +92,7 @@ public class KNIMEFileSystem extends FileSystem {
             final URI key) {
         m_fileSystemProvider = fileSystemProvider;
         m_baseLocation = base;
-        m_knimeURLType = knimeURLType;
+        m_knimeConnectionType = knimeURLType;
         m_key = key;
     }
 
@@ -198,7 +198,7 @@ public class KNIMEFileSystem extends FileSystem {
      * @return the KNIME Connection Type of this file system.
      */
     public KNIMEConnection.Type getKNIMEConnectionType() {
-        return m_knimeURLType;
+        return m_knimeConnectionType;
     }
 
     /**
@@ -216,7 +216,7 @@ public class KNIMEFileSystem extends FileSystem {
      * @return the base location path of this file system
      */
     public Path getBasePath() {
-        return m_baseLocation != null ? Paths.get(m_baseLocation.toString()) : null;
+        return m_baseLocation != null ? Paths.get(m_baseLocation) : null;
     }
 
     /**
@@ -226,6 +226,17 @@ public class KNIMEFileSystem extends FileSystem {
      */
     public URI getKey() {
         return m_key;
+    }
+
+    /**
+     * Return the connection scheme and host of this file system.
+     *
+     * I.e for a node relative file system "knime://knime.node", is returned.
+     *
+     * @return a string containing the scheme and host of the file system
+     */
+    public String getConnectionSchemeAndHost() {
+        return m_knimeConnectionType.getSchemeAndHost();
     }
 
 }

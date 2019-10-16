@@ -48,15 +48,12 @@
  */
 package org.knime.filehandling.core.connections.knime;
 
-import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 
-import org.knime.core.internal.ReferencedFile;
-import org.knime.core.node.workflow.NodeContext;
-import org.knime.core.node.workflow.WorkflowContext;
-import org.knime.core.node.workflow.WorkflowManager;
-import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
 import org.knime.filehandling.core.defaultnodesettings.KNIMEConnection;
+import org.knime.filehandling.core.util.MountPointIDProviderService;
 
 /**
  * Factory for creating {@link KNIMEFileSystem} URI keys, i.e. "knime://knime.workflow/absolute/path/to/workflow".
@@ -80,27 +77,6 @@ import org.knime.filehandling.core.defaultnodesettings.KNIMEConnection;
 public class KNIMEFSKeyFactory {
 
     /**
-     * The identifying part of a KNIME File System
-     */
-    public static final String WORKFLOW_RELATIVE_FS = "knime://knime.workflow/";
-
-    /**
-     * The identifying part of a KNIME File System
-     */
-    public static final String NODE_RELATIVE_FS = "knime://knime.node/";
-
-    /**
-     * The identifying part of a KNIME File System
-     */
-    public static final String MOUNT_POINT_RELATIVE_FS = "knime://knime.mountpoint/";
-
-    /**
-     * The identifying part of a KNIME File System
-     */
-    public static final String MOUNT_POINT_ABSOLUTE_FS = "knime://";
-
-
-    /**
      * Dynamically fetches a file system key (URI) for the given
      * {@link org.knime.filehandling.core.defaultnodesettings.KNIMEConnection.Type}.
      *
@@ -110,73 +86,12 @@ public class KNIMEFSKeyFactory {
      *
      * @param knimeConnectionType the type of the file system
      * @return the key (URI) of the file system with the relative paths resolved
+     * @throws IOException
      */
-    public static URI keyOf(final KNIMEConnection.Type knimeConnectionType) {
-        switch (knimeConnectionType) {
-            case NODE_RELATIVE :
-                return KNIMEFSKeyFactory.nodeKey();
-            case WORKFLOW_RELATIVE :
-                return KNIMEFSKeyFactory.workflowKey();
-            case MOUNTPOINT_RELATIVE :
-                return KNIMEFSKeyFactory.mountPointRelativeKey();
-            case MOUNTPOINT_ABSOLUTE :
-                return KNIMEFSKeyFactory.mountPointAbsoluteKey();
-            default :
-                return null;
-        }
-    }
-
-    private static URI nodeKey() {
-        ReferencedFile nodeContainerDirectory = NodeContext.getContext().getNodeContainer().getNodeContainerDirectory();
-
-        if (nodeContainerDirectory == null) {
-            // TODO TU: figure out how to best handle this. Throw exception?
-            return null;
-        }
-
-        String absoluteNodePath = nodeContainerDirectory.getFile().getAbsolutePath();
-        String unixStyleNodePath = UnixStylePathUtil.asUnixStylePath(absoluteNodePath);
-        return URI.create(NODE_RELATIVE_FS + unixStyleNodePath);
-    }
-
-    private static URI workflowKey() {
-        WorkflowContext workflowContext = getWorkflowContext();
-        String workflowLocation = null;
-        if (workflowContext != null) {
-            workflowLocation = workflowContext.getCurrentLocation().getAbsolutePath();
-        }
-
-        if (workflowLocation != null) {
-            String unixStyleWorkflowLocation = UnixStylePathUtil.asUnixStylePath(workflowLocation);
-            return URI.create(WORKFLOW_RELATIVE_FS + unixStyleWorkflowLocation);
-        } else {
-            return null;
-        }
-    }
-
-    private static WorkflowContext getWorkflowContext() {
-        NodeContext nodeContext = NodeContext.getContext();
-
-        WorkflowContext workflowContext = null;
-        if (nodeContext != null) {
-            workflowContext = //
-                nodeContext.getContextObjectForClass(WorkflowManager.class) //
-                    .map(wfm -> wfm.getContext()) //
-                    .orElse(null); //
-        }
-        return workflowContext;
-    }
-
-    private static URI mountPointRelativeKey() {
-        WorkflowContext workflowContext = getWorkflowContext();
-        File mountpointRoot = workflowContext.getMountpointRoot();
-        String unixStyleMountPointRoot = UnixStylePathUtil.asUnixStylePath(mountpointRoot.getAbsolutePath());
-        return URI.create(MOUNT_POINT_RELATIVE_FS + unixStyleMountPointRoot);
-    }
-
-    private static URI mountPointAbsoluteKey() {
-        String pathToAbsoluteMountpoint = "www.example.com/";
-        return URI.create(MOUNT_POINT_ABSOLUTE_FS + pathToAbsoluteMountpoint);
+    public static URI keyOf(final KNIMEConnection.Type knimeConnectionType) throws IOException {
+        String schemeAndHost = knimeConnectionType.getSchemeAndHost();
+        URL baseLocation = MountPointIDProviderService.instance().resolveKNIMEURL(URI.create(schemeAndHost).toURL());
+        return URI.create(schemeAndHost + baseLocation.getPath());
     }
 
 }

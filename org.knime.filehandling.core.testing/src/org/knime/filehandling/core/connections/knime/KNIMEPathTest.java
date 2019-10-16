@@ -10,6 +10,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,9 +41,9 @@ public class KNIMEPathTest {
 	}
 	
 	@Test
-	public void aKNIMEPathIsNotAbsolute() throws MalformedURLException, URISyntaxException {
-		KNIMEPath knimePath = new KNIMEPath(m_fileSystem, "../../my-data/data.txt");
-		assertFalse(knimePath.isAbsolute());
+	public void anNIMEPathIsAbsolute() throws MalformedURLException, URISyntaxException {
+		KNIMEPath absoluteKnimePath = new KNIMEPath(m_fileSystem, "C:/my-data/data.txt");
+		assertTrue(absoluteKnimePath.isAbsolute());
 	}
 	
 	@Test
@@ -371,6 +372,30 @@ public class KNIMEPathTest {
 		assertEquals("folder", knimePath.getName(2).toString());
 		assertEquals("windows", knimePath.getName(3).toString());
 		assertEquals("data.txt", knimePath.getName(4).toString());
+	}
+	
+	// TODO TU: make linux compatible :) 
+	
+	@Test
+	public void absoluteLocalPath() {
+		KNIMEPath absoluteLocalPath = new KNIMEPath(m_fileSystem, "C:/my-folder/hello/world/data.txt");
+		
+		Path localPath = absoluteLocalPath.toLocalPath();
+		Path expected = Paths.get("C:/my-folder/hello/world/data.txt");
+		
+		assertFalse(localPath.equals(absoluteLocalPath));
+		assertEquals(expected, localPath);
+	}
+	
+	@Test
+	public void relativeLocalPath() {
+		KNIMEPath absoluteLocalPath = new KNIMEPath(m_fileSystem, "my-folder/hello/world/data.txt");
+		
+		Path localPath = absoluteLocalPath.toLocalPath();
+		Path expected = Paths.get("C:/my-folder/hello/world/data.txt");
+		
+		assertFalse(localPath.equals(absoluteLocalPath));
+		assertEquals(expected, localPath);
 	}
 	
 	private KNIMEFileSystem createFileSystemOfType(KNIMEConnection.Type type) {

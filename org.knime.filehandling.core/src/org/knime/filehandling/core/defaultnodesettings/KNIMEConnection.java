@@ -67,22 +67,37 @@ public class KNIMEConnection {
             /**
              * knime://knime.node/
              */
-            NODE_RELATIVE,
+            NODE_RELATIVE("knime://knime.node"),
 
             /**
              * knime://knime.workflow/
              */
-            WORKFLOW_RELATIVE,
+            WORKFLOW_RELATIVE("knime://knime.workflow"),
 
             /**
              * knime://knime.mountpoint/
              */
-            MOUNTPOINT_RELATIVE,
+            MOUNTPOINT_RELATIVE("knime://knime.mountpoint"),
 
             /**
              * knime://<mount-ID>>/
              */
-            MOUNTPOINT_ABSOLUTE;
+            MOUNTPOINT_ABSOLUTE("knime://");
+
+        private final String m_schemeAndHost;
+
+        private Type(final String schemeAndHost) {
+            m_schemeAndHost = schemeAndHost;
+        }
+
+        /**
+         * Returns the scheme and host of the connection type.
+         *
+         * @return the scheme and host of the connection type
+         */
+        public String getSchemeAndHost() {
+            return m_schemeAndHost;
+        }
     }
 
     /** KNIME node relative connection */
@@ -177,7 +192,7 @@ public class KNIMEConnection {
 
     /**
      * Returns whether a connection exists based on the mount id.
-     * 
+     *
      * @param id the mount point identifier
      * @return true if connection exists false otherwise
      */

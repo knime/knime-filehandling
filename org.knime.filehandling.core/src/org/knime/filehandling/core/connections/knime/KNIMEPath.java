@@ -80,7 +80,6 @@ public class KNIMEPath implements Path {
     private final String[] m_pathComponents;
 
     private Path m_path;
-    private boolean m_isAbsolute;
 
     /**
      * Creates a new KNIMEPath.
@@ -91,7 +90,9 @@ public class KNIMEPath implements Path {
      */
     public KNIMEPath (final KNIMEFileSystem fileSystem, final String first, final String... more) {
         m_fileSystem = fileSystem;
-        m_isAbsolute = false;
+
+
+        // TODO TU: check if m_fileSystem.getBase starts with first
 
         List<String> allInputStrings = new ArrayList<>();
         allInputStrings.add(first);
@@ -99,13 +100,17 @@ public class KNIMEPath implements Path {
 
         List<String> pathComponents = //
             allInputStrings.stream() //
-                .map(inputString -> inputString.replaceAll("\\\\", m_fileSystem.getSeparator())) //
+                .map(inputString -> UnixStylePathUtil.asUnixStylePath(inputString)) //
                 .map(unixSeperatedInputString -> UnixStylePathUtil.toPathComponentsArray(unixSeperatedInputString)) //
                 .flatMap(componentsArray -> Arrays.stream(componentsArray)) //
                 .collect(Collectors.toList()); //
 
         m_pathComponents = pathComponents.toArray(new String[pathComponents.size()]);
         m_path = Paths.get(first, more);
+
+        // TODO TU: can I get the path components array from path?
+
+
     }
 
     /**
@@ -121,7 +126,7 @@ public class KNIMEPath implements Path {
      */
     @Override
     public boolean isAbsolute() {
-        return m_isAbsolute;
+        return true;
     }
 
     /**
@@ -254,7 +259,7 @@ public class KNIMEPath implements Path {
         }
 
         final KNIMEPath otherPath = (KNIMEPath)other;
-        if (other.isAbsolute()) { return other; }
+        if (otherPath.m_path.isAbsolute()) { return other; }
         if (other.getNameCount() == 0) { return this; }
 
         return new KNIMEPath(m_fileSystem, pathAsString(), otherPath.m_pathComponents);
@@ -282,7 +287,7 @@ public class KNIMEPath implements Path {
         }
 
         final KNIMEPath otherPath = (KNIMEPath)other;
-        if (getParent() == null || other.isAbsolute()) { return other; }
+        if (getParent() == null || otherPath.m_path.isAbsolute()) { return other; }
         if (other.getNameCount() == 0) { return this; }
 
         return new KNIMEPath(m_fileSystem, getParent().toString(), otherPath.m_pathComponents);
@@ -437,12 +442,13 @@ public class KNIMEPath implements Path {
     }
 
     /**
-     * Creates a Path using the JVMs deafault file system.
+     * Creates a local path using the JVMs default file system. If the path is relative, it is resolved against the
+     *
      *
      * @return a local equivalent of this path
      */
     public Path toLocalPath() {
-        return Paths.get(pathAsString());
+        return m_fileSystem.getBasePath().resolve(m_path);
     }
 
 }
