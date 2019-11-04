@@ -48,29 +48,31 @@
  */
 package org.knime.base.filehandling;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.knime.base.filehandling.urltofilepath.UrlToFilePathNodeFactory;
 import org.knime.base.filehandling.urltofilepathvariable.UrlToFilePathVariableNodeFactory;
+import org.knime.core.node.MapNodeFactoryClassMapper;
 import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeFactoryClassMapper;
 import org.knime.core.node.NodeModel;
 
 /**
  * Maps nodes previously in org.knime.base to their new location in the filehandling plug-in.
  * @since 3.0
  */
-public final class FileHandlingNodeFactoryClassMapper extends NodeFactoryClassMapper {
+public final class FileHandlingNodeFactoryClassMapper extends MapNodeFactoryClassMapper {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public NodeFactory<? extends NodeModel> mapFactoryClassName(final String factoryClassName) {
+    protected Map<String, Class<? extends NodeFactory<? extends NodeModel>>> getMapInternal() {
         // moved from org.knime.base to filehandling plug-in in KNIME 3.0
-        switch (factoryClassName) {
-            case "org.knime.base.node.preproc.urltofilepathvariable.UrlToFilePathVariableNodeFactory":
-                return new UrlToFilePathVariableNodeFactory();
-            case "org.knime.base.node.preproc.urltofilepath.UrlToFilePathNodeFactory":
-                return new UrlToFilePathNodeFactory();
-            default:
-                return null;
-        }
+        final Map<String, Class<? extends NodeFactory<? extends NodeModel>>> map = new HashMap<>(2);
+        map.put("org.knime.base.node.preproc.urltofilepathvariable.UrlToFilePathVariableNodeFactory",
+            UrlToFilePathVariableNodeFactory.class);
+        map.put("org.knime.base.node.preproc.urltofilepath.UrlToFilePathNodeFactory", UrlToFilePathNodeFactory.class);
+        return map;
     }
-
 }
