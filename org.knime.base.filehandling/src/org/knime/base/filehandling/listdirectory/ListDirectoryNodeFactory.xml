@@ -9,21 +9,57 @@
 
 	<fullDescription>
 		<intro>
-			This node lists the files that are contained in the specified
-			directory.
+			This node creates a list with the URIs of the files that are
+			contained in the specified directory (the content of sub folders can
+			be listed as well). It is also shown if the corresponding URI
+			represents a directory or not.
+			There are 3 filters available: file
+			extension(s), wildcard
+			pattern or
+			regular expression.
+			<br />
 			The location of the directory can either be local (if no
-			connection information is given) or on a remote
+			connection
+			information is given) or on a remote
 			server.
 		</intro>
 
 
 		<option name="Directory">
-			The directory that should be listed.
+			Select the folders to be scanned. Also KNIME-URLs
+			like "knime://knime.workflow/"
+			are accepted.
 		</option>
 		<option name="Include sub folders">
-			If this is selected the files contained in
-			sub folders will also be listed.
+			If enabled the content of the
+			sub folders will be
+			included as well. If disabled sub folders will be
+			ignored.
 		</option>
+		<option name="Filter:">
+			Specifies the filter to be applied:
+			<br />
+			<ul>
+				<li> none: all files will be included</li>
+				<li> regular expression: only the files matching the regular
+					expression will be included.
+				</li>
+				<li> wildcard pattern: only the files matching the wildcard pattern
+					will be included.
+				</li>
+				<li> extension(s): only the files with the right extension will be
+					included.
+				</li>
+			</ul>
+		</option>
+		<option name="Extensions / expression:">Define the file extension(s),
+			a wildcard pattern or
+			a regular expression for the filter. For
+			multiple extensions ";" acts
+			as the separator. This option is
+			ignored if no filter is selected.
+		</option>
+		<option name="case sensitive:">If checked the filter is case sensitive.</option>
 	</fullDescription>
 
 	<ports>
