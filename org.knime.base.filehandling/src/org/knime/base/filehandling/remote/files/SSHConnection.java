@@ -107,12 +107,18 @@ public class SSHConnection extends Connection {
         // Use keyfile if available
         final String keyfile = m_connectionInformation.getKeyfile();
         if (!StringUtils.isEmpty(keyfile)) {
-            final URL url = FileUtil.toURL(keyfile);
-            final byte[] keyFileByteArray = IOUtils.toByteArray(url.openConnection().getInputStream());
-            if (password == null) {
-                jsch.addIdentity(null, keyFileByteArray, null, null);
+            // Jsch seems to resolve ~ correctly, so to not break that functionality, we let jsch handle the keyfile
+            // if it's not using the knime protocol.
+            if (keyfile.startsWith("knime://")) {
+                final URL url = FileUtil.toURL(keyfile);
+                final byte[] keyFileByteArray = IOUtils.toByteArray(url.openConnection().getInputStream());
+                if (password == null) {
+                    jsch.addIdentity(null, keyFileByteArray, null, null);
+                } else {
+                    jsch.addIdentity(null, keyFileByteArray, null, password.getBytes(StandardCharsets.UTF_8));
+                }
             } else {
-                jsch.addIdentity(null, keyFileByteArray, null, password.getBytes(StandardCharsets.UTF_8));
+                jsch.addIdentity(keyfile, password);
             }
 
         }
