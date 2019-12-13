@@ -2,7 +2,7 @@
 <feature
       id="org.knime.features.base.filehandling"
       label="KNIME File Handling Nodes"
-      version="4.1.0.qualifier"
+      version="4.2.0.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland"
       plugin="org.knime.base.filehandling">
 
@@ -747,7 +747,7 @@ propagated with or for interoperation with KNIME.
          download-size="0"
          install-size="0"
          version="0.0.0"
-		 unpack="false"/>
+         unpack="false"/>
 
    <plugin
          id="org.apache.commons.logging"
