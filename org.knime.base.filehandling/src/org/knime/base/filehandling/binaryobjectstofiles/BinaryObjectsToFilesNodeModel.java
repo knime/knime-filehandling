@@ -52,19 +52,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.http.client.utils.URIBuilder;
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
@@ -90,7 +84,7 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
-import org.knime.core.util.pathresolve.ResolverUtil;
+import org.knime.core.util.FileUtil;
 
 /**
  * This is the model implementation.
@@ -99,8 +93,6 @@ import org.knime.core.util.pathresolve.ResolverUtil;
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 class BinaryObjectsToFilesNodeModel extends NodeModel {
-
-    private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     private final SettingsModelString m_bocolumn;
 
@@ -139,7 +131,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
 
         // Check settings only if filename handling is generate
         if (m_filenamehandling.getStringValue().equals(FilenameHandling.GENERATE.getName())) {
-            getOutputDirectory(getOutputDirectoryURI());
+            getOutputDirectory(getOutputDirectoryURL());
         }
 
         // HashSet for duplicate checking and cleanup
@@ -270,7 +262,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         if (m_filenamehandling.getStringValue().equals(FilenameHandling.GENERATE.getName())) {
             // Does the output directory exist?
             try {
-                getOutputDirectory(getOutputDirectoryURI());
+                getOutputDirectory(getOutputDirectoryURL());
             } catch (final IOException e) {
                 throw new InvalidSettingsException("Could not create output directory: " + e.getMessage());
             }
@@ -284,30 +276,15 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
     }
 
     /**
-     * @return the URI of the output directory
+     * @return the URL of the output directory
      * @throws IOException
      */
-    private URI getOutputDirectoryURI() throws IOException {
-        try {
-            // first we assume an URI
-            String path = m_outputdirectory.getStringValue().replaceAll(" ", "%20");
-
-            // we append a /
-            if (!path.endsWith("/")) {
-                path = path + "/";
-            }
-
-            URI uri;
-            try {
-                uri = new URL(path).toURI();
-            } catch (MalformedURLException e) {
-                // fall back to path resolution
-                uri = Paths.get(m_outputdirectory.getStringValue()).toAbsolutePath().toUri();
-            }
-
-            return uri;
-        } catch (InvalidPathException | URISyntaxException e) {
-            throw new IOException("Could not resolve the file: " + e.getMessage());
+    private URL getOutputDirectoryURL() throws IOException {
+        final URL url = FileUtil.toURL(m_outputdirectory.getStringValue());
+        if (url.toString().endsWith("/")) {
+            return url;
+        } else {
+            return new URL(url.toString() + "/");
         }
     }
 
@@ -315,8 +292,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
      * @return the outputdirectory
      * @throws InvalidSettingsException
      */
-    private static File getOutputDirectory(final URI uri) throws IOException {
-        final File outputdirectory = ResolverUtil.resolveURItoLocalFile(uri);
+    private static File getOutputDirectory(final URL url) throws IOException {
+        final File outputdirectory = FileUtil.getFileFromURL(url);
 
         if (!outputdirectory.exists()) {
             throw new IOException("Output directory \"" + outputdirectory.getAbsoluteFile() + "\" does not exist");
@@ -358,37 +335,31 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
         }
 
         // create filename and output folder
-        String filename = "";
-        URI targetUri = null; // user supplied
+        final File file;
 
         // internal output directory, we may not report it to the user!
-        final File outputDirectory;
-
         if (filenameHandling.equals(fromColumn)) {
             // Get filename from table
             final int targetIndex = inSpec.findColumnIndex(m_targetcolumn.getStringValue());
             if (row.getCell(targetIndex).isMissing()) {
                 throw new IOException("Filename in row \"" + row.getKey() + "\" is missing");
             }
-            targetUri = ((URIDataCell)(row.getCell(targetIndex))).getURIContent().getURI();
+            final URI targetUri = ((URIDataCell)(row.getCell(targetIndex))).getURIContent().getURI();
 
             // Absolute path in filename, no preceding directory
-            filename = ResolverUtil.resolveURItoLocalFile(targetUri).getAbsolutePath();
-            outputDirectory = null;
+            file = FileUtil.getFileFromURL(targetUri.toURL());
         } else if (filenameHandling.equals(generate)) {
             // Generate filename using pattern, by replacing the ? with the
             // row number
-            filename = m_namepattern.getStringValue().replace("?", "" + rowNr);
-            targetUri = getOutputDirectoryURI();
-
-            outputDirectory = getOutputDirectory(targetUri);
+            final String filename = m_namepattern.getStringValue().replace("?", "" + rowNr);
+            final File outputDirectory = getOutputDirectory(getOutputDirectoryURL());
+            file = new File(outputDirectory, filename);
         } else {
             throw new IllegalArgumentException("Invalid filename handling setting!");
         }
 
         // create the output file
         try {
-            final File file = new File(outputDirectory, filename);
             // Check if a file with the same name has already been created
             // (only possible with use of the target column)
             if (filenames.contains(file.getAbsolutePath())) {
@@ -399,15 +370,8 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             if (file.exists()) {
                 // Abort if policy is abort
                 if (ifExists.equals(OverwritePolicy.ABORT.getName())) {
-                    String message;
-                    if (filenameHandling.equals(fromColumn)) {
-                        message =
-                            "File \"" + targetUri.toString() + "\" exists, but overwrite policy: \"" + ifExists + "\"";
-                    } else {
-                        message = "File \"" + targetUri.toString() + "/" + filename
-                            + "\" exists, but overwrite policy: \"" + ifExists + "\"";
-                    }
-                    throw new IOException(message);
+                    throw new IOException(
+                        "File \"" + file.toString() + "\" exists, but overwrite policy: \"" + ifExists + "\"");
                 }
                 // Remove if policy is overwrite
                 if (ifExists.equals(OverwritePolicy.OVERWRITE.getName())) {
@@ -433,16 +397,7 @@ class BinaryObjectsToFilesNodeModel extends NodeModel {
             }
 
             // Create cell with the URI information
-
-            URI outputURI;
-            if (filenameHandling.equals(fromColumn)) {
-                outputURI = targetUri;
-            } else {
-                final String newPath = getOutputDirectoryURI().getPath() + filename;
-                outputURI = new URIBuilder(targetUri).setPath(newPath).setCharset(CHARSET).build();
-            }
-
-            return UriCellFactory.create(outputURI.toString());
+            return UriCellFactory.create(file.toURI().toString());
         } catch (final Exception e) {
             throw new IOException(e);
         }
