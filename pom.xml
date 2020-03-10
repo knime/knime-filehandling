@@ -25,7 +25,7 @@
 
 	<modules>
 		<module>org.knime.base.filehandling</module>
-		<module>org.knime.base.filehandling.testing</module>
+		<module>org.knime.base.filehandling.tests</module>
 		<module>org.knime.features.base.filehandling</module>
 		<module>org.knime.update.filehandling</module>
 	</modules>
