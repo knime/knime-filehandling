@@ -46,6 +46,7 @@
 package org.knime.base.filehandling.remote.files;
 
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.util.KnimeEncryption;
 
 import it.sauronsoftware.ftp4j.FTPClient;
@@ -59,6 +60,8 @@ import it.sauronsoftware.ftp4j.connectors.HTTPTunnelConnector;
  * @since 2.11
  */
 public class FTPConnection extends Connection {
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(FTPConnection.class);
+
 
     private final FTPRemoteFile m_ftpRemoteFile;
 
@@ -109,13 +112,21 @@ public class FTPConnection extends Connection {
         // Login
         m_client.login(user, password);
         m_client.setType(FTPClient.TYPE_BINARY);
-        // Find root directory
-        String oldDir;
-        do {
-            oldDir = m_client.currentDirectory();
-            m_client.changeDirectoryUp();
-            m_defaultDir = m_client.currentDirectory();
-        } while (!m_defaultDir.equals(oldDir));
+        try {
+            // Find root directory - per AP-11328, there are cases in which this cd(..) throws an exception
+            //      for example a user's ftp directory is not chroot-jailed, but nor to they have read
+            //      permissions in the parent directory. We consume the exception and log at DEBUG instead of
+            //      having the exception emitted from this method, as trying to change diretories up has
+            //      nothing to do with whether the connection was opened successfully or not.
+            String oldDir;
+            do {
+                oldDir = m_client.currentDirectory();
+                m_client.changeDirectoryUp();
+                m_defaultDir = m_client.currentDirectory();
+            } while (!m_defaultDir.equals(oldDir));
+        } catch (final Exception e) {
+            LOGGER.debug("Exception while trying to walk up the directory structure looking for the root.", e);
+        }
     }
 
     /**
