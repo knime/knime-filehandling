@@ -36,6 +36,36 @@
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.deletefiles.DeleteFilesNodeFactory"  />
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.createdirectory.CreateDirectoryNodeFactory"  />
    <node category-path="/io/filehandling/remote" factory-class="org.knime.base.filehandling.listdirectory.ListDirectoryNodeFactory"  />
+   <node
+         deprecated="true"
+         factory-class="org.knime.base.filehandling.download.DownloadNodeFactory"
+         hidden="false">
+   </node>
+   <node
+         deprecated="true"
+         factory-class="org.knime.base.filehandling.downloaduploadfromlist.DownloadUploadFromListNodeFactory"
+         hidden="false">
+   </node>
+   <node
+         deprecated="true"
+         factory-class="org.knime.base.filehandling.filemetainfo.FileMetaInfoNodeFactory"
+         hidden="false">
+   </node>
+   <node
+         deprecated="true"
+         factory-class="org.knime.base.filehandling.unzip.UnzipNodeFactory"
+         hidden="false">
+   </node>
+   <node
+         deprecated="true"
+         factory-class="org.knime.base.filehandling.upload.UploadNodeFactory"
+         hidden="false">
+   </node>
+   <node
+         deprecated="true"
+         factory-class="org.knime.base.filehandling.zip.ZipNodeFactory"
+         hidden="false">
+   </node>
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category
