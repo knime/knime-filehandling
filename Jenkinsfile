@@ -14,18 +14,51 @@ properties([
 try {
     knimetools.defaultTychoBuild('org.knime.update.filehandling')
 
-    workflowTests.runTests(
-        dependencies: [ repositories: [ 'knime-filehandling', 'knime-datageneration', 'knime-server-client', 'knime-xml' ] ]
-    )
+    runIntegrationTests()
+    
+     workflowTests.runTests(
+         dependencies: [ repositories: [ 'knime-filehandling', 'knime-datageneration', 'knime-server-client', 'knime-xml' ] ]
+     )
 
-    stage('Sonarqube analysis') {
-        env.lastStage = env.STAGE_NAME
-        workflowTests.runSonar()
-    }
+     stage('Sonarqube analysis') {
+         env.lastStage = env.STAGE_NAME
+         workflowTests.runSonar()
+     }
 } catch (ex) {
     currentBuild.result = 'FAILURE'
     throw ex
 } finally {
     notifications.notifyBuild(currentBuild.result);
 }
+
+/**
+* Runs integration tests, some of them require an external ssh host
+*/
+def runIntegrationTests() {
+    node('workflow-tests && ubuntu18.04'){
+        def sidecars = dockerTools.createSideCarFactory()
+        try {
+            stage('Testing remote FS'){
+                env.lastStage = env.STAGE_NAME
+                checkout scm
+
+                dockerTools.ecrLogin()
+                def ecrPrefix = "910065342149.dkr.ecr.eu-west-1.amazonaws.com/"
+                def sshdImage = "knime/sshd:alpine3.10"
+                def sshdhost = sidecars.createSideCar(ecrPrefix + sshdImage, 'ssh-test-host', [], [22]).start()
+
+                def address =  sshdhost.getAddress(22)
+                def testEnv = ["KNIME_SSHD_HOST=${address}"]
+
+                knimetools.runIntegratedWorkflowTests(mvnEnv: testEnv, profile: "test")
+            }
+        } catch (ex) {
+            currentBuild.result = 'FAILURE'
+            throw ex
+        } finally {
+            sidecars.close()
+        }
+    }
+}
+
 /* vim: set shiftwidth=4 expandtab smarttab: */

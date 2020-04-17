@@ -54,6 +54,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -61,10 +62,13 @@ import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
@@ -81,7 +85,6 @@ import org.knime.core.util.PathUtils;
  * @param <C> connection type
  */
 public abstract class RemoteFileTest<C extends Connection> {
-
 
     /**
      * The host location.
@@ -109,12 +112,10 @@ public abstract class RemoteFileTest<C extends Connection> {
     protected RemoteFileHandler<C> m_fileHandler;
 
     /**
-     * Initialize the connection.
-     * Initialize m_host, m_connInfo, m_type, m_connectionMonitor, m_fileHandler
+     * Initialize the connection. Initialize m_host, m_connInfo, m_type, m_connectionMonitor, m_fileHandler
      */
     @Before
     public abstract void setup();
-
 
     /**
      * @param p Path to a location.
@@ -122,7 +123,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      * @throws MalformedURLException thrown if p is invalid
      */
     protected abstract String createPath(Path p) throws MalformedURLException;
-
 
     /**
      * Closes all connection.
@@ -133,20 +133,40 @@ public abstract class RemoteFileTest<C extends Connection> {
     }
 
     /**
+     * Creates a temporary root folder, containing the provided elements
+     *
+     * Create directories by using a "/" postfix: file - creates a file folder/ creates a folder
+     *
+     * @return
+     * @throws IOException
+     * @throws Exception
+     */
+    protected List<Path> createTempFiles(final String... paths) throws Exception {
+        final Path tempRoot = PathUtils.createTempDir(getClass().getName());
+
+        final List<Path> results = new ArrayList<>();
+        results.add(tempRoot);
+        for (final String p : paths) {
+            if (p.endsWith("/")) {
+                results.add(Files.createDirectories(tempRoot.resolve(p)));
+            } else {
+                results.add(Files.createFile(tempRoot.resolve(p)));
+            }
+        }
+        return results;
+    }
+
+    /**
      * Test for {@link SFTPRemoteFile#getType()}.
      *
      * @throws Exception
      */
     @Test
     public void testGetType() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
-
-        String tempRootPath = createPath(tempRoot);
-        RemoteFile<C> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, tempRootPath, null), m_connInfo, m_connectionMonitor);
+        final RemoteFile<C> remoteFile =
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, "/", null), m_connInfo, m_connectionMonitor);
 
         assertThat("Incorrect type of tempRoot", remoteFile.getType(), equalTo(m_type));
-
     }
 
     /**
@@ -156,14 +176,14 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testGetName() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
-        Files.createFile(tempRoot.resolve("file"));
+        final Path tempRoot = createTempFiles("file").get(0);
 
-        String tempRootPath = createPath(tempRoot);
-        RemoteFile<C> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, tempRootPath, null), m_connInfo, m_connectionMonitor);
+        final String tempRootPath = createPath(tempRoot);
+        final RemoteFile<C> remoteFile = m_fileHandler.createRemoteFile(new URI(m_type, m_host, tempRootPath, null),
+            m_connInfo, m_connectionMonitor);
 
-        assertThat("Incorrect path of tempRoot directory", remoteFile.getName(), equalTo(tempRoot.getFileName().toString()));
+        assertThat("Incorrect path of tempRoot directory", remoteFile.getName(),
+            equalTo(tempRoot.getFileName().toString()));
         assertThat("Incorrect path of file", remoteFile.listFiles()[0].getName(), equalTo("file"));
 
     }
@@ -175,16 +195,27 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testGetPath() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
-        Files.createFile(tempRoot.resolve("file"));
+        List<Path> paths = createTempFiles("file");
+        final Path tempRoot = paths.get(0);
 
         String tempRootPath = createPath(tempRoot);
-        RemoteFile<C> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, tempRootPath, null), m_connInfo, m_connectionMonitor);
+        final RemoteFile<C> remoteFile = m_fileHandler.createRemoteFile(new URI(m_type, m_host, tempRootPath, null),
+            m_connInfo, m_connectionMonitor);
 
-        assertThat("Incorrect path of tempRoot directory", remoteFile.getPath(), equalTo(tempRootPath));
-        // SFTPRemoteFile.getPath(file) returns path to directory !without! file-name (as described in method documentation)
-        assertThat("Incorrect path of file", remoteFile.listFiles()[0].getPath(), equalTo(tempRootPath));
+        // strip trailing slashes
+        String remoteRootPath = remoteFile.getPath();
+        if (remoteRootPath.endsWith("/")) {
+            remoteRootPath = remoteRootPath.substring(0, remoteRootPath.length() - 1);
+        }
+        if (tempRootPath.endsWith("/")) {
+            tempRootPath = tempRootPath.substring(0, tempRootPath.length() - 1);
+        }
+        String tempFilePath = remoteFile.listFiles()[0].getPath();
+        if (tempFilePath.endsWith("/")) {
+            tempFilePath = tempFilePath.substring(0, tempFilePath.length() - 1);
+        }
+        assertThat("Incorrect path of tempRoot directory", remoteRootPath, equalTo(tempRootPath));
+        assertThat("Incorrect path of file", tempFilePath, equalTo(tempRootPath));
     }
 
     /**
@@ -194,19 +225,17 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testExits() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
-        Files.createFile(tempRoot.resolve("file"));
-
-        String path = createPath(tempRoot);
-        RemoteFile<C> remoteFile =
+        final List<Path> files = createTempFiles("file");
+        final String path = createPath(files.get(0));
+        final RemoteFile<C> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         boolean exists = remoteFile.exists();
         assertThat("tempRoot does not exists", exists, is(true));
 
-        RemoteFile<C>[] dirContents = remoteFile.listFiles();
+        final RemoteFile<C>[] dirContents = remoteFile.listFiles();
         exists = dirContents[0].exists();
-        assertThat("Entry at position 1 does not exists", exists, is(true));
+        assertThat("Entry at position 1 does not exist", exists, is(true));
 
         dirContents[0].delete();
         exists = dirContents[0].exists();
@@ -220,15 +249,14 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testIsDirectory() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
-        Files.createFile(tempRoot.resolve("file"));
+        final Path tempRoot = createTempFiles("file").get(0);
 
-        String path = createPath(tempRoot);
-        RemoteFile<C> remoteFile =
+        final String path = createPath(tempRoot);
+        final RemoteFile<C> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         boolean isDirectory = remoteFile.isDirectory();
-        assertThat("empRoot is not a directory", isDirectory, is(true));
+        assertThat("tempRoot is not a directory", isDirectory, is(true));
 
         isDirectory = remoteFile.listFiles()[0].isDirectory();
         assertThat("Entry at position 1 is a directory", isDirectory, is(false));
@@ -241,13 +269,13 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testMove() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        final Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
         Files.createDirectories(tempRoot.resolve("dir1"));
         Files.createFile(tempRoot.resolve("file"));
 
-        String path = createPath(tempRoot);
-        RemoteFile<C> remoteFile =
+        final String path = createPath(tempRoot);
+        final RemoteFile<C> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         RemoteFile<C>[] dirContents = remoteFile.listFiles();
@@ -273,21 +301,21 @@ public abstract class RemoteFileTest<C extends Connection> {
     @Test
     public void testOpenInputStream() throws Exception {
 
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        List<Path> paths = createTempFiles("file");
+        final Path tempRoot = paths.get(0);
+        final Path file = paths.get(1);
 
-        Path file = Files.createFile(tempRoot.resolve("file"));
-
-        String str1 = "JUnit test for openInputStream method in SFTPRemoteFile";
+        final String str1 = "JUnit test for openInputStream method in RemoteFile";
         try (Writer w = Files.newBufferedWriter(file, Charset.forName("UTF-8"))) {
             w.write(str1);
         }
 
-        String path = createPath(file);
-        RemoteFile<C> remoteFile =
+        final String path = createPath(file);
+        final RemoteFile<C> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         try (InputStream stream = remoteFile.openInputStream()) {
-            String str2 = IOUtils.toString(stream, "UTF-8");
+            final String str2 = IOUtils.toString(stream, "UTF-8");
 
             assertThat("Strings do not have same length", str2.length(), is(str1.length()));
             assertThat("Strings are not equal", str2, equalTo(str1));
@@ -302,22 +330,20 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testOpenOutputStream() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        final List<Path> paths = createTempFiles("file");
+        final Path file = paths.get(1);
 
-        Path file = Files.createFile(tempRoot.resolve("file"));
-
-
-        String path = createPath(file);
-        RemoteFile<C> remoteFile =
+        final String path = createPath(file);
+        final RemoteFile<C> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
-        String str1 = "JUnit test for openInputStream method in SFTPRemoteFile";
+        final String str1 = "JUnit test for openInputStream method in RemoteFile";
         try (OutputStream stream = remoteFile.openOutputStream()) {
             IOUtils.write(str1, stream);
         }
 
-        try (Reader r = Files.newBufferedReader(file, Charset.forName("UTF-8"))) {
-            String str2 = IOUtils.toString(r);
+        try (Reader r = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            final String str2 = IOUtils.toString(r);
             assertThat("Strings do not have same length", str2.length(), is(str1.length()));
             assertThat("Strings are not equal", str2, equalTo(str1));
         }
@@ -330,19 +356,20 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testGetSize() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        final List<Path> paths = createTempFiles("file");
+        final Path tempRoot = paths.get(0);
 
-        Path file = Files.createFile(tempRoot.resolve("file"));
-        try (Writer w = Files.newBufferedWriter(file, Charset.forName("UTF-8"))) {
+        final Path file = paths.get(1);
+        try (Writer w = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
             w.write("Add some characters");
         }
 
-        String path = createPath(file);
-        RemoteFile<C> remoteFile =
+        final String path = createPath(file);
+        final RemoteFile<C> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
-        long s1 = Files.size(file);
-        long s2 = remoteFile.getSize();
+        final long s1 = Files.size(file);
+        final long s2 = remoteFile.getSize();
 
         assertThat("Size is not equal", s2, equalTo(s1));
     }
@@ -354,16 +381,14 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testLastModified() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        final Path file = createTempFiles("file").get(1);
+        final String path = createPath(file);
 
-        Path file = Files.createFile(tempRoot.resolve("file"));
-
-        String path = createPath(file);
-        RemoteFile<C> remoteFile =
+        final RemoteFile<C> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
-        long t1 = Files.getLastModifiedTime(file, LinkOption.NOFOLLOW_LINKS).to(TimeUnit.SECONDS);
-        long t2 = remoteFile.lastModified();
+        final long t1 = Files.getLastModifiedTime(file, LinkOption.NOFOLLOW_LINKS).to(TimeUnit.SECONDS);
+        final long t2 = remoteFile.lastModified();
 
         assertThat("LastModified time is not equal", t2, equalTo(t1));
     }
@@ -375,15 +400,16 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testDelete() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
-        Path dir = Files.createDirectories(tempRoot.resolve("dir"));
-        Files.createFile(dir.resolve("file1"));
-        Files.createFile(tempRoot.resolve("file2"));
+        final List<Path> paths = createTempFiles("dir/", "dir/file1", "file2");
+        final Path tempRoot = paths.get(0);
+        final Path dir = paths.get(1);
+        final Path file1 = paths.get(2);
+        final Path file2 = paths.get(3);
 
-        String path = createPath(tempRoot);
-        RemoteFile<C> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+        final String rootPath = createPath(tempRoot);
+        final RemoteFile<C> remoteFile =
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, rootPath, null), m_connInfo, m_connectionMonitor);
 
         RemoteFile<C>[] dirContents = remoteFile.listFiles();
 
@@ -397,7 +423,7 @@ public abstract class RemoteFileTest<C extends Connection> {
         assertThat("Entry at position 1 is a directory", dirContents[0].isDirectory(), is(false));
 
         // delete file
-        RemoteFile<C> temp = dirContents[0];
+        final RemoteFile<C> temp = dirContents[0];
         deleted = dirContents[0].delete();
         dirContents = remoteFile.listFiles();
         assertThat("File could not be deleted", deleted, is(true));
@@ -415,16 +441,17 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testListFiles() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
-        Path file = Files.createFile(tempRoot.resolve("file"));
-        Files.createDirectory(tempRoot.resolve("dir"));
+        final List<Path> paths = createTempFiles("file", "dir/");
 
-        String path = createPath(tempRoot);
-        RemoteFile<C> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+        final Path tempRoot = paths.get(0);
+        final Path file = paths.get(1);
 
-        RemoteFile<C>[] dirContents = remoteFile.listFiles();
+        final String rootPath = createPath(tempRoot);
+        final RemoteFile<C> remoteRoot =
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, rootPath, null), m_connInfo, m_connectionMonitor);
+
+        RemoteFile<C>[] dirContents = remoteRoot.listFiles();
         assertThat("Unexpected number of directory entries returned", dirContents.length, is(2));
 
         assertThat("Unexpected directory entry at position 0", dirContents[0].getName(), is("dir"));
@@ -434,9 +461,9 @@ public abstract class RemoteFileTest<C extends Connection> {
         assertThat("Entry at position 1 is a directory", dirContents[1].isDirectory(), is(false));
 
         // list on file, should not return any entries
-        path = file.toUri().getPath().replace("C:", "cygdrive/c"); // fix path for Windows
-        remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+        final String filePath = createPath(file);
+        final RemoteFile<C> remoteFile =
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, filePath, null), m_connInfo, m_connectionMonitor);
 
         dirContents = remoteFile.listFiles();
         assertThat("Unexpected number of entries for file returned", dirContents.length, is(0));
@@ -449,37 +476,33 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testMkDir() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        final Path tempRoot = createTempFiles().get(0); // create only the root dir
 
-        String path = createPath(tempRoot.resolve("dir"));
-        RemoteFile<C> remoteFile =
+        final String path = createPath(tempRoot.resolve("dir"));
+        final RemoteFile<C> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         remoteFile.mkDir();
-        RemoteFile<C>[] dirContents = remoteFile.getParent().listFiles();
+        final RemoteFile<C>[] dirContents = remoteFile.getParent().listFiles();
         assertThat("Unexpected number of directory entries returned", dirContents.length, is(1));
 
         assertThat("Unexpected directory entry at position 0", dirContents[0].getName(), is("dir"));
         assertThat("Entry at position 0 is a directory", dirContents[0].isDirectory(), is(true));
 
-
-        boolean b = remoteFile.mkDir();
+        final boolean b = remoteFile.mkDir();
         assertThat("Was not a directory", b, is(false));
     }
 
     /**
-     * Test for {@link SFTPRemoteFile#mkDir()}.
+     * Test for mkDir on already existing file.
      *
      * @throws Exception
      */
     @Test(expected = FileAlreadyExistsException.class)
     public void testMkDirFileExists() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        final String path = createPath(createTempFiles("file").get(1));
 
-        Path file = Files.createFile(tempRoot.resolve("dir"));
-
-        String path = createPath(file);
-        RemoteFile<C> remoteFile =
+        final RemoteFile<C> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
         remoteFile.mkDir();
     }
@@ -493,19 +516,18 @@ public abstract class RemoteFileTest<C extends Connection> {
     public void testListFilesSymlinks() throws Exception {
         assumeThat(Platform.getOS(), anyOf(is(Platform.OS_LINUX), is(Platform.OS_MACOSX)));
 
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        final Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
-        Path file = Files.createFile(tempRoot.resolve("file"));
+        final Path file = Files.createFile(tempRoot.resolve("file"));
         Files.createSymbolicLink(tempRoot.resolve("AAAfile"), file);
 
-        Path dir = Files.createDirectory(tempRoot.resolve("dir"));
+        final Path dir = Files.createDirectory(tempRoot.resolve("dir"));
         Files.createSymbolicLink(tempRoot.resolve("AAAdir"), dir);
 
-        RemoteFile<C> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, tempRoot.toString(), null), m_connInfo,
-                m_connectionMonitor);
+        final RemoteFile<C> remoteFile = m_fileHandler
+            .createRemoteFile(new URI(m_type, m_host, tempRoot.toString(), null), m_connInfo, m_connectionMonitor);
 
-        RemoteFile<C>[] dirContents = remoteFile.listFiles();
+        final RemoteFile<C>[] dirContents = remoteFile.listFiles();
         assertThat("Unexpected number of directory entries returned", dirContents.length, is(4));
 
         assertThat("Unexpected directory entry at position 0", dirContents[0].getName(), is("AAAdir"));

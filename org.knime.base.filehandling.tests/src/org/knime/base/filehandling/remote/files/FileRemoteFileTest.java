@@ -51,11 +51,13 @@ package org.knime.base.filehandling.remote.files;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -91,6 +93,7 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
 
     /**
      * {@inheritDoc}
+     *
      * @throws MalformedURLException
      */
     @Override
@@ -107,23 +110,27 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
      */
     @Test
     public void testGetParent() throws Exception {
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        final Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
-        Path file = Files.createFile(tempRoot.resolve("file"));
+        final Path file = Files.createFile(tempRoot.resolve("file"));
 
         String path = createPath(file);
-        RemoteFile<Connection> remoteFile =
+        final RemoteFile<Connection> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         path = createPath(tempRoot);
-        RemoteFile<Connection> remoteTempRoot =
-                m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+        final RemoteFile<Connection> remoteTempRoot =
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         remoteFile.getParent().equals(remoteTempRoot);
         assertThat("Parent is not a directory", remoteFile.getParent().isDirectory(), is(true));
-        assertThat("Incorrect name of parent direcotry", remoteFile.getParent().getName(), equalTo(remoteTempRoot.getName()));
+        assertThat("Incorrect name of parent direcotry", remoteFile.getParent().getName(),
+            equalTo(remoteTempRoot.getName()));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     /**
      * {@inheritDoc}
      */
@@ -131,54 +138,49 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
     public void testMove() throws Exception {
         super.testMove();
 
-        ConnectionInformation connInfo = new ConnectionInformation();
-        connInfo.setHost("localhost");
-        connInfo.setUser(System.getProperty("user.name"));
+        final String[] sshdHostInfo = System.getenv("KNIME_SSHD_HOST").split(":");
+        final String sshdHost = sshdHostInfo[0];
+        final int port = Integer.parseInt(sshdHostInfo[1]);
+
+        final ConnectionInformation connInfo = new ConnectionInformation();
+        connInfo.setHost(sshdHost);
+        connInfo.setPort(port);
+        connInfo.setUser("jenkins");
         connInfo.setProtocol("ssh");
-        connInfo.setPort(22);
 
-        Path sshDir = Paths.get(System.getProperty("user.home"), ".ssh");
-        if (Files.exists(sshDir.resolve("id_ecdsa"))) {
-            connInfo.setKeyfile(sshDir.resolve("id_ecdsa").toString());
-        } else if (Files.exists(sshDir.resolve("id_dsa"))) {
-            connInfo.setKeyfile(sshDir.resolve("id_dsa").toString());
-        } else if (Files.exists(sshDir.resolve("id_rsa"))) {
-            connInfo.setKeyfile(sshDir.resolve("id_rsa").toString());
-        }
+        final Path sshDir = Paths.get(System.getProperty("user.home"), ".ssh");
+        final Path keyfile = sshDir.resolve("id_rsa");
+        assertTrue(keyfile.toFile().exists());
 
-        ConnectionMonitor<SSHConnection> connectionMonitor = new ConnectionMonitor<SSHConnection>();
+        connInfo.setKeyfile(keyfile.toString());
 
-        RemoteFileHandler<SSHConnection> sftpFileHandler = new SFTPRemoteFileHandler();
+        final ConnectionMonitor<SSHConnection> connectionMonitor = new ConnectionMonitor<>();
+        final RemoteFileHandler<SSHConnection> sftpFileHandler = new SFTPRemoteFileHandler();
 
-        Path sftpTempRoot = PathUtils.createTempDir(getClass().getName());
+        final String sftpFilePath = "/data/FileRemoteFileTestFile" + System.currentTimeMillis();
+        final RemoteFile<SSHConnection> sftpRemoteFile = sftpFileHandler
+            .createRemoteFile(new URI("sftp", "jenkins@" + sshdHost, sftpFilePath, null), connInfo, connectionMonitor);
 
-        Path sftpFile = Files.createFile(sftpTempRoot.resolve("sftpFile"));
+        final String str1 = "sftpRemoteFile was here";
 
-        String sftpFilePath = sftpFile.toUri().getPath().replace("C:", "cygdrive/c");
-        RemoteFile<SSHConnection> sftpRemoteFile =
-            sftpFileHandler.createRemoteFile(new URI("sftp", "localhost", sftpFilePath, null), connInfo, connectionMonitor);
-
-        String str1 = "sftpRemoteFile was here";
         try (OutputStream os = sftpRemoteFile.openOutputStream()) {
-            IOUtils.write(str1, os);
+            IOUtils.write(str1, os, StandardCharsets.UTF_8);
         }
 
-        Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
-        Path file = Files.createFile(tempRoot.resolve("file"));
+        final Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
-        String path = createPath(file);
-        RemoteFile<Connection> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+        final Path file = Files.createFile(tempRoot.resolve("file"));
+
+        final String path = createPath(file);
+        final RemoteFile<Connection> remoteFile =
+                m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         remoteFile.move((RemoteFile)sftpRemoteFile, null);
 
         try (InputStream is = remoteFile.openInputStream()) {
-            String str2 = IOUtils.toString(is, "UTF-8");
+            final String str2 = IOUtils.toString(is, StandardCharsets.UTF_8);
             assertThat("file content is different", str2, equalTo(str1));
         }
-
     }
-
-
 }
