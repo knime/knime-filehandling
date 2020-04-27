@@ -12,9 +12,23 @@ properties([
 ])
 
 try {
-    knimetools.defaultTychoBuild('org.knime.update.filehandling')
 
-    runIntegrationTests()
+    buildConfigs = [
+        Linux: {
+            runIntegrationTests('workflow-tests && ubuntu18.04')
+        },
+        MacOsx: {
+            runIntegrationTests('macosx')
+        },
+        Windows: {
+            runIntegrationTests('windows')
+        },
+        P2Build: {
+            knimetools.defaultTychoBuild('org.knime.update.filehandling')
+        }
+    ]
+
+    parallel buildConfigs
     
      workflowTests.runTests(
          dependencies: [ repositories: [ 'knime-filehandling', 'knime-datageneration', 'knime-server-client', 'knime-xml' ] ]
@@ -34,8 +48,8 @@ try {
 /**
 * Runs integration tests, some of them require an external ssh host
 */
-def runIntegrationTests() {
-    node('workflow-tests && ubuntu18.04'){
+def runIntegrationTests(String image) {
+    node(image) {
         def sidecars = dockerTools.createSideCarFactory()
         try {
             stage('Testing remote FS'){
