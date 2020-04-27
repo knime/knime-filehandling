@@ -17,12 +17,12 @@ try {
         Linux: {
             runIntegrationTests('workflow-tests && ubuntu18.04')
         },
-        MacOsx: {
-            runIntegrationTests('macosx')
-        },
-        Windows: {
-            runIntegrationTests('windows')
-        },
+        /* MacOsx: { */
+        /*     runIntegrationTests('macosx') */
+        /* }, */
+        /* Windows: { */
+        /*     runIntegrationTests('windows') */
+        /* }, */
         P2Build: {
             knimetools.defaultTychoBuild('org.knime.update.filehandling')
         }
