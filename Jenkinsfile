@@ -56,7 +56,6 @@ def runIntegrationTests(String image) {
                 env.lastStage = env.STAGE_NAME
                 checkout scm
 
-                dockerTools.ecrLogin()
                 def ecrPrefix = "910065342149.dkr.ecr.eu-west-1.amazonaws.com/"
                 def sshdImage = "knime/sshd:alpine3.10"
                 def sshdhost = sidecars.createSideCar(ecrPrefix + sshdImage, 'ssh-test-host', [], [22]).start()
