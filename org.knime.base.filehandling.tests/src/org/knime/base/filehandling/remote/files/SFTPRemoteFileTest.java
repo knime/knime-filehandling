@@ -50,7 +50,6 @@ package org.knime.base.filehandling.remote.files;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
@@ -89,9 +88,12 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Before
     @Override
     public void setup() {
-        final String getenv = System.getenv("KNIME_SSHD_HOST");
-        assertNotNull("The KNIME_SSHD_HOST environment variable is not set!", getenv);
-        final String[] sshdHostInfo = getenv.split(":");
+        String hostString = System.getenv("KNIME_SSHD_HOST");
+        if (hostString == null) {
+            hostString = "localhost:22";
+        }
+        final String[] sshdHostInfo = hostString.split(":");
+
         m_host = "jenkins@" + sshdHostInfo[0];
         final int port = Integer.parseInt(sshdHostInfo[1]);
 

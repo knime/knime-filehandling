@@ -138,7 +138,11 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
     public void testMove() throws Exception {
         super.testMove();
 
-        final String[] sshdHostInfo = System.getenv("KNIME_SSHD_HOST").split(":");
+        String hostString = System.getenv("KNIME_SSHD_HOST");
+        if (hostString == null) {
+            hostString = "localhost:22";
+        }
+        final String[] sshdHostInfo = hostString.split(":");
         final String sshdHost = sshdHostInfo[0];
         final int port = Integer.parseInt(sshdHostInfo[1]);
 
@@ -167,14 +171,13 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
             IOUtils.write(str1, os, StandardCharsets.UTF_8);
         }
 
-
         final Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
         final Path file = Files.createFile(tempRoot.resolve("file"));
 
         final String path = createPath(file);
         final RemoteFile<Connection> remoteFile =
-                m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         remoteFile.move((RemoteFile)sftpRemoteFile, null);
 
