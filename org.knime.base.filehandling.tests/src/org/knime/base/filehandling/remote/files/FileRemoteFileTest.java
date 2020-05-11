@@ -98,9 +98,10 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
      */
     @Override
     public String createPath(final Path p) throws MalformedURLException {
-
+        if ("localhost".equals(m_connInfo.getHost())) { // running against localhost, need to fix path on windows
+            return p.toUri().getPath().replace("C:", "cygdrive/c");
+        }
         return p.toUri().toURL().getPath();
-
     }
 
     /**
@@ -139,8 +140,10 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
         super.testMove();
 
         String hostString = System.getenv("KNIME_SSHD_HOST");
+        String userString = "jenkins";
         if (hostString == null) {
             hostString = "localhost:22";
+            userString = System.getProperty("user.name");
         }
         final String[] sshdHostInfo = hostString.split(":");
         final String sshdHost = sshdHostInfo[0];
@@ -149,7 +152,7 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
         final ConnectionInformation connInfo = new ConnectionInformation();
         connInfo.setHost(sshdHost);
         connInfo.setPort(port);
-        connInfo.setUser("jenkins");
+        connInfo.setUser(userString);
         connInfo.setProtocol("ssh");
 
         final Path sshDir = Paths.get(System.getProperty("user.home"), ".ssh");
@@ -161,9 +164,14 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
         final ConnectionMonitor<SSHConnection> connectionMonitor = new ConnectionMonitor<>();
         final RemoteFileHandler<SSHConnection> sftpFileHandler = new SFTPRemoteFileHandler();
 
-        final String sftpFilePath = "/data/FileRemoteFileTestFile" + System.currentTimeMillis();
+        final String sftpFilePath;
+        if ("localhost".equals(sshdHost)) { // use system tmp dir when running on localhost
+            sftpFilePath = createPath(Files.createTempDirectory(getClass().getName()).resolve("FileRemoteFileTestFile"));
+        } else {
+            sftpFilePath = "/tmp/FileRemoteFileTestFile" + System.currentTimeMillis();
+        }
         final RemoteFile<SSHConnection> sftpRemoteFile = sftpFileHandler
-            .createRemoteFile(new URI("sftp", "jenkins@" + sshdHost, sftpFilePath, null), connInfo, connectionMonitor);
+            .createRemoteFile(new URI("sftp", userString +"@" + sshdHost, sftpFilePath, null), connInfo, connectionMonitor);
 
         final String str1 = "sftpRemoteFile was here";
 

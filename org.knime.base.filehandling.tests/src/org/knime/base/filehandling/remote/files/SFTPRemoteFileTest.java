@@ -89,18 +89,20 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Override
     public void setup() {
         String hostString = System.getenv("KNIME_SSHD_HOST");
+        String userString = "jenkins";
         if (hostString == null) {
             hostString = "localhost:22";
+            userString = System.getProperty("user.name");
         }
         final String[] sshdHostInfo = hostString.split(":");
 
-        m_host = "jenkins@" + sshdHostInfo[0];
+        m_host = userString + "@" + sshdHostInfo[0];
         final int port = Integer.parseInt(sshdHostInfo[1]);
 
         m_connInfo = new ConnectionInformation();
         m_connInfo.setHost(sshdHostInfo[0]);
         m_connInfo.setPort(port);
-        m_connInfo.setUser("jenkins");
+        m_connInfo.setUser(userString);
         m_connInfo.setProtocol("ssh");
 
         final Path sshDir = Paths.get(System.getProperty("user.home"), ".ssh");
@@ -118,7 +120,10 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
      */
     @Override
     public String createPath(final Path p) throws MalformedURLException {
-        return p.toUri().toURL().getPath(); // fix path for Windows;
+        if("localhost".equals(m_connInfo.getHost())) { // running against localhost, need to fix path on windows
+            return p.toUri().getPath().replace("C:", "cygdrive/c");
+        }
+        return p.toUri().toURL().getPath();
     }
 
     /**
@@ -356,7 +361,9 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
      */
     @Override
     protected List<Path> createTempFiles(final String... paths) throws Exception {
-        final String basepath = "/data/testRoot" + System.currentTimeMillis() + "/";
+
+        final String root = "localhost".equals(m_connInfo.getHost()) ?  System.getProperty("java.io.tmpdir") : "/tmp";
+        final String basepath = root + "/testRoot" + System.currentTimeMillis() + "/";
 
         final List<Path> results = new ArrayList<>();
         final List<String> createCommands = new ArrayList<>();
