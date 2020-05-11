@@ -31,7 +31,13 @@ try {
     parallel buildConfigs
     
      workflowTests.runTests(
-         dependencies: [ repositories: [ 'knime-filehandling', 'knime-datageneration', 'knime-server-client', 'knime-xml' ] ]
+         dependencies: [
+            repositories: [
+                'knime-filehandling', 'knime-datageneration', 'knime-xml',
+                'knime-js-core', 'knime-js-base', 'knime-server-client', 'knime-com-shared',
+                'knime-productivity-oss', 'knime-reporting'
+            ]
+        ]
      )
 
      stage('Sonarqube analysis') {
