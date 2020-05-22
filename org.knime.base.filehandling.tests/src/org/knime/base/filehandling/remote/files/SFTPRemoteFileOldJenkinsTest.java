@@ -44,22 +44,18 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   08.12.2014 (tibuch): created
+ *   02.12.2014 (thor): created
  */
 package org.knime.base.filehandling.remote.files;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -71,10 +67,12 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
 import org.knime.core.util.PathUtils;
 
 /**
+ * Testcases for {@link SFTPRemoteFile}.
  *
- * @author Tim-Oliver Buchholz, KNIME AG, Zurich, Switzerland
+ * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
  */
-public class FileRemoteFileTest extends RemoteFileTest<Connection> {
+public class SFTPRemoteFileOldJenkinsTest extends RemoteFileTest<SSHConnection> {
+
 
     /**
      * {@inheritDoc}
@@ -82,127 +80,109 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
     @Override
     protected boolean isEnabled() {
         String hostString = System.getenv("KNIME_SSHD_HOST");
-        return hostString != null; // need to be run on new jenkins
+        return hostString == null; // running on old jenkins
     }
 
     /**
-     * {@inheritDoc}
+     * Set up a connection to localhost with the current user using PPK authentication.
      */
     @Before
     @Override
     public void setup() {
-        if (!isEnabled()) {
+        if(!isEnabled()) {
             return;
         }
 
-        String hostString = System.getenv("KNIME_SSHD_HOST");
-        assumeNotNull(hostString);
-
         m_connInfo = new ConnectionInformation();
-        m_connInfo.setProtocol("file");
+        m_connInfo.setHost("localhost");
+        m_connInfo.setUser(System.getProperty("user.name"));
+        m_connInfo.setProtocol("ssh");
+        m_connInfo.setPort(22);
 
-        m_type = "file";
-        m_host = null;
+        Path sshDir = Paths.get(System.getProperty("user.home"), ".ssh");
+        if (Files.exists(sshDir.resolve("id_ecdsa"))) {
+            m_connInfo.setKeyfile(sshDir.resolve("id_ecdsa").toString());
+        } else if (Files.exists(sshDir.resolve("id_dsa"))) {
+            m_connInfo.setKeyfile(sshDir.resolve("id_dsa").toString());
+        } else if (Files.exists(sshDir.resolve("id_rsa"))) {
+            m_connInfo.setKeyfile(sshDir.resolve("id_rsa").toString());
+        }
 
-        m_connectionMonitor = new ConnectionMonitor<Connection>();
+        m_type = "sftp";
+        m_host = "localhost";
 
-        m_fileHandler = new FileRemoteFileHandler();
+        m_connectionMonitor = new ConnectionMonitor<SSHConnection>();
+
+        m_fileHandler = new SFTPRemoteFileHandler();
     }
 
     /**
      * {@inheritDoc}
-     *
-     * @throws MalformedURLException
      */
     @Override
-    public String createPath(final Path p) throws MalformedURLException {
-        return p.toUri().toURL().getPath();
+    public String createPath(final Path p) {
+        return p.toUri().getPath().replace("C:", "cygdrive/c"); // fix path for Windows;
     }
 
-    /**
-     * Test for {@link FileRemoteFile#getParent()}.
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testGetParent() throws Exception {
-        assumeTrue(isEnabled());
-        final Path tempRoot = PathUtils.createTempDir(getClass().getName());
-
-        final Path file = Files.createFile(tempRoot.resolve("file"));
-
-        String path = createPath(file);
-        final RemoteFile<Connection> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
-
-        path = createPath(tempRoot);
-        final RemoteFile<Connection> remoteTempRoot =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
-
-        remoteFile.getParent().equals(remoteTempRoot);
-        assertThat("Parent is not a directory", remoteFile.getParent().isDirectory(), is(true));
-        assertThat("Incorrect name of parent direcotry", remoteFile.getParent().getName(),
-            equalTo(remoteTempRoot.getName()));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     /**
      * {@inheritDoc}
      */
     @Override
     public void testMove() throws Exception {
-        assumeTrue(isEnabled());
         super.testMove();
 
-        String hostString = System.getenv("KNIME_SSHD_HOST");
-        String userString = "jenkins";
+        ConnectionInformation connInfo = new ConnectionInformation();
+        connInfo = new ConnectionInformation();
+        connInfo.setProtocol("file");
 
-        final String[] sshdHostInfo = hostString.split(":");
-        final String sshdHost = sshdHostInfo[0];
-        final int port = Integer.parseInt(sshdHostInfo[1]);
+        ConnectionMonitor<Connection> connectionMonitor = new ConnectionMonitor<Connection>();
+        RemoteFileHandler<Connection> fileFileHandler = new FileRemoteFileHandler();
 
-        final ConnectionInformation connInfo = new ConnectionInformation();
-        connInfo.setHost(sshdHost);
-        connInfo.setPort(port);
-        connInfo.setUser(userString);
-        connInfo.setProtocol("ssh");
+        Path fileTempRoot = PathUtils.createTempDir(getClass().getName());
 
-        final Path sshDir = Paths.get(System.getProperty("user.home"), ".ssh");
-        final Path keyfile = sshDir.resolve("id_rsa");
-        assertTrue(keyfile.toFile().exists());
+        Path fileFile = Files.createFile(fileTempRoot.resolve("sftpFile"));
 
-        connInfo.setKeyfile(keyfile.toString());
+        String fileFilePath = fileFile.toUri().toURL().getPath();
+        RemoteFile<Connection> fileRemoteFile =
+            fileFileHandler.createRemoteFile(new URI("file", null, fileFilePath, null), connInfo, connectionMonitor);
 
-        final ConnectionMonitor<SSHConnection> connectionMonitor = new ConnectionMonitor<>();
-        final RemoteFileHandler<SSHConnection> sftpFileHandler = new SFTPRemoteFileHandler();
-
-        final String sftpFilePath;
-        sftpFilePath = "/tmp/FileRemoteFileTestFile" + System.currentTimeMillis();
-
-        final RemoteFile<SSHConnection> sftpRemoteFile = sftpFileHandler.createRemoteFile(
-            new URI("sftp", userString + "@" + sshdHost, sftpFilePath, null), connInfo, connectionMonitor);
-
-        final String str1 = "sftpRemoteFile was here";
-
-        try (OutputStream os = sftpRemoteFile.openOutputStream()) {
-            IOUtils.write(str1, os, StandardCharsets.UTF_8);
+        String str1 = "sftpRemoteFile was here";
+        try (OutputStream os = fileRemoteFile.openOutputStream()) {
+            IOUtils.write(str1, os);
         }
 
-        final Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
-        final Path file = Files.createFile(tempRoot.resolve("file"));
+        Path file = Files.createFile(tempRoot.resolve("file"));
 
-        final String path = createPath(file);
-        final RemoteFile<Connection> remoteFile =
+        String path = createPath(file);
+        RemoteFile<SSHConnection> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
-        remoteFile.move((RemoteFile)sftpRemoteFile, null);
+        remoteFile.move((RemoteFile)fileRemoteFile, null);
 
         try (InputStream is = remoteFile.openInputStream()) {
-            final String str2 = IOUtils.toString(is, StandardCharsets.UTF_8);
+            String str2 = IOUtils.toString(is, "UTF-8");
             assertThat("file content is different", str2, equalTo(str1));
         }
+
+    }
+
+    /**
+     * Test if URI without path works.
+     *
+     * @throws Exception if error occurs
+     */
+    @Test
+    public void testOpenChannelWithoutPath() throws Exception {
+        assumeTrue(isEnabled());
+
+        Path tempRoot = PathUtils.createTempDir(getClass().getName());
+        Files.createFile(tempRoot.resolve("file"));
+
+        RemoteFile<SSHConnection> remoteFile =
+                m_fileHandler.createRemoteFile(new URI(m_type, m_host, null, null), m_connInfo, m_connectionMonitor);
+        assertThat("Directory does not exist", remoteFile.exists(), is(true));
+        assertThat("Directory is not root directory", remoteFile.getFullName(), equalTo("/"));
     }
 }

@@ -51,6 +51,7 @@ package org.knime.base.filehandling.remote.files;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,17 +84,27 @@ import com.jcraft.jsch.Session;
 public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean isEnabled() {
+        String hostString = System.getenv("KNIME_SSHD_HOST");
+        return hostString != null; // running on old jenkins
+    }
+
+    /**
      * Set up a connection to the sshd container with the jenkins user using PPK authentication.
      */
     @Before
     @Override
     public void setup() {
-        String hostString = System.getenv("KNIME_SSHD_HOST");
-        String userString = "jenkins";
-        if (hostString == null) {
-            hostString = "localhost:22";
-            userString = System.getProperty("user.name");
+        if (!isEnabled()) {
+            return;
         }
+
+        String hostString = System.getenv("KNIME_SSHD_HOST");
+
+        String userString = "jenkins";
         final String[] sshdHostInfo = hostString.split(":");
 
         m_host = userString + "@" + sshdHostInfo[0];
@@ -120,9 +131,6 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
      */
     @Override
     public String createPath(final Path p) throws MalformedURLException {
-        if("localhost".equals(m_connInfo.getHost())) { // running against localhost, need to fix path on windows
-            return p.toUri().getPath().replace("C:", "cygdrive/c");
-        }
         return p.toUri().toURL().getPath();
     }
 
@@ -159,6 +167,7 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Override
     @Test
     public void testMove() throws Exception {
+        assumeTrue(isEnabled());
 
         final List<Path> paths = createTempFiles(
             /* Setup for the first part of the test*/
@@ -168,7 +177,7 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
 
         final String testMove1 = createPath(paths.get(1));
         final SFTPRemoteFile remoteFile1 = (SFTPRemoteFile)m_fileHandler
-                .createRemoteFile(new URI(m_type, m_host, testMove1, null), m_connInfo, m_connectionMonitor);
+            .createRemoteFile(new URI(m_type, m_host, testMove1, null), m_connInfo, m_connectionMonitor);
 
         SFTPRemoteFile[] dirContents = remoteFile1.listFiles();
         assertThat("Unexpected number of directory entries returned: " + dirContents.length, dirContents.length, is(2));
@@ -197,7 +206,7 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
 
         final String localFilePath = localFile.toUri().toURL().getPath();
         final RemoteFile<Connection> fileRemoteFile =
-                fileFileHandler.createRemoteFile(new URI("file", null, localFilePath, null), connInfo, connectionMonitor);
+            fileFileHandler.createRemoteFile(new URI("file", null, localFilePath, null), connInfo, connectionMonitor);
 
         final String str1 = "sftpRemoteFile was here";
         try (OutputStream os = fileRemoteFile.openOutputStream()) {
@@ -208,7 +217,7 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
         final String path = createPath(paths.get(5)); // /testMove2/file
 
         final RemoteFile<SSHConnection> remoteFile2 =
-                m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         remoteFile2.move((RemoteFile)fileRemoteFile, null);
 
@@ -225,8 +234,9 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
      */
     @Test
     public void testOpenChannelWithoutPath() throws Exception {
+        assumeTrue(isEnabled());
         final RemoteFile<SSHConnection> remoteFile =
-                m_fileHandler.createRemoteFile(new URI(m_type, m_host, null, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, null, null), m_connInfo, m_connectionMonitor);
         assertThat("Directory does not exist", remoteFile.exists(), is(true));
         assertThat("Expected root Directory, got: " + remoteFile.getFullName(), remoteFile.getFullName(), equalTo("/"));
     }
@@ -237,11 +247,12 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Override
     @Test
     public void testLastModified() throws Exception {
+        assumeTrue(isEnabled());
         final Path result = createTempFiles("file").get(1);
         final String path = result.toUri().getPath();
 
         final RemoteFile<SSHConnection> remoteFile =
-                m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         final long actual = remoteFile.lastModified();
         final String output = runCommandWithOutput("date +%s -r " + path).replaceAll("\\s", "");
@@ -254,17 +265,19 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
      * {@inheritDoc}
      */
     @Override
+    @Test
     public void testGetSize() throws Exception {
+        assumeTrue(isEnabled());
 
         final List<Path> paths = createTempFiles("file");
         final Path file = paths.get(1);
 
         final String filePath = createPath(file);
         final String result =
-                runCommandWithOutput("echo \"Add some character\" >>" + filePath + " ;stat -c %s " + filePath);
+            runCommandWithOutput("echo \"Add some character\" >>" + filePath + " ;stat -c %s " + filePath);
 
         final SFTPRemoteFile remoteFile = (SFTPRemoteFile)m_fileHandler
-                .createRemoteFile(new URI(m_type, m_host, filePath, null), m_connInfo, m_connectionMonitor);
+            .createRemoteFile(new URI(m_type, m_host, filePath, null), m_connInfo, m_connectionMonitor);
 
         final long expected = Long.parseLong(result.replaceAll("\\s", ""));
         final long actual = remoteFile.getSize();
@@ -273,7 +286,9 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     }
 
     @Override
+    @Test
     public void testOpenInputStream() throws Exception {
+        assumeTrue(isEnabled());
 
         final List<Path> paths = createTempFiles("file");
         final Path file = paths.get(1);
@@ -283,7 +298,7 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
         runCommandWithOutput("echo '" + str1 + "' > " + path);
 
         final RemoteFile<SSHConnection> remoteFile =
-                m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         try (InputStream stream = remoteFile.openInputStream()) {
             final String str2 = IOUtils.toString(stream, StandardCharsets.UTF_8).replaceAll("\n", "");
@@ -296,6 +311,7 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
      */
     @Override
     public void testListFilesSymlinks() throws Exception {
+        assumeTrue(isEnabled());
 
         final List<Path> paths = createTempFiles("file", "dir/");
         final Path tempRoot = paths.get(0);
@@ -312,7 +328,7 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
         runCommandWithOutput(symbolicFile + "; " + symbolicDir);
 
         final RemoteFile<SSHConnection> remoteFile = m_fileHandler
-                .createRemoteFile(new URI(m_type, m_host, tempRoot.toString(), null), m_connInfo, m_connectionMonitor);
+            .createRemoteFile(new URI(m_type, m_host, tempRoot.toString(), null), m_connInfo, m_connectionMonitor);
 
         final RemoteFile<SSHConnection>[] dirContents = remoteFile.listFiles();
         assertThat("Unexpected number of directory entries returned", dirContents.length, is(4));
@@ -334,12 +350,13 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Test
     @Override
     public void testOpenOutputStream() throws Exception {
+        assumeTrue(isEnabled());
         final List<Path> paths = createTempFiles("file");
         final Path file = paths.get(1);
 
         final String path = createPath(file);
         final RemoteFile<SSHConnection> remoteFile =
-                m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
 
         final String str1 = "JUnit test for openInputStream method in RemoteFile";
         try (OutputStream stream = remoteFile.openOutputStream()) {
@@ -362,8 +379,7 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Override
     protected List<Path> createTempFiles(final String... paths) throws Exception {
 
-        final String root = "localhost".equals(m_connInfo.getHost()) ?  System.getProperty("java.io.tmpdir") : "/tmp";
-        final String basepath = root + "/testRoot" + System.currentTimeMillis() + "/";
+        final String basepath = "/tmp" + "/testRoot" + System.currentTimeMillis() + "/";
 
         final List<Path> results = new ArrayList<>();
         final List<String> createCommands = new ArrayList<>();

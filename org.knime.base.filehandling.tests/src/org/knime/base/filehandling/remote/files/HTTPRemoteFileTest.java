@@ -90,6 +90,14 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
      * {@inheritDoc}
      */
     @Override
+    protected boolean isEnabled() {
+        return true; // works on both systems
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void testMkDirFileExists() throws Exception {
         // not supported by http
         // test expects exception
