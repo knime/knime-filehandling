@@ -51,7 +51,6 @@ package org.knime.base.filehandling.remote.files;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -119,7 +118,6 @@ public class FileRemoteFileOldJenkinsTest extends RemoteFileTest<Connection> {
      */
     @Test
     public void testGetParent() throws Exception {
-        assumeTrue(isEnabled());
         Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
         Path file = Files.createFile(tempRoot.resolve("file"));
@@ -143,7 +141,6 @@ public class FileRemoteFileOldJenkinsTest extends RemoteFileTest<Connection> {
      */
     @Override
     public void testMove() throws Exception {
-        assumeTrue(isEnabled());
         super.testMove();
 
         ConnectionInformation connInfo = new ConnectionInformation();

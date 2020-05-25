@@ -53,7 +53,6 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -82,7 +81,7 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
     @Override
     protected boolean isEnabled() {
         String hostString = System.getenv("KNIME_SSHD_HOST");
-        return hostString != null; // need to be run on new jenkins
+        return hostString != null; // only runs on the new jenkins
     }
 
     /**
@@ -126,7 +125,6 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
      */
     @Test
     public void testGetParent() throws Exception {
-        assumeTrue(isEnabled());
         final Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
         final Path file = Files.createFile(tempRoot.resolve("file"));
@@ -153,7 +151,6 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
      */
     @Override
     public void testMove() throws Exception {
-        assumeTrue(isEnabled());
         super.testMove();
 
         String hostString = System.getenv("KNIME_SSHD_HOST");

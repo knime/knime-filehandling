@@ -51,7 +51,6 @@ package org.knime.base.filehandling.remote.files;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -167,7 +166,6 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Override
     @Test
     public void testMove() throws Exception {
-        assumeTrue(isEnabled());
 
         final List<Path> paths = createTempFiles(
             /* Setup for the first part of the test*/
@@ -234,7 +232,6 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
      */
     @Test
     public void testOpenChannelWithoutPath() throws Exception {
-        assumeTrue(isEnabled());
         final RemoteFile<SSHConnection> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, null, null), m_connInfo, m_connectionMonitor);
         assertThat("Directory does not exist", remoteFile.exists(), is(true));
@@ -247,7 +244,6 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Override
     @Test
     public void testLastModified() throws Exception {
-        assumeTrue(isEnabled());
         final Path result = createTempFiles("file").get(1);
         final String path = result.toUri().getPath();
 
@@ -267,7 +263,6 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Override
     @Test
     public void testGetSize() throws Exception {
-        assumeTrue(isEnabled());
 
         final List<Path> paths = createTempFiles("file");
         final Path file = paths.get(1);
@@ -288,7 +283,6 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Override
     @Test
     public void testOpenInputStream() throws Exception {
-        assumeTrue(isEnabled());
 
         final List<Path> paths = createTempFiles("file");
         final Path file = paths.get(1);
@@ -311,7 +305,6 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
      */
     @Override
     public void testListFilesSymlinks() throws Exception {
-        assumeTrue(isEnabled());
 
         final List<Path> paths = createTempFiles("file", "dir/");
         final Path tempRoot = paths.get(0);
@@ -350,7 +343,6 @@ public class SFTPRemoteFileTest extends RemoteFileTest<SSHConnection> {
     @Test
     @Override
     public void testOpenOutputStream() throws Exception {
-        assumeTrue(isEnabled());
         final List<Path> paths = createTempFiles("file");
         final Path file = paths.get(1);
 

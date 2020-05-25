@@ -135,6 +135,11 @@ public abstract class RemoteFileTest<C extends Connection> {
         }
     }
 
+    @Before
+    public void checkEnabled() {
+       assumeTrue(isEnabled());
+    }
+
     /**
      * Creates a temporary root folder, containing the provided elements
      *
@@ -173,7 +178,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testGetType() throws Exception {
-        assumeTrue(isEnabled());
         final RemoteFile<C> remoteFile =
             m_fileHandler.createRemoteFile(new URI(m_type, m_host, "/", null), m_connInfo, m_connectionMonitor);
 
@@ -187,7 +191,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testGetName() throws Exception {
-        assumeTrue(isEnabled());
         final Path tempRoot = createTempFiles("file").get(0);
 
         final String tempRootPath = createPath(tempRoot);
@@ -207,7 +210,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testGetPath() throws Exception {
-        assumeTrue(isEnabled());
         List<Path> paths = createTempFiles("file");
         final Path tempRoot = paths.get(0);
 
@@ -238,7 +240,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testExits() throws Exception {
-        assumeTrue(isEnabled());
         final List<Path> files = createTempFiles("file");
         final String path = createPath(files.get(0));
         final RemoteFile<C> remoteFile =
@@ -263,7 +264,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testIsDirectory() throws Exception {
-        assumeTrue(isEnabled());
         final Path tempRoot = createTempFiles("file").get(0);
 
         final String path = createPath(tempRoot);
@@ -284,7 +284,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testMove() throws Exception {
-        assumeTrue(isEnabled());
         final Path tempRoot = PathUtils.createTempDir(getClass().getName());
 
         Files.createDirectories(tempRoot.resolve("dir1"));
@@ -316,7 +315,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testOpenInputStream() throws Exception {
-        assumeTrue(isEnabled());
 
         List<Path> paths = createTempFiles("file");
         final Path tempRoot = paths.get(0);
@@ -347,7 +345,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testOpenOutputStream() throws Exception {
-        assumeTrue(isEnabled());
         final List<Path> paths = createTempFiles("file");
         final Path file = paths.get(1);
 
@@ -374,7 +371,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testGetSize() throws Exception {
-        assumeTrue(isEnabled());
         final List<Path> paths = createTempFiles("file");
         final Path tempRoot = paths.get(0);
 
@@ -400,7 +396,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testLastModified() throws Exception {
-        assumeTrue(isEnabled());
         final Path file = createTempFiles("file").get(1);
         final String path = createPath(file);
 
@@ -421,7 +416,6 @@ public abstract class RemoteFileTest<C extends Connection> {
     @Test
     public void testDelete() throws Exception {
 
-        assumeTrue(isEnabled());
         final List<Path> paths = createTempFiles("dir/", "dir/file1", "file2");
         final Path tempRoot = paths.get(0);
         final Path dir = paths.get(1);
@@ -462,7 +456,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testListFiles() throws Exception {
-        assumeTrue(isEnabled());
 
         final List<Path> paths = createTempFiles("file", "dir/");
 
@@ -498,7 +491,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testMkDir() throws Exception {
-        assumeTrue(isEnabled());
         final Path tempRoot = createTempFiles().get(0); // create only the root dir
 
         final String path = createPath(tempRoot.resolve("dir"));
@@ -523,7 +515,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test(expected = FileAlreadyExistsException.class)
     public void testMkDirFileExists() throws Exception {
-        assumeTrue(isEnabled());
         final String path = createPath(createTempFiles("file").get(1));
 
         final RemoteFile<C> remoteFile =
@@ -538,7 +529,6 @@ public abstract class RemoteFileTest<C extends Connection> {
      */
     @Test
     public void testListFilesSymlinks() throws Exception {
-        assumeTrue(isEnabled());
         assumeThat(Platform.getOS(), anyOf(is(Platform.OS_LINUX), is(Platform.OS_MACOSX)));
 
         final Path tempRoot = PathUtils.createTempDir(getClass().getName());
