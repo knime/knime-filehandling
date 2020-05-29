@@ -61,24 +61,13 @@ try {
 */
 def runIntegrationTests(String image) {
     node(image) {
-        def sidecars = dockerTools.createSideCarFactory()
-        try {
-            stage('Testing remote FS'){
-                env.lastStage = env.STAGE_NAME
-                checkout scm
+        stage('Testing remote FS'){
+            env.lastStage = env.STAGE_NAME
+            checkout scm
 
-                def sshdhost = sidecars.createSideCar(SSHD_IMAGE, 'ssh-test-host', [], [22]).start()
-
-                def address =  sshdhost.getAddress(22)
-                def testEnv = ["KNIME_SSHD_ADDRESS=${address}"]
-
-                knimetools.runIntegratedWorkflowTests(mvnEnv: testEnv, profile: "test")
-            }
-        } catch (ex) {
-            currentBuild.result = 'FAILURE'
-            throw ex
-        } finally {
-            sidecars.close()
+            knimetools.runIntegratedWorkflowTests(profile: "test", sidecarContainers: [
+                [ image: SSHD_IMAGE, namePrefix: "SSHD", port: 22 ]
+            ])
         }
     }
 }
