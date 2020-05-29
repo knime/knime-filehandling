@@ -11,6 +11,8 @@ properties([
     disableConcurrentBuilds()
 ])
 
+SSHD_IMAGE = "${dockerTools.ECR}/knime/sshd:alpine3.10"
+
 try {
 
     buildConfigs = [
@@ -37,6 +39,9 @@ try {
                 'knime-js-core', 'knime-js-base', 'knime-server-client', 'knime-com-shared',
                 'knime-productivity-oss', 'knime-reporting'
             ]
+        ],
+        sidecarContainers: [
+            [ image: SSHD_IMAGE, namePrefix: "SSHD", port: 22 ]
         ]
      )
 
@@ -62,12 +67,10 @@ def runIntegrationTests(String image) {
                 env.lastStage = env.STAGE_NAME
                 checkout scm
 
-                def ecrPrefix = "910065342149.dkr.ecr.eu-west-1.amazonaws.com/"
-                def sshdImage = "knime/sshd:alpine3.10"
-                def sshdhost = sidecars.createSideCar(ecrPrefix + sshdImage, 'ssh-test-host', [], [22]).start()
+                def sshdhost = sidecars.createSideCar(SSHD_IMAGE, 'ssh-test-host', [], [22]).start()
 
                 def address =  sshdhost.getAddress(22)
-                def testEnv = ["KNIME_SSHD_HOST=${address}"]
+                def testEnv = ["KNIME_SSHD_ADDRESS=${address}"]
 
                 knimetools.runIntegratedWorkflowTests(mvnEnv: testEnv, profile: "test")
             }

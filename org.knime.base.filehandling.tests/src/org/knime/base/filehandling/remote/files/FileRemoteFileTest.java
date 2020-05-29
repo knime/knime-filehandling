@@ -80,7 +80,7 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
      */
     @Override
     protected boolean isEnabled() {
-        String hostString = System.getenv("KNIME_SSHD_HOST");
+        String hostString = System.getenv("KNIME_SSHD_ADDRESS");
         return hostString != null; // only runs on the new jenkins
     }
 
@@ -94,7 +94,7 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
             return;
         }
 
-        String hostString = System.getenv("KNIME_SSHD_HOST");
+        String hostString = System.getenv("KNIME_SSHD_ADDRESS");
         assumeNotNull(hostString);
 
         m_connInfo = new ConnectionInformation();
@@ -153,7 +153,7 @@ public class FileRemoteFileTest extends RemoteFileTest<Connection> {
     public void testMove() throws Exception {
         super.testMove();
 
-        String hostString = System.getenv("KNIME_SSHD_HOST");
+        String hostString = System.getenv("KNIME_SSHD_ADDRESS");
         String userString = "jenkins";
 
         final String[] sshdHostInfo = hostString.split(":");

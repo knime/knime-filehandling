@@ -78,7 +78,7 @@ public class SFTPRemoteFileOldJenkinsTest extends RemoteFileTest<SSHConnection> 
      */
     @Override
     protected boolean isEnabled() {
-        String hostString = System.getenv("KNIME_SSHD_HOST");
+        String hostString = System.getenv("KNIME_SSHD_ADDRESS");
         return hostString == null; // running on old jenkins
     }
 
