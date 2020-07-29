@@ -111,7 +111,7 @@ public class KnimeRemoteFile extends RemoteFile<Connection> {
      */
     @Override
     public OutputStream openOutputStream() throws Exception {
-        return FileUtil.openOutputConnection(getURI().toURL(), "PUT").getOutputStream();
+        return FileUtil.openOutputStream(getURI().toURL(), "PUT");
     }
 
     /**

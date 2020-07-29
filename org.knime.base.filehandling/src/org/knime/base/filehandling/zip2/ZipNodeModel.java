@@ -53,6 +53,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Date;
@@ -203,14 +204,17 @@ class ZipNodeModel extends NodeModel {
             //try remote delete if exists
             if (exists) {
                 try {
-                    FileUtil.openOutputConnection(target, "DELETE");
+                    final URLConnection conn = FileUtil.openOutputConnection(target, "DELETE");
+
+                    if (conn instanceof HttpURLConnection) {
+                        ((HttpURLConnection)conn).disconnect();
+                    }
                 } catch (IOException e) {
                     LOGGER.warn("Failed to delete: " + target, e);
                 }
             }
-            //PUT to the ooutputstream
-            URLConnection connection = FileUtil.openOutputConnection(target, "PUT");
-            try (OutputStream outStream = connection.getOutputStream()) {
+            //PUT to the outputstream
+            try (OutputStream outStream = FileUtil.openOutputStream(target, "PUT")) {
                 FileUtils.copyFile(tmpFile, outStream);
                 //cleanup
                 FileUtils.deleteQuietly(tmpFile);

@@ -342,7 +342,7 @@ class UnzipNodeModel extends NodeModel {
     private static OutputStream openStream(final URL target) throws IOException, URISyntaxException {
         Path path = FileUtil.resolveToPath(target);
         if (path == null) {
-            return FileUtil.openOutputConnection(target, "PUT").getOutputStream();
+            return FileUtil.openOutputStream(target, "PUT");
         }
         return Files.newOutputStream(path);
     }
