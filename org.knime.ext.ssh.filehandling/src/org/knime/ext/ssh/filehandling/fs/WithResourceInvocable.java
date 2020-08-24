@@ -44,88 +44,23 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-28 (Vyacheslav Soldatov): created
+ *   2020-08-01 (Vyacheslav Soldatov): created
  */
-package org.knime.ext.ssh.filehandling.testing;
+
+package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
-
-import org.knime.ext.ssh.filehandling.fs.SshConnection;
-import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
-import org.knime.ext.ssh.filehandling.fs.SshPath;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFiles;
-import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
 
 /**
- * SSH test initializer.
- *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ *
  */
-public class SshTestInitializer extends DefaultFSTestInitializer<SshPath, SshFileSystem> {
-    private boolean m_isWorkingDirCreated = false;
-    private final SshFileSystem m_fileSystem;
-
+@FunctionalInterface
+interface WithResourceInvocable<R> {
     /**
-     * Creates new instance
-     * @param connection {@link FSConnection} object.
+     * @param resource resource.
+     * @return invocation result.
+     * @throws IOException
      */
-    public SshTestInitializer(final SshConnection connection) {
-        super(connection);
-        m_fileSystem = connection.getFileSystem();
-    }
-
-    @Override
-    public SshPath createFileWithContent(final String content, final String... pathComponents)
-            throws IOException {
-
-        final SshPath path = makePath(pathComponents);
-
-        Files.createDirectories(path.getParent());
-
-        try (OutputStream out = m_fileSystem.provider()
-                .newOutputStream(
-                path, StandardOpenOption.WRITE,
-                        StandardOpenOption.CREATE_NEW)) {
-            final byte[] bytes = content.getBytes();
-            out.write(bytes);
-            out.flush();
-        }
-
-        return path;
-    }
-
-    @Override
-    protected void beforeTestCaseInternal() throws IOException {
-        final SshPath scratchDir = getTestCaseScratchDir();
-
-        if (!m_isWorkingDirCreated) {
-            Files.createDirectory(scratchDir.getParent());
-            m_isWorkingDirCreated = true;
-        }
-
-        Files.createDirectory(scratchDir);
-    }
-
-    @Override
-    protected void afterTestCaseInternal() throws IOException {
-        FSFiles.deleteRecursively(getTestCaseScratchDir());
-        getFileSystem().clearAttributesCache();
-    }
-
-    @Override
-    public void afterClass() throws IOException {
-        final SshPath scratchDir = getTestCaseScratchDir();
-
-        if (m_isWorkingDirCreated) {
-            try {
-                FSFiles.deleteRecursively(scratchDir.getParent());
-            } finally {
-                m_isWorkingDirCreated = false;
-            }
-        }
-    }
+    R invoke(final ConnectionResource resource) throws IOException;
 }

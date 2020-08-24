@@ -44,88 +44,91 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-28 (Vyacheslav Soldatov): created
+ *   30 июл. 2020 г. (soldatov): created
  */
-package org.knime.ext.ssh.filehandling.testing;
+package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
-
-import org.knime.ext.ssh.filehandling.fs.SshConnection;
-import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
-import org.knime.ext.ssh.filehandling.fs.SshPath;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFiles;
-import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 
 /**
- * SSH test initializer.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshTestInitializer extends DefaultFSTestInitializer<SshPath, SshFileSystem> {
-    private boolean m_isWorkingDirCreated = false;
-    private final SshFileSystem m_fileSystem;
+class SshSeekableByteChannel implements SeekableByteChannel {
+    private final SeekableByteChannel m_channel;
+    private final ConnectionResource m_resource;
 
     /**
-     * Creates new instance
-     * @param connection {@link FSConnection} object.
+     * @param resource connection resource.
+     * @param ch channel.
      */
-    public SshTestInitializer(final SshConnection connection) {
-        super(connection);
-        m_fileSystem = connection.getFileSystem();
+    public SshSeekableByteChannel(final ConnectionResource resource,
+            final SeekableByteChannel ch) {
+        super();
+        m_resource = resource;
+        m_channel = ch;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public SshPath createFileWithContent(final String content, final String... pathComponents)
-            throws IOException {
-
-        final SshPath path = makePath(pathComponents);
-
-        Files.createDirectories(path.getParent());
-
-        try (OutputStream out = m_fileSystem.provider()
-                .newOutputStream(
-                path, StandardOpenOption.WRITE,
-                        StandardOpenOption.CREATE_NEW)) {
-            final byte[] bytes = content.getBytes();
-            out.write(bytes);
-            out.flush();
-        }
-
-        return path;
+    public boolean isOpen() {
+        return m_channel.isOpen();
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    protected void beforeTestCaseInternal() throws IOException {
-        final SshPath scratchDir = getTestCaseScratchDir();
-
-        if (!m_isWorkingDirCreated) {
-            Files.createDirectory(scratchDir.getParent());
-            m_isWorkingDirCreated = true;
-        }
-
-        Files.createDirectory(scratchDir);
+    public void close() throws IOException {
+        m_channel.close();
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    protected void afterTestCaseInternal() throws IOException {
-        FSFiles.deleteRecursively(getTestCaseScratchDir());
-        getFileSystem().clearAttributesCache();
+    public int read(final ByteBuffer dst) throws IOException {
+        return m_channel.read(dst);
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void afterClass() throws IOException {
-        final SshPath scratchDir = getTestCaseScratchDir();
-
-        if (m_isWorkingDirCreated) {
-            try {
-                FSFiles.deleteRecursively(scratchDir.getParent());
-            } finally {
-                m_isWorkingDirCreated = false;
-            }
-        }
+    public int write(final ByteBuffer src) throws IOException {
+        return m_channel.write(src);
+    }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long position() throws IOException {
+        return m_channel.position();
+    }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SeekableByteChannel position(final long newPosition) throws IOException {
+        return new SshSeekableByteChannel(m_resource, m_channel.position(newPosition));
+    }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long size() throws IOException {
+        return m_channel.size();
+    }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SeekableByteChannel truncate(final long size) throws IOException {
+        return new SshSeekableByteChannel(
+            m_resource, m_channel.truncate(Math.min(m_channel.size(), size)));
+    }
+    public ConnectionResource getResource() {
+        return m_resource;
     }
 }

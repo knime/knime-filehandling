@@ -79,7 +79,7 @@ public class SshConnectionNodeModel extends NodeModel {
     private String m_fsId;
     private SshConnection m_connection;
 
-    private SshConnectionSettings m_settings = new SshConnectionSettings();
+    private SshConnectionSettings m_settings = new SshConnectionSettings("ssh");
 
     /**
      * Creates new instance.
@@ -133,6 +133,7 @@ public class SshConnectionNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO output) {
+        m_settings.saveSettingsTo(output);
     }
 
     /**
@@ -140,6 +141,7 @@ public class SshConnectionNodeModel extends NodeModel {
      */
     @Override
     protected void validateSettings(final NodeSettingsRO input) throws InvalidSettingsException {
+        m_settings.validateSettings(input);
     }
 
     /**
@@ -147,6 +149,7 @@ public class SshConnectionNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO input) throws InvalidSettingsException {
+        m_settings.loadSettingsFrom(input);
     }
 
     @Override

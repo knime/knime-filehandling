@@ -61,7 +61,6 @@ import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
  */
 public class SshConnection implements FSConnection {
     private final SshFileSystem m_fileSystem;
-    private static final long CACHE_TTL = 6000;
 
     /**
      * @param settings connection settings.
@@ -69,9 +68,7 @@ public class SshConnection implements FSConnection {
      */
     public SshConnection(final SshConnectionSettings settings)
             throws IOException {
-        final SshFileSystemProvider provider = new SshFileSystemProvider(settings,
-                CACHE_TTL);
-        m_fileSystem = provider.getFileSystem();
+        m_fileSystem = new SshFileSystem(settings);
     }
 
     /**

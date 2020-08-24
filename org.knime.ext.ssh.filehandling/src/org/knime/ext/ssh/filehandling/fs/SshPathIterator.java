@@ -46,86 +46,96 @@
  * History
  *   2020-07-28 (Vyacheslav Soldatov): created
  */
-package org.knime.ext.ssh.filehandling.testing;
+package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Path;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-import org.knime.ext.ssh.filehandling.fs.SshConnection;
-import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
-import org.knime.ext.ssh.filehandling.fs.SshPath;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFiles;
-import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
+import org.apache.sshd.client.subsystem.sftp.SftpClient;
+import org.apache.sshd.client.subsystem.sftp.SftpClient.DirEntry;
 
 /**
- * SSH test initializer.
+ * Class to iterate through the files and folders in the path
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshTestInitializer extends DefaultFSTestInitializer<SshPath, SshFileSystem> {
-    private boolean m_isWorkingDirCreated = false;
-    private final SshFileSystem m_fileSystem;
+public class SshPathIterator implements Iterator<SshPath> {
+    private Iterator<SftpClient.DirEntry> m_dirEntryIterator;
+    private final Filter<? super Path> m_filter;
+
+    private SshPath m_next;
+    private SshPath m_dir;
 
     /**
-     * Creates new instance
-     * @param connection {@link FSConnection} object.
+     * @param dir
+     *            directory path.
+     * @param iter
+     *            directory iterator.
+     * @param f
+     *            filter.
      */
-    public SshTestInitializer(final SshConnection connection) {
-        super(connection);
-        m_fileSystem = connection.getFileSystem();
+    public SshPathIterator(final SshPath dir, final Iterator<SftpClient.DirEntry> iter, final Filter<? super Path> f) {
+        super();
+        m_dirEntryIterator = iter;
+        m_filter = f;
+        m_dir = dir;
+
+        goToNext();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public SshPath createFileWithContent(final String content, final String... pathComponents)
-            throws IOException {
+    public boolean hasNext() {
+        return m_next != null;
+    }
 
-        final SshPath path = makePath(pathComponents);
-
-        Files.createDirectories(path.getParent());
-
-        try (OutputStream out = m_fileSystem.provider()
-                .newOutputStream(
-                path, StandardOpenOption.WRITE,
-                        StandardOpenOption.CREATE_NEW)) {
-            final byte[] bytes = content.getBytes();
-            out.write(bytes);
-            out.flush();
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SshPath next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
         }
-
-        return path;
+        final SshPath p = m_next;
+        goToNext();
+        return p;
     }
 
-    @Override
-    protected void beforeTestCaseInternal() throws IOException {
-        final SshPath scratchDir = getTestCaseScratchDir();
+    private void goToNext() {
+        m_next = null;
+        while (true) {
+            if (!m_dirEntryIterator.hasNext()) {
+                return;
+            }
 
-        if (!m_isWorkingDirCreated) {
-            Files.createDirectory(scratchDir.getParent());
-            m_isWorkingDirCreated = true;
-        }
+            final DirEntry entry = m_dirEntryIterator.next();
+            String fileName = entry.getFilename();
 
-        Files.createDirectory(scratchDir);
-    }
+            // ignore current and parent directory
+            if (".".equals(fileName) || "..".equals(fileName)) {
+                continue;
+            }
 
-    @Override
-    protected void afterTestCaseInternal() throws IOException {
-        FSFiles.deleteRecursively(getTestCaseScratchDir());
-        getFileSystem().clearAttributesCache();
-    }
-
-    @Override
-    public void afterClass() throws IOException {
-        final SshPath scratchDir = getTestCaseScratchDir();
-
-        if (m_isWorkingDirCreated) {
+            final SshPath path = createSshPath(fileName);
             try {
-                FSFiles.deleteRecursively(scratchDir.getParent());
-            } finally {
-                m_isWorkingDirCreated = false;
+                if (m_filter == null || m_filter.accept(path)) {
+                    m_next = path;
+                    return;
+                }
+            } catch (final IOException e) {
+                throw new DirectoryIteratorException(e);
             }
         }
+    }
+
+    private SshPath createSshPath(final String fileName) {
+        return (SshPath) m_dir.resolve(fileName);
     }
 }

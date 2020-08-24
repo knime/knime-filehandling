@@ -48,21 +48,34 @@
  */
 package org.knime.ext.ssh.filehandling.fs;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
+import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.sshd.client.subsystem.sftp.SftpClient;
+import org.apache.sshd.client.subsystem.sftp.SftpClient.Attributes;
+import org.apache.sshd.client.subsystem.sftp.fs.SftpPosixFileAttributes;
+import org.apache.sshd.common.subsystem.sftp.SftpException;
+import org.knime.ext.ssh.filehandling.fs.ConnectionResourceHolder.ReleaseAction;
 import org.knime.ext.ssh.filehandling.node.SshConnectionSettings;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
@@ -73,21 +86,21 @@ import org.knime.filehandling.core.connections.base.attributes.BaseFileAttribute
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFileSystem> {
-    private final SshFileSystem m_fileSystem;
-    private final ConnectionResourcePool m_resources = new ConnectionResourcePool();
+    private final ConnectionResourcePool m_resources;
+    private final Map<Closeable, ConnectionResourceHolder> m_closeables = new ConcurrentHashMap<>();
+
+    private final ThreadLocal<ConnectionResourceHolder> m_resourceRef
+        = new ThreadLocal<>();
 
     /**
      * @param settings
-     *            settings.
-     * @param cacheTtl
+     *            connection resource pool.
      * @throws IOException
      */
-    public SshFileSystemProvider(final SshConnectionSettings settings,
-            final long cacheTtl)
+    public SshFileSystemProvider(final SshConnectionSettings settings)
             throws IOException {
-        m_resources.setSettings(settings);
+        m_resources = new ConnectionResourcePool(settings);
         m_resources.start();
-        m_fileSystem = new SshFileSystem(this, cacheTtl, settings);
     }
 
     /**
@@ -96,7 +109,8 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     @Override
     protected SeekableByteChannel newByteChannelInternal(final SshPath path, final Set<? extends OpenOption> options,
             final FileAttribute<?>... attrs) throws IOException {
-        throw new RuntimeException("TODO implement");
+        return invokeWithResource(false,
+                resource -> NativeSftpProviderUtils.newByteChannelInternal(resource, path, options, attrs));
     }
 
     /**
@@ -128,9 +142,11 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("resource")
     @Override
     protected OutputStream newOutputStreamInternal(final SshPath path, final OpenOption... options) throws IOException {
-        throw new RuntimeException("TODO implement");
+        final Set<OpenOption> opts = new HashSet<>(Arrays.asList(options));
+        return Channels.newOutputStream(newByteChannelInternal(path, opts));
     }
 
     /**
@@ -139,7 +155,8 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     @Override
     protected Iterator<SshPath> createPathIterator(final SshPath dir, final Filter<? super Path> filter)
             throws IOException {
-        throw new RuntimeException("TODO implement");
+        return invokeWithResource(false,
+                resource -> NativeSftpProviderUtils.createPathIteratorImpl(resource, dir, filter));
     }
 
     /**
@@ -148,7 +165,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     @Override
     protected void createDirectoryInternal(final SshPath dir, final FileAttribute<?>... attrs)
             throws IOException {
-        throw new RuntimeException("TODO implement");
+        invokeWithClient(true, client -> NativeSftpProviderUtils.createDirectoryInternal(client, dir, attrs));
     }
 
     /**
@@ -156,7 +173,13 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     @Override
     public boolean exists(final SshPath path) throws IOException {
-        throw new RuntimeException("TODO implement");
+        try {
+            Attributes attrs = invokeWithClient(true,
+                    client -> NativeSftpProviderUtils.readRemoteAttributes(client, path));
+            return attrs != null || (path.isAbsolute() && path.getNameCount() == 0);
+        } catch (final IOException e) {
+            return false;
+        }
     }
 
     /**
@@ -164,7 +187,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     @Override
     protected BaseFileAttributes fetchAttributesInternal(final SshPath path, final Class<?> type) throws IOException {
-        throw new RuntimeException("TODO implement");
+        return invokeWithClient(true, client -> fetchAttributesInternal(client, path, type));
     }
 
     /**
@@ -180,7 +203,14 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     protected BaseFileAttributes fetchAttributesInternal(
             final SftpClient sftpClient,
             final SshPath path, final Class<?> type) throws IOException {
-        throw new RuntimeException("TODO implement");
+
+        if (type.isAssignableFrom(PosixFileAttributes.class)) {
+            SftpPosixFileAttributes attr = new SftpPosixFileAttributes(path,
+                    NativeSftpProviderUtils.readRemoteAttributes(sftpClient, path));
+            return new SshFileAttributes(path, attr);
+        }
+
+        throw new UnsupportedOperationException("readAttributes(" + path + ")[" + type.getSimpleName() + "] N/A");
     }
 
     /**
@@ -188,12 +218,27 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     @Override
     protected void checkAccessInternal(final SshPath path, final AccessMode... modes) throws IOException {
-        throw new RuntimeException("TODO implement");
+        // not checked only existence of attributes
+        // because check access mode for different file system is very complex deal.
     }
 
     @Override
     protected void deleteInternal(final SshPath path) throws IOException {
-        throw new RuntimeException("TODO implement");
+        invokeWithClient(true, client -> deleteInternal(client, path));
+    }
+
+    Void deleteInternal(final SftpClient sftp, final SshPath path) throws IOException {
+        try {
+            BasicFileAttributes attributes = readAttributes(path, BasicFileAttributes.class);
+            if (attributes.isDirectory()) {
+                sftp.rmdir(path.toString());
+            } else {
+                sftp.remove(path.toString());
+            }
+        } catch (final SftpException e) {
+            throw e;
+        }
+        return null;
     }
     /**
      * {@inheritDoc}
@@ -223,20 +268,116 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         return SshFileSystem.FS_TYPE;
     }
 
-    /**
-     * @return the SSH file system.
-     */
-    public SshFileSystem getFileSystem() {
-        return m_fileSystem;
+    void prepareClose() {
+        m_resources.stop();
     }
 
     /**
-     * @param first first segment.
-     * @param more other segments.
-     * @return SSH path.
+     * @param releaseResource whether or not should release resource just after invoke method.
+     * @param func function to invoke with resource.
+     * @return invocation result.
      */
-    @SuppressWarnings("resource")
-    public SshPath toSsh(final String first, final String... more) {
-        return new SshPath(getFileSystem(), first, more);
+    private <R> R invokeWithResource(final boolean releaseResource,
+            final WithResourceInvocable<R> func)
+        throws IOException {
+
+        final ConnectionResource resource = m_resources.take();
+        try {
+            final R result = func.invoke(resource);
+            if (releaseResource) {
+                m_resources.release(resource);
+            } else if (m_resourceRef.get() != null) {
+                m_resourceRef.get().setResource(resource);
+            }
+            return result;
+        } catch (final IOException exc) {
+            if (isCorrupted(exc)) {
+                m_resources.forceClose(resource);
+            } else {
+                m_resources.release(resource);
+            }
+
+            throw exc;
+        }
+    }
+
+    /**
+     * @param releaseResource
+     *            whether or not should release resource just after invoke method.
+     * @param func
+     *            function to invoke with client.
+     * @return invocation result.
+     */
+    private <R> R invokeWithClient(final boolean releaseResource, final WithClientInvocable<R> func)
+            throws IOException {
+        return invokeWithResource(releaseResource, resource -> func.invoke(resource.getClient()));
+    }
+
+    /**
+     * @param exc
+     *            I/O exception.
+     * @return true if an exception is retryable.
+     */
+    private static boolean isCorrupted(final IOException exc) {
+        return !exc.getClass().getName().startsWith("java.nio");
+    }
+
+    /**
+     * @param closeable closeable.
+     */
+    void unregisterCloseable(final Closeable closeable) {
+        final ConnectionResourceHolder holder = m_closeables.remove(closeable);
+        if (holder != null) {
+            switch (holder.getReleaseAction()) {
+            case Release:
+                m_resources.release(holder.getResource());
+                break;
+            case ForceClose:
+                m_resources.forceClose(holder.getResource());
+                break;
+            default:
+                throw new RuntimeException("Unexpected release action: " + holder.getReleaseAction());
+            }
+        }
+    }
+
+    /**
+     * @param releaseAction
+     *            release action. Sets atomic reference for resource. It marks it as
+     *            waiting of closeable resource set in same thread.
+     */
+    private void startCatchResource(final ReleaseAction releaseAction) {
+        if (m_resourceRef.get() != null) {
+            throw new IllegalStateException("Already waiting resource");
+        }
+        m_resourceRef.set(new ConnectionResourceHolder(releaseAction));
+    }
+
+    /**
+     * @param closeable
+     *            closeable.
+     */
+    private void finishCatchResource(final Closeable closeable) {
+        final ConnectionResourceHolder holder = m_resourceRef.get();
+        m_resourceRef.set(null);
+        if (closeable != null && holder != null) {
+            m_closeables.put(closeable, holder);
+        }
+    }
+
+    //catch closeables
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DirectoryStream<Path> newDirectoryStream(final Path dir, final Filter<? super Path> filter) throws IOException {
+        startCatchResource(ReleaseAction.ForceClose);
+        DirectoryStream<Path> stream = null;
+        try {
+            stream = super.newDirectoryStream(dir, filter);
+        } finally {
+            finishCatchResource(stream);
+        }
+        return stream;
     }
 }

@@ -44,88 +44,53 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-28 (Vyacheslav Soldatov): created
+ *   2020-08-01 (Vyacheslav Soldatov): created
  */
-package org.knime.ext.ssh.filehandling.testing;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
+package org.knime.ext.ssh.filehandling.fs;
 
-import org.knime.ext.ssh.filehandling.fs.SshConnection;
-import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
-import org.knime.ext.ssh.filehandling.fs.SshPath;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFiles;
-import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
+import org.apache.sshd.client.subsystem.sftp.SftpClient;
 
 /**
- * SSH test initializer.
- *
+ * This class holds native SFTP Client and provides the method for safely closed
+ * it and check whether or not is Client closed.
+ * 
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ *
  */
-public class SshTestInitializer extends DefaultFSTestInitializer<SshPath, SshFileSystem> {
-    private boolean m_isWorkingDirCreated = false;
-    private final SshFileSystem m_fileSystem;
+public class ConnectionResource {
+    private final SftpClient m_client;
 
     /**
-     * Creates new instance
-     * @param connection {@link FSConnection} object.
+     * @param client
+     *            SFTP client.
      */
-    public SshTestInitializer(final SshConnection connection) {
-        super(connection);
-        m_fileSystem = connection.getFileSystem();
+    public ConnectionResource(final SftpClient client) {
+        super();
+        m_client = client;
     }
 
-    @Override
-    public SshPath createFileWithContent(final String content, final String... pathComponents)
-            throws IOException {
-
-        final SshPath path = makePath(pathComponents);
-
-        Files.createDirectories(path.getParent());
-
-        try (OutputStream out = m_fileSystem.provider()
-                .newOutputStream(
-                path, StandardOpenOption.WRITE,
-                        StandardOpenOption.CREATE_NEW)) {
-            final byte[] bytes = content.getBytes();
-            out.write(bytes);
-            out.flush();
-        }
-
-        return path;
+    /**
+     * @return SFTP client.
+     */
+    public SftpClient getClient() {
+        return m_client;
     }
-
-    @Override
-    protected void beforeTestCaseInternal() throws IOException {
-        final SshPath scratchDir = getTestCaseScratchDir();
-
-        if (!m_isWorkingDirCreated) {
-            Files.createDirectory(scratchDir.getParent());
-            m_isWorkingDirCreated = true;
-        }
-
-        Files.createDirectory(scratchDir);
-    }
-
-    @Override
-    protected void afterTestCaseInternal() throws IOException {
-        FSFiles.deleteRecursively(getTestCaseScratchDir());
-        getFileSystem().clearAttributesCache();
-    }
-
-    @Override
-    public void afterClass() throws IOException {
-        final SshPath scratchDir = getTestCaseScratchDir();
-
-        if (m_isWorkingDirCreated) {
+    /**
+     * Closes resource.
+     */
+    public void close() {
+        if (!isClosed()) {
             try {
-                FSFiles.deleteRecursively(scratchDir.getParent());
-            } finally {
-                m_isWorkingDirCreated = false;
+                m_client.close();
+            } catch (final Throwable e) {
             }
         }
+    }
+    /**
+     * @return true if resource is closed.
+     */
+    public boolean isClosed() {
+        return !m_client.isOpen() || m_client.isClosing();
     }
 }

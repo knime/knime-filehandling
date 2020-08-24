@@ -48,7 +48,19 @@
  */
 package org.knime.ext.ssh.filehandling.node;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettings;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.defaultnodesettings.SettingsModel;
+import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
+import org.knime.core.node.defaultnodesettings.SettingsModelPassword;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.port.PortObjectSpec;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 
 /**
@@ -56,66 +68,174 @@ import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshConnectionSettings implements Cloneable {
+public class SshConnectionSettings extends SettingsModel implements ChangeListener {
+    private static final String AUTH = "auth";
+    private static final String SECRET_KEY = "ekerjvjhmzle,ptktysq";
+
     /**
      * Default connection time out.
      */
     public static final int DEFAULT_TIMEOUT = 30;
 
-    private String m_workingDirectory;
-    private int m_connectionTimeout;
-    private int m_port;
-    private String m_host;
+    private final SettingsModelString m_workingDirectory;
+    private final SettingsModelIntegerBounded m_connectionTimeout;
+    private final SettingsModelIntegerBounded m_port;
+    private final SettingsModelString m_host;
 
     //authentication
-    private String m_userName;
-    private String m_password;
+    private final SettingsModelString m_userName;
+    private final SettingsModelPassword m_password;
+    private final String m_configName;
+
+    private static final String KNOWN_HOSTS_FILE = "knownHostsFile";
+    private static final String KEY_FILE = "keyFile";
 
     /**
-     * Default constructor.
+     * @param configName
+     *            configuration name.
      */
-    public SshConnectionSettings() {
-        m_host = "localhost";
-        m_port = 22;
-        m_connectionTimeout = DEFAULT_TIMEOUT;
+    public SshConnectionSettings(final String configName) {
+        m_configName = configName;
+
+        m_host = new SettingsModelString("host", "localhost");
+        m_port = new SettingsModelIntegerBounded("port", 22, 1, Integer.MAX_VALUE);
+        m_connectionTimeout = new SettingsModelIntegerBounded("connectionTimeout", DEFAULT_TIMEOUT,
+                1,
+                Integer.MAX_VALUE);
 
         //authentication
-        m_userName = System.getProperty("user.name");
+        m_userName = new SettingsModelString("user", System.getProperty("user.name"));
+        m_password = new SettingsModelPassword("password", SECRET_KEY, "");
 
-        m_workingDirectory = SshFileSystem.PATH_SEPARATOR;
+        m_workingDirectory = new SettingsModelString("workingDirectory", SshFileSystem.PATH_SEPARATOR);
+
+        // enable change listening
+        m_workingDirectory.addChangeListener(this);
+        m_connectionTimeout.addChangeListener(this);
+        m_port.addChangeListener(this);
+        m_host.addChangeListener(this);
+        m_userName.addChangeListener(this);
+        m_password.addChangeListener(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void stateChanged(final ChangeEvent e) {
+        // forward change event from listened fields to settings listeners.
+        notifyChangeListeners();
     }
 
     /**
      * @return user name.
      */
     public String getUsername() {
-        return m_userName;
+        return m_userName.getStringValue();
     }
     /**
      * @return password
      */
     public String getPassword() {
-        return m_password;
+        String value = m_password.getStringValue();
+        return isEmpty(value) ? null : value;
     }
 
     /**
-     * Validates settings consistency for this instance.
-     *
-     * @throws InvalidSettingsException
+     * {@inheritDoc}
      */
-    public void validate() throws InvalidSettingsException {
-        if (m_connectionTimeout < 1) {
-            throw new InvalidSettingsException("Invalid connection timeout "
-                    + m_connectionTimeout);
+    @SuppressWarnings("unchecked")
+    @Override
+    public SshConnectionSettings createClone() {
+        // save
+        NodeSettings settings = new NodeSettings("tmp");
+        saveSettingsForModel(settings);
+
+        // restore
+        SshConnectionSettings cloned = new SshConnectionSettings(getConfigName());
+        try {
+            cloned.loadSettingsForModel(settings);
+        } catch (InvalidSettingsException ex) {
+            throw new RuntimeException("Failed to clone SSH Node settings", ex);
         }
-        if (m_port < 1) {
-            throw new InvalidSettingsException("Invalid port "
-                    + m_port);
-        }
-        if (isEmpty(m_workingDirectory)) {
+        return cloned;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void saveSettingsForModel(final NodeSettingsWO settings) {
+        m_workingDirectory.saveSettingsTo(settings);
+        m_connectionTimeout.saveSettingsTo(settings);
+        m_port.saveSettingsTo(settings);
+        m_host.saveSettingsTo(settings);
+
+        // authentication
+        NodeSettingsWO auth = settings.addNodeSettings(AUTH);
+        m_userName.saveSettingsTo(auth);
+        m_password.saveSettingsTo(auth);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
+        m_workingDirectory.loadSettingsFrom(settings);
+        m_connectionTimeout.loadSettingsFrom(settings);
+        m_port.loadSettingsFrom(settings);
+        m_host.loadSettingsFrom(settings);
+
+        // authentication
+        NodeSettingsRO auth = settings.getNodeSettings(AUTH);
+        m_userName.loadSettingsFrom(auth);
+        m_password.loadSettingsFrom(auth);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String getConfigName() {
+        return m_configName;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected String getModelTypeID() {
+        return "SSHConnection";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadSettingsForDialog(final NodeSettingsRO settings, final PortObjectSpec[] specs)
+            throws NotConfigurableException {
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void saveSettingsForDialog(final NodeSettingsWO settings) throws InvalidSettingsException {
+    }
+
+    /**
+     * Validates settings consistency for this instance. {@inheritDoc}
+     */
+    @Override
+    protected void validateSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
+        m_connectionTimeout.validateSettings(settings);
+        m_port.validateSettings(settings);
+
+        if (isEmpty(m_workingDirectory.getStringValue())) {
             throw new InvalidSettingsException("Working directory must be specified.");
         }
-        if (m_host == null) {
+        if (isEmpty(m_host.getStringValue())) {
             throw new InvalidSettingsException("Host must be specified.");
         }
     }
@@ -128,62 +248,26 @@ public class SshConnectionSettings implements Cloneable {
      * @return working directory.
      */
     public String getWorkingDirectory() {
-        return m_workingDirectory;
-    }
-    /**
-     * @param dir working directory.
-     */
-    public void setWorkingDirectory(final String dir) {
-        this.m_workingDirectory = dir;
-    }
-    /**
-     * @param connectionTimeout the connectionTimeout to set
-     */
-    public void setConnectionTimeout(final int connectionTimeout) {
-        this.m_connectionTimeout = connectionTimeout;
-    }
-    /**
-     * @param password the password to set
-     */
-    public void setPassword(final String password) {
-        this.m_password = password;
-    }
-    /**
-     * @param userName the userName to set
-     */
-    public void setUserName(final String userName) {
-        this.m_userName = userName;
+        return m_workingDirectory.getStringValue();
     }
     /**
      * @return remote port.
      */
     public int getPort() {
-        return m_port;
-    }
-    /**
-     * @param port port to set.
-     */
-    public void setPort(final int port) {
-        m_port = port;
+        return m_port.getIntValue();
     }
     /**
      * @return remote host.
      */
     public String getHost() {
-        return m_host;
-    }
-    /**
-     * @param host host to set.
-     */
-    public void setHost(final String host) {
-        this.m_host = host;
+        return m_host.getStringValue();
     }
 
     /**
      * @return connection time out.
      */
     public int getConnectionTimeout() {
-        return m_connectionTimeout;
+        return m_connectionTimeout.getIntValue();
     }
 
     @Override
@@ -196,5 +280,27 @@ public class SshConnectionSettings implements Cloneable {
         }
 
         return clone;
+    }
+
+    /**
+     * @return path to 'keyFile' location settings.
+     */
+    public static String[] getKeyFileLocationPath() {
+        return new String[] { AUTH, KEY_FILE };
+    }
+
+    /**
+     * @return path to 'knowhHostsFile' location settings.
+     */
+    public static String[] getKnownHostLocationPath() {
+        return new String[] { AUTH, KNOWN_HOSTS_FILE };
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+        return getUsername() + "@" + getHost() + ":" + getPort();
     }
 }

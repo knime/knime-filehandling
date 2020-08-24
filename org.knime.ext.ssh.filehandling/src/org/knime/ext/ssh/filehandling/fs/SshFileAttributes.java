@@ -80,8 +80,8 @@ public class SshFileAttributes extends BaseFileAttributes {
                 attr.isSymbolicLink(),
                 attr.isOther(),
                 null);
-        this.m_fileKey = fileKey;
-        this.m_attr = attr;
+        m_fileKey = fileKey;
+        m_attr = attr;
     }
     @Override
     public synchronized BaseFileAttributes generatePosixAttributes() throws IOException {

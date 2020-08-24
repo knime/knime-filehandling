@@ -44,88 +44,54 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-28 (Vyacheslav Soldatov): created
+ *   2020-08-13 (soldatov): created
  */
-package org.knime.ext.ssh.filehandling.testing;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
-
-import org.knime.ext.ssh.filehandling.fs.SshConnection;
-import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
-import org.knime.ext.ssh.filehandling.fs.SshPath;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFiles;
-import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
+package org.knime.ext.ssh.filehandling.fs;
 
 /**
- * SSH test initializer.
- *
+ * This class is container for {@link ConnectionResource} and next behavior what
+ * should be done when resource released. If release action is
+ * <code>Release</code> the resource will just returned to pool, otherwise
+ * resource will closed immediately.
+ * 
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshTestInitializer extends DefaultFSTestInitializer<SshPath, SshFileSystem> {
-    private boolean m_isWorkingDirCreated = false;
-    private final SshFileSystem m_fileSystem;
+class ConnectionResourceHolder {
+    enum ReleaseAction {
+        ForceClose, Release
+    }
+
+    private ConnectionResource m_resource;
+    private final ReleaseAction m_releaseAction;
 
     /**
-     * Creates new instance
-     * @param connection {@link FSConnection} object.
+     * @param releaseAction
+     *            release action.
      */
-    public SshTestInitializer(final SshConnection connection) {
-        super(connection);
-        m_fileSystem = connection.getFileSystem();
+    public ConnectionResourceHolder(final ReleaseAction releaseAction) {
+        super();
+        m_releaseAction = releaseAction;
     }
 
-    @Override
-    public SshPath createFileWithContent(final String content, final String... pathComponents)
-            throws IOException {
-
-        final SshPath path = makePath(pathComponents);
-
-        Files.createDirectories(path.getParent());
-
-        try (OutputStream out = m_fileSystem.provider()
-                .newOutputStream(
-                path, StandardOpenOption.WRITE,
-                        StandardOpenOption.CREATE_NEW)) {
-            final byte[] bytes = content.getBytes();
-            out.write(bytes);
-            out.flush();
-        }
-
-        return path;
+    /**
+     * @return release action.
+     */
+    public ReleaseAction getReleaseAction() {
+        return m_releaseAction;
     }
 
-    @Override
-    protected void beforeTestCaseInternal() throws IOException {
-        final SshPath scratchDir = getTestCaseScratchDir();
-
-        if (!m_isWorkingDirCreated) {
-            Files.createDirectory(scratchDir.getParent());
-            m_isWorkingDirCreated = true;
-        }
-
-        Files.createDirectory(scratchDir);
+    /**
+     * @return connection resource.
+     */
+    public ConnectionResource getResource() {
+        return m_resource;
     }
 
-    @Override
-    protected void afterTestCaseInternal() throws IOException {
-        FSFiles.deleteRecursively(getTestCaseScratchDir());
-        getFileSystem().clearAttributesCache();
-    }
-
-    @Override
-    public void afterClass() throws IOException {
-        final SshPath scratchDir = getTestCaseScratchDir();
-
-        if (m_isWorkingDirCreated) {
-            try {
-                FSFiles.deleteRecursively(scratchDir.getParent());
-            } finally {
-                m_isWorkingDirCreated = false;
-            }
-        }
+    /**
+     * @param resource
+     *            connection resource.
+     */
+    public void setResource(final ConnectionResource resource) {
+        m_resource = resource;
     }
 }

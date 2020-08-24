@@ -48,6 +48,7 @@
  */
 package org.knime.ext.ssh.filehandling.fs;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
@@ -64,11 +65,13 @@ import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
 /**
- * Sharepoint implementation of the {@link FileSystem}.
+ * SFTP implementation of the {@link FileSystem}.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class SshFileSystem extends BaseFileSystem<SshPath> {
+    private static final long CACHE_TTL = 6000;
+
     /**
      * SSH URI scheme.
      */
@@ -81,20 +84,15 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
 
     private final SshConnectionSettings m_settings;
 
-    SshFileSystem(final SshFileSystemProvider provider, final long cacheTTL,
-            final SshConnectionSettings settings) throws IOException {
-        this(provider, cacheTTL, settings, getWorkingDirectory(settings));
-    }
-    private SshFileSystem(final SshFileSystemProvider provider, final long cacheTTL,
-            final SshConnectionSettings settings, final String workingDirectory) throws IOException {
-        super(provider, createUri(settings), cacheTTL,
-                workingDirectory, createFSLocationSpec(settings.getHost()));
-        this.m_settings = settings;
+    SshFileSystem(final SshConnectionSettings settings) throws IOException {
+        super(createProvider(settings), createUri(settings), CACHE_TTL,
+                settings.getWorkingDirectory(),
+                createFSLocationSpec(settings.getHost()));
+        m_settings = settings;
     }
 
-    private static String getWorkingDirectory(final SshConnectionSettings settings) {
-        final String workDir = settings.getWorkingDirectory();
-        return workDir == null ? PATH_SEPARATOR : workDir;
+    private static SshFileSystemProvider createProvider(final SshConnectionSettings settings) throws IOException {
+        return new SshFileSystemProvider(settings);
     }
 
     @Override
@@ -134,6 +132,7 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
      */
     @Override
     protected void prepareClose() {
+        provider().prepareClose();
     }
 
     /**
@@ -157,7 +156,7 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
      */
     @Override
     public SshPath getPath(final String first, final String... more) {
-        return provider().toSsh(first, more);
+        return new SshPath(this, first, more);
     }
 
     /**
@@ -176,4 +175,9 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
         return Collections.singletonList(getPath(PATH_SEPARATOR));
     }
 
+    @Override
+    public synchronized void unregisterCloseable(final Closeable closeable) {
+        provider().unregisterCloseable(closeable);
+        super.unregisterCloseable(closeable);
+    }
 }

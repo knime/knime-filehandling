@@ -50,6 +50,10 @@
 package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -57,6 +61,8 @@ import org.apache.sshd.client.auth.password.UserAuthPasswordFactory;
 import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
 import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.client.subsystem.sftp.SftpClient;
+import org.apache.sshd.client.subsystem.sftp.SftpClientFactory;
 import org.apache.sshd.common.FactoryManager;
 import org.apache.sshd.common.PropertyResolverUtils;
 import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
@@ -64,14 +70,71 @@ import org.apache.sshd.common.session.SessionListener;
 import org.knime.ext.ssh.filehandling.node.SshConnectionSettings;
 
 /**
+ * This is the simple resource pool implementation. Main idea is for the most of
+ * time to have just one free resource. Possible states is 0 free resources or 1
+ * free resource. When the <code>take</code> method is called it is there free
+ * resource it is returned immediately. Otherwise the resource is created and
+ * registered as busy. When resource releasing and if the list of free resources
+ * already contains one free resource, the releasing resource is just
+ * immediately closed. Otherwise it is placed to free resources. It allows to
+ * have one free resource during the most of time.
+ *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  *
  */
 public class ConnectionResourcePool implements SessionListener {
+    private final LinkedList<ConnectionResource> m_freeResources = new LinkedList<>();
+    private final Set<ConnectionResource> m_busyResources = new HashSet<>();
+
     private SshClient m_sshClient;
     private ClientSession m_session;
 
-    private SshConnectionSettings m_settings;
+    private final SshConnectionSettings m_settings;
+
+    /**
+     * @param settings
+     *            SSH connection settings.
+     */
+    public ConnectionResourcePool(final SshConnectionSettings settings) {
+        super();
+        m_settings = settings;
+    }
+
+    /**
+     * Marks resource as busy and returns it.
+     * @return resource.
+     * @throws IOException
+     */
+    public ConnectionResource take() throws IOException {
+        ConnectionResource resource = null;
+        synchronized (this) {
+            checkStarted();
+
+            if (!m_freeResources.isEmpty()) {
+                resource = m_freeResources.removeFirst();
+                m_busyResources.add(resource);
+            }
+        }
+
+        if (resource == null) {
+            resource = createResource();
+            synchronized (this) {
+                m_busyResources.add(resource);
+            }
+        }
+
+        return resource;
+    }
+
+    /**
+     * @return SSH connection resource.
+     * @throws IOException
+     */
+    @SuppressWarnings("resource")
+    private ConnectionResource createResource() throws IOException {
+        SftpClient client = SftpClientFactory.instance().createSftpClient(m_session);
+        return new ConnectionResource(client);
+    }
 
     private static IOException convertToCreateSshConnection(final Throwable exc) {
         //handle exception
@@ -82,13 +145,44 @@ public class ConnectionResourcePool implements SessionListener {
                     + exc.getMessage(), exc);
         }
     }
+    private void checkStarted() {
+        if (m_session == null) {
+            throw new IllegalStateException("Resource pool is not started");
+        }
+    }
+    /**
+     * Move resource as available again.
+     * @param resource resource.
+     */
+    public synchronized void release(final ConnectionResource resource) {
+        if (m_busyResources.remove(resource) && m_session != null && !resource.isClosed()) {
+            // should attempt to keep one alive client in pool
+            if (!m_freeResources.isEmpty()) {
+                resource.close();
+            } else {
+                m_freeResources.addFirst(resource);
+            }
+        }
+    }
+
+    /**
+     * Notify resource pool resource should be closed immediately.
+     *
+     * @param resource
+     *            resource.
+     */
+    public synchronized void forceClose(final ConnectionResource resource) {
+        m_busyResources.remove(resource);
+        m_freeResources.remove(resource);
+        close(resource);
+    }
 
     /**
      * Starts resource pool.
      * @throws IOException
      */
     public synchronized void start() throws IOException {
-        this.m_sshClient = SshClient.setUpDefaultClient();
+        m_sshClient = SshClient.setUpDefaultClient();
 
         m_sshClient.setServerKeyVerifier(AcceptAllServerKeyVerifier.INSTANCE);
         m_sshClient.setHostConfigEntryResolver(HostConfigEntryResolver.EMPTY);
@@ -138,11 +232,37 @@ public class ConnectionResourcePool implements SessionListener {
      * Stops resource pool.
      */
     public synchronized void stop() {
+        // close resources
+        List<ConnectionResource> toClose = new LinkedList<>(m_freeResources);
+        toClose.addAll(m_busyResources);
+        m_freeResources.clear();
+        m_busyResources.clear();
+
+        for (ConnectionResource res : toClose) {
+            close(res);
+        }
+
+        // close session
         if (m_session != null) {
             closeSession();
             m_session = null;
         }
-        m_sshClient.stop();
+
+        // close client
+        if (m_sshClient != null) {
+            m_sshClient.stop();
+            m_sshClient = null;
+        }
+    }
+
+    /**
+     * @param resource resource to close
+     */
+    private static void close(final ConnectionResource resource) {
+        try {
+            resource.close();
+        } catch (final Throwable e) {
+        }
     }
 
     private String getHost() {
@@ -163,12 +283,5 @@ public class ConnectionResourcePool implements SessionListener {
 
     private long getConnectionTimeOut() {
         return m_settings.getConnectionTimeout() * 1000l;
-    }
-
-    /**
-     * @param settings connection settings.
-     */
-    public void setSettings(final SshConnectionSettings settings) {
-        this.m_settings = settings;
     }
 }

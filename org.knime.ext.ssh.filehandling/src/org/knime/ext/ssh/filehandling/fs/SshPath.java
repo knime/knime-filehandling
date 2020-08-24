@@ -58,6 +58,8 @@ import org.knime.filehandling.core.connections.base.UnixStylePath;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class SshPath extends UnixStylePath {
+    private final String m_SftpString;
+
     /**
      * @param fileSystem The file system.
      * @param first The first name component.
@@ -65,6 +67,7 @@ public class SshPath extends UnixStylePath {
      */
     public SshPath(final SshFileSystem fileSystem, final String first, final String[] more) {
         super(fileSystem, first, more);
+        m_SftpString = createSftpString();
     }
 
     /**
@@ -73,6 +76,7 @@ public class SshPath extends UnixStylePath {
      */
     public SshPath(final SshFileSystem fileSystem, final String path) {
         super(fileSystem, path);
+        m_SftpString = createSftpString();
     }
 
     /**
@@ -89,5 +93,29 @@ public class SshPath extends UnixStylePath {
     @Override
     public SshPath getParent() {
         return (SshPath) super.getParent();
+    }
+
+    /**
+     * @return SFTP native file system implementation path.
+     */
+    public String toSftpString() {
+        return m_SftpString;
+    }
+
+    /**
+     * @return
+     */
+    private String createSftpString() {
+        String root = isAbsolute() ? SshFileSystem.PATH_SEPARATOR : "";
+        StringBuilder sb = new StringBuilder(root);
+
+        for (int i = 0; i < m_pathParts.size(); i++) {
+            if ((sb.length() > 0) && (sb.charAt(sb.length() - 1) != '/')) {
+                sb.append(SshFileSystem.PATH_SEPARATOR);
+            }
+            sb.append(m_pathParts.get(i));
+        }
+
+        return sb.toString();
     }
 }
