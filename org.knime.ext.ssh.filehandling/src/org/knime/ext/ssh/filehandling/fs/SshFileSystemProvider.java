@@ -56,8 +56,10 @@ import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -70,11 +72,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import org.apache.sshd.client.subsystem.sftp.SftpClient;
 import org.apache.sshd.client.subsystem.sftp.SftpClient.Attributes;
 import org.apache.sshd.client.subsystem.sftp.fs.SftpPosixFileAttributes;
-import org.apache.sshd.common.subsystem.sftp.SftpException;
 import org.knime.ext.ssh.filehandling.fs.ConnectionResourceHolder.ReleaseAction;
 import org.knime.ext.ssh.filehandling.node.SshConnectionSettings;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
@@ -136,7 +138,8 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     @Override
     protected InputStream newInputStreamInternal(final SshPath path, final OpenOption... options) throws IOException {
-        throw new RuntimeException("TODO implement");
+        return invokeWithResource(false,
+                resource -> NativeSftpProviderUtils.newInputStreamInternalImpl(resource, path, options));
     }
 
     /**
@@ -228,18 +231,20 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     }
 
     Void deleteInternal(final SftpClient sftp, final SshPath path) throws IOException {
-        try {
-            BasicFileAttributes attributes = readAttributes(path, BasicFileAttributes.class);
-            if (attributes.isDirectory()) {
-                sftp.rmdir(path.toString());
-            } else {
-                sftp.remove(path.toString());
+        BasicFileAttributes attributes = readAttributes(path, BasicFileAttributes.class);
+
+        if (attributes.isDirectory()) {
+            if (isNotEmptyDir(path)) {
+                throw new DirectoryNotEmptyException(path.toString());
             }
-        } catch (final SftpException e) {
-            throw e;
+            sftp.rmdir(path.toString());
+        } else {
+            sftp.remove(path.toString());
         }
+
         return null;
     }
+
     /**
      * {@inheritDoc}
      */
@@ -273,8 +278,26 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     }
 
     /**
-     * @param releaseResource whether or not should release resource just after invoke method.
-     * @param func function to invoke with resource.
+     * @param path
+     *            path to check is it directory and not empty.
+     * @return true if is a directory and is not empty.
+     * @throws IOException
+     */
+    static boolean isNotEmptyDir(final SshPath path) throws IOException {
+        try (final Stream<Path> stream = Files.list(path)) {
+            if (stream.anyMatch(childPath -> true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param releaseResource
+     *            whether or not should release resource just after invoke method.
+     * @param func
+     *            function to invoke with resource.
      * @return invocation result.
      */
     private <R> R invokeWithResource(final boolean releaseResource,
@@ -365,7 +388,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         }
     }
 
-    //catch closeables
     /**
      * {@inheritDoc}
      */
@@ -379,5 +401,36 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
             finishCatchResource(stream);
         }
         return stream;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SeekableByteChannel newByteChannel(final Path path, final Set<? extends OpenOption> options, final FileAttribute<?>... attrs)
+            throws IOException {
+        startCatchResource(ReleaseAction.ForceClose);
+        SeekableByteChannel channel = null;
+        try {
+            channel = super.newByteChannel(path, options, attrs);
+        } finally {
+            finishCatchResource(channel);
+        }
+        return channel;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InputStream newInputStream(final Path path, final OpenOption... options) throws IOException {
+        startCatchResource(ReleaseAction.ForceClose);
+        InputStream in = null;
+        try {
+            in = super.newInputStream(path, options);
+        } finally {
+            finishCatchResource(in);
+        }
+        return in;
     }
 }

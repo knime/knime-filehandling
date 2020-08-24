@@ -49,6 +49,7 @@
 package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.FileAlreadyExistsException;
@@ -62,6 +63,7 @@ import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -105,6 +107,18 @@ public final class NativeSftpProviderUtils {
         SftpRemotePathChannel nativeChannel = new SftpRemotePathChannel(path.toSftpString(), resource.getClient(), true,
                 modes);
         return new SshSeekableByteChannel(resource, nativeChannel);
+    }
+
+    @SuppressWarnings("resource")
+    static InputStream newInputStreamInternalImpl(final ConnectionResource resource, final SshPath path,
+            final OpenOption... options) throws IOException {
+        final SftpClient sftpClient = resource.getClient();
+        Collection<OpenMode> modes = OpenMode.fromOpenOptions(Arrays.asList(options));
+        if (modes.isEmpty()) {
+            modes = EnumSet.of(OpenMode.Read);
+        }
+
+        return sftpClient.read(path.toSftpString(), modes);
     }
 
     @SuppressWarnings("resource")
