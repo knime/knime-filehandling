@@ -121,7 +121,21 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     @Override
     protected void moveInternal(final SshPath source, final SshPath target, final CopyOption... options)
             throws IOException {
-        throw new RuntimeException("TODO implement");
+        invokeWithClient(true, client -> moveInternal(client, source, target, options));
+    }
+
+    @SuppressWarnings("resource")
+    private Void moveInternal(
+            final SftpClient sftpClient,
+            final SshPath source,
+            final SshPath target, final CopyOption... options)
+            throws IOException {
+        NativeSftpProviderUtils.moveInternal(sftpClient, source, target, options);
+
+        // TODO remove when fixed in BaseFileSystemProvider
+        // now BaseFileSystemProvider removes cached attributes but not deep
+        getFileSystemInternal().removeFromAttributeCacheDeep(source);
+        return null;
     }
 
     /**
@@ -130,7 +144,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     @Override
     protected void copyInternal(final SshPath source, final SshPath target, final CopyOption... options)
             throws IOException {
-        throw new RuntimeException("TODO implement");
+        invokeWithClient(true, client -> NativeSftpProviderUtils.copyInternal(client, source, target, options));
     }
 
     /**
@@ -262,7 +276,8 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     public void setAttribute(final Path path, final String name, final Object value,
             final LinkOption... options)
             throws IOException {
-        throw new RuntimeException("TODO implement");
+        invokeWithClient(true,
+                client -> NativeSftpProviderUtils.setAttribute(client, (SshPath) path, name, value, options));
     }
 
     /**
@@ -283,7 +298,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      * @return true if is a directory and is not empty.
      * @throws IOException
      */
-    static boolean isNotEmptyDir(final SshPath path) throws IOException {
+    private static boolean isNotEmptyDir(final SshPath path) throws IOException {
         try (final Stream<Path> stream = Files.list(path)) {
             if (stream.anyMatch(childPath -> true)) {
                 return true;
