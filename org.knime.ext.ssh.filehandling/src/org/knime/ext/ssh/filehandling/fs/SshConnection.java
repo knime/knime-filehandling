@@ -51,7 +51,6 @@ package org.knime.ext.ssh.filehandling.fs;
 import java.io.IOException;
 
 import org.knime.core.node.util.FileSystemBrowser;
-import org.knime.ext.ssh.filehandling.node.SshConnectionSettings;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
 
@@ -63,12 +62,17 @@ public class SshConnection implements FSConnection {
     private final SshFileSystem m_fileSystem;
 
     /**
-     * @param settings connection settings.
+     * @param cfg
+     *            connection configuration.
+     * @param workingDirectory
+     *            working directory
      * @throws IOException
      */
-    public SshConnection(final SshConnectionSettings settings)
+    public SshConnection(
+            final SshConnectionConfiguration cfg,
+            final String workingDirectory)
             throws IOException {
-        m_fileSystem = new SshFileSystem(settings);
+        m_fileSystem = new SshFileSystem(cfg, workingDirectory);
     }
 
     /**

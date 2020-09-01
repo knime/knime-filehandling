@@ -44,91 +44,57 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   30 июл. 2020 г. (Vyacheslav Soldatov): created
+ *   2020-08-30 (Vyacheslav Soldatov): created
  */
 package org.knime.ext.ssh.filehandling.fs;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
+import java.net.SocketAddress;
+import java.nio.file.Path;
+import java.security.PublicKey;
+
+import org.apache.sshd.client.keyverifier.KnownHostsServerKeyVerifier;
+import org.apache.sshd.client.keyverifier.RejectAllServerKeyVerifier;
+import org.apache.sshd.client.keyverifier.ServerKeyVerifier;
+import org.apache.sshd.client.session.ClientSession;
 
 /**
+ * Verifies the server key in context of file chooser path accessor.
  *
- * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ * @author @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-class SshSeekableByteChannel implements SeekableByteChannel {
-    private final SeekableByteChannel m_channel;
-    private final ConnectionResource m_resource;
+class FileChooserServerKeyVerifier implements ServerKeyVerifier {
+    private final ConnectionToNodeModelBridge m_bridge;
 
     /**
-     * @param resource connection resource.
-     * @param ch channel.
+     * @param bridge
+     *            file chooser model.
      */
-    public SshSeekableByteChannel(final ConnectionResource resource,
-            final SeekableByteChannel ch) {
+    public FileChooserServerKeyVerifier(final ConnectionToNodeModelBridge bridge) {
         super();
-        m_resource = resource;
-        m_channel = ch;
+        m_bridge = bridge;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean isOpen() {
-        return m_channel.isOpen();
+    public boolean verifyServerKey(final ClientSession clientSession, final SocketAddress remoteAddress, final PublicKey serverKey) {
+        try {
+            boolean[] result = new boolean[1];
+            m_bridge.doWithKnowhHostsFile(
+                    path -> result[0] = verifyServerKey(path, clientSession, remoteAddress, serverKey));
+            return result[0];
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws IOException {
-        m_channel.close();
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int read(final ByteBuffer dst) throws IOException {
-        return m_channel.read(dst);
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int write(final ByteBuffer src) throws IOException {
-        return m_channel.write(src);
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long position() throws IOException {
-        return m_channel.position();
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public SeekableByteChannel position(final long newPosition) throws IOException {
-        return new SshSeekableByteChannel(m_resource, m_channel.position(newPosition));
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long size() throws IOException {
-        return m_channel.size();
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public SeekableByteChannel truncate(final long size) throws IOException {
-        return new SshSeekableByteChannel(
-            m_resource, m_channel.truncate(Math.min(m_channel.size(), size)));
-    }
-    public ConnectionResource getResource() {
-        return m_resource;
+
+    private static boolean verifyServerKey(final Path path,
+            final ClientSession clientSession,
+            final SocketAddress remoteAddress, final PublicKey serverKey) {
+        KnownHostsServerKeyVerifier nativeVerifier = new KnownHostsServerKeyVerifier(
+                RejectAllServerKeyVerifier.INSTANCE, path);
+        nativeVerifier.resetReloadAttributes();
+        return nativeVerifier.verifyServerKey(clientSession, remoteAddress, serverKey);
     }
 }

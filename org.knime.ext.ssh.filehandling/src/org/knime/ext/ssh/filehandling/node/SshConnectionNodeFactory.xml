@@ -28,13 +28,16 @@
         
         <tab name="Settings">
 	        <option name="Host">
-	            SSH remote host.
+	            Address of the host.
 	        </option>
 	        <option name="Port">
-	            SSH remote port.
+	            Port of the service.
+	        </option>
+	        <option name="Username">
+	            Remote system user name.
 	        </option>
 	        <option name="Authentication">
-	        	Authentication
+	            Method of authentication.
 	            <ul>
 	            	<li>
 	            		<i>Credentials:</i> workflow credentials authentication.
@@ -47,6 +50,23 @@
 	            	</li>
 	           	</ul>
 	        </option>
+	        <option name="Credentials">
+	            Use workflow credentials to determine user
+	            and password.
+	        </option>
+	        <option name="Password">
+	            Password of the user of remote file system
+	        </option>
+	        <option name="Read from">
+	            File system where known hosts file is placed on.
+	        </option>
+	        <option name="File">
+	            Location of the keyfile. Note that the key file has to be in OpenSSH
+	            key file format.
+	        </option>
+	        <option name="Key file password">
+	            Password of the keyfile.
+	        </option>
 		    <option name="Working directory">
 		        Specify the <i>working directory</i> of the resulting file system connection, using the <b>Path syntax</b> explained above. The working
 		        directory must be specified as an absolute path. A working directory allows downstream nodes to access files/folders using <i>relative</i>
@@ -56,12 +76,19 @@
 	    </tab>
 	    
         <tab name="Advanced">
-		    <option name="Connection timeout in seconds">
+		    <option name="Connection timeout">
 		        Timeout in seconds to establish a connection or 0 for an infinite timeout. 
 		    </option>
 		    <option name="Use known hosts">
 		        If this options selected the known hosts file will used for verify remote hosts.
 		    </option>
+	        <option name="Read from">
+	            File system where known hosts file is placed on.
+	        </option>
+	        <option name="File">
+	            Location of known hosts file on selected file system.
+	            Note that the known hosts file has to be in OpenSSH known hosts file format.
+	        </option>
 		</tab>
     </fullDescription>
 

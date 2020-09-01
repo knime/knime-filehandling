@@ -44,7 +44,7 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-08-13 (soldatov): created
+ *   2020-08-13 (Vyacheslav Soldatov): created
  */
 package org.knime.ext.ssh.filehandling.fs;
 

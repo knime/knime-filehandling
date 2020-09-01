@@ -58,7 +58,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Collections;
 
-import org.knime.ext.ssh.filehandling.node.SshConnectionSettings;
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
@@ -82,16 +81,16 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
      */
     public static final String PATH_SEPARATOR = "/";
 
-    private final SshConnectionSettings m_settings;
+    private final SshConnectionConfiguration m_settings;
 
-    SshFileSystem(final SshConnectionSettings settings) throws IOException {
+    SshFileSystem(final SshConnectionConfiguration settings, final String workingDirectory) throws IOException {
         super(createProvider(settings), createUri(settings), CACHE_TTL,
-                settings.getWorkingDirectory(),
+                workingDirectory,
                 createFSLocationSpec(settings.getHost()));
         m_settings = settings;
     }
 
-    private static SshFileSystemProvider createProvider(final SshConnectionSettings settings) throws IOException {
+    private static SshFileSystemProvider createProvider(final SshConnectionConfiguration settings) throws IOException {
         return new SshFileSystemProvider(settings);
     }
 
@@ -99,14 +98,16 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
     public SshFileSystemProvider provider() {
         return (SshFileSystemProvider) super.provider();
     }
+
     /**
-     * @param settings settings.
-     * @return URI from settions.
+     * @param cfg
+     *            connection configuration.
+     * @return URI from configuration.
      * @throws URISyntaxException
      */
-    private static URI createUri(final SshConnectionSettings settings) throws IOException {
+    private static URI createUri(final SshConnectionConfiguration cfg) throws IOException {
         try {
-            return new URI(FS_TYPE, null, settings.getHost(), settings.getPort(), null, null, null);
+            return new URI(FS_TYPE, null, cfg.getHost(), cfg.getPort(), null, null, null);
         } catch (final URISyntaxException e) {
             throw new IOException("Failed to create URI", e);
         }

@@ -50,6 +50,9 @@ package org.knime.ext.ssh.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.EnumSet;
+import java.util.function.Consumer;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -61,9 +64,20 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.node.workflow.ICredentials;
+import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
 import org.knime.ext.ssh.filehandling.fs.SshConnection;
+import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
+import org.knime.ext.ssh.filehandling.node.SshAuthenticationSettingsModel.AuthType;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
+import org.knime.filehandling.core.connections.FSPath;
+import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.ReadPathAccessor;
+import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
+import org.knime.filehandling.core.defaultnodesettings.status.NodeModelStatusConsumer;
+import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
+import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage.MessageType;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
@@ -79,7 +93,9 @@ public class SshConnectionNodeModel extends NodeModel {
     private String m_fsId;
     private SshConnection m_connection;
 
-    private SshConnectionSettings m_settings = new SshConnectionSettings("ssh");
+    private final SshConnectionSettingsModel m_settings;
+
+    private final NodeModelStatusConsumer m_statusConsumer;
 
     /**
      * Creates new instance.
@@ -90,18 +106,118 @@ public class SshConnectionNodeModel extends NodeModel {
     protected SshConnectionNodeModel(final NodeCreationConfiguration creationConfig) {
         super(creationConfig.getPortConfig().get().getInputPorts(),
                 creationConfig.getPortConfig().get().getOutputPorts());
+        m_settings = new SshConnectionSettingsModel("ssh", creationConfig);
+        m_statusConsumer = new NodeModelStatusConsumer(EnumSet.of(MessageType.ERROR, MessageType.WARNING));
     }
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        m_connection = new SshConnection(m_settings);
+        m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
+        m_connection = createConnection(m_settings, toSpecs(inObjects), getCredentialsProvider(), m_statusConsumer);
         FSConnectionRegistry.getInstance().register(m_fsId, m_connection);
         return new PortObject[] { new FileSystemPortObject(createSpec()) };
     }
 
+    /**
+     * @param settings
+     *            SSH connection settings.
+     * @param inputSpecs
+     *            port input specification.
+     * @param credentials
+     *            credentials provider.
+     * @return file system connection
+     * @throws InvalidSettingsException
+     * @throws IOException
+     */
+    public static SshConnection createConnection(final SshConnectionSettingsModel settings,
+            final PortObjectSpec[] inputSpecs, final CredentialsProvider credentials)
+            throws InvalidSettingsException, IOException {
+        return createConnection(settings, inputSpecs, credentials, s -> {
+        });
+    }
+
+    /**
+     * @param portObjects
+     *            port objects.
+     * @return port object specifications.
+     */
+    private static PortObjectSpec[] toSpecs(final PortObject[] portObjects) {
+        final PortObjectSpec[] specs = new PortObjectSpec[portObjects.length];
+        for (int i = 0; i < specs.length; i++) {
+            final PortObject obj = portObjects[i];
+            specs[i] = obj == null ? null : obj.getSpec();
+        }
+        return specs;
+    }
+
+    private static SshConnection createConnection(final SshConnectionSettingsModel settings,
+            final PortObjectSpec[] inputSpecs, final CredentialsProvider credentials,
+            final Consumer<StatusMessage> statusConsumer) throws InvalidSettingsException, IOException {
+        SshConnectionConfiguration cfg = new SshConnectionConfiguration();
+        cfg.setHost(settings.getHost());
+        cfg.setConnectionTimeout(settings.getConnectionTimeout() * 1000l);
+        cfg.setPort(settings.getPort());
+
+        // auth
+        SshAuthenticationSettingsModel auth = settings.getAuthenticationSettings();
+        cfg.setKeyFilePassword(auth.getKeyFilePassword());
+        cfg.setUseKeyFile(auth.getAuthType() == AuthType.KEY_FILE);
+        cfg.setUseKnownHosts(settings.hasKnownHostsFile());
+
+        if (auth.getAuthType() != AuthType.CREDENTIALS) {
+            cfg.setPassword(auth.getPassword());
+            cfg.setUserName(settings.getUsername());
+        } else {
+            final ICredentials cred = credentials.get(auth.getCredential());
+            if (cred == null) {
+                throw new RuntimeException("Unable to found credentials: " + auth.getCredential());
+            }
+            cfg.setUserName(cred.getLogin());
+            cfg.setPassword(cred.getPassword());
+        }
+
+        SettingsModelReaderFileChooser keyFile = settings.getAuthenticationSettings().getKeyFileModel().createClone();
+        SettingsModelReaderFileChooser knownHosts = settings.getKnownHostsFileModel().createClone();
+
+        if (cfg.isUseKeyFile()) {
+            keyFile.configureInModel(inputSpecs, statusConsumer);
+        }
+        if (cfg.isUseKnownHosts()) {
+            knownHosts.configureInModel(inputSpecs, statusConsumer);
+        }
+
+        cfg.setBridge(new ConnectionToNodeModelBridge() {
+            @Override
+            public void doWithKnowhHostsFile(
+                    final Consumer<Path> operation)
+                    throws IOException, InvalidSettingsException {
+                doWithFileChooserModel(knownHosts, operation);
+            }
+
+            @Override
+            public void doWithKeysFile(
+                    final Consumer<Path> operation)
+                    throws IOException, InvalidSettingsException {
+                doWithFileChooserModel(keyFile, operation);
+            }
+
+            private void doWithFileChooserModel(final SettingsModelReaderFileChooser chooser,
+                    final Consumer<Path> operation) throws IOException, InvalidSettingsException {
+                try (ReadPathAccessor accessor = chooser.createReadPathAccessor()) {
+                    FSPath path = accessor.getRootPath(statusConsumer);
+                    operation.accept(path);
+                }
+            }
+        });
+
+        return new SshConnection(cfg, settings.getWorkingDirectory());
+    }
+
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+        m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
         m_fsId = FSConnectionRegistry.getInstance().getKey();
+        m_settings.configure(inSpecs, m_statusConsumer);
         return new PortObjectSpec[] { createSpec() };
     }
 

@@ -51,13 +51,10 @@ package org.knime.ext.ssh.filehandling.testing;
 import java.io.IOException;
 import java.util.Map;
 
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettings;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.ext.ssh.filehandling.fs.SshConnection;
+import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
-import org.knime.ext.ssh.filehandling.node.SshConnectionSettings;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
@@ -77,29 +74,15 @@ public class SshTestInitializerProvider extends DefaultFSTestInitializerProvider
         final String workingDir = generateRandomizedWorkingDir(cfg.get("workingDirPrefix"),
                 SshFileSystem.PATH_SEPARATOR);
 
-        final String host = cfg.get("host");
-        final String userName = cfg.get("username");
-        final String password = cfg.get("password");
-        final int port = cfg.containsKey("port") ? Integer.parseInt(cfg.get("port")) : 22;
+        final SshConnectionConfiguration sshCfg = new SshConnectionConfiguration();
+        sshCfg.setHost(cfg.get("host"));
+        sshCfg.setUserName(cfg.get("username"));
+        sshCfg.setPassword(cfg.get("password"));
+        sshCfg.setPort(cfg.containsKey("port") ? Integer.parseInt(cfg.get("port")) : 22);
+        sshCfg.setConnectionTimeout(3000000); // set a big time out for well debugging
 
-        NodeSettings settings = new NodeSettings("tmp");
-        settings.addString("workingDirectory", workingDir);
-        settings.addString("host", host);
-        settings.addInt("port", port);
-        settings.addInt("connectionTimeout", 30000);
-
-        NodeSettingsWO auth = settings.addNodeSettings("auth");
-        auth.addString("user", userName);
-        auth.addPassword("password", "ekerjvjhmzle,ptktysq", password);
-
-        final SshConnectionSettings sshSettings = new SshConnectionSettings("unit-test");
-        try {
-            sshSettings.loadSettingsFrom(settings);
-        } catch (InvalidSettingsException ex) {
-            throw new RuntimeException("Failed to initialize connection settings", ex);
-        }
-
-        final SshConnection connection = new SshConnection(sshSettings);
+        // create connection
+        final SshConnection connection = new SshConnection(sshCfg, workingDir);
         return new SshTestInitializer(connection);
     }
 

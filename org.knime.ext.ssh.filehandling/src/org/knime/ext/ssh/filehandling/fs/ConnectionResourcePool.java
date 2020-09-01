@@ -54,20 +54,12 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import org.apache.sshd.client.SshClient;
-import org.apache.sshd.client.auth.password.UserAuthPasswordFactory;
-import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
-import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.client.subsystem.sftp.SftpClient;
 import org.apache.sshd.client.subsystem.sftp.SftpClientFactory;
-import org.apache.sshd.common.FactoryManager;
-import org.apache.sshd.common.PropertyResolverUtils;
-import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
+import org.apache.sshd.common.session.Session;
 import org.apache.sshd.common.session.SessionListener;
-import org.knime.ext.ssh.filehandling.node.SshConnectionSettings;
 
 /**
  * This is the simple resource pool implementation. Main idea is for the most of
@@ -86,18 +78,16 @@ public class ConnectionResourcePool implements SessionListener {
     private final LinkedList<ConnectionResource> m_freeResources = new LinkedList<>();
     private final Set<ConnectionResource> m_busyResources = new HashSet<>();
 
-    private SshClient m_sshClient;
+    private final SftpSessionFactory m_sessionFactory;
     private ClientSession m_session;
-
-    private final SshConnectionSettings m_settings;
 
     /**
      * @param settings
      *            SSH connection settings.
      */
-    public ConnectionResourcePool(final SshConnectionSettings settings) {
+    public ConnectionResourcePool(final SshConnectionConfiguration settings) {
         super();
-        m_settings = settings;
+        m_sessionFactory = new SftpSessionFactory(settings);
     }
 
     /**
@@ -109,6 +99,7 @@ public class ConnectionResourcePool implements SessionListener {
         ConnectionResource resource = null;
         synchronized (this) {
             checkStarted();
+            makeSureSessionOpened();
 
             if (!m_freeResources.isEmpty()) {
                 resource = m_freeResources.removeFirst();
@@ -126,30 +117,28 @@ public class ConnectionResourcePool implements SessionListener {
         return resource;
     }
 
+    private void makeSureSessionOpened() throws IOException {
+        if (!m_session.isOpen()) {
+            sessionClosed(m_session);
+        }
+    }
+
     /**
      * @return SSH connection resource.
      * @throws IOException
      */
     @SuppressWarnings("resource")
     private ConnectionResource createResource() throws IOException {
-        SftpClient client = SftpClientFactory.instance().createSftpClient(m_session);
+        final SftpClient client = SftpClientFactory.instance().createSftpClient(m_session);
         return new ConnectionResource(client);
     }
 
-    private static IOException convertToCreateSshConnection(final Throwable exc) {
-        //handle exception
-        if (exc instanceof IOException) {
-            return (IOException) exc;
-        } else {
-            return new IOException("Failed to create SSH connection: "
-                    + exc.getMessage(), exc);
-        }
-    }
     private void checkStarted() {
         if (m_session == null) {
             throw new IllegalStateException("Resource pool is not started");
         }
     }
+
     /**
      * Move resource as available again.
      * @param resource resource.
@@ -177,55 +166,26 @@ public class ConnectionResourcePool implements SessionListener {
         close(resource);
     }
 
-    /**
-     * Starts resource pool.
-     * @throws IOException
-     */
-    public synchronized void start() throws IOException {
-        m_sshClient = SshClient.setUpDefaultClient();
 
-        m_sshClient.setServerKeyVerifier(AcceptAllServerKeyVerifier.INSTANCE);
-        m_sshClient.setHostConfigEntryResolver(HostConfigEntryResolver.EMPTY);
-        m_sshClient.setKeyIdentityProvider(KeyIdentityProvider.EMPTY_KEYS_PROVIDER);
-
-        try {
-            m_sshClient.start();
-
-            m_session = m_sshClient.connect(getUser(), getHost(), getPort()).verify(getConnectionTimeOut())
-                    .getSession();
-
-            m_session.getFactoryManager().setUserAuthFactoriesNameList(UserAuthPasswordFactory.INSTANCE.getName());
-            m_session.addPasswordIdentity(getPassword());
-
-            // set idle time out one year for avoid of unexpected
-            // session closing
-            PropertyResolverUtils.updateProperty(m_session, FactoryManager.IDLE_TIMEOUT, TimeUnit.DAYS.toMillis(365));
-
-            // do authorization
+    private void closeSession() {
+        if (m_session != null) {
+            ClientSession session = m_session;
+            m_session = null;
             try {
-                m_session.auth().verify(getConnectionTimeOut());
-            } catch (final Exception exc) {
-                m_session.close();
-                throw new IOException("Authentication failed", exc);
+                session.close();
+            } catch (final Throwable ex) {
             }
-
-        } catch (final Throwable exc) {
-            if (m_session != null) {
-                closeSession();
-            }
-            if (m_sshClient != null) {
-                m_sshClient.stop();
-            }
-
-            throw convertToCreateSshConnection(exc);
         }
     }
 
-    private void closeSession() {
-        try {
-            m_session.close();
-        } catch (Throwable ex) {
-        }
+    /**
+     * Starts resource pool.
+     *
+     * @throws IOException
+     */
+    public synchronized void start() throws IOException {
+        m_sessionFactory.init();
+        m_session = m_sessionFactory.createSession();
     }
 
     /**
@@ -243,15 +203,33 @@ public class ConnectionResourcePool implements SessionListener {
         }
 
         // close session
-        if (m_session != null) {
-            closeSession();
-            m_session = null;
-        }
+        closeSession();
 
-        // close client
-        if (m_sshClient != null) {
-            m_sshClient.stop();
-            m_sshClient = null;
+        // destroy session factory
+        m_sessionFactory.destroy();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void sessionDisconnect(final Session session, final int reason, final String msg, final String language,
+            final boolean initiator) {
+        sessionClosed(session);
+    }
+
+    @Override
+    public synchronized void sessionClosed(final Session session) {
+        session.removeSessionListener(this);
+
+        if (m_session != null && m_session == session) { // is not closed by API
+            m_freeResources.clear();
+            m_busyResources.clear();
+
+            try {
+                m_session = m_sessionFactory.createSession();
+            } catch (IOException ex) {
+            }
         }
     }
 
@@ -265,23 +243,11 @@ public class ConnectionResourcePool implements SessionListener {
         }
     }
 
-    private String getHost() {
-        return m_settings.getHost();
-    }
-
-    private int getPort() {
-        return m_settings.getPort();
-    }
-
-    private String getUser() {
-        return m_settings.getUsername();
-    }
-
-    private String getPassword() {
-        return m_settings.getPassword();
-    }
-
-    private long getConnectionTimeOut() {
-        return m_settings.getConnectionTimeout() * 1000l;
+    /**
+     * @param resource
+     *            corrupted resource.
+     */
+    public void handleCorrupted(final ConnectionResource resource) {
+        sessionClosed(m_session);
     }
 }

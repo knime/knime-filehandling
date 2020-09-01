@@ -44,91 +44,39 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   30 июл. 2020 г. (Vyacheslav Soldatov): created
+ *   2020-08-31 (Vyacheslav Soldatov): created
  */
 package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Path;
+import java.util.function.Consumer;
+
+import org.knime.core.node.InvalidSettingsException;
 
 /**
+ * Provides access to known hosts and key file paths.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-class SshSeekableByteChannel implements SeekableByteChannel {
-    private final SeekableByteChannel m_channel;
-    private final ConnectionResource m_resource;
+public interface ConnectionToNodeModelBridge {
+    /**
+     * @param consumer
+     *            operation with known hosts file. All manipulation should be
+     *            finished inside the method body. because the path instance may be
+     *            invalid outside the method.
+     * @throws IOException
+     * @throws InvalidSettingsException
+     */
+    void doWithKnowhHostsFile(Consumer<Path> consumer) throws IOException, InvalidSettingsException;
 
     /**
-     * @param resource connection resource.
-     * @param ch channel.
+     * @param consumer
+     *            operation with key file. All manipulation should be finished
+     *            inside the method body. because the path instance may be invalid
+     *            outside the method.
+     * @throws IOException
+     * @throws InvalidSettingsException
      */
-    public SshSeekableByteChannel(final ConnectionResource resource,
-            final SeekableByteChannel ch) {
-        super();
-        m_resource = resource;
-        m_channel = ch;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isOpen() {
-        return m_channel.isOpen();
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void close() throws IOException {
-        m_channel.close();
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int read(final ByteBuffer dst) throws IOException {
-        return m_channel.read(dst);
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int write(final ByteBuffer src) throws IOException {
-        return m_channel.write(src);
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long position() throws IOException {
-        return m_channel.position();
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public SeekableByteChannel position(final long newPosition) throws IOException {
-        return new SshSeekableByteChannel(m_resource, m_channel.position(newPosition));
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long size() throws IOException {
-        return m_channel.size();
-    }
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public SeekableByteChannel truncate(final long size) throws IOException {
-        return new SshSeekableByteChannel(
-            m_resource, m_channel.truncate(Math.min(m_channel.size(), size)));
-    }
-    public ConnectionResource getResource() {
-        return m_resource;
-    }
+    void doWithKeysFile(Consumer<Path> consumer) throws IOException, InvalidSettingsException;
 }

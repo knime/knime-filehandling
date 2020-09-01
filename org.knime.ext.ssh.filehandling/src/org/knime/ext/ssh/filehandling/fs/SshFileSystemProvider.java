@@ -78,7 +78,6 @@ import org.apache.sshd.client.subsystem.sftp.SftpClient;
 import org.apache.sshd.client.subsystem.sftp.SftpClient.Attributes;
 import org.apache.sshd.client.subsystem.sftp.fs.SftpPosixFileAttributes;
 import org.knime.ext.ssh.filehandling.fs.ConnectionResourceHolder.ReleaseAction;
-import org.knime.ext.ssh.filehandling.node.SshConnectionSettings;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
@@ -95,13 +94,12 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         = new ThreadLocal<>();
 
     /**
-     * @param settings
-     *            connection resource pool.
+     * @param config
+     *            SSH connection configuration.
      * @throws IOException
      */
-    public SshFileSystemProvider(final SshConnectionSettings settings)
-            throws IOException {
-        m_resources = new ConnectionResourcePool(settings);
+    public SshFileSystemProvider(final SshConnectionConfiguration config) throws IOException {
+        m_resources = new ConnectionResourcePool(config);
         m_resources.start();
     }
 
@@ -319,23 +317,33 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
             final WithResourceInvocable<R> func)
         throws IOException {
 
-        final ConnectionResource resource = m_resources.take();
-        try {
-            final R result = func.invoke(resource);
-            if (releaseResource) {
-                m_resources.release(resource);
-            } else if (m_resourceRef.get() != null) {
-                m_resourceRef.get().setResource(resource);
-            }
-            return result;
-        } catch (final IOException exc) {
-            if (isCorrupted(exc)) {
-                m_resources.forceClose(resource);
-            } else {
-                m_resources.release(resource);
-            }
+        int maxRetry = 1;
 
-            throw exc;
+        while (true) {
+            final ConnectionResource resource = m_resources.take();
+            try {
+                final R result = func.invoke(resource);
+                if (releaseResource) {
+                    m_resources.release(resource);
+                } else if (m_resourceRef.get() != null) {
+                    m_resourceRef.get().setResource(resource);
+                }
+                return result;
+            } catch (final IOException exc) {
+                boolean retry = false;
+                if (isCorrupted(exc)) {
+                    m_resources.handleCorrupted(resource);
+                    retry = maxRetry > 0;
+                } else {
+                    m_resources.release(resource);
+                }
+
+                if (retry) {
+                    maxRetry++;
+                } else {
+                    throw exc;
+                }
+            }
         }
     }
 
