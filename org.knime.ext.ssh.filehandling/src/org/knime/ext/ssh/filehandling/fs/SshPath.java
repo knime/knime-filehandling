@@ -58,7 +58,7 @@ import org.knime.filehandling.core.connections.base.UnixStylePath;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class SshPath extends UnixStylePath {
-    private final String m_SftpString;
+    private final String m_sftpString;
 
     /**
      * @param fileSystem The file system.
@@ -67,7 +67,7 @@ public class SshPath extends UnixStylePath {
      */
     public SshPath(final SshFileSystem fileSystem, final String first, final String[] more) {
         super(fileSystem, first, more);
-        m_SftpString = createSftpString();
+        m_sftpString = createSftpString();
     }
 
     /**
@@ -76,7 +76,7 @@ public class SshPath extends UnixStylePath {
      */
     public SshPath(final SshFileSystem fileSystem, final String path) {
         super(fileSystem, path);
-        m_SftpString = createSftpString();
+        m_sftpString = createSftpString();
     }
 
     /**
@@ -99,7 +99,7 @@ public class SshPath extends UnixStylePath {
      * @return SFTP native file system implementation path.
      */
     public String toSftpString() {
-        return m_SftpString;
+        return m_sftpString;
     }
 
     /**
