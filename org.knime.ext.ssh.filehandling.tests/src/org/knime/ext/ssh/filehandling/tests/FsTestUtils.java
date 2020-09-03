@@ -81,9 +81,20 @@ public class FsTestUtils {
         final String workingDirectory = "/tmp";
         final SshConnectionConfiguration cfg = new SshConnectionConfiguration();
 
-        //add settings from settings file.
-        cfg.setHost(System.getenv("KNIME_SSHD_ADDRESS"));
-        cfg.setPort(22);
+        // This connects to the SSH server specified by the KNIME_SSHD_ADDRESS
+        // environment variable.
+        // The environment variable is set by Jenkins when running the unit tests at
+        // build time (see Jenkinsfile).
+        final String sshdAddress = System.getenv("KNIME_SSHD_ADDRESS");
+        if (sshdAddress == null || sshdAddress.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Environment variable KNIME_SSHD_ADDRESS must be set to host:port of the SSH server");
+        }
+
+        final String[] sshdAddressSplits = sshdAddress.split(":");
+
+        cfg.setHost(sshdAddressSplits[0]);
+        cfg.setPort(Integer.parseInt(sshdAddressSplits[1]));
         cfg.setConnectionTimeout(30000l);
         cfg.setUserName("jenkins");
         cfg.setUseKeyFile(true);
