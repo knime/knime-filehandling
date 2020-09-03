@@ -61,7 +61,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.AclEntry;
-import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
@@ -157,8 +156,13 @@ public final class NativeSftpProviderUtils {
             }
             throw e;
         }
-        for (FileAttribute<?> attr : attrs) {
-            setAttribute(sftp, dir, attr.name(), attr.value());
+
+        if (attrs.length > 0) {
+            SftpClient.Attributes attributes = new SftpClient.Attributes();
+            for (FileAttribute<?> attr : attrs) {
+                addToAttributres(dir, attributes, attr.name(), attr.value());
+            }
+            sftp.setStat(dir.toSftpString(), attributes);
         }
 
         return null;
@@ -207,20 +211,23 @@ public final class NativeSftpProviderUtils {
 
         // copy basic attributes to target
         if (copyAttributes) {
-            BasicFileAttributeView view = provider.getFileAttributeView(target, BasicFileAttributeView.class,
-                    linkOptions);
-            try {
-                view.setTimes(attrs.lastModifiedTime(), attrs.lastAccessTime(), attrs.creationTime());
-            } catch (Throwable x) {
-                // rollback
-                try {
-                    provider.deleteInternal(sftpClient, target);
-                } catch (Throwable suppressed) {
-                    x.addSuppressed(suppressed);
-                }
-                throw x;
-            }
+            setAttributes(sftpClient, attrs, target, linkOptions);
         }
+        return null;
+    }
+
+    static Void setAttributes(
+            final SftpClient sftpClient,
+            final BasicFileAttributes attrs,
+            final SshPath target,
+            @SuppressWarnings("unused") final LinkOption... linkOptions) throws IOException {
+        SftpClient.Attributes attributes = new SftpClient.Attributes();
+
+        addToAttributres(target, attributes, "lastModifiedTime", attrs.lastModifiedTime());
+        addToAttributres(target, attributes, "lastAccessTime", attrs.lastAccessTime());
+        addToAttributres(target, attributes, "creationTime", attrs.creationTime());
+
+        sftpClient.setStat(target.toSftpString(), attributes);
         return null;
     }
 
@@ -228,11 +235,12 @@ public final class NativeSftpProviderUtils {
             final SshPath target,
             final CopyOption... options) throws IOException {
         boolean replaceExisting = false;
-        boolean copyAttributes = false;
         boolean noFollowLinks = false;
         for (CopyOption opt : options) {
             replaceExisting |= opt == StandardCopyOption.REPLACE_EXISTING;
-            copyAttributes |= opt == StandardCopyOption.COPY_ATTRIBUTES;
+            // atomic move can't be supported by given SFTP implementation
+            // because not supported CopyMode
+            // atomicMove |= opt == StandardCopyOption.ATOMIC_MOVE;
             noFollowLinks |= opt == LinkOption.NOFOLLOW_LINKS;
         }
         LinkOption[] linkOptions = IoUtils.getLinkOptions(noFollowLinks);
@@ -251,23 +259,6 @@ public final class NativeSftpProviderUtils {
         }
 
         sftpClient.rename(source.toSftpString(), target.toSftpString());
-
-        // copy basic attributes to target
-        if (copyAttributes) {
-            BasicFileAttributeView view = provider.getFileAttributeView(target, BasicFileAttributeView.class,
-                    linkOptions);
-            try {
-                view.setTimes(attrs.lastModifiedTime(), attrs.lastAccessTime(), attrs.creationTime());
-            } catch (Throwable x) {
-                // rollback
-                try {
-                    provider.delete(target);
-                } catch (Throwable suppressed) {
-                    x.addSuppressed(suppressed);
-                }
-                throw x;
-            }
-        }
         return null;
     }
 
@@ -291,7 +282,25 @@ public final class NativeSftpProviderUtils {
     }
 
     static Void setAttribute(final SftpClient client, final SshPath path, final String attribute, final Object value,
-            final LinkOption... options) throws IOException {
+            @SuppressWarnings("unused") final LinkOption... options) throws IOException {
+        SftpClient.Attributes attributes = new SftpClient.Attributes();
+        addToAttributres(path, attributes, attribute, value);
+        client.setStat(path.toSftpString(), attributes);
+        return null;
+    }
+
+    static Void writeAttributes(final SftpClient client, final SshPath path, final Attributes attrs)
+            throws IOException {
+        client.setStat(path.toSftpString(), attrs);
+        return null;
+    }
+
+    private static void addToAttributres(final SshPath path, final SftpClient.Attributes attributes,
+            final String attribute, final Object value) {
+        if (value == null) {
+            return;
+        }
+
         String view;
         String attr;
         int i = attribute.indexOf(':');
@@ -303,12 +312,6 @@ public final class NativeSftpProviderUtils {
             attr = attribute.substring(i);
         }
 
-        setAttribute(client, path, view, attr, value, options);
-        return null;
-    }
-
-    private static void setAttribute(final SftpClient client, final SshPath path, final String view, final String attr,
-            final Object value, @SuppressWarnings("unused") final LinkOption... options) throws IOException {
         @SuppressWarnings("resource")
         Collection<String> views = path.getFileSystem().supportedFileAttributeViews();
         if (GenericUtils.isEmpty(views) || (!views.contains(view))) {
@@ -316,12 +319,13 @@ public final class NativeSftpProviderUtils {
                     + "] view " + view + " not supported: " + views);
         }
 
-        SftpClient.Attributes attributes = new SftpClient.Attributes();
         switch (attr) {
+        // this Mine SFTP implementation ignores the changes only one
+        // lastModifiedTime or lastAccessTime attribute
+        // should be changed both
         case "lastModifiedTime":
-            attributes.modifyTime((int) ((FileTime) value).to(TimeUnit.SECONDS));
-            break;
         case "lastAccessTime":
+            attributes.modifyTime((int) ((FileTime) value).to(TimeUnit.SECONDS));
             attributes.accessTime((int) ((FileTime) value).to(TimeUnit.SECONDS));
             break;
         case "creationTime":
@@ -358,8 +362,6 @@ public final class NativeSftpProviderUtils {
                     "setAttribute(" + path + ")[" + view + ":" + attr + "=" + value + "] modification N/A");
         default:
         }
-
-        client.setStat(path.toSftpString(), attributes);
     }
 
     private static int attributesToPermissions(final Collection<PosixFilePermission> perms) {

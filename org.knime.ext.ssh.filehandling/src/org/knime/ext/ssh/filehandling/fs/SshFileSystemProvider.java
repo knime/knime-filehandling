@@ -65,6 +65,8 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -222,7 +224,9 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         if (type.isAssignableFrom(PosixFileAttributes.class)) {
             SftpPosixFileAttributes attr = new SftpPosixFileAttributes(path,
                     NativeSftpProviderUtils.readRemoteAttributes(sftpClient, path));
-            return new SshFileAttributes(path, attr);
+            return new BaseFileAttributes(attr.isRegularFile(), path, attr.lastModifiedTime(), attr.lastAccessTime(),
+                    attr.creationTime(), attr.size(), attr.isSymbolicLink(), attr.isOther(), attr.owner(), attr.group(),
+                    attr.permissions());
         }
 
         throw new UnsupportedOperationException("readAttributes(" + path + ")[" + type.getSimpleName() + "] N/A");
@@ -270,12 +274,28 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("resource")
     @Override
     public void setAttribute(final Path path, final String name, final Object value,
             final LinkOption... options)
             throws IOException {
         invokeWithClient(true,
                 client -> NativeSftpProviderUtils.setAttribute(client, (SshPath) path, name, value, options));
+        getFileSystemInternal().removeFromAttributeCache(path);
+    }
+
+    /**
+     * @param path
+     *            path to write attributes.
+     * @param attrs
+     *            attributes.
+     * @throws IOException
+     */
+    @SuppressWarnings("resource")
+    void writeRemoteAttributes(final Path path, final SftpClient.Attributes attrs) throws IOException {
+        invokeWithClient(true,
+                client -> NativeSftpProviderUtils.writeAttributes(client, (SshPath) path, attrs));
+        getFileSystemInternal().removeFromAttributeCache(path);
     }
 
     /**
@@ -339,7 +359,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
                 }
 
                 if (retry) {
-                    maxRetry++;
+                    maxRetry--;
                 } else {
                     throw exc;
                 }
@@ -455,5 +475,18 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
             finishCatchResource(in);
         }
         return in;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    public <V extends FileAttributeView> V getFileAttributeView(final Path path, final Class<V> type,
+            final LinkOption... options) {
+        V fileAttributeView = super.getFileAttributeView(path, type, options);
+        return fileAttributeView instanceof PosixFileAttributeView
+                ? (V) new SshFileAttributeView(path, (PosixFileAttributeView) fileAttributeView)
+                : null;
     }
 }

@@ -188,7 +188,7 @@ public class SshConnectionNodeModel extends NodeModel {
 
         cfg.setBridge(new ConnectionToNodeModelBridge() {
             @Override
-            public void doWithKnowhHostsFile(
+            public void doWithKnownHostsFile(
                     final Consumer<Path> operation)
                     throws IOException, InvalidSettingsException {
                 doWithFileChooserModel(knownHosts, operation);

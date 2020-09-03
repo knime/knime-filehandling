@@ -44,62 +44,65 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-28 (Vyacheslav Soldatov): created
+ *   2020-08-04 (Vyacheslav Soldatov): created
  */
-package org.knime.ext.ssh.filehandling.fs;
+
+package org.knime.ext.ssh.filehandling.tests;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.Paths;
+import java.util.function.Consumer;
 
-import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
+import org.knime.ext.ssh.filehandling.fs.SshConnection;
+import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
 
 /**
- * SSH implementation of the {@link BaseFileAttributes}.
- *
+ * Utilities for SSH file system tests.
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ *
  */
-public class SshFileAttributes extends BaseFileAttributes {
-    private final BasicFileAttributes m_attr;
-    private final Path m_fileKey;
+public class FsTestUtils {
+    /**
+     * Default constructor.
+     */
+    private FsTestUtils() {
+        super();
+    }
 
     /**
-     * @param fileKey
-     *            file path.
-     * @param attr
-     *            origin attributes.
+     * @return file system connection.
+     * @throws IOException
      */
-    public SshFileAttributes(final Path fileKey, final BasicFileAttributes attr) {
-        super(attr.isRegularFile(),
-                fileKey,
-                attr.lastModifiedTime(),
-                attr.lastAccessTime(),
-                attr.creationTime(),
-                attr.size(),
-                attr.isSymbolicLink(),
-                attr.isOther(),
-                null);
-        m_fileKey = fileKey;
-        m_attr = attr;
-    }
-    @Override
-    public synchronized BaseFileAttributes generatePosixAttributes() throws IOException {
-        if (m_attr instanceof PosixFileAttributes) {
-            final PosixFileAttributes pfa = (PosixFileAttributes) m_attr;
-            return new BaseFileAttributes(
-                    m_attr.isRegularFile(),
-                    m_fileKey,
-                    m_attr.lastModifiedTime(),
-                    m_attr.lastAccessTime(),
-                    m_attr.creationTime(),
-                    m_attr.size(),
-                    m_attr.isSymbolicLink(),
-                    m_attr.isOther(),
-                    pfa.owner(),
-                    pfa.group(),
-                    pfa.permissions());
-        }
-        return this;
+    public static SshConnection createConnection() throws IOException {
+        // working directory
+        final String workingDirectory = "/tmp";
+        final SshConnectionConfiguration cfg = new SshConnectionConfiguration();
+
+        //add settings from settings file.
+        cfg.setHost(System.getenv("KNIME_SSHD_ADDRESS"));
+        cfg.setPort(22);
+        cfg.setConnectionTimeout(30000l);
+        cfg.setUserName("jenkins");
+        cfg.setUseKeyFile(true);
+        cfg.setKeyFilePassword("");
+        cfg.setUseKnownHosts(false);
+
+        cfg.setBridge(new ConnectionToNodeModelBridge() {
+            @Override
+            public void doWithKnownHostsFile(final Consumer<Path> consumer) throws IOException, InvalidSettingsException {
+                throw new IOException("Not known hosts user");
+            }
+
+            @Override
+            public void doWithKeysFile(final Consumer<Path> consumer) throws IOException, InvalidSettingsException {
+                final Path privKey = Paths.get(System.getProperty("user.home"), ".ssh", "id_rsa");
+                consumer.accept(privKey);
+            }
+        });
+
+        return new SshConnection(cfg, workingDirectory);
     }
 }

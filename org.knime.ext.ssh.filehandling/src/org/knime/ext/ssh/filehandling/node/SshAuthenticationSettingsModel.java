@@ -312,7 +312,11 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
         m_authType = AuthType.valueOf(settings.getString(KEY_AUTH_TYPE));
         m_password.loadSettingsFrom(settings);
         m_credential.loadSettingsFrom(settings);
-        m_keyFile.loadSettingsFrom(settings);
+        try {
+            m_keyFile.loadSettingsFrom(settings);
+        } catch (InvalidSettingsException ex) {
+            // possible error in case of null location
+        }
         m_keyFilePassword.loadSettingsFrom(settings);
     }
 

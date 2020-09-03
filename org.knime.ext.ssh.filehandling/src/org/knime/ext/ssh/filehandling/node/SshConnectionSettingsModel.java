@@ -225,7 +225,11 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         m_port.loadSettingsFrom(settings);
         m_host.loadSettingsFrom(settings);
         m_userName.loadSettingsFrom(settings);
-        m_knownHostsFile.loadSettingsFrom(settings);
+        try {
+            m_knownHostsFile.loadSettingsFrom(settings);
+        } catch (InvalidSettingsException ex) {
+            // possible error in case of null location
+        }
 
         // authentication
         m_authSettings.loadSettingsFrom(settings);

@@ -68,7 +68,7 @@ public interface ConnectionToNodeModelBridge {
      * @throws IOException
      * @throws InvalidSettingsException
      */
-    void doWithKnowhHostsFile(Consumer<Path> consumer) throws IOException, InvalidSettingsException;
+    void doWithKnownHostsFile(Consumer<Path> consumer) throws IOException, InvalidSettingsException;
 
     /**
      * @param consumer

@@ -81,7 +81,7 @@ class FileChooserServerKeyVerifier implements ServerKeyVerifier {
     public boolean verifyServerKey(final ClientSession clientSession, final SocketAddress remoteAddress, final PublicKey serverKey) {
         try {
             boolean[] result = new boolean[1];
-            m_bridge.doWithKnowhHostsFile(
+            m_bridge.doWithKnownHostsFile(
                     path -> result[0] = verifyServerKey(path, clientSession, remoteAddress, serverKey));
             return result[0];
         } catch (Exception ex) {
