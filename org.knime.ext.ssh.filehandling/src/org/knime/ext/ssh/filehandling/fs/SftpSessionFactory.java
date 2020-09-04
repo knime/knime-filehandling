@@ -49,10 +49,12 @@
 package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
+import java.nio.channels.UnresolvedAddressException;
 import java.nio.file.Path;
 import java.security.KeyPair;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -69,6 +71,7 @@ import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
 import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
 import org.apache.sshd.common.signature.BuiltinSignatures;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
 /**
  * Creates authorized SFTP sessions.
@@ -134,14 +137,14 @@ public class SftpSessionFactory {
      * @throws IOException
      */
     public ClientSession createSession() throws IOException {
-        long connctionTimeOut = m_settings.getConnectionTimeout();
+        long connectionTimeOut = m_settings.getConnectionTimeout();
 
-        @SuppressWarnings("resource")
-        ClientSession session = m_sshClient
-                .connect(m_settings.getUserName(), m_settings.getHost(), m_settings.getPort()).verify(connctionTimeOut)
-                .getSession();
-
+        ClientSession session = null;
         try {
+            session = m_sshClient
+                    .connect(m_settings.getUserName(), m_settings.getHost(), m_settings.getPort())
+                    .verify(connectionTimeOut).getSession();
+
             if (m_settings.isUseKnownHosts()) {
                 session.setServerKeyVerifier(new FileChooserServerKeyVerifier(m_settings.getBridge()));
             } else {
@@ -160,16 +163,34 @@ public class SftpSessionFactory {
             // session closing
             PropertyResolverUtils.updateProperty(session, FactoryManager.IDLE_TIMEOUT, TimeUnit.DAYS.toMillis(365));
             PropertyResolverUtils.updateProperty(session, FactoryManager.AUTH_TIMEOUT,
-                    connctionTimeOut);
+                    connectionTimeOut);
 
             // do authorization
-            session.auth().verify(connctionTimeOut);
+            session.auth().verify(connectionTimeOut);
         } catch (final Exception exc) {
-            session.close();
-            throw new IOException("Authentication failed", exc);
+            if (session != null) {
+                closeSessionSafely(session);
+            }
+
+            if (ExceptionUtil.getDeepestError(exc) instanceof UnresolvedAddressException) {
+                // UnresolvedAddressException unfortunately has a very ugly message
+                throw new IOException("Unknown host " + m_settings.getHost(), exc.getCause());
+            } else {
+                final String msg = Optional.ofNullable(ExceptionUtil.getDeepestErrorMessage(exc, true))
+                        .orElse("Failed to connect for unknown reason. Please see KNIME log for more details.");
+                throw new IOException(msg, exc);
+            }
         }
 
         return session;
+    }
+
+    private static void closeSessionSafely(final ClientSession session) {
+        try {
+            session.close();
+        } catch (IOException ioe) {
+            // do nothing
+        }
     }
 
     /**

@@ -64,7 +64,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
-import org.eclipse.swt.widgets.Display;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettings;
@@ -81,7 +80,6 @@ import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 import org.knime.filehandling.core.data.location.variable.FSLocationVariableType;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.DialogComponentReaderFileChooser;
-import org.knime.workbench.core.WorkbenchErrorLogger;
 
 /**
  * SSH Connection node dialog.
@@ -204,19 +202,12 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
     }
 
     private FSConnection createFSConnection() throws IOException {
-        IOException ioException = null;
         try {
             return SshConnectionNodeModel.createConnection(createSettings(), m_inputSpecs, getCredentialsProvider());
-        } catch (final IOException e) {
-            ioException = e;
         } catch (InvalidSettingsException e) {
             // wrap to I/O exception
-            ioException = new IOException("Failed to create node settings", e);
+            throw new IOException("Failed to create node settings", e);
         }
-
-        final IOException exc = ioException;
-        Display.getDefault().asyncExec(() -> WorkbenchErrorLogger.error(exc.getMessage(), exc));
-        throw ioException;
     }
 
     private JComponent createAdvancedPanel() {
