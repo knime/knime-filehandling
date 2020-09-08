@@ -58,8 +58,10 @@ import java.util.Set;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.client.subsystem.sftp.SftpClient;
 import org.apache.sshd.client.subsystem.sftp.SftpClientFactory;
+import org.apache.sshd.common.channel.exception.SshChannelOpenException;
 import org.apache.sshd.common.session.Session;
 import org.apache.sshd.common.session.SessionListener;
+import org.knime.core.node.NodeLogger;
 
 /**
  * This is the simple resource pool implementation. Main idea is for the most of
@@ -75,6 +77,9 @@ import org.apache.sshd.common.session.SessionListener;
  *
  */
 public class ConnectionResourcePool implements SessionListener {
+
+    private static final NodeLogger LOG = NodeLogger.getLogger(ConnectionResourcePool.class);
+
     private final LinkedList<ConnectionResource> m_freeResources = new LinkedList<>();
     private final Set<ConnectionResource> m_busyResources = new HashSet<>();
 
@@ -133,12 +138,7 @@ public class ConnectionResourcePool implements SessionListener {
         }
 
         if (resource == null) {
-            if (getNumResourcesInUse() < m_maxResourcesLimit) {
-                resource = createResource();
-                m_busyResources.add(resource);
-            } else {
-                throw new ResourcesLimitExceedException();
-            }
+            throw new ResourcesLimitExceedException();
         }
 
         return resource;
@@ -175,13 +175,9 @@ public class ConnectionResourcePool implements SessionListener {
      * @param resource resource.
      */
     public synchronized void release(final ConnectionResource resource) {
-        if (m_busyResources.remove(resource) && m_session != null && !resource.isClosed()) {
-            // should attempt to keep one alive client in pool
-            if (!m_freeResources.isEmpty()) {
-                resource.close();
-            } else {
-                m_freeResources.addFirst(resource);
-            }
+        if (m_session != null && !resource.isClosed()) {
+            m_freeResources.add(resource);
+            m_busyResources.remove(resource);
         }
         // notify resource consumers if any waits it
         notifyAll();
@@ -222,6 +218,17 @@ public class ConnectionResourcePool implements SessionListener {
     public synchronized void start() throws IOException {
         m_sessionFactory.init();
         m_session = m_sessionFactory.createSession();
+
+        for (int i = 0; i < m_maxResourcesLimit; i++) {
+            try {
+                m_freeResources.add(createResource());
+            } catch (SshChannelOpenException e) {
+                LOG.warn(String.format(
+                        "Failed to create %d-th SFT session (%d sessions already opened). You might consider decreasing the maximum SFTP sessions.",
+                        i + 1, i), e);
+                break;
+            }
+        }
     }
 
     /**

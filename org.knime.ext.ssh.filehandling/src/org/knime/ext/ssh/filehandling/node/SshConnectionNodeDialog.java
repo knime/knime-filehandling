@@ -222,8 +222,8 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
         addLabeledComponent(northPanel,
                 "Connection timeout",
                 leftLayout(new DialogComponentNumber(m_settings.getConnectionTimeoutModel(), "", 1)), 1);
-        addLabeledComponent(northPanel, "Max opented SFTP sessions",
-                leftLayout(new DialogComponentNumber(m_settings.getMaxSessionCountModel(), "", 1)), 2);
+        addLabeledComponent(northPanel, "SFTP sessions",
+                leftLayout(new DialogComponentNumber(m_settings.getSessionCountModel(), "", 1)), 2);
 
         //known hosts
         final JPanel knownHostsPanel = new JPanel(new BorderLayout());

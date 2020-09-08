@@ -325,36 +325,30 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     private <R> R invokeWithResource(final boolean releaseResource,
             final WithResourceInvocable<R> func)
-        throws IOException {
+            throws IOException {
 
-        int maxRetry = 1;
+        IOException toThrow = new IOException(); // dummy assignment to shut up compiler warning
 
-        while (true) {
-            final ConnectionResource resource = m_resources.take();
-            try {
-                final R result = func.invoke(resource);
-                if (releaseResource) {
-                    m_resources.release(resource);
-                } else if (m_resourceRef.get() != null) {
-                    m_resourceRef.get().setResource(resource);
-                }
-                return result;
-            } catch (final IOException exc) {
-                boolean retry = false;
-                if (isCorrupted(exc)) {
-                    m_resources.handleCorrupted(resource);
-                    retry = maxRetry > 0;
-                } else {
-                    m_resources.release(resource);
-                }
+        final ConnectionResource resource = m_resources.take();
+        try {
+            final R result = func.invoke(resource);
 
-                if (retry) {
-                    maxRetry--;
-                } else {
-                    throw exc;
-                }
+            if (releaseResource) {
+                m_resources.release(resource);
+            } else {
+                m_resourceRef.get().setResource(resource);
             }
+
+            return result;
+        } catch (final IOException e) {
+            m_resources.release(resource);
+            toThrow = e;
+        } catch (Exception e) { // NOSONAR prevent resource leakage caused by non-IOEs being thrown
+            m_resources.release(resource);
+            toThrow = new IOException(e.getMessage(), e);
         }
+
+        throw toThrow;
     }
 
     /**
@@ -367,15 +361,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     private <R> R invokeWithClient(final boolean releaseResource, final WithClientInvocable<R> func)
             throws IOException {
         return invokeWithResource(releaseResource, resource -> func.invoke(resource.getClient()));
-    }
-
-    /**
-     * @param exc
-     *            I/O exception.
-     * @return true if an exception is retryable.
-     */
-    private static boolean isCorrupted(final IOException exc) {
-        return !exc.getClass().getName().startsWith("java.nio");
     }
 
     /**
@@ -427,7 +412,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     @Override
     public SeekableByteChannel newByteChannel(final Path path, final Set<? extends OpenOption> options, final FileAttribute<?>... attrs)
             throws IOException {
-        startCatchResource(ReleaseAction.ForceClose);
+        startCatchResource(ReleaseAction.Release);
         SeekableByteChannel channel = null;
         try {
             channel = super.newByteChannel(path, options, attrs);
@@ -442,7 +427,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     @Override
     public InputStream newInputStream(final Path path, final OpenOption... options) throws IOException {
-        startCatchResource(ReleaseAction.ForceClose);
+        startCatchResource(ReleaseAction.Release);
         InputStream in = null;
         try {
             in = super.newInputStream(path, options);
@@ -457,7 +442,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     @Override
     public OutputStream newOutputStream(final Path path, final OpenOption... options) throws IOException {
-        startCatchResource(ReleaseAction.ForceClose);
+        startCatchResource(ReleaseAction.Release);
         OutputStream out = null;
         try {
             out = super.newOutputStream(path, options);
