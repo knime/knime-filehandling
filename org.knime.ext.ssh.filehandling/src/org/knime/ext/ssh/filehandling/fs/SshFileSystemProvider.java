@@ -60,6 +60,7 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -188,13 +189,24 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("resource")
     @Override
     public boolean exists(final SshPath path) throws IOException {
+        if (path.isAbsolute() && path.getNameCount() == 0) {
+            return true;
+        }
+
         try {
-            Attributes attrs = invokeWithClient(true,
+            final Attributes attrs = invokeWithClient(true,
                     client -> NativeSftpProviderUtils.readRemoteAttributes(client, path));
-            return attrs != null || (path.isAbsolute() && path.getNameCount() == 0);
-        } catch (final IOException e) {
+            if (attrs != null) {
+                getFileSystemInternal().addToAttributeCache(path,
+                        toBaseFileAttributes(path, new SftpPosixFileAttributes(path, attrs)));
+                return true;
+            } else {
+                return false;
+            }
+        } catch (final NoSuchFileException e) {
             return false;
         }
     }
@@ -224,12 +236,24 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         if (type.isAssignableFrom(PosixFileAttributes.class)) {
             SftpPosixFileAttributes attr = new SftpPosixFileAttributes(path,
                     NativeSftpProviderUtils.readRemoteAttributes(sftpClient, path));
-            return new BaseFileAttributes(attr.isRegularFile(), path, attr.lastModifiedTime(), attr.lastAccessTime(),
-                    attr.creationTime(), attr.size(), attr.isSymbolicLink(), attr.isOther(), attr.owner(), attr.group(),
-                    attr.permissions());
+            return toBaseFileAttributes(path, attr);
         }
 
         throw new UnsupportedOperationException("readAttributes(" + path + ")[" + type.getSimpleName() + "] N/A");
+    }
+
+    private static BaseFileAttributes toBaseFileAttributes(final SshPath path, final SftpPosixFileAttributes attr) {
+        return new BaseFileAttributes(attr.isRegularFile(), //
+                path, //
+                attr.lastModifiedTime(), //
+                attr.lastAccessTime(), //
+                attr.creationTime(), //
+                attr.size(), //
+                attr.isSymbolicLink(), //
+                attr.isOther(), //
+                attr.owner(), //
+                attr.group(), //
+                attr.permissions());
     }
 
     /**
