@@ -81,12 +81,18 @@ public class ConnectionResourcePool implements SessionListener {
     private final SftpSessionFactory m_sessionFactory;
     private ClientSession m_session;
 
+    private final int m_maxResourcesLimit;
+    private final long m_connectionTimeOut;
+
     /**
      * @param settings
      *            SSH connection settings.
      */
     public ConnectionResourcePool(final SshConnectionConfiguration settings) {
         super();
+        m_maxResourcesLimit = settings.getMaxSftpSessionLimit();
+        m_connectionTimeOut = settings.getConnectionTimeout();
+
         m_sessionFactory = new SftpSessionFactory(settings);
     }
 
@@ -95,26 +101,51 @@ public class ConnectionResourcePool implements SessionListener {
      * @return resource.
      * @throws IOException
      */
-    public ConnectionResource take() throws IOException {
-        ConnectionResource resource = null;
-        synchronized (this) {
-            checkStarted();
-            makeSureSessionOpened();
+    public synchronized ConnectionResource take() throws IOException {
+        long startTime = System.currentTimeMillis();
 
-            if (!m_freeResources.isEmpty()) {
-                resource = m_freeResources.removeFirst();
-                m_busyResources.add(resource);
+        while (true) {
+            try {
+                return takeImpl();
+            } catch (ResourcesLimitExceedException ex) {
+                long waitTime = m_connectionTimeOut - (System.currentTimeMillis() - startTime);
+                if (waitTime > 0) {
+                    try {
+                        wait(waitTime);
+                    } catch (InterruptedException ex1) {
+                        throw new IOException("Thread interrupted", ex1);
+                    }
+                } else {
+                    throw new IOException("Wait of resource time out exceed");
+                }
             }
+        }
+    }
+
+    private ConnectionResource takeImpl() throws IOException, ResourcesLimitExceedException {
+        checkStarted();
+        makeSureSessionOpened();
+
+        ConnectionResource resource = null;
+        if (!m_freeResources.isEmpty()) {
+            resource = m_freeResources.removeFirst();
+            m_busyResources.add(resource);
         }
 
         if (resource == null) {
-            resource = createResource();
-            synchronized (this) {
+            if (getNumResourcesInUse() < m_maxResourcesLimit) {
+                resource = createResource();
                 m_busyResources.add(resource);
+            } else {
+                throw new ResourcesLimitExceedException();
             }
         }
 
         return resource;
+    }
+
+    private int getNumResourcesInUse() {
+        return m_busyResources.size() + m_freeResources.size();
     }
 
     private void makeSureSessionOpened() throws IOException {
@@ -152,6 +183,8 @@ public class ConnectionResourcePool implements SessionListener {
                 m_freeResources.addFirst(resource);
             }
         }
+        // notify resource consumers if any waits it
+        notifyAll();
     }
 
     /**
@@ -164,6 +197,9 @@ public class ConnectionResourcePool implements SessionListener {
         m_busyResources.remove(resource);
         m_freeResources.remove(resource);
         close(resource);
+
+        // notify resource consumers if any waits it
+        notifyAll();
     }
 
 
@@ -207,6 +243,9 @@ public class ConnectionResourcePool implements SessionListener {
 
         // destroy session factory
         m_sessionFactory.destroy();
+
+        // notify resource consumers if any waits it
+        notifyAll();
     }
 
     /**
@@ -230,6 +269,9 @@ public class ConnectionResourcePool implements SessionListener {
                 m_session = m_sessionFactory.createSession();
             } catch (IOException ex) {
             }
+
+            // notify resource consumers if any waits it
+            notifyAll();
         }
     }
 
@@ -248,6 +290,6 @@ public class ConnectionResourcePool implements SessionListener {
      *            corrupted resource.
      */
     public void handleCorrupted(final ConnectionResource resource) {
-        sessionClosed(m_session);
+        forceClose(resource);
     }
 }

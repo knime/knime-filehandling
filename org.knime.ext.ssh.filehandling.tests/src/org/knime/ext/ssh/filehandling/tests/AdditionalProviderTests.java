@@ -50,9 +50,11 @@
 package org.knime.ext.ssh.filehandling.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
@@ -154,6 +156,45 @@ public class AdditionalProviderTests {
 
         final Set<PosixFilePermission> resultPerms = Files.getPosixFilePermissions(f);
         assertTrue(resultPerms.contains(PosixFilePermission.OWNER_EXECUTE));
+    }
+
+    /**
+     * Tests the file starting with '.' is determined as hidden.
+     *
+     * @throws IOException
+     */
+    @Test
+    public void test_hidden_files() throws IOException {
+        final FSPath notHidden = m_provider.createTempFile(m_tmpDir, "not-", ".hidden");
+        final FSPath hidden = m_provider.createTempFile(m_tmpDir, ".hidden-", ".tmp");
+
+        // set last modified time.
+        assertFalse(Files.isHidden(notHidden));
+        assertTrue(Files.isHidden(hidden));
+    }
+
+    /**
+     * Test access denied exception is thrown when attempts to create file inside of
+     * root user home directory
+     *
+     * @throws IOException
+     */
+    @Test(expected = AccessDeniedException.class)
+    public void test_throws_accessDeniedException() throws IOException {
+        FSPath path = m_fileSystem.getPath("/root/1");
+        m_provider.createDirectory(path);
+    }
+
+    /**
+     * Tests access denied exception while attempted to list of root user's home
+     * folder
+     * 
+     * @throws IOException
+     */
+    @Test(expected = AccessDeniedException.class)
+    public void test_list_root_folder() throws IOException {
+        FSPath path = m_fileSystem.getPath("/root");
+        Files.list(path);
     }
 
     /**

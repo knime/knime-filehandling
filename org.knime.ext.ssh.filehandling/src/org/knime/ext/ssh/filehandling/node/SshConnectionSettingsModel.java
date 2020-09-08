@@ -93,8 +93,8 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelIntegerBounded m_connectionTimeout;
     private final SettingsModelIntegerBounded m_port;
+    private final SettingsModelIntegerBounded m_maxSessionCount;
     private final SettingsModelString m_host;
-    private final SettingsModelString m_userName;
     private final SshAuthenticationSettingsModel m_authSettings;
     private SettingsModelReaderFileChooser m_knownHostsFile;
 
@@ -113,10 +113,10 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         m_connectionTimeout = new SettingsModelIntegerBounded("connectionTimeout", DEFAULT_TIMEOUT,
                 1,
                 Integer.MAX_VALUE);
+        m_maxSessionCount = new SettingsModelIntegerBounded("maxSessionCount", 15, 1, Integer.MAX_VALUE);
 
         m_authSettings = new SshAuthenticationSettingsModel(AUTH, cfg);
 
-        m_userName = new SettingsModelString("user", System.getProperty("user.name"));
         m_knownHostsFile = createFileChooserSettings(KEY_KNOWN_HOSTS_FILE, cfg);
 
         m_workingDirectory = new SettingsModelString("workingDirectory", SshFileSystem.PATH_SEPARATOR);
@@ -126,7 +126,6 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         m_connectionTimeout.addChangeListener(this);
         m_port.addChangeListener(this);
         m_host.addChangeListener(this);
-        m_userName.addChangeListener(this);
         m_authSettings.addChangeListener(this);
         m_knownHostsFile.addChangeListener(this);
     }
@@ -152,7 +151,7 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         m_connectionTimeout.setEnabled(enabled);
         m_port.setEnabled(enabled);
         m_host.setEnabled(enabled);
-        m_userName.setEnabled(enabled);
+        m_maxSessionCount.setEnabled(enabled);
         m_authSettings.setEnabled(enabled);
         m_knownHostsFile.setEnabled(enabled);
     }
@@ -170,14 +169,7 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
      * @return user name.
      */
     public String getUsername() {
-        return m_userName.getStringValue();
-    }
-
-    /**
-     * @return user name model.
-     */
-    public SettingsModelString getUsernameModel() {
-        return m_userName;
+        return getAuthenticationSettings().getUsernameModel().getStringValue();
     }
 
     /**
@@ -210,7 +202,7 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         m_connectionTimeout.saveSettingsTo(settings);
         m_port.saveSettingsTo(settings);
         m_host.saveSettingsTo(settings);
-        m_userName.saveSettingsTo(settings);
+        m_maxSessionCount.saveSettingsTo(settings);
         m_knownHostsFile.saveSettingsTo(settings);
         m_authSettings.saveSettingsForModel(settings);
     }
@@ -224,7 +216,11 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         m_connectionTimeout.loadSettingsFrom(settings);
         m_port.loadSettingsFrom(settings);
         m_host.loadSettingsFrom(settings);
-        m_userName.loadSettingsFrom(settings);
+        try {
+            m_maxSessionCount.loadSettingsFrom(settings);
+        } catch (InvalidSettingsException ex1) {
+            // wrapped by try/catch for backward compatibility
+        }
         try {
             m_knownHostsFile.loadSettingsFrom(settings);
         } catch (InvalidSettingsException ex) {
@@ -316,16 +312,16 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         if (isEmpty(m_host.getStringValue())) {
             throw new InvalidSettingsException("Host must be specified.");
         }
-
-        if (m_authSettings.getAuthType() != AuthType.CREDENTIALS) {
-            if (isEmpty(m_userName.getStringValue())) {
-                throw new InvalidSettingsException("Please enter a valid user name");
-            }
+        if (m_maxSessionCount.getIntValue() < 1) {
+            throw new InvalidSettingsException(
+                    "Invalid maximum number of SFTP sessions " + m_maxSessionCount.getIntValue());
         }
+
+        m_authSettings.validate();
     }
 
     static boolean isEmpty(final String str) {
-        return str == null || str.length() == 0;
+        return str == null || str.trim().length() == 0;
     }
 
     /**
@@ -432,5 +428,19 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
      */
     public SshAuthenticationSettingsModel getAuthenticationSettings() {
         return m_authSettings;
+    }
+
+    /**
+     * @return maximum number of SFTP sessions.
+     */
+    public int getMaxSessionCount() {
+        return m_maxSessionCount.getIntValue();
+    }
+
+    /**
+     * @return settings model of maximum number of SFTP sessions.
+     */
+    public SettingsModelIntegerBounded getMaxSessionCountModel() {
+        return m_maxSessionCount;
     }
 }

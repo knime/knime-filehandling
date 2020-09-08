@@ -57,7 +57,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -172,7 +171,8 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     @Override
     protected Iterator<SshPath> createPathIterator(final SshPath dir, final Filter<? super Path> filter)
             throws IOException {
-        return invokeWithResource(false,
+        return invokeWithResource(
+                true,
                 resource -> NativeSftpProviderUtils.createPathIteratorImpl(resource, dir, filter));
     }
 
@@ -259,16 +259,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         }
 
         return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isHidden(final Path path) throws IOException {
-        // MINE STFP File system provider just returns true
-        // TODO search and possible correct implement it.
-        return false;
     }
 
     /**
@@ -425,25 +415,10 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     private void finishCatchResource(final Closeable closeable) {
         final ConnectionResourceHolder holder = m_resourceRef.get();
-        m_resourceRef.set(null);
+        m_resourceRef.remove();
         if (closeable != null && holder != null) {
             m_closeables.put(closeable, holder);
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public DirectoryStream<Path> newDirectoryStream(final Path dir, final Filter<? super Path> filter) throws IOException {
-        startCatchResource(ReleaseAction.ForceClose);
-        DirectoryStream<Path> stream = null;
-        try {
-            stream = super.newDirectoryStream(dir, filter);
-        } finally {
-            finishCatchResource(stream);
-        }
-        return stream;
     }
 
     /**
@@ -480,6 +455,21 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     /**
      * {@inheritDoc}
      */
+    @Override
+    public OutputStream newOutputStream(final Path path, final OpenOption... options) throws IOException {
+        startCatchResource(ReleaseAction.ForceClose);
+        OutputStream out = null;
+        try {
+            out = super.newOutputStream(path, options);
+        } finally {
+            finishCatchResource(out);
+        }
+        return out;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @SuppressWarnings("unchecked")
     @Override
     public <V extends FileAttributeView> V getFileAttributeView(final Path path, final Class<V> type,
@@ -488,5 +478,13 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         return fileAttributeView instanceof PosixFileAttributeView
                 ? (V) new SshFileAttributeView(path, (PosixFileAttributeView) fileAttributeView)
                 : null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected boolean isHiddenInternal(final SshPath path) throws IOException {
+        return path != null && path.getFileName().toString().startsWith(".");
     }
 }

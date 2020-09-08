@@ -52,7 +52,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.CopyOption;
+import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.LinkOption;
@@ -71,12 +73,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.subsystem.sftp.SftpClient;
 import org.apache.sshd.client.subsystem.sftp.SftpClient.Attributes;
+import org.apache.sshd.client.subsystem.sftp.SftpClient.DirEntry;
 import org.apache.sshd.client.subsystem.sftp.SftpClient.OpenMode;
 import org.apache.sshd.client.subsystem.sftp.extensions.CopyFileExtension;
 import org.apache.sshd.client.subsystem.sftp.fs.SftpFileSystemProvider;
@@ -109,8 +113,13 @@ public final class NativeSftpProviderUtils {
         }
 
         // TODO: process file attributes
-        SftpRemotePathChannel nativeChannel = new SftpRemotePathChannel(path.toSftpString(), resource.getClient(), true,
-                modes);
+        SftpRemotePathChannel nativeChannel;
+        try {
+            nativeChannel = new SftpRemotePathChannel(path.toSftpString(), resource.getClient(), true,
+                    modes);
+        } catch (SftpException ex) {
+            throw convertAndRethrow(ex, path);
+        }
         return new SshSeekableByteChannel(resource, nativeChannel);
     }
 
@@ -123,15 +132,51 @@ public final class NativeSftpProviderUtils {
             modes = EnumSet.of(OpenMode.Read);
         }
 
-        return sftpClient.read(path.toSftpString(), modes);
+        try {
+            return sftpClient.read(path.toSftpString(), modes);
+        } catch (SftpException ex) {
+            throw convertAndRethrow(ex, path);
+        }
     }
 
     @SuppressWarnings("resource")
     static Iterator<SshPath> createPathIteratorImpl(final ConnectionResource resource, final SshPath dir,
             final Filter<? super Path> filter) throws IOException {
         final SftpClient sftpClient = resource.getClient();
-        // FIXME directory stream is not really closed
-        return new SshPathIterator(dir, sftpClient.readDir(dir.toSftpString()).iterator(), filter);
+
+        try {
+            final List<SshPath> files = new LinkedList<>();
+            final Iterator<DirEntry> iter = sftpClient.readDir(dir.toSftpString()).iterator();
+            final String directoryPath = dir.toString();
+
+            while (iter.hasNext()) {
+                final DirEntry entry = iter.next();
+                String fileName = entry.getFilename();
+
+                // ignore current and parent directory
+                if (".".equals(fileName) || "..".equals(fileName)) {
+                    continue;
+                }
+
+                final SshPath path = dir.getFileSystem().getPath(directoryPath, fileName);
+                try {
+                    if (filter == null || filter.accept(path)) {
+                        files.add(path);
+                    }
+                } catch (final IOException e) {
+                    throw new DirectoryIteratorException(e);
+                }
+            }
+
+            return files.iterator();
+        } catch (RuntimeException die) {
+            if (die.getCause() instanceof SftpException) {
+                throw convertAndRethrow((SftpException) die.getCause(), dir);
+            }
+            throw die;
+        } catch (SftpException ex) {
+            throw convertAndRethrow(ex, dir);
+        }
     }
 
     static Void createDirectoryInternal(final SftpClient sftp, final SshPath dir, final FileAttribute<?>... attrs)
@@ -143,18 +188,16 @@ public final class NativeSftpProviderUtils {
             int sftpStatus = e.getStatus();
             if ((sftp.getVersion() == SftpConstants.SFTP_V3) && (sftpStatus == SftpConstants.SSH_FX_FAILURE)) {
                 try {
-                    Attributes attributes = sftp.stat(dir.toString());
-                    if (attributes != null) {
-                        throw new FileAlreadyExistsException(dir.toString());
+                    if (sftp.stat(dir.toString()) != null) {
+                        FileAlreadyExistsException faeEx = new FileAlreadyExistsException(dir.toString());
+                        faeEx.setStackTrace(e.getStackTrace());
+                        throw faeEx;
                     }
                 } catch (SshException e2) {
                     e.addSuppressed(e2);
                 }
             }
-            if (sftpStatus == SftpConstants.SSH_FX_FILE_ALREADY_EXISTS) {
-                throw new FileAlreadyExistsException(dir.toString());
-            }
-            throw e;
+            throw convertAndRethrow(e, dir);
         }
 
         if (attrs.length > 0) {
@@ -162,7 +205,7 @@ public final class NativeSftpProviderUtils {
             for (FileAttribute<?> attr : attrs) {
                 addToAttributres(dir, attributes, attr.name(), attr.value());
             }
-            sftp.setStat(dir.toSftpString(), attributes);
+            writeAttributes(sftp, dir, attributes);
         }
 
         return null;
@@ -227,7 +270,7 @@ public final class NativeSftpProviderUtils {
         addToAttributres(target, attributes, "lastAccessTime", attrs.lastAccessTime());
         addToAttributres(target, attributes, "creationTime", attrs.creationTime());
 
-        sftpClient.setStat(target.toSftpString(), attributes);
+        writeAttributes(sftpClient, target, attributes);
         return null;
     }
 
@@ -258,7 +301,11 @@ public final class NativeSftpProviderUtils {
             provider.deleteIfExists(target);
         }
 
-        sftpClient.rename(source.toSftpString(), target.toSftpString());
+        try {
+            sftpClient.rename(source.toSftpString(), target.toSftpString());
+        } catch (SftpException ex) {
+            throw convertAndRethrow(ex, target);
+        }
         return null;
     }
 
@@ -274,10 +321,7 @@ public final class NativeSftpProviderUtils {
             }
             return attrs;
         } catch (SftpException e) {
-            if (e.getStatus() == SftpConstants.SSH_FX_NO_SUCH_FILE) {
-                throw new NoSuchFileException(path.toString());
-            }
-            throw e;
+            throw convertAndRethrow(e, path);
         }
     }
 
@@ -285,14 +329,38 @@ public final class NativeSftpProviderUtils {
             @SuppressWarnings("unused") final LinkOption... options) throws IOException {
         SftpClient.Attributes attributes = new SftpClient.Attributes();
         addToAttributres(path, attributes, attribute, value);
-        client.setStat(path.toSftpString(), attributes);
+        writeAttributes(client, path, attributes);
         return null;
     }
 
     static Void writeAttributes(final SftpClient client, final SshPath path, final Attributes attrs)
             throws IOException {
-        client.setStat(path.toSftpString(), attrs);
+        try {
+            client.setStat(path.toSftpString(), attrs);
+        } catch (SftpException ex) {
+            throw convertAndRethrow(ex, path);
+        }
         return null;
+    }
+
+    private static IOException convertAndRethrow(final SftpException e, final SshPath file) throws IOException {
+        final String path = file.toString();
+        final int status = e.getStatus();
+
+        IOException converted = null;
+        if (status == SftpConstants.SSH_FX_NO_SUCH_FILE) {
+            converted = new NoSuchFileException(path);
+        } else if (status == SftpConstants.SSH_FX_PERMISSION_DENIED) {
+            converted = new AccessDeniedException(path);
+        } else if (status == SftpConstants.SSH_FX_FILE_ALREADY_EXISTS) {
+            converted = new FileAlreadyExistsException(file.toSftpString());
+        }
+
+        if (converted != null) {
+            converted.setStackTrace(e.getStackTrace());
+            throw converted;
+        }
+        throw e;
     }
 
     private static void addToAttributres(final SshPath path, final SftpClient.Attributes attributes,

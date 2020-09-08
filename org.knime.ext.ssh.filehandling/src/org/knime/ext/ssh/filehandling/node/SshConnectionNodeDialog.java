@@ -57,8 +57,10 @@ import java.io.IOException;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
@@ -73,7 +75,6 @@ import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.defaultnodesettings.DialogComponent;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
-import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.ext.ssh.filehandling.node.SshAuthenticationSettingsModel.AuthType;
 import org.knime.filehandling.core.connections.FSConnection;
@@ -109,18 +110,15 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
      */
     public SshConnectionNodeDialog(final NodeCreationConfiguration cfg) {
         m_settings = new SshConnectionSettingsModel("justForDialog", cfg);
+        // add user name synchronizer
 
         addTab("Settings", createSettingsPanel());
         addTab("Advanced", createAdvancedPanel());
     }
 
     private JComponent createSettingsPanel() {
-        //wrap to flow panel for avoid of stretching by height
-        final JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEADING));
-
         //components
         final JPanel parent = new JPanel(new BorderLayout());
-        wrapper.add(parent);
 
         //add other components
         final JPanel connections = new JPanel(new BorderLayout());
@@ -129,11 +127,13 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
         final JPanel conTop = new JPanel(new GridBagLayout());
         connections.add(conTop, BorderLayout.NORTH);
 
-        addLabeledComponent(conTop, "Host", new DialogComponentString(m_settings.getHostModel(), ""), 0);
-        addLabeledComponent(conTop, "Port", new DialogComponentNumber(m_settings.getPortModel(), "", 1), 1);
-        addLabeledComponent(conTop, "Username", new DialogComponentString(m_settings.getUsernameModel(), ""), 2);
+        DialogComponentStringJustified hostComponent = new DialogComponentStringJustified(m_settings.getHostModel(), "");
+        hostComponent.getComponentLayout().setHgap(5);
+        hostComponent.getComponentPanel().setBorder(new EmptyBorder(5, 5, 5, 0));
 
-        //key file file chooser
+        addLabeledComponent(conTop, "Host", hostComponent.getComponentPanel(), 0);
+        addLabeledComponent(conTop, "Port", leftLayout(new DialogComponentNumber(m_settings.getPortModel(), "", 1)), 1);
+
         final JPanel conCenter = new JPanel(new BorderLayout());
         conCenter.setBorder(createTitledBorder("Authentication"));
         connections.add(conCenter, BorderLayout.CENTER);
@@ -152,8 +152,9 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
         south.add(m_workingDirChooser, BorderLayout.CENTER);
         parent.add(south, BorderLayout.SOUTH);
 
-        return wrapper;
+        return parent;
     }
+
     /**
      * @param title border title.
      * @return titled border.
@@ -162,20 +163,8 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
         return new TitledBorder(new EtchedBorder(EtchedBorder.RAISED), title);
     }
 
-    private static void addComponent(final JPanel container,
-            final JComponent component, final int row) {
-        //add component.
-        final GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 1;
-        gbc.gridy = row;
-        gbc.weightx = 1.;
-        container.add(component, gbc);
-    }
-
     private static void addLabeledComponent(final JPanel container, final String label,
-            final DialogComponent component,
-            final int row) {
+            final JPanel component, final int row) {
         // add label
         final GridBagConstraints lc = new GridBagConstraints();
         lc.fill = GridBagConstraints.HORIZONTAL;
@@ -198,13 +187,18 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
         cc.gridx = 1;
         cc.gridy = row;
         cc.weightx = 1.;
-        container.add(leftLayout(component), cc);
+        container.add(component, cc);
     }
 
     private FSConnection createFSConnection() throws IOException {
         try {
             return SshConnectionNodeModel.createConnection(createSettings(), m_inputSpecs, getCredentialsProvider());
-        } catch (InvalidSettingsException e) {
+        } catch (Exception e) {
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(getPanel(), e.getMessage(),
+                    "Failed to create SSH connection", JOptionPane.ERROR_MESSAGE));
+            if (e instanceof IOException) {
+                throw (IOException) e;
+            }
             // wrap to I/O exception
             throw new IOException("Failed to create node settings", e);
         }
@@ -219,12 +213,17 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
         wrapper.add(parent);
 
         //connection timeout
-        final JPanel timeOutPanel = new JPanel(new GridBagLayout());
-        parent.add(timeOutPanel, BorderLayout.NORTH);
+        final JPanel northPanel = new JPanel(new GridBagLayout());
+        final JPanel northPanelWrapper = new JPanel(new FlowLayout(FlowLayout.LEADING));
+        northPanelWrapper.add(northPanel);
+        parent.add(northPanelWrapper, BorderLayout.NORTH);
 
-        addComponent(timeOutPanel,
-                leftLayout(new DialogComponentNumber(m_settings.getConnectionTimeoutModel(), "Connection timeout", 1)),
-                1);
+        // add component.
+        addLabeledComponent(northPanel,
+                "Connection timeout",
+                leftLayout(new DialogComponentNumber(m_settings.getConnectionTimeoutModel(), "", 1)), 1);
+        addLabeledComponent(northPanel, "Max opented SFTP sessions",
+                leftLayout(new DialogComponentNumber(m_settings.getMaxSessionCountModel(), "", 1)), 2);
 
         //known hosts
         final JPanel knownHostsPanel = new JPanel(new BorderLayout());
@@ -239,17 +238,14 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
         final JPanel fileChooserPanel = m_knownHostsChooser.getComponentPanel();
         fileChooserPanel.setPreferredSize(fileChooserPanel.getMinimumSize());
 
-        final JPanel fileChooserWrapper = new JPanel(new BorderLayout());
-        fileChooserWrapper.add(fileChooserPanel, BorderLayout.WEST);
-
-        knownHostsPanel.add(fileChooserWrapper, BorderLayout.CENTER);
+        knownHostsPanel.add(fileChooserPanel, BorderLayout.CENTER);
 
         m_useKnownHostsField.addActionListener(
                 event -> knownHostsSelectionChanged(m_useKnownHostsField.isSelected()));
         return wrapper;
     }
 
-    static JComponent leftLayout(final DialogComponent comp) {
+    static JPanel leftLayout(final DialogComponent comp) {
         final JPanel pane = comp.getComponentPanel();
         pane.setLayout(new FlowLayout(FlowLayout.LEFT));
         return pane;

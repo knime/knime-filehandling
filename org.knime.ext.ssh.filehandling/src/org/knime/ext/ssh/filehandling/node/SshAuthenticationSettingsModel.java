@@ -87,6 +87,7 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
 
     //authentication
     private AuthType m_authType;
+    private final SettingsModelString m_userName;
     private final SettingsModelPassword m_password;
     private final String m_configName;
     private NodeCreationConfiguration m_nodeCreationConfig;
@@ -175,11 +176,13 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
 
         //authentication
         m_authType = AuthType.USER_PWD;
+        m_userName = new SettingsModelString("user", System.getProperty("user.name"));
         m_password = new SettingsModelPassword("password", SECRET_KEY, "");
         m_credential = new SettingsModelString("credential", "");
         m_keyFile = createFileChooserSettings(KEY_KEY_FILE, cfg);
         m_keyFilePassword = new SettingsModelPassword("keyFilePassword", SECRET_KEY, "");
 
+        m_userName.addChangeListener(this);
         m_password.addChangeListener(this);
         m_credential.addChangeListener(this);
         m_keyFile.addChangeListener(this);
@@ -210,6 +213,7 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
 
+        m_userName.setEnabled(enabled);
         m_password.setEnabled(enabled);
         m_credential.setEnabled(enabled);
         m_keyFile.setEnabled(enabled);
@@ -236,8 +240,7 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
      * @return password
      */
     public String getPassword() {
-        String value = m_password.getStringValue();
-        return isEmpty(value) ? null : value;
+        return m_password.getStringValue();
     }
 
     /**
@@ -296,6 +299,7 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
         NodeSettingsWO settings = connectionSettings.addNodeSettings(getConfigName());
 
         settings.addString(KEY_AUTH_TYPE, m_authType.name());
+        m_userName.saveSettingsTo(settings);
         m_password.saveSettingsTo(settings);
         m_credential.saveSettingsTo(settings);
         m_keyFile.saveSettingsTo(settings);
@@ -310,6 +314,7 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
         NodeSettingsRO settings = connectionSettings.getNodeSettings(getConfigName());
 
         m_authType = AuthType.valueOf(settings.getString(KEY_AUTH_TYPE));
+        m_userName.loadSettingsFrom(settings);
         m_password.loadSettingsFrom(settings);
         m_credential.loadSettingsFrom(settings);
         try {
@@ -393,21 +398,25 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
      * @throws InvalidSettingsException
      */
     public void validate() throws InvalidSettingsException {
+        if (getAuthType() != AuthType.CREDENTIALS) {
+            if (isEmpty(m_userName.getStringValue())) {
+                throw new InvalidSettingsException("Please enter a valid user name");
+            }
+        }
+
         switch (getAuthType()) {
         case CREDENTIALS:
-            if (m_credential == null || isEmpty(m_credential.getStringValue())) {
+            if (isEmpty(m_credential.getStringValue())) {
                 throw new InvalidSettingsException("Please select a valid credential");
             }
             break;
         case KEY_FILE:
-            if (m_keyFile == null) {
-                throw new InvalidSettingsException("Please select a valid credential");
+            if (isNullLocation(m_keyFile.getLocation())) {
+                throw new InvalidSettingsException("Please select a valid key file location");
             }
             break;
         case USER_PWD:
-            if (m_password == null || isEmpty(m_password.getStringValue())) {
-                throw new InvalidSettingsException("Please enter a valid password");
-            }
+            //password can be empty
             break;
         default:
             break;
@@ -464,5 +473,12 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
      */
     public SettingsModelPassword getKeyFilePasswordModel() {
         return m_keyFilePassword;
+    }
+
+    /**
+     * @return user name model.
+     */
+    public SettingsModelString getUsernameModel() {
+        return m_userName;
     }
 }

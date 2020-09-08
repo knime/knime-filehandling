@@ -44,98 +44,14 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-28 (Vyacheslav Soldatov): created
+ *   2020-09-07 (Vyacheslav Soldatov): created
  */
 package org.knime.ext.ssh.filehandling.fs;
 
-import java.io.IOException;
-import java.nio.file.DirectoryIteratorException;
-import java.nio.file.DirectoryStream.Filter;
-import java.nio.file.Path;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-import org.apache.sshd.client.subsystem.sftp.SftpClient;
-import org.apache.sshd.client.subsystem.sftp.SftpClient.DirEntry;
-
 /**
- * Class to iterate through the files and folders in the path
  *
- * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ * @author @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshPathIterator implements Iterator<SshPath> {
-    private Iterator<SftpClient.DirEntry> m_dirEntryIterator;
-    private final Filter<? super Path> m_filter;
-
-    private SshPath m_next;
-    private SshPath m_dir;
-
-    /**
-     * @param dir
-     *            directory path.
-     * @param iter
-     *            directory iterator.
-     * @param f
-     *            filter.
-     */
-    public SshPathIterator(final SshPath dir, final Iterator<SftpClient.DirEntry> iter, final Filter<? super Path> f) {
-        super();
-        m_dirEntryIterator = iter;
-        m_filter = f;
-        m_dir = dir;
-
-        goToNext();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean hasNext() {
-        return m_next != null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public SshPath next() {
-        if (!hasNext()) {
-            throw new NoSuchElementException();
-        }
-        final SshPath p = m_next;
-        goToNext();
-        return p;
-    }
-
-    private void goToNext() {
-        m_next = null;
-        while (true) {
-            if (!m_dirEntryIterator.hasNext()) {
-                return;
-            }
-
-            final DirEntry entry = m_dirEntryIterator.next();
-            String fileName = entry.getFilename();
-
-            // ignore current and parent directory
-            if (".".equals(fileName) || "..".equals(fileName)) {
-                continue;
-            }
-
-            final SshPath path = createSshPath(fileName);
-            try {
-                if (m_filter == null || m_filter.accept(path)) {
-                    m_next = path;
-                    return;
-                }
-            } catch (final IOException e) {
-                throw new DirectoryIteratorException(e);
-            }
-        }
-    }
-
-    private SshPath createSshPath(final String fileName) {
-        return (SshPath) m_dir.resolve(fileName);
-    }
+public class ResourcesLimitExceedException extends Exception {
+    private static final long serialVersionUID = 1L;
 }

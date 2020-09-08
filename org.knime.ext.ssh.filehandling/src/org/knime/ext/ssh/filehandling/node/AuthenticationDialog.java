@@ -53,6 +53,7 @@ import static org.knime.ext.ssh.filehandling.node.SshConnectionNodeDialog.leftLa
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -68,7 +69,16 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.PlainDocument;
 
 import org.knime.core.node.FlowVariableModel;
 import org.knime.core.node.NodeSettingsRO;
@@ -110,18 +120,84 @@ public class AuthenticationDialog extends JPanel {
     private final Component m_credentialPanel;
     private final Component m_userPwdPanel;
     private final Component m_keyFilePanel;
+    private final PlainDocument m_userNameDocument = new PlainDocument();
 
     private final SshAuthenticationSettingsModel m_settings;
 
     private final ItemListener credentialsListener = new ItemListener() {
         @Override
         public void itemStateChanged(final ItemEvent e) {
-            Object selected = e.getItem();
+            String selected = (String) e.getItem();
             if (e.getStateChange() == ItemEvent.SELECTED && selected != null) {
-                m_settings.getCredentialModel().setStringValue((String) selected);
+                m_settings.getCredentialModel().setStringValue(selected);
             }
         }
     };
+
+    private class UserNameSynchronizer implements DocumentListener, ChangeListener {
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void changedUpdate(final DocumentEvent e) {
+            textChanged(e.getDocument());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void insertUpdate(final DocumentEvent e) {
+            textChanged(e.getDocument());
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void removeUpdate(final DocumentEvent e) {
+            textChanged(e.getDocument());
+        }
+
+        private void textChanged(final Document document) {
+            stopListen();
+            try {
+                m_settings.getUsernameModel().setStringValue(document.getText(0, document.getLength()));
+            } catch (BadLocationException ex) {
+                // impossible. Location alwais is ok.
+            } finally {
+                startListen();
+            }
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void stateChanged(final ChangeEvent e) {
+            stopListen();
+            try {
+                String text = m_settings.getUsernameModel().getStringValue();
+                m_userNameDocument.replace(0, m_userNameDocument.getLength(), text == null ? "" : text, null);
+            } catch (BadLocationException ex) {
+                // impossible. Location alwais is ok.
+            } finally {
+                startListen();
+            }
+        }
+
+        private void stopListen() {
+            m_settings.getUsernameModel().removeChangeListener(this);
+            m_userNameDocument.removeDocumentListener(this);
+        }
+
+        public void startListen() {
+            m_settings.getUsernameModel().addChangeListener(this);
+            m_userNameDocument.addDocumentListener(this);
+        }
+    }
+
+    private final UserNameSynchronizer m_userNameSynchronizer = new UserNameSynchronizer();
 
     private JRadioButton createAuthTypeButton(
             final AuthType type,
@@ -182,6 +258,15 @@ public class AuthenticationDialog extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         add(createRootPanel(), gbc);
+
+        try {
+            m_userNameDocument.insertString(0, m_settings.getUsernameModel().getStringValue(), null);
+        } catch (BadLocationException ex) {
+            // impossible
+        }
+
+        m_userNameSynchronizer.startListen();
+        m_credentialField.addItemListener(credentialsListener);
     }
 
     private JPanel createRootPanel() {
@@ -231,18 +316,30 @@ public class AuthenticationDialog extends JPanel {
         final GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.LINE_START;
         gbc.fill = GridBagConstraints.BOTH;
-
         gbc.ipadx = 0;
+
+        // user name
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.weightx = 0;
         gbc.insets = new Insets(0, LEFT_INSET, 0, 5);
+        panel.add(new JLabel("User:", SwingConstants.LEFT), gbc);
 
-        panel.add(new JLabel("Password:", SwingConstants.LEFT), gbc);
         gbc.gridx = 1;
         gbc.weightx = 1;
         gbc.insets = NEUTRAL_INSET;
+        panel.add(createUserNameComponent(), gbc);
 
+        // password
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.insets = new Insets(0, LEFT_INSET, 0, 5);
+        panel.add(new JLabel("Password:", SwingConstants.LEFT), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        gbc.insets = NEUTRAL_INSET;
         DialogComponentPasswordField password = new DialogComponentPasswordField(m_settings.getPasswordModel(), "");
         panel.add(leftLayout(password), gbc);
         return panel;
@@ -251,19 +348,36 @@ public class AuthenticationDialog extends JPanel {
     private JPanel createKeyFilePanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
         final GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.ipadx = 0;
-        gbc.gridx = 0;
-        gbc.gridy++;
         gbc.anchor = GridBagConstraints.LINE_START;
         gbc.fill = GridBagConstraints.BOTH;
+        gbc.ipadx = 0;
+
+        // user name
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.insets = new Insets(0, LEFT_INSET, 0, 5);
+        panel.add(new JLabel("User:", SwingConstants.LEFT), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        gbc.insets = NEUTRAL_INSET;
+        panel.add(createUserNameComponent(), gbc);
+
+        // file chooser
+        gbc.gridx = 0;
+        gbc.gridy++;
         gbc.gridwidth = 2;
         gbc.insets = new Insets(0, LEFT_INSET, 0, 5);
         gbc.weightx = 1;
         panel.add(m_keyFileChooser.getComponentPanel(), gbc);
 
+        // key file password
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
         gbc.gridy++;
         gbc.weightx = 0;
+        gbc.insets = new Insets(0, LEFT_INSET, 0, 5);
         panel.add(new JLabel("Key file password:", SwingConstants.LEFT), gbc);
 
         gbc.gridx = 1;
@@ -271,7 +385,7 @@ public class AuthenticationDialog extends JPanel {
         gbc.insets = NEUTRAL_INSET;
         DialogComponentPasswordField keyPassword = new DialogComponentPasswordField(
                 m_settings.getKeyFilePasswordModel(), "");
-        panel.add(keyPassword.getComponentPanel(), gbc);
+        panel.add(SshConnectionNodeDialog.leftLayout(keyPassword), gbc);
         return panel;
     }
 
@@ -297,6 +411,17 @@ public class AuthenticationDialog extends JPanel {
         m_keyFilePanel.setVisible(m_typeKeyFile.isSelected());
     }
 
+    private JPanel createUserNameComponent() {
+        JTextField userNameComp = new JTextField(
+                DialogComponentStringJustified.calcDefaultWidth(m_settings.getUsernameModel().getStringValue()));
+        userNameComp.setDocument(m_userNameDocument);
+
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        panel.add(userNameComp);
+        return panel;
+    }
+
     /**
      * Initializes from settings.
      *
@@ -310,8 +435,6 @@ public class AuthenticationDialog extends JPanel {
      */
     public void updateUi(final NodeSettingsRO input, final PortObjectSpec[] specs, final CredentialsProvider cp)
             throws NotConfigurableException {
-        m_credentialField.removeItemListener(credentialsListener);
-
         //each time need to reload credentials because can be changed
         //independently
         final DefaultComboBoxModel<String> credsModel = (DefaultComboBoxModel<String>) m_credentialField.getModel();
@@ -331,8 +454,6 @@ public class AuthenticationDialog extends JPanel {
             if (presented) {
                 m_credentialField.setSelectedItem(credential);
             }
-
-            m_credentialField.addItemListener(credentialsListener);
         }
 
         //init from settings

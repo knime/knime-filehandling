@@ -57,6 +57,7 @@ public class SshConnectionConfiguration {
     private ConnectionToNodeModelBridge m_bridge;
 
     private long m_connectionTimeout = 30000l;
+    private int m_maxSftpSessionLimit = 15;
     private int m_port = 22;
     private String m_host;
     private String m_userName;
@@ -208,5 +209,20 @@ public class SshConnectionConfiguration {
      */
     public void setKeyFilePassword(final String keyFilePassword) {
         m_keyFilePassword = keyFilePassword;
+    }
+
+    /**
+     * @return maximum number of SFTP sessions.
+     */
+    public int getMaxSftpSessionLimit() {
+        return m_maxSftpSessionLimit;
+    }
+
+    /**
+     * @param count
+     *            maximum number of SFTP sessions
+     */
+    public void setMaxSftpSessionLimit(final int count) {
+        this.m_maxSftpSessionLimit = count;
     }
 }
