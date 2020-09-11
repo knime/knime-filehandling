@@ -112,10 +112,9 @@ public final class NativeSftpProviderUtils {
             modes = EnumSet.of(OpenMode.Read, OpenMode.Write);
         }
 
-        // TODO: process file attributes
         SftpRemotePathChannel nativeChannel;
         try {
-            nativeChannel = new SftpRemotePathChannel(path.toSftpString(), resource.getClient(), true,
+            nativeChannel = new SftpRemotePathChannel(path.toSftpString(), resource.getClient(), false,
                     modes);
         } catch (SftpException ex) {
             throw convertAndRethrow(ex, path);

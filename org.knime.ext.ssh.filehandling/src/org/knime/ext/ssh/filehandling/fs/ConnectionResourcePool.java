@@ -144,10 +144,6 @@ public class ConnectionResourcePool implements SessionListener {
         return resource;
     }
 
-    private int getNumResourcesInUse() {
-        return m_busyResources.size() + m_freeResources.size();
-    }
-
     private void makeSureSessionOpened() throws IOException {
         if (!m_session.isOpen()) {
             sessionClosed(m_session);
@@ -175,29 +171,14 @@ public class ConnectionResourcePool implements SessionListener {
      * @param resource resource.
      */
     public synchronized void release(final ConnectionResource resource) {
+        m_busyResources.remove(resource);
         if (m_session != null && !resource.isClosed()) {
             m_freeResources.add(resource);
-            m_busyResources.remove(resource);
         }
-        // notify resource consumers if any waits it
-        notifyAll();
-    }
-
-    /**
-     * Notify resource pool resource should be closed immediately.
-     *
-     * @param resource
-     *            resource.
-     */
-    public synchronized void forceClose(final ConnectionResource resource) {
-        m_busyResources.remove(resource);
-        m_freeResources.remove(resource);
-        close(resource);
 
         // notify resource consumers if any waits it
         notifyAll();
     }
-
 
     private void closeSession() {
         if (m_session != null) {
@@ -290,13 +271,5 @@ public class ConnectionResourcePool implements SessionListener {
             resource.close();
         } catch (final Throwable e) {
         }
-    }
-
-    /**
-     * @param resource
-     *            corrupted resource.
-     */
-    public void handleCorrupted(final ConnectionResource resource) {
-        forceClose(resource);
     }
 }

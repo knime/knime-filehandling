@@ -53,31 +53,17 @@ package org.knime.ext.ssh.filehandling.fs;
  * should be done when resource released. If release action is
  * <code>Release</code> the resource will just returned to pool, otherwise
  * resource will closed immediately.
- * 
+ *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 class ConnectionResourceHolder {
-    enum ReleaseAction {
-        ForceClose, Release
-    }
-
     private ConnectionResource m_resource;
-    private final ReleaseAction m_releaseAction;
 
     /**
-     * @param releaseAction
-     *            release action.
+     * Default constructor.
      */
-    public ConnectionResourceHolder(final ReleaseAction releaseAction) {
+    public ConnectionResourceHolder() {
         super();
-        m_releaseAction = releaseAction;
-    }
-
-    /**
-     * @return release action.
-     */
-    public ReleaseAction getReleaseAction() {
-        return m_releaseAction;
     }
 
     /**

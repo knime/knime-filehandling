@@ -79,7 +79,6 @@ import java.util.stream.Stream;
 import org.apache.sshd.client.subsystem.sftp.SftpClient;
 import org.apache.sshd.client.subsystem.sftp.SftpClient.Attributes;
 import org.apache.sshd.client.subsystem.sftp.fs.SftpPosixFileAttributes;
-import org.knime.ext.ssh.filehandling.fs.ConnectionResourceHolder.ReleaseAction;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
@@ -351,28 +350,24 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
             final WithResourceInvocable<R> func)
             throws IOException {
 
-        IOException toThrow = new IOException(); // dummy assignment to shut up compiler warning
-
         final ConnectionResource resource = m_resources.take();
         try {
             final R result = func.invoke(resource);
-
             if (releaseResource) {
                 m_resources.release(resource);
             } else {
+                // if not released immediately then should be listen
+                // for release it later.
                 m_resourceRef.get().setResource(resource);
             }
-
             return result;
         } catch (final IOException e) {
             m_resources.release(resource);
-            toThrow = e;
+            throw e;
         } catch (Exception e) { // NOSONAR prevent resource leakage caused by non-IOEs being thrown
             m_resources.release(resource);
-            toThrow = new IOException(e.getMessage(), e);
+            throw new IOException(e.getMessage(), e);
         }
-
-        throw toThrow;
     }
 
     /**
@@ -393,29 +388,17 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     void unregisterCloseable(final Closeable closeable) {
         final ConnectionResourceHolder holder = m_closeables.remove(closeable);
         if (holder != null) {
-            switch (holder.getReleaseAction()) {
-            case Release:
-                m_resources.release(holder.getResource());
-                break;
-            case ForceClose:
-                m_resources.forceClose(holder.getResource());
-                break;
-            default:
-                throw new RuntimeException("Unexpected release action: " + holder.getReleaseAction());
-            }
+            m_resources.release(holder.getResource());
         }
     }
 
     /**
-     * @param releaseAction
-     *            release action. Sets atomic reference for resource. It marks it as
-     *            waiting of closeable resource set in same thread.
      */
-    private void startCatchResource(final ReleaseAction releaseAction) {
+    private void startCatchResource() {
         if (m_resourceRef.get() != null) {
             throw new IllegalStateException("Already waiting resource");
         }
-        m_resourceRef.set(new ConnectionResourceHolder(releaseAction));
+        m_resourceRef.set(new ConnectionResourceHolder());
     }
 
     /**
@@ -436,7 +419,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     @Override
     public SeekableByteChannel newByteChannel(final Path path, final Set<? extends OpenOption> options, final FileAttribute<?>... attrs)
             throws IOException {
-        startCatchResource(ReleaseAction.Release);
+        startCatchResource();
         SeekableByteChannel channel = null;
         try {
             channel = super.newByteChannel(path, options, attrs);
@@ -451,7 +434,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     @Override
     public InputStream newInputStream(final Path path, final OpenOption... options) throws IOException {
-        startCatchResource(ReleaseAction.Release);
+        startCatchResource();
         InputStream in = null;
         try {
             in = super.newInputStream(path, options);
@@ -466,7 +449,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     @Override
     public OutputStream newOutputStream(final Path path, final OpenOption... options) throws IOException {
-        startCatchResource(ReleaseAction.Release);
+        startCatchResource();
         OutputStream out = null;
         try {
             out = super.newOutputStream(path, options);
