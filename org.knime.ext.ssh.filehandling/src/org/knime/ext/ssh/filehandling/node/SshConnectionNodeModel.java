@@ -157,7 +157,7 @@ public class SshConnectionNodeModel extends NodeModel {
         cfg.setHost(settings.getHost());
         cfg.setConnectionTimeout(settings.getConnectionTimeout() * 1000l);
         cfg.setPort(settings.getPort());
-        cfg.setMaxSftpSessionLimit(settings.getSessionCount());
+        cfg.setMaxSftpSessionLimit(settings.getMaxSessionCount());
 
         // auth
         SshAuthenticationSettingsModel auth = settings.getAuthenticationSettings();

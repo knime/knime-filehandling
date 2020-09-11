@@ -57,10 +57,8 @@ import java.io.IOException;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
@@ -142,7 +140,7 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
         m_authDialog = new AuthenticationDialog(m_settings.getAuthenticationSettings(),
                 createFlowVariableModel(
                 m_settings.getAuthenticationSettings().getKeyFileLocationPath(), FSLocationVariableType.INSTANCE));
-        conCenter.add(m_authDialog, BorderLayout.WEST);
+        conCenter.add(m_authDialog, BorderLayout.NORTH);
 
         parent.add(connections, BorderLayout.CENTER);
 
@@ -193,24 +191,17 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
     private FSConnection createFSConnection() throws IOException {
         try {
             return SshConnectionNodeModel.createConnection(createSettings(), m_inputSpecs, getCredentialsProvider());
-        } catch (Exception e) {
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(getPanel(), e.getMessage(),
-                    "Failed to create SSH connection", JOptionPane.ERROR_MESSAGE));
-            if (e instanceof IOException) {
-                throw (IOException) e;
-            }
+        } catch (IOException e) {
+            throw e;
+        } catch (InvalidSettingsException e) {
             // wrap to I/O exception
             throw new IOException("Failed to create node settings", e);
         }
     }
 
     private JComponent createAdvancedPanel() {
-        //wrap to flow panel for avoid of stretching by height
-        final JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEADING));
-
         //components
         final JPanel parent = new JPanel(new BorderLayout());
-        wrapper.add(parent);
 
         //connection timeout
         final JPanel northPanel = new JPanel(new GridBagLayout());
@@ -222,8 +213,9 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
         addLabeledComponent(northPanel,
                 "Connection timeout",
                 leftLayout(new DialogComponentNumber(m_settings.getConnectionTimeoutModel(), "", 1)), 1);
-        addLabeledComponent(northPanel, "SFTP sessions",
-                leftLayout(new DialogComponentNumber(m_settings.getSessionCountModel(), "", 1)), 2);
+        addLabeledComponent(northPanel,
+                "Max opened SFTP sessions",
+                leftLayout(new DialogComponentNumber(m_settings.getMaxSessionCountModel(), "", 1)), 2);
 
         //known hosts
         final JPanel knownHostsPanel = new JPanel(new BorderLayout());
@@ -235,14 +227,22 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
         m_knownHostsChooser = new DialogComponentReaderFileChooser(m_settings.getKnownHostsFileModel(),
                 KNOWN_HOSTS_HISTORY_ID, createFlowVariableModel(SshConnectionSettingsModel.getKnownHostLocationPath(),
                         FSLocationVariableType.INSTANCE));
+
         final JPanel fileChooserPanel = m_knownHostsChooser.getComponentPanel();
         fileChooserPanel.setPreferredSize(fileChooserPanel.getMinimumSize());
+        fileChooserPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        knownHostsPanel.add(fileChooserPanel, BorderLayout.CENTER);
+        // add file chooser to wrapper at the north position for
+        // avoid of vertical scratch
+        final JPanel fileChooserWrapper = new JPanel(new BorderLayout());
+        fileChooserWrapper.add(fileChooserPanel, BorderLayout.NORTH);
+
+        knownHostsPanel.add(fileChooserWrapper, BorderLayout.CENTER);
 
         m_useKnownHostsField.addActionListener(
                 event -> knownHostsSelectionChanged(m_useKnownHostsField.isSelected()));
-        return wrapper;
+
+        return parent;
     }
 
     static JPanel leftLayout(final DialogComponent comp) {

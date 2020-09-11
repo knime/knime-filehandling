@@ -79,6 +79,10 @@
 		    <option name="Connection timeout">
 		        Timeout in seconds to establish a connection or 0 for an infinite timeout. 
 		    </option>
+		    <option name="Max opened SFTP sessions">
+		        Max number of opened SFTP sessions. Actual number of sessions may be less
+		        it is dependent from SSHD server settings. 
+		    </option>
 		    <option name="Use known hosts">
 		        If this options selected the known hosts file will used for verify remote hosts.
 		    </option>

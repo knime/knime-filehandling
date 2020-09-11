@@ -85,7 +85,7 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
 
     private static final String AUTH = "auth";
     private static final String KEY_KNOWN_HOSTS_FILE = "knownHostsFile";
-    private static final int DEFAULT_TIMEOUT = 60;
+    private static final int DEFAULT_TIMEOUT = 30;
 
     private final String m_configName;
     private NodeCreationConfiguration m_nodeCreationConfig;
@@ -93,7 +93,7 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelIntegerBounded m_connectionTimeout;
     private final SettingsModelIntegerBounded m_port;
-    private final SettingsModelIntegerBounded m_sessionCount;
+    private final SettingsModelIntegerBounded m_maxSessionCount;
     private final SettingsModelString m_host;
     private final SshAuthenticationSettingsModel m_authSettings;
     private SettingsModelReaderFileChooser m_knownHostsFile;
@@ -113,7 +113,7 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         m_connectionTimeout = new SettingsModelIntegerBounded("connectionTimeout", DEFAULT_TIMEOUT,
                 1,
                 Integer.MAX_VALUE);
-        m_sessionCount = new SettingsModelIntegerBounded("sessionCount", 8, 1, Integer.MAX_VALUE);
+        m_maxSessionCount = new SettingsModelIntegerBounded("maxSessionCount", 15, 1, Integer.MAX_VALUE);
 
         m_authSettings = new SshAuthenticationSettingsModel(AUTH, cfg);
 
@@ -151,7 +151,7 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         m_connectionTimeout.setEnabled(enabled);
         m_port.setEnabled(enabled);
         m_host.setEnabled(enabled);
-        m_sessionCount.setEnabled(enabled);
+        m_maxSessionCount.setEnabled(enabled);
         m_authSettings.setEnabled(enabled);
         m_knownHostsFile.setEnabled(enabled);
     }
@@ -202,7 +202,7 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         m_connectionTimeout.saveSettingsTo(settings);
         m_port.saveSettingsTo(settings);
         m_host.saveSettingsTo(settings);
-        m_sessionCount.saveSettingsTo(settings);
+        m_maxSessionCount.saveSettingsTo(settings);
         m_knownHostsFile.saveSettingsTo(settings);
         m_authSettings.saveSettingsForModel(settings);
     }
@@ -216,8 +216,11 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         m_connectionTimeout.loadSettingsFrom(settings);
         m_port.loadSettingsFrom(settings);
         m_host.loadSettingsFrom(settings);
-        m_sessionCount.loadSettingsFrom(settings);
-
+        try {
+            m_maxSessionCount.loadSettingsFrom(settings);
+        } catch (InvalidSettingsException ex1) {
+            // wrapped by try/catch for backward compatibility
+        }
         try {
             m_knownHostsFile.loadSettingsFrom(settings);
         } catch (InvalidSettingsException ex) {
@@ -309,9 +312,9 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
         if (isEmpty(m_host.getStringValue())) {
             throw new InvalidSettingsException("Host must be specified.");
         }
-        if (m_sessionCount.getIntValue() < 1) {
+        if (m_maxSessionCount.getIntValue() < 1) {
             throw new InvalidSettingsException(
-                    "Invalid number of SFTP sessions " + m_sessionCount.getIntValue());
+                    "Invalid maximum number of SFTP sessions " + m_maxSessionCount.getIntValue());
         }
 
         m_authSettings.validate();
@@ -428,16 +431,16 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
     }
 
     /**
-     * @return number of SFTP sessions.
+     * @return maximum number of SFTP sessions.
      */
-    public int getSessionCount() {
-        return m_sessionCount.getIntValue();
+    public int getMaxSessionCount() {
+        return m_maxSessionCount.getIntValue();
     }
 
     /**
-     * @return settings model of number of SFTP sessions.
+     * @return settings model of maximum number of SFTP sessions.
      */
-    public SettingsModelIntegerBounded getSessionCountModel() {
-        return m_sessionCount;
+    public SettingsModelIntegerBounded getMaxSessionCountModel() {
+        return m_maxSessionCount;
     }
 }

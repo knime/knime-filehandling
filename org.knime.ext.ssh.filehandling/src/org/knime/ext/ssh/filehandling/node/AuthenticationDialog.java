@@ -51,7 +51,7 @@ package org.knime.ext.ssh.filehandling.node;
 
 import static org.knime.ext.ssh.filehandling.node.SshConnectionNodeDialog.leftLayout;
 
-import java.awt.Component;
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -117,9 +117,9 @@ public class AuthenticationDialog extends JPanel {
     private final DialogComponentReaderFileChooser m_keyFileChooser;
 
     //panels
-    private final Component m_credentialPanel;
-    private final Component m_userPwdPanel;
-    private final Component m_keyFilePanel;
+    private final JPanel m_credentialPanel;
+    private final JPanel m_userPwdPanel;
+    private final JPanel m_keyFilePanel;
     private final PlainDocument m_userNameDocument = new PlainDocument();
 
     private final SshAuthenticationSettingsModel m_settings;
@@ -231,7 +231,7 @@ public class AuthenticationDialog extends JPanel {
      *            flow variables model.
      */
     public AuthenticationDialog(final SshAuthenticationSettingsModel settings, final FlowVariableModel flowVariables) {
-        super();
+        super(new BorderLayout());
         m_settings = settings;
 
         m_keyFileChooser = new DialogComponentReaderFileChooser(
@@ -247,17 +247,7 @@ public class AuthenticationDialog extends JPanel {
         m_userPwdPanel = createUserPwdPanel();
         m_keyFilePanel = createKeyFilePanel();
 
-        setLayout(new GridBagLayout());
-
-        final GridBagConstraints gbc = new GridBagConstraints();
-        // connection
-        gbc.anchor = GridBagConstraints.LINE_START;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        add(createRootPanel(), gbc);
+        add(createRootPanel(), BorderLayout.NORTH);
 
         try {
             m_userNameDocument.insertString(0, m_settings.getUsernameModel().getStringValue(), null);
@@ -270,32 +260,15 @@ public class AuthenticationDialog extends JPanel {
     }
 
     private JPanel createRootPanel() {
-        final JPanel authBox = new JPanel(new GridBagLayout());
-        final GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.LINE_START;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.insets = NEUTRAL_INSET;
+        final JPanel authBox = new JPanel(new BorderLayout());
 
-        //credentials
-        gbc.gridy++;
-        authBox.add(m_typeCredential, gbc);
-        gbc.gridy++;
-        authBox.add(m_credentialPanel, gbc);
+        JPanel credentials = createPanelWithType(m_typeCredential, m_credentialPanel);
+        JPanel password = createPanelWithType(m_typeUserPwd, m_userPwdPanel);
+        JPanel keyFile = createPanelWithType(m_typeKeyFile, m_keyFilePanel);
 
-        //user/password
-        gbc.gridy++;
-        authBox.add(m_typeUserPwd, gbc);
-        gbc.gridy++;
-        authBox.add(m_userPwdPanel, gbc);
-
-        gbc.gridy++;
-        authBox.add(m_typeKeyFile, gbc);
-        gbc.gridy++;
-        authBox.add(m_keyFilePanel, gbc);
+        authBox.add(credentials, BorderLayout.NORTH);
+        credentials.add(password, BorderLayout.CENTER);
+        password.add(keyFile, BorderLayout.CENTER);
 
         final Dimension origSize = authBox.getPreferredSize();
         Dimension preferredSize = getMaxDim(m_credentialPanel.getPreferredSize(), m_userPwdPanel.getPreferredSize());
@@ -305,6 +278,28 @@ public class AuthenticationDialog extends JPanel {
         authBox.setMinimumSize(maxSize);
         authBox.setPreferredSize(maxSize);
         return authBox;
+    }
+
+    private static JPanel createPanelWithType(final JRadioButton rb, final JPanel panel) {
+        // Using of proxy panel allows to avoid of component shifting
+        // when new authentication mode selected
+        JPanel north = new JPanel(new BorderLayout()) {
+            private static final long serialVersionUID = 1L;
+
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public Dimension getPreferredSize() {
+                return panel.getPreferredSize();
+            }
+        };
+        north.add(rb, BorderLayout.WEST);
+        north.add(panel, BorderLayout.CENTER);
+
+        JPanel container = new JPanel(new BorderLayout());
+        container.add(north, BorderLayout.NORTH);
+        return container;
     }
 
     private static Dimension getMaxDim(final Dimension d1, final Dimension d2) {
@@ -370,7 +365,9 @@ public class AuthenticationDialog extends JPanel {
         gbc.gridwidth = 2;
         gbc.insets = new Insets(0, LEFT_INSET, 0, 5);
         gbc.weightx = 1;
-        panel.add(m_keyFileChooser.getComponentPanel(), gbc);
+        JPanel fileChooserPanel = m_keyFileChooser.getComponentPanel();
+        fileChooserPanel.setPreferredSize(fileChooserPanel.getMinimumSize());
+        panel.add(fileChooserPanel, gbc);
 
         // key file password
         gbc.gridwidth = 1;
@@ -389,7 +386,7 @@ public class AuthenticationDialog extends JPanel {
         return panel;
     }
 
-    private Component createCredentialPanel() {
+    private JPanel createCredentialPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
         final GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.LINE_START;
