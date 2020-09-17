@@ -155,8 +155,12 @@ public class SftpSessionFactory {
                 session.getFactoryManager().setUserAuthFactoriesNameList(UserAuthPublicKeyFactory.INSTANCE.getName());
                 addPublicKeys(session);
             } else {
-                session.getFactoryManager().setUserAuthFactoriesNameList(UserAuthPasswordFactory.INSTANCE.getName());
-                session.addPasswordIdentity(m_settings.getPassword());
+                final String password = m_settings.getPassword();
+                if (password != null && !password.isEmpty()) {
+                    session.getFactoryManager()
+                            .setUserAuthFactoriesNameList(UserAuthPasswordFactory.INSTANCE.getName());
+                    session.addPasswordIdentity(password);
+                }
             }
 
             // set idle time out one year for avoid of unexpected
