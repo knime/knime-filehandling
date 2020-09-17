@@ -48,33 +48,31 @@
  */
 package org.knime.ext.ssh.filehandling.node;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.io.IOException;
 
-import javax.swing.JCheckBox;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.context.NodeCreationConfiguration;
-import org.knime.core.node.defaultnodesettings.DialogComponent;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
+import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.ext.ssh.filehandling.node.SshAuthenticationSettingsModel.AuthType;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 import org.knime.filehandling.core.data.location.variable.FSLocationVariableType;
@@ -86,19 +84,19 @@ import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.Dialog
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class SshConnectionNodeDialog extends NodeDialogPane {
-    private static final String KNOWN_HOSTS_HISTORY_ID = "sshFs.knowhHostsFile";
 
-    private final WorkingDirectoryChooser m_workingDirChooser = new WorkingDirectoryChooser("ssh.workingDir",
-            this::createFSConnection);
+    private static final String KNOWN_HOSTS_HISTORY_ID = "ssh.knownHostsFile";
 
-    private AuthenticationDialog m_authDialog;
-
-    private final JCheckBox m_useKnownHostsField = new JCheckBox("Use known hosts");
-    private DialogComponentReaderFileChooser m_knownHostsChooser;
+    private static final String WORKING_DIR_HISTORY_ID = "ssh.workingDir";
 
     private final SshConnectionSettingsModel m_settings;
 
-    private PortObjectSpec[] m_inputSpecs;
+    private AuthenticationDialog m_authPanel;
+
+    private final WorkingDirectoryChooser m_workingDirChooser = new WorkingDirectoryChooser(WORKING_DIR_HISTORY_ID,
+            this::createFSConnection);
+
+    private DialogComponentReaderFileChooser m_knownHostsChooser;
 
     /**
      * Creates new instance.
@@ -107,90 +105,107 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
      *            node creation configuration.
      */
     public SshConnectionNodeDialog(final NodeCreationConfiguration cfg) {
-        m_settings = new SshConnectionSettingsModel("justForDialog", cfg);
+        m_settings = new SshConnectionSettingsModel(cfg);
         // add user name synchronizer
+
+        initFields();
 
         addTab("Settings", createSettingsPanel());
         addTab("Advanced", createAdvancedPanel());
     }
 
+    private void initFields() {
+        m_authPanel = new AuthenticationDialog(m_settings.getAuthenticationSettings(),
+                createFlowVariableModel(SshConnectionSettingsModel.getKeyFileLocationPath(), //
+                        FSLocationVariableType.INSTANCE), //
+                this);
+
+        m_knownHostsChooser = new DialogComponentReaderFileChooser(m_settings.getKnownHostsFileModel(),
+                KNOWN_HOSTS_HISTORY_ID, //
+                createFlowVariableModel(SshConnectionSettingsModel.getKnownHostLocationPath(), //
+                        FSLocationVariableType.INSTANCE));
+    }
+
     private JComponent createSettingsPanel() {
-        //components
-        final JPanel parent = new JPanel(new BorderLayout());
+        final JPanel panel = new JPanel();
+        final BoxLayout parentLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+        panel.setLayout(parentLayout);
 
-        //add other components
-        final JPanel connections = new JPanel(new BorderLayout());
-        connections.setBorder(createTitledBorder("Connection settings"));
+        panel.add(createConnectionSettingsPanel());
+        panel.add(createAuthenticationSettingsPanel());
+        panel.add(createFileSystemSettingsPanel());
 
-        final JPanel conTop = new JPanel(new GridBagLayout());
-        connections.add(conTop, BorderLayout.NORTH);
+        return panel;
+    }
 
-        DialogComponentStringJustified hostComponent = new DialogComponentStringJustified(m_settings.getHostModel(), "");
-        hostComponent.getComponentLayout().setHgap(5);
-        hostComponent.getComponentPanel().setBorder(new EmptyBorder(5, 5, 5, 0));
+    private Component createFileSystemSettingsPanel() {
+        final JPanel panel = new JPanel();
+        final BoxLayout parentLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+        panel.setLayout(parentLayout);
+        panel.setBorder(createTitledBorder("File System settings"));
 
-        addLabeledComponent(conTop, "Host", hostComponent.getComponentPanel(), 0);
-        addLabeledComponent(conTop, "Port", leftLayout(new DialogComponentNumber(m_settings.getPortModel(), "", 1)), 1);
+        panel.add(m_workingDirChooser);
+        return panel;
+    }
 
-        final JPanel conCenter = new JPanel(new BorderLayout());
-        conCenter.setBorder(createTitledBorder("Authentication"));
-        connections.add(conCenter, BorderLayout.CENTER);
+    private Component createAuthenticationSettingsPanel() {
+        final JPanel panel = new JPanel();
+        panel.setBorder(createTitledBorder("Authentication settings"));
+        panel.add(m_authPanel);
+        return panel;
+    }
 
-        //authentication component
-        m_authDialog = new AuthenticationDialog(m_settings.getAuthenticationSettings(),
-                createFlowVariableModel(
-                m_settings.getAuthenticationSettings().getKeyFileLocationPath(), FSLocationVariableType.INSTANCE));
-        conCenter.add(m_authDialog, BorderLayout.NORTH);
+    private Component createConnectionSettingsPanel() {
+        final JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(createTitledBorder("Connection settings"));
 
-        parent.add(connections, BorderLayout.CENTER);
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 0, 5);
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("Host:"), gbc);
 
-        //add directory chooser panel
-        final JPanel south = new JPanel(new BorderLayout());
-        south.setBorder(createTitledBorder("File system settings"));
-        south.add(m_workingDirChooser, BorderLayout.CENTER);
-        parent.add(south, BorderLayout.SOUTH);
+        gbc.gridx++;
+        panel.add(new DialogComponentString(m_settings.getHostModel(), "", false, 45).getComponentPanel(), gbc);
 
-        return parent;
+        gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        panel.add(Box.createHorizontalGlue(), gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        panel.add(new JLabel("Port: "), gbc);
+
+        gbc.gridx++;
+        gbc.insets = new Insets(0, 0, 0, 5);
+        panel.add(new DialogComponentNumber(m_settings.getPortModel(), "", 1).getComponentPanel(), gbc);
+
+        gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        panel.add(Box.createHorizontalGlue(), gbc);
+
+        return panel;
     }
 
     /**
-     * @param title border title.
+     * @param title
+     *            border title.
      * @return titled border.
      */
     private static Border createTitledBorder(final String title) {
         return new TitledBorder(new EtchedBorder(EtchedBorder.RAISED), title);
     }
 
-    private static void addLabeledComponent(final JPanel container, final String label,
-            final JPanel component, final int row) {
-        // add label
-        final GridBagConstraints lc = new GridBagConstraints();
-        lc.fill = GridBagConstraints.HORIZONTAL;
-        lc.gridx = 0;
-        lc.gridy = row;
-        lc.weightx = 0.;
-
-        final JLabel l = new JLabel(label);
-        l.setHorizontalTextPosition(SwingConstants.RIGHT);
-        l.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        final JPanel labelWrapper = new JPanel(new BorderLayout());
-        labelWrapper.setBorder(new EmptyBorder(0, 0, 0, 5));
-        labelWrapper.add(l, BorderLayout.CENTER);
-        container.add(labelWrapper, lc);
-
-        // add component.
-        final GridBagConstraints cc = new GridBagConstraints();
-        cc.fill = GridBagConstraints.HORIZONTAL;
-        cc.gridx = 1;
-        cc.gridy = row;
-        cc.weightx = 1.;
-        container.add(component, cc);
-    }
-
     private FSConnection createFSConnection() throws IOException {
         try {
-            return SshConnectionNodeModel.createConnection(createSettings(), m_inputSpecs, getCredentialsProvider());
+            final SshConnectionSettingsModel settings = m_settings.createClone();
+            return SshConnectionNodeModel.createConnection(settings, getCredentialsProvider());
         } catch (IOException e) {
             throw e;
         } catch (InvalidSettingsException e) {
@@ -200,124 +215,99 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
     }
 
     private JComponent createAdvancedPanel() {
-        //components
-        final JPanel parent = new JPanel(new BorderLayout());
+        final JPanel panel = new JPanel(new GridBagLayout());
 
-        //connection timeout
-        final JPanel northPanel = new JPanel(new GridBagLayout());
-        final JPanel northPanelWrapper = new JPanel(new FlowLayout(FlowLayout.LEADING));
-        northPanelWrapper.add(northPanel);
-        parent.add(northPanelWrapper, BorderLayout.NORTH);
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 5, 0, 5);
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.fill = GridBagConstraints.NONE;
+        panel.add(new JLabel("Connection timeout (seconds)  :"), gbc);
 
-        // add component.
-        addLabeledComponent(northPanel,
-                "Connection timeout",
-                leftLayout(new DialogComponentNumber(m_settings.getConnectionTimeoutModel(), "", 1)), 1);
-        addLabeledComponent(northPanel,
-                "Max opened SFTP sessions",
-                leftLayout(new DialogComponentNumber(m_settings.getMaxSessionCountModel(), "", 1)), 2);
+        gbc.gridx++;
+        panel.add(new DialogComponentNumber(m_settings.getConnectionTimeoutModel(), "", 1).getComponentPanel(), gbc);
 
-        //known hosts
-        final JPanel knownHostsPanel = new JPanel(new BorderLayout());
-        parent.add(knownHostsPanel, BorderLayout.CENTER);
+        gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        panel.add(Box.createHorizontalGlue(), gbc);
 
-        knownHostsPanel.add(m_useKnownHostsField, BorderLayout.NORTH);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        panel.add(new JLabel("Maximum SFTP sessions:"), gbc);
 
-        //known hosts file chooser
-        m_knownHostsChooser = new DialogComponentReaderFileChooser(m_settings.getKnownHostsFileModel(),
-                KNOWN_HOSTS_HISTORY_ID, createFlowVariableModel(SshConnectionSettingsModel.getKnownHostLocationPath(),
-                        FSLocationVariableType.INSTANCE));
+        gbc.gridx++;
+        panel.add(new DialogComponentNumber(m_settings.getMaxSessionCountModel(), "", 1).getComponentPanel(), gbc);
 
-        final JPanel fileChooserPanel = m_knownHostsChooser.getComponentPanel();
-        fileChooserPanel.setPreferredSize(fileChooserPanel.getMinimumSize());
-        fileChooserPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        panel.add(Box.createHorizontalGlue(), gbc);
 
-        // add file chooser to wrapper at the north position for
-        // avoid of vertical scratch
-        final JPanel fileChooserWrapper = new JPanel(new BorderLayout());
-        fileChooserWrapper.add(fileChooserPanel, BorderLayout.NORTH);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.insets = new Insets(0, 0, 0, 5);
+        gbc.weightx = 0;
+        panel.add(new DialogComponentBoolean(m_settings.getUseKnownHostsFileModel(), "Use known hosts file")
+                .getComponentPanel(), gbc);
 
-        knownHostsPanel.add(fileChooserWrapper, BorderLayout.CENTER);
+        gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.gridwidth = 2;
+        panel.add(Box.createHorizontalGlue(), gbc);
 
-        m_useKnownHostsField.addActionListener(
-                event -> knownHostsSelectionChanged(m_useKnownHostsField.isSelected()));
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.insets = new Insets(0, 23, 0, 5);
+        gbc.gridwidth = 3;
+        panel.add(m_knownHostsChooser.getComponentPanel(), gbc);
 
-        return parent;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        gbc.weighty = 1;
+        panel.add(Box.createVerticalGlue(), gbc);
+
+        return panel;
     }
 
-    static JPanel leftLayout(final DialogComponent comp) {
-        final JPanel pane = comp.getComponentPanel();
-        pane.setLayout(new FlowLayout(FlowLayout.LEFT));
-        return pane;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO output) throws InvalidSettingsException {
-        SshConnectionSettingsModel settings = m_settings.createClone();
-
-        if (!m_useKnownHostsField.isSelected()) {
-            settings.getKnownHostsFileModel().setLocation(SshConnectionSettingsModel.NULL_LOCATION);
-        }
-
-        SshAuthenticationSettingsModel auth = settings.getAuthenticationSettings();
-        if (auth.getAuthType() != AuthType.USER_PWD) {
-            auth.getPasswordModel().setStringValue("");
-        }
-        if (auth.getAuthType() != AuthType.KEY_FILE) {
-            auth.getKeyFilePasswordModel().setStringValue("");
-            auth.getKeyFileModel().setLocation(SshConnectionSettingsModel.NULL_LOCATION);
-        }
-        if (auth.getAuthType() != AuthType.CREDENTIALS) {
-            auth.getCredentialModel().setStringValue("");
-        }
-
-        settings.validate();
-        settings.saveSettingsTo(output);
+        preSettingsSave();
+        m_settings.validate();
+        m_settings.saveSettingsTo(output);
     }
 
-    private SshConnectionSettingsModel createSettings() throws InvalidSettingsException {
-        NodeSettings ns = new NodeSettings("tmp");
-        saveSettingsTo(ns);
-
-        SshConnectionSettingsModel settings = m_settings.createClone();
-        settings.loadSettingsFrom(ns);
-        settings.configure(m_inputSpecs, e -> {
-        });
-
-        return settings;
+    private void preSettingsSave() {
+        m_settings.getWorkingDirectoryModel().setStringValue(m_workingDirChooser.getSelectedWorkingDirectory());
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO input, final PortObjectSpec[] specs)
             throws NotConfigurableException {
-        m_inputSpecs = specs;
 
         try {
-            m_settings.loadSettingsForModel(input);
-        } catch (final InvalidSettingsException e) {
+            m_settings.loadSettingsFrom(input);
+        } catch (final InvalidSettingsException e) { // NOSONAR can be ignored
+            // can be ignored
         }
 
         // call load settings for correct initialize file system dialog
+        m_authPanel.loadSettingsFrom(input, specs);
         m_knownHostsChooser.loadSettingsFrom(input, specs);
-
-        m_authDialog.updateUi(input, specs, getCredentialsProvider());
-
-        //Known hosts
-        final boolean useKnownHosts = m_settings.hasKnownHostsFile();
-        m_useKnownHostsField.setSelected(useKnownHosts);
-        knownHostsSelectionChanged(useKnownHosts);
-
-        m_workingDirChooser.setSelectedWorkingDirectory(m_settings.getWorkingDirectory());
     }
 
-    private void knownHostsSelectionChanged(final boolean selected) {
-        m_knownHostsChooser.getComponentPanel().setVisible(selected);
+
+    @Override
+    public void onOpen() {
+        m_workingDirChooser.setSelectedWorkingDirectory(m_settings.getWorkingDirectory());
+        m_authPanel.onOpen();
     }
 
     @Override
