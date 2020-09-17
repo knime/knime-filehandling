@@ -66,6 +66,7 @@ import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.FactoryManager;
 import org.apache.sshd.common.PropertyResolverUtils;
+import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
 import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
@@ -79,6 +80,11 @@ import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class SftpSessionFactory {
+    /**
+     *
+     */
+    private static final String ERR_MSG_AUTHENTICATION_FAILED = "No more authentication methods available";
+
     private SshClient m_sshClient;
 
     private final SshConnectionConfiguration m_settings;
@@ -175,18 +181,23 @@ public class SftpSessionFactory {
             if (session != null) {
                 closeSessionSafely(session);
             }
-
-            if (ExceptionUtil.getDeepestError(exc) instanceof UnresolvedAddressException) {
-                // UnresolvedAddressException unfortunately has a very ugly message
-                throw new IOException("Unknown host " + m_settings.getHost(), exc.getCause());
-            } else {
-                final String msg = Optional.ofNullable(ExceptionUtil.getDeepestErrorMessage(exc, true))
-                        .orElse("Failed to connect for unknown reason. Please see KNIME log for more details.");
-                throw new IOException(msg, exc);
-            }
+            toIOException(exc);
         }
 
         return session;
+    }
+
+    private void toIOException(final Exception exc) throws IOException {
+        if (ExceptionUtil.getDeepestError(exc) instanceof UnresolvedAddressException) {
+            // UnresolvedAddressException unfortunately has a very ugly message
+            throw new IOException("Unknown host " + m_settings.getHost(), exc.getCause());
+        } else if (exc instanceof SshException && exc.getMessage().equalsIgnoreCase(ERR_MSG_AUTHENTICATION_FAILED)) {
+            throw new IOException("Authentication failed", exc);
+        } else {
+            final String msg = Optional.ofNullable(ExceptionUtil.getDeepestErrorMessage(exc, true))
+                    .orElse("Failed to connect for unknown reason. Please see KNIME log for more details.");
+            throw new IOException(msg, exc);
+        }
     }
 
     private static void closeSessionSafely(final ClientSession session) {
