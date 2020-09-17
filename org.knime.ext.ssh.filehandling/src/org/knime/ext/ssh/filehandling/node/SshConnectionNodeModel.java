@@ -64,8 +64,10 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.ICredentials;
+import org.knime.core.node.workflow.NodeContext;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
 import org.knime.ext.ssh.filehandling.fs.SshConnection;
 import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
@@ -252,9 +254,12 @@ public class SshConnectionNodeModel extends NodeModel {
 
         private final Consumer<StatusMessage> m_statusConsumer;
 
+        private final NodeContext m_nodeContext;
+
         DefaultBridge(final SshConnectionSettingsModel settings, final Consumer<StatusMessage> statusConsumer) {
             m_settings = settings;
             m_statusConsumer = statusConsumer;
+            m_nodeContext = CheckUtils.checkArgumentNotNull(NodeContext.getContext(), "Node context required");
         }
 
         @Override
@@ -269,9 +274,14 @@ public class SshConnectionNodeModel extends NodeModel {
 
         private void doWithFileChooserModel(final SettingsModelReaderFileChooser chooser,
                 final Consumer<Path> operation) throws IOException, InvalidSettingsException {
+
+            NodeContext.pushContext(m_nodeContext);
+
             try (ReadPathAccessor accessor = chooser.createReadPathAccessor()) {
                 FSPath path = accessor.getRootPath(m_statusConsumer);
                 operation.accept(path);
+            } finally {
+                NodeContext.removeLastContext();
             }
         }
     }
