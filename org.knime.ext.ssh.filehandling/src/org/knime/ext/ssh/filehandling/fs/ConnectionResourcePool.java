@@ -205,7 +205,7 @@ public class ConnectionResourcePool implements SessionListener {
                 m_freeResources.add(createResource());
             } catch (SshChannelOpenException e) {
                 LOG.warn(String.format(
-                        "Failed to create %d-th SFT session (%d sessions already opened). You might consider decreasing the maximum SFTP sessions.",
+                        "Failed to create %d-th SFTP session (%d sessions already opened). Please consider decreasing the maximum SFTP sessions.",
                         i + 1, i), e);
                 break;
             }
