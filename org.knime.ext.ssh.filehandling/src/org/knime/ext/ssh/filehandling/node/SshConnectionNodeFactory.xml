@@ -7,18 +7,17 @@
     <name>SSH Connector (Labs)</name>
     
     <shortDescription>
-        Connects to remote file system by SSH in order to read/write files in downstream nodes.
+        Connects to remote file system via SSH in order to read/write files in downstream nodes.
     </shortDescription>
     
     <fullDescription>
          <intro>
-            <p>This node connects to remote file system by SSH. The resulting output port allows downstream nodes to access
-            the <i>files</i> of the remote file system, e.g. to read or write,
-            or to perform other file system operations (browse/list files, copy, move, ...).
+            <p>This node connects to a remote SSH server using SFTP. The resulting output port allows downstream nodes to access
+            the <i>files</i> of the remote server, e.g. to read or write, or to perform other file system operations (browse/list files, copy, move, ...).
             </p>
             
             <p><b>Path syntax:</b> Paths for SSH are specified with a UNIX-like syntax, /myfolder/myfile. An absolute
-            for SSH consists of:
+            path for SSH consists of:
                 <ol>
                     <li>A leading slash ("/").</li>
                     <li>Followed by the path to the file ("myfolder/myfile" in the above example).</li>
@@ -28,10 +27,10 @@
         
         <tab name="Settings">
 	        <option name="Host">
-	            Address of the host.
+	            Address of the host where the SSH server runs.
 	        </option>
 	        <option name="Port">
-	            Port of the service.
+	            Port that the SSH server is listening on for incoming connections.
 	        </option>
 	        <option name="Username">
 	            Remote system user name.
@@ -40,38 +39,22 @@
 	            Method of authentication.
 	            <ul>
 	            	<li>
-	            		<i>Credentials:</i> workflow credentials authentication.
+	            		<i>Credentials:</i> workflow credentials authentication. The username and password of the credentials
+	            			flow variable will be used to log into SSH. 
 	            	</li>
 	            	<li>
-	            		<i>Username &amp; password:</i> user name and password authentication.
+	            		<i>Username &amp; password:</i> Username and password authentication.
 	            	</li>
 	            	<li>
-	            		<i>Key file:</i> private key file authentication.
+	            		<i>Key file:</i> Authenticate using a private key file (supports PEM and OpenSSH file formats). You still have
+	            		to specify the <i>username</i> and optionally a password (if the private key file is password-protected).
 	            	</li>
 	           	</ul>
-	        </option>
-	        <option name="Credentials">
-	            Use workflow credentials to determine user
-	            and password.
-	        </option>
-	        <option name="Password">
-	            Password of the user of remote file system
-	        </option>
-	        <option name="Read from">
-	            File system where known hosts file is placed on.
-	        </option>
-	        <option name="File">
-	            Location of the keyfile. Note that the key file has to be in OpenSSH
-	            key file format.
-	        </option>
-	        <option name="Key file password">
-	            Password of the keyfile.
 	        </option>
 		    <option name="Working directory">
 		        Specify the <i>working directory</i> of the resulting file system connection, using the <b>Path syntax</b> explained above. The working
 		        directory must be specified as an absolute path. A working directory allows downstream nodes to access files/folders using <i>relative</i>
-		        paths, i.e. paths that do not have a leading slash. The default working directory is the root "/", under which all the
-		        document libraries are located.
+		        paths, i.e. paths that do not have a leading slash. The default working directory is the root "/".
 		    </option>
 	    </tab>
 	    
@@ -79,9 +62,9 @@
 		    <option name="Connection timeout">
 		        Timeout in seconds to establish a connection or 0 for an infinite timeout. 
 		    </option>
-		    <option name="Max opened SFTP sessions">
-		        Max number of opened SFTP sessions. Actual number of sessions may be less
-		        it is dependent from SSHD server settings. 
+		    <option name="Maximum SFTP sessions">
+		        Number of SFTP sessions the node will try to open. Actual number of sessions may be less,
+		        depending on the limits of the SSH server. 
 		    </option>
 		    <option name="Use known hosts">
 		        If this options selected the known hosts file will used for verify remote hosts.
