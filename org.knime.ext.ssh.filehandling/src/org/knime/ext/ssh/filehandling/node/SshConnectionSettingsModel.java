@@ -50,23 +50,17 @@ package org.knime.ext.ssh.filehandling.node;
 
 import java.util.function.Consumer;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.context.NodeCreationConfiguration;
-import org.knime.core.node.defaultnodesettings.SettingsModel;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelNumber;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
-import org.knime.ext.ssh.filehandling.node.SshAuthenticationSettingsModel.AuthType;
-import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocation;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.filtermode.SettingsModelFilterMode.FilterMode;
@@ -77,251 +71,187 @@ import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshConnectionSettingsModel extends SettingsModel implements ChangeListener {
-    /**
-     * Null location instance.
-     */
-    public static final FSLocation NULL_LOCATION = new FSLocation(FSCategory.LOCAL, "");
+public class SshConnectionSettingsModel {
 
-    private static final String AUTH = "auth";
+    private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
+
+    private static final String KEY_CONNECTION_TIMEOUT = "connectionTimeout";
+
+    private static final String KEY_PORT = "port";
+
+    private static final String KEY_HOST = "host";
+
+    private static final String KEY_MAX_SESSION_COUNT = "maxSessionCount";
+
+    private static final String KEY_AUTH = "auth";
+
+    private static final String KEY_USE_KNOWN_HOSTS = "useKnownHosts";
+
     private static final String KEY_KNOWN_HOSTS_FILE = "knownHostsFile";
+
     private static final int DEFAULT_TIMEOUT = 30;
 
-    private final String m_configName;
     private NodeCreationConfiguration m_nodeCreationConfig;
 
-    private final SettingsModelString m_workingDirectory;
-    private final SettingsModelIntegerBounded m_connectionTimeout;
-    private final SettingsModelIntegerBounded m_port;
-    private final SettingsModelIntegerBounded m_maxSessionCount;
     private final SettingsModelString m_host;
+    private final SettingsModelIntegerBounded m_port;
     private final SshAuthenticationSettingsModel m_authSettings;
+    private final SettingsModelString m_workingDirectory;
+
+    private final SettingsModelIntegerBounded m_connectionTimeout;
+    private final SettingsModelIntegerBounded m_maxSessionCount;
+    private final SettingsModelBoolean m_useKnownHostsFile;
     private SettingsModelReaderFileChooser m_knownHostsFile;
 
     /**
-     * @param configName
-     *            configuration name.
      * @param cfg
      *            node creation configuration.
      */
-    public SshConnectionSettingsModel(final String configName, final NodeCreationConfiguration cfg) {
-        m_configName = configName;
+    public SshConnectionSettingsModel(final NodeCreationConfiguration cfg) {
         m_nodeCreationConfig = cfg;
 
-        m_host = new SettingsModelString("host", "localhost");
-        m_port = new SettingsModelIntegerBounded("port", 22, 1, Integer.MAX_VALUE);
-        m_connectionTimeout = new SettingsModelIntegerBounded("connectionTimeout", DEFAULT_TIMEOUT,
+        m_host = new SettingsModelString(KEY_HOST, "localhost");
+        m_port = new SettingsModelIntegerBounded(KEY_PORT, 22, 1, 65535);
+        m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT, DEFAULT_TIMEOUT,
                 1,
                 Integer.MAX_VALUE);
-        m_maxSessionCount = new SettingsModelIntegerBounded("maxSessionCount", 15, 1, Integer.MAX_VALUE);
+        m_maxSessionCount = new SettingsModelIntegerBounded(KEY_MAX_SESSION_COUNT, 8, 1, Integer.MAX_VALUE);
 
-        m_authSettings = new SshAuthenticationSettingsModel(AUTH, cfg);
+        m_authSettings = new SshAuthenticationSettingsModel(cfg);
 
-        m_knownHostsFile = createFileChooserSettings(KEY_KNOWN_HOSTS_FILE, cfg);
+        m_useKnownHostsFile = new SettingsModelBoolean(KEY_USE_KNOWN_HOSTS, false);
 
-        m_workingDirectory = new SettingsModelString("workingDirectory", SshFileSystem.PATH_SEPARATOR);
-
-        // enable change listening
-        m_workingDirectory.addChangeListener(this);
-        m_connectionTimeout.addChangeListener(this);
-        m_port.addChangeListener(this);
-        m_host.addChangeListener(this);
-        m_authSettings.addChangeListener(this);
-        m_knownHostsFile.addChangeListener(this);
-    }
-
-    private static SettingsModelReaderFileChooser createFileChooserSettings(
-            final String name,
-            final NodeCreationConfiguration cfg) {
-        final SettingsModelReaderFileChooser model = new SettingsModelReaderFileChooser(
-                name,
-                cfg.getPortConfig().orElseThrow(() -> new IllegalStateException("port creation config is absent")),
+        m_knownHostsFile = new SettingsModelReaderFileChooser( //
+                KEY_KNOWN_HOSTS_FILE, //
+                cfg.getPortConfig().orElseThrow(() -> new IllegalStateException("port creation config is absent")), //
                 SshConnectionNodeFactory.FS_CONNECT_GRP_ID, FilterMode.FILE);
-        return model;
+
+        m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, SshFileSystem.PATH_SEPARATOR);
+
+        m_useKnownHostsFile.addChangeListener(e -> m_knownHostsFile.setEnabled(m_useKnownHostsFile.getBooleanValue()));
+
+        m_knownHostsFile.setEnabled(false);
     }
 
     /**
-     * {@inheritDoc}
+     * @return path to key file location settings.
      */
-    @Override
-    public void setEnabled(final boolean enabled) {
-        super.setEnabled(enabled);
-
-        m_workingDirectory.setEnabled(enabled);
-        m_connectionTimeout.setEnabled(enabled);
-        m_port.setEnabled(enabled);
-        m_host.setEnabled(enabled);
-        m_maxSessionCount.setEnabled(enabled);
-        m_authSettings.setEnabled(enabled);
-        m_knownHostsFile.setEnabled(enabled);
+    public static String[] getKeyFileLocationPath() {
+        return new String[] { KEY_AUTH, SshAuthenticationSettingsModel.KEY_KEY_FILE };
     }
 
     /**
-     * {@inheritDoc}
+     * @return path to known host location settings.
      */
-    @Override
-    public void stateChanged(final ChangeEvent e) {
-        // forward change event from listened fields to settings listeners.
-        notifyChangeListeners();
+    public static String[] getKnownHostLocationPath() {
+        return new String[] { KEY_KNOWN_HOSTS_FILE };
     }
 
     /**
-     * @return user name.
+     * Saves settings to the given {@link NodeSettingsWO}.
+     *
+     * @param settings
      */
-    public String getUsername() {
-        return getAuthenticationSettings().getUsernameModel().getStringValue();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public SshConnectionSettingsModel createClone() {
-        // save
-        NodeSettings settings = new NodeSettings("tmp");
-        saveSettingsForModel(settings);
-
-        // restore
-        SshConnectionSettingsModel cloned = new SshConnectionSettingsModel(getConfigName(), m_nodeCreationConfig);
-        try {
-            cloned.loadSettingsForModel(settings);
-            cloned.m_knownHostsFile = m_knownHostsFile.createClone();
-        } catch (InvalidSettingsException ex) {
-            throw new RuntimeException("Failed to clone SSH Node settings", ex);
-        }
-        return cloned;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void saveSettingsForModel(final NodeSettingsWO settings) {
-        m_workingDirectory.saveSettingsTo(settings);
-        m_connectionTimeout.saveSettingsTo(settings);
-        m_port.saveSettingsTo(settings);
+    public void saveSettingsTo(final NodeSettingsWO settings) {
         m_host.saveSettingsTo(settings);
+        m_port.saveSettingsTo(settings);
+        m_authSettings.saveSettingsTo(settings.addNodeSettings(KEY_AUTH));
+        m_workingDirectory.saveSettingsTo(settings);
+
+        m_connectionTimeout.saveSettingsTo(settings);
         m_maxSessionCount.saveSettingsTo(settings);
+        m_useKnownHostsFile.saveSettingsTo(settings);
         m_knownHostsFile.saveSettingsTo(settings);
-        m_authSettings.saveSettingsForModel(settings);
     }
 
     /**
-     * {@inheritDoc}
+     * Loads settings from the given {@link NodeSettingsRO}.
+     *
+     * @param settings
+     * @throws InvalidSettingsException
      */
-    @Override
-    protected void loadSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_workingDirectory.loadSettingsFrom(settings);
-        m_connectionTimeout.loadSettingsFrom(settings);
-        m_port.loadSettingsFrom(settings);
+    public void loadSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_host.loadSettingsFrom(settings);
-        try {
-            m_maxSessionCount.loadSettingsFrom(settings);
-        } catch (InvalidSettingsException ex1) {
-            // wrapped by try/catch for backward compatibility
-        }
-        try {
-            m_knownHostsFile.loadSettingsFrom(settings);
-        } catch (InvalidSettingsException ex) {
-            // possible error in case of null location
-        }
+        m_port.loadSettingsFrom(settings);
+        m_authSettings.loadSettingsFrom(settings.getNodeSettings(KEY_AUTH));
+        m_workingDirectory.loadSettingsFrom(settings);
 
-        // authentication
-        m_authSettings.loadSettingsFrom(settings);
+        m_connectionTimeout.loadSettingsFrom(settings);
+        m_maxSessionCount.loadSettingsFrom(settings);
+        m_useKnownHostsFile.loadSettingsFrom(settings);
+        m_knownHostsFile.loadSettingsFrom(settings);
+
+        m_knownHostsFile.setEnabled(m_useKnownHostsFile.getBooleanValue());
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String getConfigName() {
-        return m_configName;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String getModelTypeID() {
-        return "SSHConnection";
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void loadSettingsForDialog(final NodeSettingsRO settings, final PortObjectSpec[] specs)
-            throws NotConfigurableException {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void saveSettingsForDialog(final NodeSettingsWO settings) throws InvalidSettingsException {
-    }
-
-    /**
-     * Validates settings consistency for this instance. {@inheritDoc}
-     */
-    @Override
-    protected void validateSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
-        SshConnectionSettingsModel tmp = new SshConnectionSettingsModel(getConfigName(), m_nodeCreationConfig);
-        tmp.loadSettingsForModel(settings);
-        tmp.validate();
-    }
-
-    /**
+     * Forwards the given {@link PortObjectSpec} and status message consumer to the
+     * file chooser settings models to they can configure themselves properly.
+     *
      * @param inSpecs
      *            input specifications.
      * @param statusConsumer
      *            status consumer.
      * @throws InvalidSettingsException
      */
-    public void configure(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer)
+    public void configureInModel(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer)
             throws InvalidSettingsException {
-        SshAuthenticationSettingsModel auth = getAuthenticationSettings();
-        if (auth.getAuthType() == AuthType.KEY_FILE) {
-            auth.getKeyFileModel().configureInModel(inSpecs, statusConsumer);
+
+        if (m_useKnownHostsFile.getBooleanValue()) {
+            m_knownHostsFile.configureInModel(inSpecs, statusConsumer);
         }
-        if (hasKnownHostsFile()) {
-            getKnownHostsFileModel().configureInModel(inSpecs, statusConsumer);
-        }
+
+        m_authSettings.configureInModel(inSpecs, statusConsumer);
     }
 
     /**
-     * Validates the settings.
+     * Validates the settings in the given {@link NodeSettingsRO}.
+     *
+     * @param settings
+     * @throws InvalidSettingsException
+     */
+    public void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
+        m_host.validateSettings(settings);
+        m_port.validateSettings(settings);
+        m_authSettings.validateSettings(settings.getNodeSettings(KEY_AUTH));
+        m_workingDirectory.validateSettings(settings);
+        m_connectionTimeout.validateSettings(settings);
+        m_maxSessionCount.validateSettings(settings);
+        m_useKnownHostsFile.validateSettings(settings);
+        m_knownHostsFile.validateSettings(settings);
+
+        final SshConnectionSettingsModel temp = new SshConnectionSettingsModel(m_nodeCreationConfig);
+        temp.loadSettingsFrom(settings);
+        temp.validate();
+    }
+
+    /**
+     * Validates the current settings.
      *
      * @throws InvalidSettingsException
      */
     public void validate() throws InvalidSettingsException {
-        int connectionTimeOut = m_connectionTimeout.getIntValue();
-        if (connectionTimeOut < 1) {
-            throw new InvalidSettingsException("Invalid connection timeout " + connectionTimeOut);
-        }
-
-        int port = m_port.getIntValue();
-        if (port < 1) {
-            throw new InvalidSettingsException("Invalid port " + port);
-        }
-
-        if (isEmpty(m_workingDirectory.getStringValue())) {
-            throw new InvalidSettingsException("Working directory must be specified.");
-        }
-        if (isEmpty(m_host.getStringValue())) {
+        if (isEmpty(getHost())) {
             throw new InvalidSettingsException("Host must be specified.");
         }
-        if (m_maxSessionCount.getIntValue() < 1) {
-            throw new InvalidSettingsException(
-                    "Invalid maximum number of SFTP sessions " + m_maxSessionCount.getIntValue());
+
+        if (getPort() < 1 || getPort() > 65535) {
+            throw new InvalidSettingsException("Port must be between 1 and 65535.");
         }
 
-        m_authSettings.validate();
+        if (m_useKnownHostsFile.getBooleanValue() && isEmpty(m_knownHostsFile.getLocation().getPath())) {
+            throw new InvalidSettingsException("Known hosts file must be specified.");
+        }
+
+        if (isEmpty(getWorkingDirectory())) {
+            throw new InvalidSettingsException("Working directory must be specified.");
+        }
+
+        getAuthenticationSettings().validate();
     }
 
     static boolean isEmpty(final String str) {
-        return str == null || str.trim().length() == 0;
+        return str == null || str.trim().isEmpty();
     }
 
     /**
@@ -330,6 +260,14 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
     public String getWorkingDirectory() {
         return m_workingDirectory.getStringValue();
     }
+
+    /**
+     * @return the settings model for the working directory.
+     */
+    public SettingsModelString getWorkingDirectoryModel() {
+        return m_workingDirectory;
+    }
+
     /**
      * @return remote port.
      */
@@ -358,41 +296,12 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
     }
 
     /**
-     * @return true if has key file.
-     */
-    public boolean hasKnownHostsFile() {
-        FSLocation knownHosts = m_knownHostsFile.getLocation();
-        return !isNullLocation(knownHosts);
-    }
-
-    /**
      * @param location
      *            location to test.
      * @return true if the location is NULL location in fact.
      */
-    static boolean isNullLocation(final FSLocation location) {
-        if (location == null || location == FSLocation.NULL || location == NULL_LOCATION) {
-            return true;
-        }
-        if (location.getFileSystemCategory() != null && isEmpty(location.getPath())) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String toString() {
-        return getUsername() + "@" + getHost() + ":" + getPort();
-    }
-
-    /**
-     * @return path to known host location settings.
-     */
-    public static String[] getKnownHostLocationPath() {
-        return new String[] { AUTH, KEY_KNOWN_HOSTS_FILE };
+    static boolean isEmptyLocation(final FSLocation location) {
+        return location == null || isEmpty(location.getPath());
     }
 
     /**
@@ -414,6 +323,20 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
      */
     public SettingsModelNumber getConnectionTimeoutModel() {
         return m_connectionTimeout;
+    }
+
+    /**
+     * @return true, when a known hosts file should be used, false otherwise.
+     */
+    public boolean useKnownHostsFile() {
+        return m_useKnownHostsFile.getBooleanValue();
+    }
+
+    /**
+     * @return settings model for whether to use a known hosts file or not.
+     */
+    public SettingsModelBoolean getUseKnownHostsFileModel() {
+        return m_useKnownHostsFile;
     }
 
     /**
@@ -442,5 +365,21 @@ public class SshConnectionSettingsModel extends SettingsModel implements ChangeL
      */
     public SettingsModelIntegerBounded getMaxSessionCountModel() {
         return m_maxSessionCount;
+    }
+
+    /**
+     * @return a (deep) clone of this node settings object.
+     */
+    public SshConnectionSettingsModel createClone() {
+        final NodeSettings tempSettings = new NodeSettings("ignored");
+        saveSettingsTo(tempSettings);
+
+        final SshConnectionSettingsModel toReturn = new SshConnectionSettingsModel(m_nodeCreationConfig);
+        try {
+            toReturn.loadSettingsFrom(tempSettings);
+        } catch (InvalidSettingsException ex) { // NOSONAR can never happen
+            // won't happen
+        }
+        return toReturn;
     }
 }

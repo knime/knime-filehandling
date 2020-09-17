@@ -48,53 +48,74 @@
  */
 package org.knime.ext.ssh.filehandling.node;
 
-import static org.knime.ext.ssh.filehandling.node.SshConnectionSettingsModel.NULL_LOCATION;
 import static org.knime.ext.ssh.filehandling.node.SshConnectionSettingsModel.isEmpty;
 
-import java.util.Optional;
-
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import java.util.function.Consumer;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.context.NodeCreationConfiguration;
-import org.knime.core.node.context.url.URLConfiguration;
-import org.knime.core.node.defaultnodesettings.SettingsModel;
 import org.knime.core.node.defaultnodesettings.SettingsModelAuthentication.AuthenticationType;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelPassword;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.ButtonGroupEnumInterface;
-import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocation;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.filtermode.SettingsModelFilterMode.FilterMode;
+import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
  * Settings for {@link SshConnectionNodeModel}.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshAuthenticationSettingsModel extends SettingsModel implements ChangeListener {
-    private static final String KEY_AUTH_TYPE = "authType";
-    private static final String SECRET_KEY = "ekerjvjhmzle,ptktysq";
-    private static final String KEY_KNOWN_HOSTS_FILE = "knownHostsFile";
-    private static final String KEY_KEY_FILE = "keyFile";
+public class SshAuthenticationSettingsModel {
 
-    //authentication
+    private static final String KEY_AUTH_TYPE = "authType";
+
+    private static final String KEY_CREDENTIAL = "credential";
+
+    private static final String KEY_USER = "user";
+
+    private static final String KEY_PASSWORD = "password";
+
+    private static final String KEY_KEY_USER = "keyUser";
+
+    private static final String KEY_USE_KEY_PASSPHRASE = "useKeyPassphrase";
+
+    private static final String KEY_KEY_PASSPHRASE = "keyPassphrase";
+
+    /**
+     * Settings key for the key file (must be public to derive flow variable model).
+     */
+    public static final String KEY_KEY_FILE = "keyFile";
+
+    private static final String SECRET_KEY = "ekerjvjhmzle,ptktysq";
+
+
+    private final NodeCreationConfiguration m_nodeCreationConfig;
+
     private AuthType m_authType;
-    private final SettingsModelString m_userName;
-    private final SettingsModelPassword m_password;
-    private final String m_configName;
-    private NodeCreationConfiguration m_nodeCreationConfig;
 
     private final SettingsModelString m_credential;
+
+    private final SettingsModelString m_user;
+
+    private final SettingsModelPassword m_password;
+
+    private final SettingsModelString m_keyUser;
+
+    private SettingsModelBoolean m_useKeyPassphrase;
+
+    private final SettingsModelPassword m_keyPassphrase;
+
     private SettingsModelReaderFileChooser m_keyFile;
-    private final SettingsModelPassword m_keyFilePassword;
+
+
 
     /**
      * Authentication type enumeration.
@@ -105,22 +126,31 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
         /**
          * User name and password authentication.
          */
-        USER_PWD("Username & password", "Username and password based authentication"),
+        USER_PWD("USER_PWD", "Username/password", "Username and password based authentication"),
         /**
-         * User name and password authentication based on workflow credentionals.
+         * User name and password authentication based on workflow credentials.
          */
-        CREDENTIALS("Credentials", "Workflow credentials"),
+        CREDENTIALS("CREDENTIALS", "Credentials", "Workflow credentials"),
         /**
          * Public key based authentication.
          */
-        KEY_FILE("Key file", "Private key based authentication");
+        KEY_FILE("KEY_FILE", "Key file", "Private key based authentication");
 
-        private String m_toolTip;
-        private String m_text;
+        private final String m_settingsValue;
+        private final String m_toolTip;
+        private final String m_text;
 
-        private AuthType(final String text, final String toolTip) {
+        private AuthType(final String settingsValue, final String text, final String toolTip) {
+            m_settingsValue = settingsValue;
             m_text = text;
             m_toolTip = toolTip;
+        }
+
+        /**
+         * @return the settings value
+         */
+        public String getSettingsValue() {
+            return m_settingsValue;
         }
 
         /**
@@ -162,71 +192,54 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
         public static AuthType get(final String actionCommand) {
             return valueOf(actionCommand);
         }
+
+        /**
+         * Maps a settings value string to an {@link AuthType} enum value.
+         *
+         * @param settingsValue
+         *            The node settings value of a {@link AuthType} enum value.
+         * @return the {@link AuthType} enum value corresponding to the given node
+         *         settings value.
+         * @throws IllegalArgumentException
+         *             if there is no {@link AuthType} enum value corresponding to the
+         *             given node settings value.
+         */
+        public static AuthType fromSettingsValue(final String settingsValue) {
+            if (settingsValue.equals(CREDENTIALS.getSettingsValue())) {
+                return CREDENTIALS;
+            } else if (settingsValue.equals(USER_PWD.getSettingsValue())) {
+                return USER_PWD;
+            } else if (settingsValue.equals(KEY_FILE.getSettingsValue())) {
+                return KEY_FILE;
+            } else {
+                throw new IllegalArgumentException("Invalid authentication type " + settingsValue);
+            }
+        }
     }
 
     /**
-     * @param configName
-     *            configuration name.
      * @param cfg
      *            node creation configuration.
      */
-    public SshAuthenticationSettingsModel(final String configName, final NodeCreationConfiguration cfg) {
-        m_configName = configName;
+    public SshAuthenticationSettingsModel(final NodeCreationConfiguration cfg) {
         m_nodeCreationConfig = cfg;
 
         //authentication
         m_authType = AuthType.USER_PWD;
-        m_userName = new SettingsModelString("user", System.getProperty("user.name"));
-        m_password = new SettingsModelPassword("password", SECRET_KEY, "");
-        m_credential = new SettingsModelString("credential", "");
-        m_keyFile = createFileChooserSettings(KEY_KEY_FILE, cfg);
-        m_keyFilePassword = new SettingsModelPassword("keyFilePassword", SECRET_KEY, "");
-
-        m_userName.addChangeListener(this);
-        m_password.addChangeListener(this);
-        m_credential.addChangeListener(this);
-        m_keyFile.addChangeListener(this);
-        m_keyFilePassword.addChangeListener(this);
-    }
-
-    private static SettingsModelReaderFileChooser createFileChooserSettings(
-            final String name,
-            final NodeCreationConfiguration cfg) {
-        final SettingsModelReaderFileChooser model = new SettingsModelReaderFileChooser(
-                name,
+        m_credential = new SettingsModelString(KEY_CREDENTIAL, "");
+        m_user = new SettingsModelString(KEY_USER, System.getProperty("user.name"));
+        m_password = new SettingsModelPassword(KEY_PASSWORD, SECRET_KEY, "");
+        m_keyUser = new SettingsModelString(KEY_KEY_USER, System.getProperty("user.name"));
+        m_useKeyPassphrase = new SettingsModelBoolean(KEY_USE_KEY_PASSPHRASE, false);
+        m_keyPassphrase = new SettingsModelPassword(KEY_KEY_PASSPHRASE, SECRET_KEY, "");
+        m_keyFile = new SettingsModelReaderFileChooser(KEY_KEY_FILE,
                 cfg.getPortConfig().orElseThrow(() -> new IllegalStateException("port creation config is absent")),
                 SshConnectionNodeFactory.FS_CONNECT_GRP_ID, FilterMode.FILE);
 
-        // set up initial location for dialog
-        final Optional<? extends URLConfiguration> urlConfig = cfg.getURLConfig();
-        if (urlConfig.isPresent()) {
-            model.setLocation(new FSLocation(FSCategory.CUSTOM_URL, "1000", urlConfig.get().getUrl().toString()));
-        }
+        m_useKeyPassphrase.addChangeListener(e -> m_keyPassphrase
+                .setEnabled(m_useKeyPassphrase.getBooleanValue() && m_useKeyPassphrase.isEnabled()));
 
-        return model;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setEnabled(final boolean enabled) {
-        super.setEnabled(enabled);
-
-        m_userName.setEnabled(enabled);
-        m_password.setEnabled(enabled);
-        m_credential.setEnabled(enabled);
-        m_keyFile.setEnabled(enabled);
-        m_keyFilePassword.setEnabled(enabled);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void stateChanged(final ChangeEvent e) {
-        // forward change event from listened fields to settings listeners.
-        notifyChangeListeners();
+        updateEnabledness();
     }
 
     /**
@@ -237,10 +250,24 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
     }
 
     /**
-     * @return password
+     * @param authType
+     *            the authType to set
      */
-    public String getPassword() {
-        return m_password.getStringValue();
+    public void setAuthType(final AuthType authType) {
+        m_authType = authType;
+        updateEnabledness();
+    }
+
+    private void updateEnabledness() {
+        m_credential.setEnabled(m_authType == AuthType.CREDENTIALS);
+
+        m_user.setEnabled(m_authType == AuthType.USER_PWD);
+        m_password.setEnabled(m_authType == AuthType.USER_PWD);
+
+        m_keyUser.setEnabled(m_authType == AuthType.KEY_FILE);
+        m_useKeyPassphrase.setEnabled(m_authType == AuthType.KEY_FILE);
+        m_keyPassphrase.setEnabled(m_useKeyPassphrase.getBooleanValue() && m_authType == AuthType.KEY_FILE);
+        m_keyFile.setEnabled(m_authType == AuthType.KEY_FILE);
     }
 
     /**
@@ -263,163 +290,133 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
     public FSLocation getKeyFile() {
         return m_keyFile.getLocation();
     }
-    /**
-     * @return key file password.
-     */
-    public String getKeyFilePassword() {
-        return m_keyFilePassword.getStringValue();
-    }
 
     /**
-     * {@inheritDoc}
+     * @return a (deep) clone of this node settings object.
      */
-    @SuppressWarnings("unchecked")
-    @Override
     public SshAuthenticationSettingsModel createClone() {
-        // save
-        NodeSettings settings = new NodeSettings("tmp");
-        saveSettingsForModel(settings);
+        final NodeSettings tempSettings = new NodeSettings("ignored");
+        saveSettingsTo(tempSettings);
 
-        // restore
-        SshAuthenticationSettingsModel cloned = new SshAuthenticationSettingsModel(getConfigName(), m_nodeCreationConfig);
+        final SshAuthenticationSettingsModel toReturn = new SshAuthenticationSettingsModel(m_nodeCreationConfig);
         try {
-            cloned.loadSettingsForModel(settings);
-            cloned.m_keyFile = m_keyFile.createClone();
-        } catch (InvalidSettingsException ex) {
-            throw new RuntimeException("Failed to clone SSH Node settings", ex);
+            toReturn.loadSettingsFrom(tempSettings);
+        } catch (InvalidSettingsException ex) { // NOSONAR can never happen
+            // won't happen
         }
-        return cloned;
+        return toReturn;
     }
 
     /**
-     * {@inheritDoc}
+     * Saves settings to the given {@link NodeSettingsWO}.
+     *
+     * @param settings
      */
-    @Override
-    protected void saveSettingsForModel(final NodeSettingsWO connectionSettings) {
-        NodeSettingsWO settings = connectionSettings.addNodeSettings(getConfigName());
-
-        settings.addString(KEY_AUTH_TYPE, m_authType.name());
-        m_userName.saveSettingsTo(settings);
-        m_password.saveSettingsTo(settings);
+    public void saveSettingsTo(final NodeSettingsWO settings) {
+        settings.addString(KEY_AUTH_TYPE, m_authType.getSettingsValue());
         m_credential.saveSettingsTo(settings);
+        m_user.saveSettingsTo(settings);
+        m_password.saveSettingsTo(settings);
+        m_keyUser.saveSettingsTo(settings);
+        m_useKeyPassphrase.saveSettingsTo(settings);
+        m_keyPassphrase.saveSettingsTo(settings);
         m_keyFile.saveSettingsTo(settings);
-        m_keyFilePassword.saveSettingsTo(settings);
     }
 
     /**
-     * {@inheritDoc}
+     * Loads settings from the given {@link NodeSettingsRO}.
+     *
+     * @param settings
+     * @throws InvalidSettingsException
      */
-    @Override
-    protected void loadSettingsForModel(final NodeSettingsRO connectionSettings) throws InvalidSettingsException {
-        NodeSettingsRO settings = connectionSettings.getNodeSettings(getConfigName());
-
-        m_authType = AuthType.valueOf(settings.getString(KEY_AUTH_TYPE));
-        m_userName.loadSettingsFrom(settings);
-        m_password.loadSettingsFrom(settings);
-        m_credential.loadSettingsFrom(settings);
+    public void loadSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         try {
-            m_keyFile.loadSettingsFrom(settings);
-        } catch (InvalidSettingsException ex) {
-            // possible error in case of null location
+            m_authType = AuthType.fromSettingsValue(settings.getString(KEY_AUTH_TYPE));
+        } catch (IllegalArgumentException e) {
+            throw new InvalidSettingsException(
+                    settings.getString(KEY_AUTH_TYPE) + " is not a valid authentication type", e);
         }
-        m_keyFilePassword.loadSettingsFrom(settings);
+
+        m_credential.loadSettingsFrom(settings);
+        m_user.loadSettingsFrom(settings);
+        m_password.loadSettingsFrom(settings);
+        m_keyUser.loadSettingsFrom(settings);
+        m_useKeyPassphrase.loadSettingsFrom(settings);
+        m_keyPassphrase.loadSettingsFrom(settings);
+        m_keyFile.loadSettingsFrom(settings);
+
+        updateEnabledness();
     }
 
     /**
-     * {@inheritDoc}
+     * Validates the settings in the given {@link NodeSettingsRO}.
+     *
+     * @param settings
+     * @throws InvalidSettingsException
      */
-    @Override
-    protected String getConfigName() {
-        return m_configName;
+    public void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
+        m_credential.validateSettings(settings);
+        m_user.validateSettings(settings);
+        m_password.validateSettings(settings);
+        m_keyUser.validateSettings(settings);
+        m_useKeyPassphrase.validateSettings(settings);
+        m_keyPassphrase.validateSettings(settings);
+        m_keyFile.validateSettings(settings);
+
+        SshAuthenticationSettingsModel temp = new SshAuthenticationSettingsModel(m_nodeCreationConfig);
+        temp.loadSettingsFrom(settings);
+        temp.validate();
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected String getModelTypeID() {
-        return "SFTPAuthentication";
-    }
-
-    /**
-     * @param authType the authType to set
-     */
-    public void setAuthType(final AuthType authType) {
-        AuthType old = getAuthType();
-        m_authType = authType;
-
-        if (old != authType) {
-            notifyChangeListeners();
-        }
-    }
-
-    /**
-     * @return path to key file location settings.
-     */
-    public String[] getKeyFileLocationPath() {
-        return new String[] { m_configName, SshAuthenticationSettingsModel.KEY_KEY_FILE };
-    }
-
-    /**
-     * @return path to known host location settings.
-     */
-    public String[] getKnownHostLocationPath() {
-        return new String[] { m_configName, SshAuthenticationSettingsModel.KEY_KNOWN_HOSTS_FILE };
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void loadSettingsForDialog(final NodeSettingsRO settings, final PortObjectSpec[] specs)
-            throws NotConfigurableException {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void saveSettingsForDialog(final NodeSettingsWO settings) throws InvalidSettingsException {
-    }
-
-    /**
-     * Validates settings consistency for this instance. {@inheritDoc}
-     */
-    @Override
-    protected void validateSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
-        SshAuthenticationSettingsModel tmp = new SshAuthenticationSettingsModel(getConfigName(), m_nodeCreationConfig);
-        tmp.loadSettingsForModel(settings);
-        tmp.validate();
-    }
-
-    /**
-     * Validates the settings.
+     * Validates the current settings.
      *
      * @throws InvalidSettingsException
      */
     public void validate() throws InvalidSettingsException {
-        if (getAuthType() != AuthType.CREDENTIALS) {
-            if (isEmpty(m_userName.getStringValue())) {
-                throw new InvalidSettingsException("Please enter a valid user name");
-            }
+        if (getAuthType() != AuthType.CREDENTIALS && isEmpty(m_user.getStringValue())) {
+            throw new InvalidSettingsException("Please provide a valid user name");
         }
 
         switch (getAuthType()) {
         case CREDENTIALS:
-            if (isEmpty(m_credential.getStringValue())) {
-                throw new InvalidSettingsException("Please select a valid credential");
-            }
-            break;
-        case KEY_FILE:
-            if (isNullLocation(m_keyFile.getLocation())) {
-                throw new InvalidSettingsException("Please select a valid key file location");
-            }
+            validateCredential();
             break;
         case USER_PWD:
-            //password can be empty
+            validateUserPasswordSettings();
+            break;
+        case KEY_FILE:
+            validateKeyFileSettings();
             break;
         default:
             break;
+        }
+    }
+
+    private void validateUserPasswordSettings() throws InvalidSettingsException {
+        if (isEmpty(m_user.getStringValue())) {
+            throw new InvalidSettingsException("Please provide a valid user name");
+        }
+        // password can be empty
+    }
+
+    private void validateKeyFileSettings() throws InvalidSettingsException {
+        if (isEmpty(m_keyUser.getStringValue())) {
+            throw new InvalidSettingsException("Please provide a valid user name");
+        }
+
+        if (m_useKeyPassphrase.getBooleanValue() && m_keyPassphrase.getStringValue().isEmpty()) {
+            throw new InvalidSettingsException("Please enter a passphrase for the private key file");
+        }
+
+        if (m_keyFile.getLocation().getPath().isEmpty()) {
+            throw new InvalidSettingsException("Please select a valid key file location");
+        }
+    }
+
+    private void validateCredential() throws InvalidSettingsException {
+        if (isEmpty(m_credential.getStringValue())) {
+            throw new InvalidSettingsException("Please select a valid credential");
         }
     }
 
@@ -428,14 +425,8 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
      *            location to test.
      * @return true if the location is NULL location in fact.
      */
-    private static boolean isNullLocation(final FSLocation location) {
-        if (location == null || location == FSLocation.NULL || location == NULL_LOCATION) {
-            return true;
-        }
-        if (location.getFileSystemCategory() != null && isEmpty(location.getPath())) {
-            return true;
-        }
-        return false;
+    private static boolean isEmptyLocation(final FSLocation location) {
+        return location == null || isEmpty(location.getPath());
     }
 
     /**
@@ -443,7 +434,7 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
      */
     public boolean hasKeyFile() {
         FSLocation keyFile = m_keyFile.getLocation();
-        return !isNullLocation(keyFile);
+        return !isEmptyLocation(keyFile);
     }
 
     /**
@@ -469,16 +460,48 @@ public class SshAuthenticationSettingsModel extends SettingsModel implements Cha
     }
 
     /**
+     * @return the key file username model
+     */
+    public SettingsModelString getKeyUserModel() {
+        return m_keyUser;
+    }
+
+    /**
+     * @return model to determine whether to use a key passphrase or not.
+     */
+    public SettingsModelBoolean getUseKeyPassphraseModel() {
+        return m_useKeyPassphrase;
+    }
+
+    /**
      * @return key file password settings model.
      */
-    public SettingsModelPassword getKeyFilePasswordModel() {
-        return m_keyFilePassword;
+    public SettingsModelPassword getKeyPassphraseModel() {
+        return m_keyPassphrase;
     }
 
     /**
      * @return user name model.
      */
-    public SettingsModelString getUsernameModel() {
-        return m_userName;
+    public SettingsModelString getUserModel() {
+        return m_user;
+    }
+
+    /**
+     * Forwards the given {@link PortObjectSpec} and status message consumer to the
+     * file chooser settings models to they can configure themselves properly.
+     *
+     * @param inSpecs
+     *            input specifications.
+     * @param statusConsumer
+     *            status consumer.
+     * @throws InvalidSettingsException
+     */
+    public void configureInModel(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer)
+            throws InvalidSettingsException {
+
+        if (m_authType == AuthType.KEY_FILE) {
+            m_keyFile.configureInModel(inSpecs, statusConsumer);
+        }
     }
 }
