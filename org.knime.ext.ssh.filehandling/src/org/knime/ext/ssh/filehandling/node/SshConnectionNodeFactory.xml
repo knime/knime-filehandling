@@ -16,7 +16,7 @@
             the <i>files</i> of the remote server, e.g. to read or write, or to perform other file system operations (browse/list files, copy, move, ...).
             </p>
             
-            <p><b>Path syntax:</b> Paths for SSH are specified with a UNIX-like syntax, /myfolder/myfile. An absolute
+            <p><b>Path syntax:</b> Paths for SSH are specified with a UNIX-like syntax such as /myfolder/myfile. An absolute
             path for SSH consists of:
                 <ol>
                     <li>A leading slash ("/").</li>
@@ -32,22 +32,21 @@
 	        <option name="Port">
 	            Port that the SSH server is listening on for incoming connections.
 	        </option>
-	        <option name="Username">
-	            Remote system user name.
-	        </option>
 	        <option name="Authentication">
-	            Method of authentication.
+	            Method of authentication to use.
 	            <ul>
 	            	<li>
-	            		<i>Credentials:</i> workflow credentials authentication. The username and password of the credentials
-	            			flow variable will be used to log into SSH. 
+	            		<b>Credentials:</b> Authenticate with the username and password of the selected credentials flow variable.
 	            	</li>
 	            	<li>
-	            		<i>Username &amp; password:</i> Username and password authentication.
+	            		<b>Username/password:</b> Authenticate with the provided <b>Username</b> and <b>Password</b>. The password is persistently stored
+	            		(in encrypted form) in the settings of this node. The password may be empty if the SSH server permits empty passwords. 
 	            	</li>
 	            	<li>
-	            		<i>Key file:</i> Authenticate using a private key file (supports PEM and OpenSSH file formats). You still have
-	            		to specify the <i>username</i> and optionally a password (if the private key file is password-protected).
+	            		<b>Key file:</b> Authenticate using a private key file (both PEM and OpenSSH file formats are supported). You have
+	            		to specify the <b>Username</b> and the private <b>Key file</b>. A <b>Key passphrase</b> can optionally be provided, in case the private 
+	            		key file is passphrase-protected. Note that the passphrase is persistently stored (in encrypted form) in the settings
+	            		of this node.
 	            	</li>
 	           	</ul>
 	        </option>
@@ -66,22 +65,16 @@
 		        Number of SFTP sessions the node will try to open. Actual number of sessions may be less,
 		        depending on the limits of the SSH server. 
 		    </option>
-		    <option name="Use known hosts">
-		        If this options selected the known hosts file will used for verify remote hosts.
+		    <option name="Use known hosts file">
+		        If this options selected, then provided known hosts file will be used to validate the (public) key of the SSH server. If not
+		        selected, then server key will not be validated.
 		    </option>
-	        <option name="Read from">
-	            File system where known hosts file is placed on.
-	        </option>
-	        <option name="File">
-	            Location of known hosts file on selected file system.
-	            Note that the known hosts file has to be in OpenSSH known hosts file format.
-	        </option>
 		</tab>
     </fullDescription>
 
     <ports>
 		<dynInPort insert-before="0" name="Input File System" group-identifier="Input File System"> 
-			File system with SSH key and known_hosts file 
+			File system that can be used to provide an SSH private key and/or known hosts file. 
 		</dynInPort>
    		<outPort index="0" name="SSH File System Connection">
    			SSH File System Connection.
