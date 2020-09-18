@@ -10,7 +10,3 @@ Import-Package: org.junit,
  org.junit.runner,
  org.junit.rules,
  org.junit.runners
-Require-Bundle: org.knime.filehandling.core;bundle-version="4.3.0",
- org.knime.filehandling.core.fs;bundle-version="4.3.0",
- org.knime.core;bundle-version="4.3.0",
- org.knime.base.filehandling;bundle-version="4.3.0"
