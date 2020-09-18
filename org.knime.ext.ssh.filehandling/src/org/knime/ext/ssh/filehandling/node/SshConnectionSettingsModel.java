@@ -73,6 +73,11 @@ import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
  */
 public class SshConnectionSettingsModel {
 
+    /**
+     * Settings key for the authentication sub-settings. Must be public for dialog.
+     */
+    public static final String KEY_AUTH = "auth";
+
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
 
     private static final String KEY_CONNECTION_TIMEOUT = "connectionTimeout";
@@ -82,8 +87,6 @@ public class SshConnectionSettingsModel {
     private static final String KEY_HOST = "host";
 
     private static final String KEY_MAX_SESSION_COUNT = "maxSessionCount";
-
-    private static final String KEY_AUTH = "auth";
 
     private static final String KEY_USE_KNOWN_HOSTS = "useKnownHosts";
 
@@ -133,55 +136,78 @@ public class SshConnectionSettingsModel {
         m_knownHostsFile.setEnabled(false);
     }
 
-    /**
-     * @return path to key file location settings.
-     */
-    public static String[] getKeyFileLocationPath() {
-        return new String[] { KEY_AUTH, SshAuthenticationSettingsModel.KEY_KEY_FILE };
-    }
-
-    /**
-     * @return path to known host location settings.
-     */
-    public static String[] getKnownHostLocationPath() {
-        return new String[] { KEY_KNOWN_HOSTS_FILE };
-    }
-
-    /**
-     * Saves settings to the given {@link NodeSettingsWO}.
-     *
-     * @param settings
-     */
-    public void saveSettingsTo(final NodeSettingsWO settings) {
+    private void save(final NodeSettingsWO settings) {
         m_host.saveSettingsTo(settings);
         m_port.saveSettingsTo(settings);
-        m_authSettings.saveSettingsTo(settings.addNodeSettings(KEY_AUTH));
+
         m_workingDirectory.saveSettingsTo(settings);
 
         m_connectionTimeout.saveSettingsTo(settings);
         m_maxSessionCount.saveSettingsTo(settings);
         m_useKnownHostsFile.saveSettingsTo(settings);
-        m_knownHostsFile.saveSettingsTo(settings);
     }
 
     /**
-     * Loads settings from the given {@link NodeSettingsRO}.
+     * Saves settings to the given {@link NodeSettingsWO} (to be called by the node
+     * dialog).
      *
      * @param settings
-     * @throws InvalidSettingsException
      */
-    public void loadSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
+    public void saveSettingsForDialog(final NodeSettingsWO settings) {
+        save(settings);
+        // m_knownHostsFile must be saved by dialog component
+        // m_authSettings are also saved by AuthenticationDialog
+    }
+
+    /**
+     * Saves settings to the given {@link NodeSettingsWO} (to be called by the node
+     * model).
+     *
+     * @param settings
+     */
+    public void saveSettingsForModel(final NodeSettingsWO settings) {
+        save(settings);
+        m_knownHostsFile.saveSettingsTo(settings);
+        m_authSettings.saveSettingsForModel(settings.addNodeSettings(KEY_AUTH));
+    }
+
+    private void load(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_host.loadSettingsFrom(settings);
         m_port.loadSettingsFrom(settings);
-        m_authSettings.loadSettingsFrom(settings.getNodeSettings(KEY_AUTH));
+
         m_workingDirectory.loadSettingsFrom(settings);
 
         m_connectionTimeout.loadSettingsFrom(settings);
         m_maxSessionCount.loadSettingsFrom(settings);
         m_useKnownHostsFile.loadSettingsFrom(settings);
-        m_knownHostsFile.loadSettingsFrom(settings);
 
         m_knownHostsFile.setEnabled(m_useKnownHostsFile.getBooleanValue());
+    }
+
+    /**
+     * Loads settings from the given {@link NodeSettingsRO} (to be called by the
+     * node dialog).
+     *
+     * @param settings
+     * @throws InvalidSettingsException
+     */
+    public void loadSettingsForDialog(final NodeSettingsRO settings) throws InvalidSettingsException {
+        load(settings);
+        // m_knownHostsFile must be loaded by the dialog component
+        // m_authSettings are loaded by AuthenticationDialog
+    }
+
+    /**
+     * Loads settings from the given {@link NodeSettingsRO} (to be called by the
+     * node model).
+     *
+     * @param settings
+     * @throws InvalidSettingsException
+     */
+    public void loadSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
+        load(settings);
+        m_knownHostsFile.loadSettingsFrom(settings);
+        m_authSettings.loadSettingsForModel(settings.getNodeSettings(KEY_AUTH));
     }
 
     /**
@@ -221,7 +247,7 @@ public class SshConnectionSettingsModel {
         m_knownHostsFile.validateSettings(settings);
 
         final SshConnectionSettingsModel temp = new SshConnectionSettingsModel(m_nodeCreationConfig);
-        temp.loadSettingsFrom(settings);
+        temp.loadSettingsForModel(settings);
         temp.validate();
     }
 
@@ -372,11 +398,11 @@ public class SshConnectionSettingsModel {
      */
     public SshConnectionSettingsModel createClone() {
         final NodeSettings tempSettings = new NodeSettings("ignored");
-        saveSettingsTo(tempSettings);
+        saveSettingsForModel(tempSettings);
 
         final SshConnectionSettingsModel toReturn = new SshConnectionSettingsModel(m_nodeCreationConfig);
         try {
-            toReturn.loadSettingsFrom(tempSettings);
+            toReturn.loadSettingsForModel(tempSettings);
         } catch (InvalidSettingsException ex) { // NOSONAR can never happen
             // won't happen
         }

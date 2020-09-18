@@ -296,11 +296,11 @@ public class SshAuthenticationSettingsModel {
      */
     public SshAuthenticationSettingsModel createClone() {
         final NodeSettings tempSettings = new NodeSettings("ignored");
-        saveSettingsTo(tempSettings);
+        saveSettingsForModel(tempSettings);
 
         final SshAuthenticationSettingsModel toReturn = new SshAuthenticationSettingsModel(m_nodeCreationConfig);
         try {
-            toReturn.loadSettingsFrom(tempSettings);
+            toReturn.loadSettingsForModel(tempSettings);
         } catch (InvalidSettingsException ex) { // NOSONAR can never happen
             // won't happen
         }
@@ -308,28 +308,29 @@ public class SshAuthenticationSettingsModel {
     }
 
     /**
-     * Saves settings to the given {@link NodeSettingsWO}.
-     *
-     * @param settings
-     */
-    public void saveSettingsTo(final NodeSettingsWO settings) {
-        settings.addString(KEY_AUTH_TYPE, m_authType.getSettingsValue());
-        m_credential.saveSettingsTo(settings);
-        m_user.saveSettingsTo(settings);
-        m_password.saveSettingsTo(settings);
-        m_keyUser.saveSettingsTo(settings);
-        m_useKeyPassphrase.saveSettingsTo(settings);
-        m_keyPassphrase.saveSettingsTo(settings);
-        m_keyFile.saveSettingsTo(settings);
-    }
-
-    /**
-     * Loads settings from the given {@link NodeSettingsRO}.
+     * Loads settings from the given {@link NodeSettingsRO} (to be called by the dialog).
      *
      * @param settings
      * @throws InvalidSettingsException
      */
-    public void loadSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
+    public void loadSettingsForDialog(final NodeSettingsRO settings) throws InvalidSettingsException {
+        load(settings);
+        // m_keyFile must be loaded by dialog component
+    }
+
+    /**
+     * Loads settings from the given {@link NodeSettingsRO} (to be called by the
+     * node model).
+     *
+     * @param settings
+     * @throws InvalidSettingsException
+     */
+    public void loadSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
+        load(settings);
+        m_keyFile.loadSettingsFrom(settings);
+    }
+
+    private void load(final NodeSettingsRO settings) throws InvalidSettingsException {
         try {
             m_authType = AuthType.fromSettingsValue(settings.getString(KEY_AUTH_TYPE));
         } catch (IllegalArgumentException e) {
@@ -343,7 +344,6 @@ public class SshAuthenticationSettingsModel {
         m_keyUser.loadSettingsFrom(settings);
         m_useKeyPassphrase.loadSettingsFrom(settings);
         m_keyPassphrase.loadSettingsFrom(settings);
-        m_keyFile.loadSettingsFrom(settings);
 
         updateEnabledness();
     }
@@ -364,7 +364,7 @@ public class SshAuthenticationSettingsModel {
         m_keyFile.validateSettings(settings);
 
         SshAuthenticationSettingsModel temp = new SshAuthenticationSettingsModel(m_nodeCreationConfig);
-        temp.loadSettingsFrom(settings);
+        temp.loadSettingsForModel(settings);
         temp.validate();
     }
 
@@ -374,10 +374,6 @@ public class SshAuthenticationSettingsModel {
      * @throws InvalidSettingsException
      */
     public void validate() throws InvalidSettingsException {
-        if (getAuthType() != AuthType.CREDENTIALS && isEmpty(m_user.getStringValue())) {
-            throw new InvalidSettingsException("Please provide a valid user name");
-        }
-
         switch (getAuthType()) {
         case CREDENTIALS:
             validateCredential();
@@ -391,6 +387,41 @@ public class SshAuthenticationSettingsModel {
         default:
             break;
         }
+    }
+
+    /**
+     * Saves the settings (to be called by node dialog).
+     *
+     * @param settings
+     */
+    public void saveSettingsForDialog(final NodeSettingsWO settings) {
+        save(settings);
+        // m_keyFile must be saved by dialog component
+    }
+
+    /**
+     * Saves the settings (to be called by node model).
+     *
+     * @param settings
+     */
+    public void saveSettingsForModel(final NodeSettingsWO settings) {
+        save(settings);
+        m_keyFile.saveSettingsTo(settings);
+    }
+
+    /**
+     * Saves settings to the given {@link NodeSettingsWO}.
+     *
+     * @param settings
+     */
+    private void save(final NodeSettingsWO settings) {
+        settings.addString(KEY_AUTH_TYPE, m_authType.getSettingsValue());
+        m_credential.saveSettingsTo(settings);
+        m_user.saveSettingsTo(settings);
+        m_password.saveSettingsTo(settings);
+        m_keyUser.saveSettingsTo(settings);
+        m_useKeyPassphrase.saveSettingsTo(settings);
+        m_keyPassphrase.saveSettingsTo(settings);
     }
 
     private void validateUserPasswordSettings() throws InvalidSettingsException {

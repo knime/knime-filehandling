@@ -211,7 +211,7 @@ public class SshConnectionNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO output) {
-        m_settings.saveSettingsTo(output);
+        m_settings.saveSettingsForModel(output);
     }
 
     /**
@@ -227,7 +227,7 @@ public class SshConnectionNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO input) throws InvalidSettingsException {
-        m_settings.loadSettingsFrom(input);
+        m_settings.loadSettingsForModel(input);
     }
 
     @Override

@@ -63,8 +63,10 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
 import org.knime.core.node.FlowVariableModel;
+import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentFlowVariableNameSelection2;
@@ -370,13 +372,23 @@ public class AuthenticationDialog extends JPanel {
     public void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
             throws NotConfigurableException {
         m_credentialFlowVarChooser.loadSettingsFrom(settings, specs);
-
-        m_username.loadSettingsFrom(settings, specs);
-        m_password.loadSettingsFrom(settings, specs);
-
-        m_keyUsername.loadSettingsFrom(settings, specs);
-        m_useKeyPassphrase.loadSettingsFrom(settings, specs);
-        m_keyPassphrase.loadSettingsFrom(settings, specs);
         m_keyFileChooser.loadSettingsFrom(settings, specs);
+        try {
+            m_settings.loadSettingsForDialog(settings);
+        } catch (InvalidSettingsException ex) { // NOSONAR can be ignored
+            // ignore
+        }
+    }
+
+    /**
+     * Saves settings to the given {@link NodeSettingsWO}.
+     *
+     * @param settings
+     * @throws InvalidSettingsException
+     */
+    public void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
+        m_settings.saveSettingsForDialog(settings);
+        m_credentialFlowVarChooser.saveSettingsTo(settings);
+        m_keyFileChooser.saveSettingsTo(settings);
     }
 }

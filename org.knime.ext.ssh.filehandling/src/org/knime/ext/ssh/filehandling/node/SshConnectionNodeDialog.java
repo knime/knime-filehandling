@@ -116,13 +116,13 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
 
     private void initFields() {
         m_authPanel = new AuthenticationDialog(m_settings.getAuthenticationSettings(),
-                createFlowVariableModel(SshConnectionSettingsModel.getKeyFileLocationPath(), //
+                createFlowVariableModel(m_settings.getAuthenticationSettings().getKeyFileModel().getKeysForFSLocation(), //
                         FSLocationVariableType.INSTANCE), //
                 this);
 
         m_knownHostsChooser = new DialogComponentReaderFileChooser(m_settings.getKnownHostsFileModel(),
                 KNOWN_HOSTS_HISTORY_ID, //
-                createFlowVariableModel(SshConnectionSettingsModel.getKnownHostLocationPath(), //
+                createFlowVariableModel(m_settings.getKnownHostsFileModel().getKeysForFSLocation(), //
                         FSLocationVariableType.INSTANCE));
     }
 
@@ -278,10 +278,13 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
     }
 
     @Override
-    protected void saveSettingsTo(final NodeSettingsWO output) throws InvalidSettingsException {
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
         preSettingsSave();
         m_settings.validate();
-        m_settings.saveSettingsTo(output);
+
+        m_settings.saveSettingsForDialog(settings);
+        m_knownHostsChooser.saveSettingsTo(settings);
+        m_authPanel.saveSettingsTo(settings.addNodeSettings(SshConnectionSettingsModel.KEY_AUTH));
     }
 
     private void preSettingsSave() {
@@ -293,14 +296,11 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
             throws NotConfigurableException {
 
         try {
-            m_settings.loadSettingsFrom(input);
+            m_authPanel.loadSettingsFrom(input.getNodeSettings(SshConnectionSettingsModel.KEY_AUTH), specs);
+            m_knownHostsChooser.loadSettingsFrom(input, specs);
+            m_settings.loadSettingsForDialog(input);
         } catch (final InvalidSettingsException e) { // NOSONAR can be ignored
-            // can be ignored
         }
-
-        // call load settings for correct initialize file system dialog
-        m_authPanel.loadSettingsFrom(input, specs);
-        m_knownHostsChooser.loadSettingsFrom(input, specs);
     }
 
 
