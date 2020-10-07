@@ -83,6 +83,7 @@ import org.apache.sshd.client.subsystem.sftp.SftpClient.Attributes;
 import org.apache.sshd.client.subsystem.sftp.SftpClient.DirEntry;
 import org.apache.sshd.client.subsystem.sftp.SftpClient.OpenMode;
 import org.apache.sshd.client.subsystem.sftp.extensions.CopyFileExtension;
+import org.apache.sshd.client.subsystem.sftp.fs.SftpFileSystem;
 import org.apache.sshd.client.subsystem.sftp.fs.SftpFileSystemProvider;
 import org.apache.sshd.client.subsystem.sftp.impl.SftpRemotePathChannel;
 import org.apache.sshd.common.SshException;
@@ -91,6 +92,7 @@ import org.apache.sshd.common.subsystem.sftp.SftpException;
 import org.apache.sshd.common.util.GenericUtils;
 import org.apache.sshd.common.util.ValidateUtils;
 import org.apache.sshd.common.util.io.IoUtils;
+import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
 /**
  * This class contains methods for access to native NAME SFTP implementation.
@@ -146,7 +148,6 @@ public final class NativeSftpProviderUtils {
         try {
             final List<SshPath> files = new LinkedList<>();
             final Iterator<DirEntry> iter = sftpClient.readDir(dir.toSftpString()).iterator();
-            final String directoryPath = dir.toString();
 
             while (iter.hasNext()) {
                 final DirEntry entry = iter.next();
@@ -157,7 +158,17 @@ public final class NativeSftpProviderUtils {
                     continue;
                 }
 
-                final SshPath path = dir.getFileSystem().getPath(directoryPath, fileName);
+                final SshPath path = (SshPath) dir.resolve(fileName);
+
+                final BaseFileAttributes attrs = toBaseFileAttributes(path, entry.getAttributes());
+                if (!attrs.isSymbolicLink()) {
+                    // sftpClient.readDir() does not follow symbolic links.
+                    // We should avoid caching file attributes for symbolic links as the cache
+                    // entries usually create in methods that follow symlinks, which leads to
+                    // inconsistent behavior.
+                    dir.getFileSystem().addToAttributeCache(path, attrs);
+                }
+
                 try {
                     if (filter == null || filter.accept(path)) {
                         files.add(path);
@@ -308,7 +319,7 @@ public final class NativeSftpProviderUtils {
         return null;
     }
 
-    static SftpClient.Attributes readRemoteAttributes(final SftpClient client,
+    static BaseFileAttributes readRemoteAttributes(final SftpClient client,
             final SshPath path,
             final LinkOption... options) throws IOException {
         try {
@@ -318,7 +329,7 @@ public final class NativeSftpProviderUtils {
             } else {
                 attrs = client.lstat(path.toString());
             }
-            return attrs;
+            return toBaseFileAttributes(path, attrs);
         } catch (SftpException e) {
             throw convertAndRethrow(e, path);
         }
@@ -471,5 +482,21 @@ public final class NativeSftpProviderUtils {
         }
 
         return pf;
+    }
+
+    private static BaseFileAttributes toBaseFileAttributes(final SshPath path, final Attributes attrs) {
+        return new BaseFileAttributes(attrs.isRegularFile(), //
+                path, //
+                attrs.getModifyTime(), //
+                attrs.getAccessTime(), //
+                attrs.getCreateTime(), //
+                attrs.getSize(), //
+                attrs.isSymbolicLink(), //
+                attrs.isOther(), //
+                GenericUtils.isEmpty(attrs.getOwner()) ? null
+                        : new SftpFileSystem.DefaultUserPrincipal(attrs.getOwner()), //
+                GenericUtils.isEmpty(attrs.getGroup()) ? null
+                        : new SftpFileSystem.DefaultGroupPrincipal(attrs.getGroup()), //
+                SftpFileSystemProvider.permissionsToAttributes(attrs.getPermissions()));
     }
 }

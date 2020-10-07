@@ -77,8 +77,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.apache.sshd.client.subsystem.sftp.SftpClient;
-import org.apache.sshd.client.subsystem.sftp.SftpClient.Attributes;
-import org.apache.sshd.client.subsystem.sftp.fs.SftpPosixFileAttributes;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
@@ -196,15 +194,10 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         }
 
         try {
-            final Attributes attrs = invokeWithClient(true,
+            final BaseFileAttributes attrs = invokeWithClient(true,
                     client -> NativeSftpProviderUtils.readRemoteAttributes(client, path));
-            if (attrs != null) {
-                getFileSystemInternal().addToAttributeCache(path,
-                        toBaseFileAttributes(path, new SftpPosixFileAttributes(path, attrs)));
-                return true;
-            } else {
-                return false;
-            }
+            getFileSystemInternal().addToAttributeCache(path, attrs);
+            return true;
         } catch (final NoSuchFileException e) {
             return false;
         }
@@ -233,26 +226,10 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
             final SshPath path, final Class<?> type) throws IOException {
 
         if (type.isAssignableFrom(PosixFileAttributes.class)) {
-            SftpPosixFileAttributes attr = new SftpPosixFileAttributes(path,
-                    NativeSftpProviderUtils.readRemoteAttributes(sftpClient, path));
-            return toBaseFileAttributes(path, attr);
+            return NativeSftpProviderUtils.readRemoteAttributes(sftpClient, path);
         }
 
         throw new UnsupportedOperationException("readAttributes(" + path + ")[" + type.getSimpleName() + "] N/A");
-    }
-
-    private static BaseFileAttributes toBaseFileAttributes(final SshPath path, final SftpPosixFileAttributes attr) {
-        return new BaseFileAttributes(attr.isRegularFile(), //
-                path, //
-                attr.lastModifiedTime(), //
-                attr.lastAccessTime(), //
-                attr.creationTime(), //
-                attr.size(), //
-                attr.isSymbolicLink(), //
-                attr.isOther(), //
-                attr.owner(), //
-                attr.group(), //
-                attr.permissions());
     }
 
     /**
