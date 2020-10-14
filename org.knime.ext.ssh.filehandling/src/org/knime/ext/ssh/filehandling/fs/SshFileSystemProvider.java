@@ -58,7 +58,6 @@ import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream.Filter;
-import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
@@ -74,9 +73,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 import org.apache.sshd.client.subsystem.sftp.SftpClient;
+import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
@@ -250,7 +249,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         BasicFileAttributes attributes = readAttributes(path, BasicFileAttributes.class);
 
         if (attributes.isDirectory()) {
-            if (isNotEmptyDir(path)) {
+            if (FSFiles.isNonEmptyDirectory(path)) {
                 throw new DirectoryNotEmptyException(path.toString());
             }
             sftp.rmdir(path.toString());
@@ -298,22 +297,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
 
     void prepareClose() {
         m_resources.stop();
-    }
-
-    /**
-     * @param path
-     *            path to check is it directory and not empty.
-     * @return true if is a directory and is not empty.
-     * @throws IOException
-     */
-    private static boolean isNotEmptyDir(final SshPath path) throws IOException {
-        try (final Stream<Path> stream = Files.list(path)) {
-            if (stream.anyMatch(childPath -> true)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
