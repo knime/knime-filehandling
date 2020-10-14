@@ -120,17 +120,13 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         invokeWithClient(true, client -> moveInternal(client, source, target, options));
     }
 
-    @SuppressWarnings("resource")
-    private Void moveInternal(
+    private static Void moveInternal(
             final SftpClient sftpClient,
             final SshPath source,
             final SshPath target, final CopyOption... options)
             throws IOException {
-        NativeSftpProviderUtils.moveInternal(sftpClient, source, target, options);
 
-        // TODO remove when fixed in BaseFileSystemProvider
-        // now BaseFileSystemProvider removes cached attributes but not deep
-        getFileSystemInternal().removeFromAttributeCacheDeep(source);
+        NativeSftpProviderUtils.moveInternal(sftpClient, source, target, options);
         return null;
     }
 
