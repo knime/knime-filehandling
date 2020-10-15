@@ -55,6 +55,8 @@ import java.security.KeyPair;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor.DiscardPolicy;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -72,10 +74,14 @@ import org.apache.sshd.common.config.keys.loader.KeyPairResourceParser;
 import org.apache.sshd.common.config.keys.loader.openssh.OpenSSHKeyPairResourceParser;
 import org.apache.sshd.common.config.keys.loader.pem.PEMResourceParserUtils;
 import org.apache.sshd.common.config.keys.loader.putty.PuttyKeyUtils;
+import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory;
 import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
 import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
 import org.apache.sshd.common.signature.BuiltinSignatures;
 import org.apache.sshd.common.util.security.SecurityUtils;
+import org.apache.sshd.common.util.threads.CloseableExecutorService;
+import org.apache.sshd.common.util.threads.SshThreadPoolExecutor;
+import org.apache.sshd.common.util.threads.SshdThreadFactory;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
@@ -98,7 +104,10 @@ public class SftpSessionFactory {
 
     private SshClient m_sshClient;
 
+    private CloseableExecutorService m_executorService;
+
     private final SshConnectionConfiguration m_settings;
+
 
     /**
      * @param settings
@@ -113,8 +122,15 @@ public class SftpSessionFactory {
      *
      * @throws IOException
      */
-    public void init() throws IOException {
+    public synchronized void init() throws IOException {
+        m_executorService = new SshThreadPoolExecutor(0, Integer.MAX_VALUE, //
+                10L, TimeUnit.SECONDS, //
+                new SynchronousQueue<>(), //
+                new SshdThreadFactory("ssh-client-worker"), //
+                new DiscardPolicy());
+
         m_sshClient = SshClient.setUpDefaultClient();
+        m_sshClient.setIoServiceFactoryFactory(new Nio2ServiceFactoryFactory(() -> m_executorService));
 
         m_sshClient.setServerKeyVerifier(AcceptAllServerKeyVerifier.INSTANCE);
         m_sshClient.setHostConfigEntryResolver(HostConfigEntryResolver.EMPTY);
@@ -131,11 +147,9 @@ public class SftpSessionFactory {
 
         try {
             m_sshClient.start();
-        } catch (final Throwable exc) {
-            if (m_sshClient != null) {
-                m_sshClient.stop();
-            }
-
+        } catch (final Exception exc) { // NOSONAR catch all, don't know what types might be thrown
+            m_sshClient.stop();
+            m_sshClient = null;
             throw convertToCreateSshConnection(exc);
         }
     }
@@ -188,7 +202,7 @@ public class SftpSessionFactory {
 
             // do authorization
             session.auth().verify(connectionTimeOut);
-        } catch (final Exception exc) {
+        } catch (final Exception exc) { // NOSONAR catch all, don't know what types might be thrown
             if (session != null) {
                 closeSessionSafely(session);
             }
@@ -214,8 +228,7 @@ public class SftpSessionFactory {
     private static void closeSessionSafely(final ClientSession session) {
         try {
             session.close();
-        } catch (IOException ioe) {
-            // do nothing
+        } catch (IOException ioe) { // NOSONAR can be ignored
         }
     }
 
@@ -245,11 +258,16 @@ public class SftpSessionFactory {
     /**
      * Destroys session factory.
      */
-    public void destroy() {
-        SshClient client = m_sshClient;
-        if (client != null) {
+    public synchronized void destroy() {
+        if (m_sshClient != null) {
+            m_sshClient.stop();
             m_sshClient = null;
-            client.stop();
+        }
+
+        if (m_executorService != null) {
+            // m_executorService.close(true);
+            m_executorService.shutdownNow();
+            m_executorService = null;
         }
     }
 }
