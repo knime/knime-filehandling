@@ -33,20 +33,23 @@
 	            Port that the SSH server is listening on for incoming connections.
 	        </option>
 	        <option name="Authentication">
-	            Method of authentication to use.
+	            Specify the authentication method to use:
 	            <ul>
 	            	<li>
 	            		<b>Credentials:</b> Authenticate with the username and password of the selected credentials flow variable.
 	            	</li>
 	            	<li>
-	            		<b>Username/password:</b> Authenticate with the provided <b>Username</b> and <b>Password</b>. The password is persistently stored
-	            		(in encrypted form) in the settings of this node. The password may be empty if the SSH server permits empty passwords. 
+	            		<b>Username/password:</b> Authenticate with the provided <i>Username</i> and <i>Password</i>. The password is persistently stored
+	            		(in encrypted form) in the settings of this node and will be saved with the workflow. The password may be empty if the SSH server
+	            		permits empty passwords. 
 	            	</li>
 	            	<li>
-	            		<b>Key file:</b> Authenticate using a private key file (both PEM and OpenSSH file formats are supported). You have
-	            		to specify the <b>Username</b> and the private <b>Key file</b>. A <b>Key passphrase</b> can optionally be provided, in case the private 
+	            		<b>Key file:</b> Authenticate using a private key file. You have to specify the <i>Username</i> and the private <i>Key file</i>. 
+	            		A <i>Key passphrase</i> can optionally be provided, in case the private 
 	            		key file is passphrase-protected. Note that the passphrase is persistently stored (in encrypted form) in the settings
-	            		of this node.
+	            		of this node and will be saved with the workflow. This node supports the following private key formats:
+	            		 <i>RFC4716</i> (default OpenSSH2 private key format), <i>PKCS#8</i>, <i>PKCS#1</i> (traditional PEM format, OpenSSL-compatible),
+	            		 and <i>ppk</i> (PuTTY format).
 	            	</li>
 	           	</ul>
 	        </option>

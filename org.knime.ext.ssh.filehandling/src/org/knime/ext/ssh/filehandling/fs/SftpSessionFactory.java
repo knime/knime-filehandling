@@ -68,9 +68,14 @@ import org.apache.sshd.common.FactoryManager;
 import org.apache.sshd.common.PropertyResolverUtils;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
+import org.apache.sshd.common.config.keys.loader.KeyPairResourceParser;
+import org.apache.sshd.common.config.keys.loader.openssh.OpenSSHKeyPairResourceParser;
+import org.apache.sshd.common.config.keys.loader.pem.PEMResourceParserUtils;
+import org.apache.sshd.common.config.keys.loader.putty.PuttyKeyUtils;
 import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
 import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
 import org.apache.sshd.common.signature.BuiltinSignatures;
+import org.apache.sshd.common.util.security.SecurityUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
@@ -80,10 +85,16 @@ import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class SftpSessionFactory {
-    /**
-     *
-     */
+
     private static final String ERR_MSG_AUTHENTICATION_FAILED = "No more authentication methods available";
+
+    static {
+        final KeyPairResourceParser parser = KeyPairResourceParser.aggregate(
+                PEMResourceParserUtils.PROXY, //
+                OpenSSHKeyPairResourceParser.INSTANCE, //
+                PuttyKeyUtils.DEFAULT_INSTANCE);
+        SecurityUtils.setKeyPairResourceParser(parser);
+    }
 
     private SshClient m_sshClient;
 
