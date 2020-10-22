@@ -49,9 +49,15 @@
 package org.knime.ext.ssh.filehandling.testing;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
 
+import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.util.CheckUtils;
+import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
 import org.knime.ext.ssh.filehandling.fs.SshConnection;
 import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
@@ -77,7 +83,24 @@ public class SshTestInitializerProvider extends DefaultFSTestInitializerProvider
         final SshConnectionConfiguration sshCfg = new SshConnectionConfiguration();
         sshCfg.setHost(cfg.get("host"));
         sshCfg.setUserName(cfg.get("username"));
-        sshCfg.setPassword(cfg.get("password"));
+        if (cfg.get("password") != null) {
+            sshCfg.setPassword(cfg.get("password"));
+        } else {
+            sshCfg.setUseKeyFile(true);
+            sshCfg.setBridge(new ConnectionToNodeModelBridge() {
+
+                @Override
+                public void doWithKnownHostsFile(final Consumer<Path> consumer)
+                        throws IOException, InvalidSettingsException {
+                    // not supported
+                }
+
+                @Override
+                public void doWithKeysFile(final Consumer<Path> consumer) throws IOException, InvalidSettingsException {
+                    consumer.accept(Paths.get(cfg.get("keyFile")));
+                }
+            });
+        }
         sshCfg.setPort(cfg.containsKey("port") ? Integer.parseInt(cfg.get("port")) : 22);
         sshCfg.setConnectionTimeout(3000000); // set a big time out for well debugging
 
@@ -90,7 +113,9 @@ public class SshTestInitializerProvider extends DefaultFSTestInitializerProvider
         CheckUtils.checkArgumentNotNull(configuration.get("host"), "host must be specified.");
         CheckUtils.checkArgumentNotNull(configuration.get("workingDirPrefix"), "workingDirPrefix must be specified.");
         CheckUtils.checkArgumentNotNull(configuration.get("username"), "username must be specified.");
-        CheckUtils.checkArgumentNotNull(configuration.get("password"), "password must be specified.");
+        CheckUtils.checkArgumentNotNull(
+                Optional.ofNullable(configuration.get("password")).orElse(configuration.get("keyFile")),
+                "Either password or keyFile must be specified.");
     }
 
     @Override
