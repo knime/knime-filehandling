@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.nio.channels.UnresolvedAddressException;
 import java.nio.file.Path;
 import java.security.KeyPair;
+import java.time.Duration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -168,7 +169,7 @@ public class SftpSessionFactory {
      * @throws IOException
      */
     public ClientSession createSession() throws IOException {
-        long connectionTimeOut = m_settings.getConnectionTimeout();
+        final Duration connectionTimeOut = m_settings.getConnectionTimeout();
 
         ClientSession session = null;
         try {

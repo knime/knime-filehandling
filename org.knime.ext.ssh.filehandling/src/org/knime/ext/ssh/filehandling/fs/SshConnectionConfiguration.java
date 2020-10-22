@@ -48,6 +48,10 @@
  */
 package org.knime.ext.ssh.filehandling.fs;
 
+import java.time.Duration;
+
+import org.knime.ext.ssh.filehandling.node.SshConnectionSettingsModel;
+
 /**
  * Settings required for create the SFTP connection.
  *
@@ -56,8 +60,9 @@ package org.knime.ext.ssh.filehandling.fs;
 public class SshConnectionConfiguration {
     private ConnectionToNodeModelBridge m_bridge;
 
-    private long m_connectionTimeout = 30000l;
-    private int m_maxSftpSessionLimit = 15;
+    private Duration m_connectionTimeout = Duration
+            .ofSeconds(SshConnectionSettingsModel.DEFAULT_CONNECTION_TIMEOUT_SECONDS);
+    private int m_maxSftpSessionLimit = SshConnectionSettingsModel.DEFAULT_MAX_SESSION_COUNT;
     private int m_port = 22;
     private String m_host;
     private String m_userName;
@@ -93,7 +98,7 @@ public class SshConnectionConfiguration {
     /**
      * @return connection time out.
      */
-    public long getConnectionTimeout() {
+    public Duration getConnectionTimeout() {
         return m_connectionTimeout;
     }
 
@@ -101,7 +106,7 @@ public class SshConnectionConfiguration {
      * @param connectionTimeout
      *            connection time out.
      */
-    public void setConnectionTimeout(final long connectionTimeout) {
+    public void setConnectionTimeout(final Duration connectionTimeout) {
         m_connectionTimeout = connectionTimeout;
     }
 

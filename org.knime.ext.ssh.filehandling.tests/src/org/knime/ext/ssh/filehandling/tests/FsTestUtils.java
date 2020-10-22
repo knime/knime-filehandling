@@ -95,7 +95,6 @@ public class FsTestUtils {
 
         cfg.setHost(sshdAddressSplits[0]);
         cfg.setPort(Integer.parseInt(sshdAddressSplits[1]));
-        cfg.setConnectionTimeout(30000l);
         cfg.setUserName("jenkins");
         cfg.setUseKeyFile(true);
         cfg.setKeyFilePassword("");

@@ -50,6 +50,7 @@
 package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -87,7 +88,7 @@ public class ConnectionResourcePool implements SessionListener {
     private ClientSession m_session;
 
     private final int m_maxResourcesLimit;
-    private final long m_connectionTimeOut;
+    private final Duration m_connectionTimeOut;
 
     /**
      * @param settings
@@ -113,7 +114,7 @@ public class ConnectionResourcePool implements SessionListener {
             try {
                 return takeImpl();
             } catch (ResourcesLimitExceedException ex) {
-                long waitTime = m_connectionTimeOut - (System.currentTimeMillis() - startTime);
+                long waitTime = m_connectionTimeOut.toMillis() - (System.currentTimeMillis() - startTime);
                 if (waitTime > 0) {
                     try {
                         wait(waitTime);

@@ -51,6 +51,7 @@ package org.knime.ext.ssh.filehandling.testing;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -102,7 +103,7 @@ public class SshTestInitializerProvider extends DefaultFSTestInitializerProvider
             });
         }
         sshCfg.setPort(cfg.containsKey("port") ? Integer.parseInt(cfg.get("port")) : 22);
-        sshCfg.setConnectionTimeout(3000000); // set a big time out for well debugging
+        sshCfg.setConnectionTimeout(Duration.ofSeconds(300)); // set a big time out for easier debugging
 
         // create connection
         final SshConnection connection = new SshConnection(sshCfg, workingDir);

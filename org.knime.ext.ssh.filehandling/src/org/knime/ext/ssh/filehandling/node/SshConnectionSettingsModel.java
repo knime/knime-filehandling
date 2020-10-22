@@ -48,6 +48,7 @@
  */
 package org.knime.ext.ssh.filehandling.node;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 
 import org.knime.core.node.InvalidSettingsException;
@@ -74,6 +75,16 @@ import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 public class SshConnectionSettingsModel {
 
     /**
+     * Default value for the maximum number of SFTP sessions to open.
+     */
+    public static final int DEFAULT_MAX_SESSION_COUNT = 8;
+
+    /**
+     * Default value for connection timeout in seconds.
+     */
+    public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 30;
+
+    /**
      * Settings key for the authentication sub-settings. Must be public for dialog.
      */
     public static final String KEY_AUTH = "auth";
@@ -92,7 +103,6 @@ public class SshConnectionSettingsModel {
 
     private static final String KEY_KNOWN_HOSTS_FILE = "knownHostsFile";
 
-    private static final int DEFAULT_TIMEOUT = 30;
 
     private NodeCreationConfiguration m_nodeCreationConfig;
 
@@ -115,10 +125,11 @@ public class SshConnectionSettingsModel {
 
         m_host = new SettingsModelString(KEY_HOST, "localhost");
         m_port = new SettingsModelIntegerBounded(KEY_PORT, 22, 1, 65535);
-        m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT, DEFAULT_TIMEOUT,
+        m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT,
+                DEFAULT_CONNECTION_TIMEOUT_SECONDS,
                 1,
                 Integer.MAX_VALUE);
-        m_maxSessionCount = new SettingsModelIntegerBounded(KEY_MAX_SESSION_COUNT, 8, 1, Integer.MAX_VALUE);
+        m_maxSessionCount = new SettingsModelIntegerBounded(KEY_MAX_SESSION_COUNT, DEFAULT_MAX_SESSION_COUNT, 1, Integer.MAX_VALUE);
 
         m_authSettings = new SshAuthenticationSettingsModel(cfg);
 
@@ -310,8 +321,8 @@ public class SshConnectionSettingsModel {
     /**
      * @return connection time out.
      */
-    public int getConnectionTimeout() {
-        return m_connectionTimeout.getIntValue();
+    public Duration getConnectionTimeout() {
+        return Duration.ofSeconds(m_connectionTimeout.getIntValue());
     }
 
     /**
@@ -345,7 +356,7 @@ public class SshConnectionSettingsModel {
     }
 
     /**
-     * @return connection time out settings model.
+     * @return connection time out settings model (holds seconds value)
      */
     public SettingsModelNumber getConnectionTimeoutModel() {
         return m_connectionTimeout;
