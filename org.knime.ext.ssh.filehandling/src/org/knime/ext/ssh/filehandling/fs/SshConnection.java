@@ -52,6 +52,8 @@ import java.io.IOException;
 
 import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.filehandling.core.connections.FSConnection;
+import org.knime.filehandling.core.connections.uriexport.PathURIExporter;
+import org.knime.filehandling.core.connections.uriexport.URIExporter;
 import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
 
 /**
@@ -75,19 +77,18 @@ public class SshConnection implements FSConnection {
         m_fileSystem = new SshFileSystem(cfg, workingDirectory);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public SshFileSystem getFileSystem() {
         return m_fileSystem;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public FileSystemBrowser getFileSystemBrowser() {
         return new NioFileSystemBrowser(this);
+    }
+
+    @Override
+    public URIExporter getDefaultURIExporter() {
+        return PathURIExporter.getInstance();
     }
 }
