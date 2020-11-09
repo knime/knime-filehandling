@@ -1,0 +1,25 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Tests for FTP filehandling extension
+Bundle-SymbolicName: org.knime.ext.ftp.filehandling.tests;singleton:=true
+Bundle-Version: 4.3.0.qualifier
+Automatic-Module-Name: org.knime.ext.ftp.filehandling.tests
+Fragment-Host: org.knime.ext.ftp.filehandling;bundle-version="4.3.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Import-Package: org.junit,
+ org.junit.runner,
+ org.junit.rules,
+ org.junit.runners
+Bundle-ClassPath: .,
+ lib/ftplet-api-1.1.1.jar,
+ lib/ftpserver-core-1.1.1.jar,
+ lib/mina-core-2.0.16.jar,
+ lib/slf4j-api-1.7.21.jar,
+ lib/javax.servlet-api-3.1.0.jar,
+ lib/jetty-http-9.4.32.v20200930.jar,
+ lib/jetty-io-9.4.32.v20200930.jar,
+ lib/jetty-proxy-9.4.32.v20200930.jar,
+ lib/jetty-server-9.4.32.v20200930.jar,
+ lib/jetty-util-9.4.32.v20200930.jar,
+ lib/jetty-security-9.4.32.v20200930.jar,
+ lib/jetty-servlet-9.4.32.v20200930.jar
