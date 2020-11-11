@@ -50,7 +50,11 @@ package org.knime.ext.ftp.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
+import org.eclipse.core.net.proxy.IProxyData;
+import org.eclipse.core.net.proxy.IProxyService;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -61,9 +65,14 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.node.workflow.ICredentials;
+import org.knime.ext.ftp.filehandling.Activator;
 import org.knime.ext.ftp.filehandling.fs.FtpConnectionConfiguration;
 import org.knime.ext.ftp.filehandling.fs.FtpFSConnection;
 import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
+import org.knime.ext.ftp.filehandling.fs.ProtectedHostConfiguration;
+import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -79,21 +88,111 @@ public class FtpConnectionNodeModel extends NodeModel {
 
     private String m_fsId;
 
+    private final FtpConnectionSettingsModel m_settings;
+
     /**
      * Creates new instance.
      */
     protected FtpConnectionNodeModel() {
         super(new PortType[0], new PortType[] { FileSystemPortObject.TYPE });
+        m_settings = new FtpConnectionSettingsModel();
     }
 
     @SuppressWarnings("resource")
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        FtpConnectionConfiguration connection = new FtpConnectionConfiguration();
-        connection.setHost("localhost");
-
-        FSConnectionRegistry.getInstance().register(m_fsId, new FtpFSConnection(connection));
+        FSConnectionRegistry.getInstance().register(m_fsId, createConnection( //
+                m_settings, getCredentialsProvider()));
         return new PortObject[] { new FileSystemPortObject(createSpec()) };
+    }
+
+    /**
+     * @param settings
+     *            FTP model settings.
+     * @param credentialsProvider
+     *            credentials provider.
+     * @return FTP connection.
+     * @throws IOException
+     * @throws InvalidSettingsException
+     */
+    public static FSConnection createConnection(final FtpConnectionSettingsModel settings,
+            final CredentialsProvider credentialsProvider) throws IOException, InvalidSettingsException {
+        FtpConnectionConfiguration conf = createConfiguration(settings, credentialsProvider::get,
+                Activator.getProxyService());
+        return new FtpFSConnection(conf);
+    }
+
+    /**
+     * @param settings
+     *            FTP model settings.
+     * @param credentialsProvider
+     *            credentials provider.
+     * @param proxyService
+     *            proxy service supplier
+     * @return FTP connection configuration.
+     * @throws InvalidSettingsException
+     */
+    public static FtpConnectionConfiguration createConfiguration(final FtpConnectionSettingsModel settings,
+            final Function<String, ICredentials> credentialsProvider,
+            final IProxyService proxyService) throws InvalidSettingsException {
+        final FtpConnectionConfiguration conf = new FtpConnectionConfiguration();
+        conf.setHost(settings.getHost());
+        conf.setPort(settings.getPort());
+        conf.setMaxConnectionPoolSize(settings.getMaxConnectionPoolSize());
+        conf.setMinConnectionPoolSize(settings.getMinConnectionPoolSize());
+        conf.setCoreConnectionPoolSize(settings.getCoreConnectionPoolSize());
+        conf.setMaxIdleTime(TimeUnit.SECONDS.toMillis(settings.getMaxIdleTime()));
+        conf.setConnectionTimeOut((int) TimeUnit.SECONDS.toMillis(settings.getConnectionTimeout()));
+        conf.setServerTimeZoneOffset(TimeUnit.MINUTES.toMillis(settings.getTimeZoneOffset()));
+        conf.setUseSsl(settings.isUseSsl());
+        conf.setWorkingDirectory(settings.getWorkingDirectory());
+
+        // authentication
+        final FtpAuthenticationSettingsModel auth = settings.getAuthenticationSettings();
+        switch (auth.getAuthType()) {
+        case ANONYMOUS:
+            conf.setUser("anonymous");
+            conf.setPassword("");
+            break;
+        case CREDENTIALS:
+            ICredentials creds = getCredentials(credentialsProvider, auth.getCredential());
+            conf.setUser(creds.getLogin());
+            conf.setPassword(creds.getPassword());
+            break;
+        case USER_PWD:
+            conf.setUser(auth.getUserModel().getStringValue());
+            conf.setPassword(auth.getPasswordModel().getStringValue());
+            break;
+        default:
+            break;
+        }
+
+        // Proxy
+        if (settings.isUseProxy()) {
+            final ProtectedHostConfiguration proxy = new ProtectedHostConfiguration();
+            IProxyData proxyData = proxyService.getProxyData(IProxyData.HTTP_PROXY_TYPE);
+            if (proxyData == null) {
+                throw new InvalidSettingsException("Eclipse HTTP proxy is not configured");
+            }
+
+            proxy.setHost(proxyData.getHost());
+            proxy.setPort(proxyData.getPort());
+            proxy.setUser(proxyData.getUserId());
+            proxy.setPassword(proxyData.getPassword());
+
+            conf.setProxy(proxy);
+        }
+
+        return conf;
+    }
+
+    private static ICredentials getCredentials(final Function<String, ICredentials> credentialsProvider,
+            final String credential) throws InvalidSettingsException {
+        final ICredentials creds = credentialsProvider.apply(credential);
+        if (creds == null) {
+            throw new InvalidSettingsException("Credentials '" + credential + "' not found");
+        }
+        return creds;
     }
 
     @Override
@@ -103,9 +202,9 @@ public class FtpConnectionNodeModel extends NodeModel {
     }
 
     private FileSystemPortObjectSpec createSpec() {
-        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId, FtpFileSystem.createFSLocationSpec("localhost"));
+        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
+                FtpFileSystem.createFSLocationSpec(m_settings.getHost()));
     }
-
 
     /**
      * {@inheritDoc}
@@ -123,7 +222,6 @@ public class FtpConnectionNodeModel extends NodeModel {
     protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         // nothing to save
-
     }
 
     /**
@@ -131,7 +229,7 @@ public class FtpConnectionNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        // Have not any settings. Nothing to save
+        m_settings.saveSettingsForModel(settings);
     }
 
     /**
@@ -139,7 +237,7 @@ public class FtpConnectionNodeModel extends NodeModel {
      */
     @Override
     protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        // Have not any settings. Nothing to validate
+        m_settings.validateSettings(settings);
     }
 
     /**
@@ -147,7 +245,7 @@ public class FtpConnectionNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        // Have not any settings. Nothing to load
+        m_settings.loadSettingsForModel(settings);
     }
 
     @Override

@@ -44,59 +44,45 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-10-01 (Vyacheslav Soldatov): created
+ *   2020-10-15 (Vyacheslav Soldatov): created
  */
-package org.knime.ext.ftp.filehandling.node;
+package org.knime.ext.ftp.filehandling;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.eclipse.core.net.proxy.IProxyService;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
 /**
- * Factory class for FTP Connection Node.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpConnectionNodeFactory extends NodeFactory<FtpConnectionNodeModel> {
+public class Activator implements BundleActivator {
+    private ServiceReference<IProxyService> m_proxyServiceRef;
+    private static IProxyService mProxyService;
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public FtpConnectionNodeModel createNodeModel() {
-        return new FtpConnectionNodeModel();
+    public void start(final BundleContext context) throws Exception {
+        m_proxyServiceRef = context.getServiceReference(IProxyService.class);
+        mProxyService = context.getService(m_proxyServiceRef); // NOSONAR is ok to initialize on bundle start
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected int getNrNodeViews() {
-        return 0;
+    public void stop(final BundleContext context) throws Exception {
+        context.ungetService(m_proxyServiceRef);
+        m_proxyServiceRef = null;
     }
 
     /**
-     * {@inheritDoc}
+     * @return Proxy service.
      */
-    @Override
-    public NodeView<FtpConnectionNodeModel> createNodeView(final int viewIndex,
-            final FtpConnectionNodeModel nodeModel) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected NodeDialogPane createNodeDialogPane() {
-        return new FtpConnectionNodeDialog();
+    public static IProxyService getProxyService() {
+        return mProxyService;
     }
 }

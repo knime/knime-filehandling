@@ -67,6 +67,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.util.Arrays;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -112,6 +113,9 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     @Override
     protected void moveInternal(final FtpPath source, final FtpPath target, final CopyOption... options)
             throws IOException {
+        // first of all get source metadata because it is cached yet
+        final FTPFile sourceMeta = ((FtpFileAttributes) readAttributes(source, PosixFileAttributes.class))
+                .getMetadata();
 
         if (exists(target)) {
             FTPFile targetMeta = ((FtpFileAttributes) readAttributes(target, PosixFileAttributes.class)).getMetadata();
@@ -127,6 +131,11 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
 
         // if not any exceptions thrown should clear the cache deeply
         getFileSystemInternal().removeFromAttributeCacheDeep(source);
+
+        // correct source metadata and cache it for target
+        sourceMeta.setTimestamp(new GregorianCalendar());
+        sourceMeta.setName(target.getFileName().toString());
+        cacheAttributes(target, new FtpFileAttributes(target, sourceMeta));
     }
 
     /**

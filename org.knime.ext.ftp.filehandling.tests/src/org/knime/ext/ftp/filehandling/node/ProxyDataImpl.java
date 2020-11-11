@@ -44,59 +44,122 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-10-01 (Vyacheslav Soldatov): created
+ *   2020-10-16 (Vyacheslav Soldatov): created
  */
 package org.knime.ext.ftp.filehandling.node;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.eclipse.core.net.proxy.IProxyData;
 
 /**
- * Factory class for FTP Connection Node.
+ * Unit test implementation of {@link IProxyData}
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpConnectionNodeFactory extends NodeFactory<FtpConnectionNodeModel> {
+class ProxyDataImpl implements IProxyData {
+    private String m_host;
+    private int m_port;
+    private String m_user;
+    private String m_password;
 
     /**
-     * {@inheritDoc}
+     * @param host
+     *            proxy host.
+     * @param port
+     *            proxy port.
      */
-    @Override
-    public FtpConnectionNodeModel createNodeModel() {
-        return new FtpConnectionNodeModel();
+    public ProxyDataImpl(final String host, final int port) {
+        m_host = host;
+        m_port = port;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected int getNrNodeViews() {
-        return 0;
+    public String getType() {
+        return IProxyData.HTTP_PROXY_TYPE;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public NodeView<FtpConnectionNodeModel> createNodeView(final int viewIndex,
-            final FtpConnectionNodeModel nodeModel) {
-        return null;
+    public String getHost() {
+        return m_host;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected boolean hasDialog() {
-        return true;
+    public void setHost(final String host) {
+        m_host = host;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected NodeDialogPane createNodeDialogPane() {
-        return new FtpConnectionNodeDialog();
+    public int getPort() {
+        return m_port;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setPort(final int port) {
+        m_port = port;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getUserId() {
+        return m_user;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setUserid(final String userid) {
+        m_user = userid;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getPassword() {
+        return m_password;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setPassword(final String password) {
+        m_password = password;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isRequiresAuthentication() {
+        return m_user != null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void disable() {
+        m_host = null;
+        m_port = -1;
+        m_user = null;
+        m_password = null;
     }
 }

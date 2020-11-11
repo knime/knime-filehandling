@@ -8,9 +8,10 @@ Require-Bundle: org.knime.core;bundle-version="[4.3.0,5.0.0]",
  org.knime.filehandling.core;bundle-version="[4.3.0,5.0.0)",
  org.knime.workbench.core;bundle-version="[4.3.0,5.0.0)",
  org.eclipse.core.resources;bundle-version="3.13.700",
- org.apache.commons.net;bundle-version="[3.7.0,4.0.0)"
+ org.apache.commons.net;bundle-version="[3.7.0,4.0.0)",
+ org.eclipse.core.net
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Automatic-Module-Name: org.knime.ext.ftp.filehandling
 Bundle-ClassPath: .
-
+Bundle-Activator: org.knime.ext.ftp.filehandling.Activator
