@@ -48,8 +48,11 @@
  */
 package org.knime.ext.ftp.filehandling.fs;
 
+import java.io.FilterInputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.NoSuchFileException;
 
 import org.apache.commons.net.ftp.FTPClient;
@@ -181,6 +184,97 @@ public class FtpClient {
      */
     public void createFile(final String path, final InputStream in) throws IOException {
         m_client.storeFile(path, in);
+    }
+
+    /**
+     * @param file
+     *            file
+     * @return file output stream.
+     * @throws IOException
+     */
+    @SuppressWarnings("resource")
+    public OutputStream openForRewrite(final String file) throws IOException {
+        OutputStream stream = m_client.storeFileStream(file);
+        if (stream == null) {
+            throw new IOException(m_client.getReplyString());
+        }
+        return wrapToCompletePendingCommand(stream);
+    }
+
+    /**
+     * @param file
+     *            file
+     * @return file output stream.
+     * @throws IOException
+     */
+    @SuppressWarnings("resource")
+    public OutputStream openForAppend(final String file) throws IOException {
+        OutputStream stream = m_client.appendFileStream(file);
+        if (stream == null) {
+            throw new IOException(m_client.getReplyString());
+        }
+        return wrapToCompletePendingCommand(stream);
+    }
+
+    private OutputStream wrapToCompletePendingCommand(final OutputStream stream) {
+        return new FilterOutputStream(stream) {
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public void close() throws IOException {
+                try {
+                    super.close();
+                } finally {
+                    completePendingCommand();
+                }
+            }
+        };
+    }
+
+    void completePendingCommand() throws IOException {
+        if (!m_client.completePendingCommand()) {
+            throw new IOException(m_client.getReplyString());
+        }
+    }
+
+    /**
+     * @param path
+     *            file path.
+     * @param out
+     *            local output stream.
+     * @throws IOException
+     */
+    public void getFileContent(final String path, final OutputStream out) throws IOException {
+        m_client.retrieveFile(path, out);
+    }
+
+    /**
+     * @param path
+     *            file path.
+     * @return file content as stream.
+     * @throws IOException
+     */
+    @SuppressWarnings("resource")
+    public InputStream getFileContentAsStream(final String path) throws IOException {
+        final InputStream stream = m_client.retrieveFileStream(path);
+        if (stream == null) {
+            throw new IOException(m_client.getReplyString());
+        }
+
+        return new FilterInputStream(stream) {
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public void close() throws IOException {
+                try {
+                    super.close();
+                } finally {
+                    completePendingCommand();
+                }
+            }
+        };
     }
 
     private void checkPositiveResponse() throws IOException {

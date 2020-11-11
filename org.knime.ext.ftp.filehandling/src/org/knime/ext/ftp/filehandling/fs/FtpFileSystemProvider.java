@@ -48,18 +48,21 @@
  */
 package org.knime.ext.ftp.filehandling.fs;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FilterInputStream;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.util.Arrays;
@@ -98,7 +101,7 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     @Override
     protected SeekableByteChannel newByteChannelInternal(final FtpPath path, final Set<? extends OpenOption> options,
             final FileAttribute<?>... attrs) throws IOException {
-        throw new IOException("TODO");
+        return new FtpSeekableByteChannel(path, options);
     }
 
     /**
@@ -113,11 +116,24 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings("resource")
     @Override
     protected InputStream newInputStreamInternal(final FtpPath path, final OpenOption... options) throws IOException {
-        final Set<OpenOption> opts = new HashSet<>(Arrays.asList(options));
-        return Channels.newInputStream(newByteChannelInternal(path, opts));
+        final FtpClientResource resource = takeResource();
+        final InputStream stream = new BufferedInputStream(resource.get().getFileContentAsStream(path.toString()));
+
+        return new FilterInputStream(stream) {
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public void close() throws IOException {
+                try {
+                    super.close();
+                } finally {
+                    releaseResource(resource);
+                }
+            }
+        };
     }
 
     /**
@@ -127,7 +143,29 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     @Override
     protected OutputStream newOutputStreamInternal(final FtpPath path, final OpenOption... options) throws IOException {
         final Set<OpenOption> opts = new HashSet<>(Arrays.asList(options));
-        return Channels.newOutputStream(newByteChannelInternal(path, opts));
+
+        final FtpClientResource resource = takeResource();
+
+        final OutputStream out;
+        if (opts.contains(StandardOpenOption.APPEND)) {
+            out = resource.get().openForAppend(path.toString());
+        } else {
+            out = resource.get().openForRewrite(path.toString());
+        }
+
+        return new FilterOutputStream(new BufferedOutputStream(out)) {
+            /**
+             * {@inheritDoc}
+             */
+            @Override
+            public void close() throws IOException {
+                try {
+                    super.close();
+                } finally {
+                    releaseResource(resource);
+                }
+            }
+        };
     }
 
     /**
@@ -181,24 +219,25 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     @Override
     protected void deleteInternal(final FtpPath path) throws IOException {
         FTPFile file = ((FtpFileAttributes) readAttributes(path, PosixFileAttributes.class)).getMetadata();
-        final boolean isDirectory = file.getType() == FTPFile.DIRECTORY_TYPE;
-        if (isDirectory && !isEmptyFolder(path)) {
-            throw new DirectoryNotEmptyException(path.toString());
-        }
+        deleteInternal(path, file);
+    }
 
+    /**
+     * @param path
+     *            path to delete.
+     * @param meta
+     *            metadata.
+     * @throws IOException
+     */
+    void deleteInternal(final FtpPath path, final FTPFile meta) throws IOException {
         invokeWithResource(c -> {
-            if (isDirectory) {
+            if (meta.getType() == FTPFile.DIRECTORY_TYPE) {
                 c.deleteDirectory(path.toString());
             } else {
                 c.deleteFile(path.toString());
             }
             return null;
         });
-    }
-
-    private boolean isEmptyFolder(final FtpPath path) throws IOException {
-        FTPFile[] files = invokeWithResource(c -> c.listFiles(path.toString()));
-        return files.length == 0;
     }
 
     /**
@@ -228,6 +267,34 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     }
 
     /**
+     * @param path
+     *            source remote path.
+     * @param out
+     *            output stream to copy.
+     * @throws IOException
+     */
+    void copyFromRemote(final String path, final OutputStream out) throws IOException {
+        invokeWithResource(c -> {
+            c.getFileContent(path, out);
+            return null;
+        });
+    }
+
+    /**
+     * @param path
+     *            file path.
+     * @param in
+     *            file content.
+     * @throws IOException
+     */
+    void copyToRemote(final String path, final InputStream in) throws IOException {
+        invokeWithResource(c -> {
+            c.createFile(path, in);
+            return null;
+        });
+    }
+
+    /**
      * @param func
      *            function to invoke with resource.
      * @return invocation result.
@@ -235,18 +302,34 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     private <R> R invokeWithResource(final WithClientInvocable<R> func)
             throws IOException {
 
-        FtpClientResource resource;
+        final FtpClientResource resource = takeResource();
+        try {
+            return func.invoke(resource.get());
+        } finally {
+            releaseResource(resource);
+        }
+    }
+
+    /**
+     * @param resource
+     *            resource to release.
+     */
+    private void releaseResource(final FtpClientResource resource) {
+        m_clientPool.release(resource);
+    }
+
+    /**
+     * @return resource.
+     * @throws IOException
+     */
+    private FtpClientResource takeResource() throws IOException {
+        final FtpClientResource resource;
         try {
             resource = m_clientPool.take();
         } catch (InterruptedException ex) { // NOSONAR there is better place to catch this exception.
             throw ExceptionUtil.wrapAsIOException(ex);
         }
-
-        try {
-            return func.invoke(resource.get());
-        } finally {
-            m_clientPool.release(resource);
-        }
+        return resource;
     }
 
     /**

@@ -144,8 +144,6 @@ public class FtpClientFactory {
             ftpsClient.execPBSZ(0);
             // set data channel encrypted
             ftpsClient.execPROT("P");
-            // prevent of double wrapping TCP socket to SSL socket.
-            ftpsClient.setSocketFactory(null);
         }
 
         client.login(m_configuration.getUser(), m_configuration.getPassword());
