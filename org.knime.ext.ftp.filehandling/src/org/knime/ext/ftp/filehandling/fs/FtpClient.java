@@ -298,4 +298,17 @@ public class FtpClient {
             throw new IOException(client.getReplyString());
         }
     }
+
+    /**
+     * @param from
+     *            from path.
+     * @param to
+     *            path.
+     * @throws IOException
+     */
+    public void rename(final String from, final String to) throws IOException {
+        if (!m_client.rename(from, to)) {
+            throw new IOException(m_client.getReplyString());
+        }
+    }
 }

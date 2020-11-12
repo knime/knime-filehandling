@@ -59,6 +59,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -107,10 +108,66 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("resource")
+    @Override
+    protected void moveInternal(final FtpPath source, final FtpPath target, final CopyOption... options)
+            throws IOException {
+
+        if (exists(target)) {
+            FTPFile targetMeta = ((FtpFileAttributes) readAttributes(target, PosixFileAttributes.class)).getMetadata();
+            // should remove already existing file
+            deleteInternal(target, targetMeta);
+        }
+
+        // renaming
+        invokeWithResource(c -> {
+            c.rename(source.toString(), target.toString());
+            return null;
+        });
+
+        // if not any exceptions thrown should clear the cache deeply
+        getFileSystemInternal().removeFromAttributeCacheDeep(source);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void copyInternal(final FtpPath source, final FtpPath target, final CopyOption... options)
             throws IOException {
-        throw new IOException("TODO");
+        // first of all get source metadata because it is cached yet
+        final FTPFile sourceMeta = ((FtpFileAttributes) readAttributes(source, PosixFileAttributes.class))
+                .getMetadata();
+
+        if (exists(target)) {
+            FTPFile targetMeta = ((FtpFileAttributes) readAttributes(target, PosixFileAttributes.class)).getMetadata();
+            // should remove already existing file
+            deleteInternal(target, targetMeta);
+        }
+
+        if (sourceMeta.getType() == FTPFile.DIRECTORY_TYPE) {
+            // just create new folder
+            createDirectoryInternal(target);
+        } else {
+            // there is not a simple way to copy the file on server side.
+            // just need to load it locally and push then to server again.
+            // some FTP servers can support proprietary extension for it
+            // but it is not universal approach to use
+            Path tmp = Files.createTempFile("knime-ftp-", ".tmp");
+            try {
+                // copy file from remote to temporary local file
+                try (OutputStream out = Files.newOutputStream(tmp)) {
+                    copyFromRemote(source.toString(), out);
+                }
+
+                // copy temporary local file to FTP server
+                try (InputStream in = Files.newInputStream(tmp)) {
+                    copyToRemote(target.toString(), in);
+                }
+            } finally {
+                Files.delete(tmp);
+            }
+        }
     }
 
     /**
@@ -171,7 +228,6 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings("resource")
     @Override
     protected Iterator<FtpPath> createPathIterator(final FtpPath dir, final Filter<? super Path> filter)
             throws IOException {
@@ -182,7 +238,7 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
             final FtpPath path = dir.resolve(ftpFile.getName());
             files.add(path);
             // cache file attributes
-            getFileSystemInternal().addToAttributeCache(path, new FtpFileAttributes(path, ftpFile));
+            cacheAttributes(path, new FtpFileAttributes(path, ftpFile));
         }
         return new FtpPathIterator(dir, files, filter);
     }
@@ -247,7 +303,7 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     public void setAttribute(final Path path, final String name, final Object value,
             final LinkOption... options)
             throws IOException {
-        throw new IOException("TODO");
+        // ignored now
     }
 
     /**
@@ -308,6 +364,11 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
         } finally {
             releaseResource(resource);
         }
+    }
+
+    @SuppressWarnings("resource")
+    void cacheAttributes(final FtpPath path, final BaseFileAttributes attr) {
+        getFileSystemInternal().addToAttributeCache(path, attr);
     }
 
     /**
