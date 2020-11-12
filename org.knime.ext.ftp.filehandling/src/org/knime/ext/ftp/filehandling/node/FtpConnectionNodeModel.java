@@ -72,7 +72,6 @@ import org.knime.ext.ftp.filehandling.fs.FtpConnectionConfiguration;
 import org.knime.ext.ftp.filehandling.fs.FtpFSConnection;
 import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
 import org.knime.ext.ftp.filehandling.fs.ProtectedHostConfiguration;
-import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -86,9 +85,11 @@ public class FtpConnectionNodeModel extends NodeModel {
 
     private static final String FILE_SYSTEM_NAME = "FTP";
 
+    private final FtpConnectionSettingsModel m_settings;
+
     private String m_fsId;
 
-    private final FtpConnectionSettingsModel m_settings;
+    private FtpFSConnection m_fsConnection;
 
     /**
      * Creates new instance.
@@ -98,11 +99,16 @@ public class FtpConnectionNodeModel extends NodeModel {
         m_settings = new FtpConnectionSettingsModel();
     }
 
-    @SuppressWarnings("resource")
+    @Override
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+        m_fsId = FSConnectionRegistry.getInstance().getKey();
+        return new PortObjectSpec[] { createSpec() };
+    }
+
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        FSConnectionRegistry.getInstance().register(m_fsId, createConnection( //
-                m_settings, getCredentialsProvider()));
+        m_fsConnection = createConnection(m_settings, getCredentialsProvider());
+        FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
         return new PortObject[] { new FileSystemPortObject(createSpec()) };
     }
 
@@ -115,7 +121,7 @@ public class FtpConnectionNodeModel extends NodeModel {
      * @throws IOException
      * @throws InvalidSettingsException
      */
-    public static FSConnection createConnection(final FtpConnectionSettingsModel settings,
+    public static FtpFSConnection createConnection(final FtpConnectionSettingsModel settings,
             final CredentialsProvider credentialsProvider) throws IOException, InvalidSettingsException {
         FtpConnectionConfiguration conf = createConfiguration(settings, credentialsProvider::get,
                 Activator.getProxyService());
@@ -133,8 +139,8 @@ public class FtpConnectionNodeModel extends NodeModel {
      * @throws InvalidSettingsException
      */
     public static FtpConnectionConfiguration createConfiguration(final FtpConnectionSettingsModel settings,
-            final Function<String, ICredentials> credentialsProvider,
-            final IProxyService proxyService) throws InvalidSettingsException {
+            final Function<String, ICredentials> credentialsProvider, final IProxyService proxyService)
+            throws InvalidSettingsException {
         final FtpConnectionConfiguration conf = new FtpConnectionConfiguration();
         conf.setHost(settings.getHost());
         conf.setPort(settings.getPort());
@@ -195,54 +201,33 @@ public class FtpConnectionNodeModel extends NodeModel {
         return creds;
     }
 
-    @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-        m_fsId = FSConnectionRegistry.getInstance().getKey();
-        return new PortObjectSpec[] { createSpec() };
-    }
-
     private FileSystemPortObjectSpec createSpec() {
         return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
                 FtpFileSystem.createFSLocationSpec(m_settings.getHost()));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         setWarningMessage("Connection no longer available. Please re-execute the node.");
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         // nothing to save
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_settings.saveSettingsForModel(settings);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_settings.validateSettings(settings);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_settings.loadSettingsForModel(settings);
@@ -254,11 +239,12 @@ public class FtpConnectionNodeModel extends NodeModel {
         reset();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void reset() {
+        if (m_fsConnection != null) {
+            m_fsConnection.closeInBackground();
+            m_fsConnection = null;
+        }
         m_fsId = null;
     }
 }
