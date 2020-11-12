@@ -48,6 +48,7 @@
  */
 package org.knime.ext.ftp.filehandling.node;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -119,7 +120,7 @@ public class FtpConnectionSettingsModel {
         m_host = new SettingsModelString(KEY_HOST, "localhost");
         m_port = new SettingsModelIntegerBounded(KEY_PORT, 21, 1, 65535);
         m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT, DEFAULT_TIMEOUT,
-                1,
+                0,
                 Integer.MAX_VALUE);
         m_maxConnectionPoolSize = new SettingsModelIntegerBounded(KEY_MAX_POOL_SIZE,
                 FtpConnectionConfiguration.DEFAULT_MAX_POOL_SIZE, 1, Integer.MAX_VALUE);
@@ -316,8 +317,8 @@ public class FtpConnectionSettingsModel {
     /**
      * @return connection time out.
      */
-    public int getConnectionTimeout() {
-        return m_connectionTimeout.getIntValue();
+    public Duration getConnectionTimeout() {
+        return Duration.ofSeconds(m_connectionTimeout.getIntValue());
     }
 
     /**
@@ -444,8 +445,8 @@ public class FtpConnectionSettingsModel {
     /**
      * @return time zone offset in minutes.
      */
-    public int getTimeZoneOffset() {
-        return m_timeZoneOffset.getIntValue();
+    public Duration getTimeZoneOffset() {
+        return Duration.ofMinutes(m_timeZoneOffset.getIntValue());
     }
 
     /**

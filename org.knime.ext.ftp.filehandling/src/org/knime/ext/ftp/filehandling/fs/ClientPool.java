@@ -50,6 +50,7 @@
 package org.knime.ext.ftp.filehandling.fs;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -122,12 +123,13 @@ public class ClientPool {
      */
     public synchronized FtpClientResource take() throws IOException, InterruptedException {
         long startTime = System.currentTimeMillis();
+        final Duration timeout = m_configuration.getConnectionTimeOut();
 
         while (true) {
             try {
                 return takeImpl();
             } catch (ResourcesLimitExceedException ex) { // NOSONAR is correct if not available resources
-                long waitTime = m_configuration.getConnectionTimeOut() - (System.currentTimeMillis() - startTime);
+                long waitTime = timeout.toMillis() - (System.currentTimeMillis() - startTime);
                 if (waitTime > 0) {
                     wait(waitTime);
                 } else {

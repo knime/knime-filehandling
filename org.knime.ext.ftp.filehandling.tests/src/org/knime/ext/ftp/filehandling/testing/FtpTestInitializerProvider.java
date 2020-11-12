@@ -49,6 +49,7 @@
 package org.knime.ext.ftp.filehandling.testing;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
 
 import org.apache.ftpserver.ftplet.FtpException;
@@ -83,7 +84,7 @@ public class FtpTestInitializerProvider extends DefaultFSTestInitializerProvider
         ftpCfg.setUser(cfg.getOrDefault("username", "junit"));
         ftpCfg.setPassword(cfg.getOrDefault("password", "password"));
         ftpCfg.setWorkingDirectory(workingDir);
-        ftpCfg.setServerTimeZoneOffset(Long.parseLong(cfg.getOrDefault("timeZoneOffset", "0")));
+        ftpCfg.setServerTimeZoneOffset(Duration.ofMinutes(Long.parseLong(cfg.getOrDefault("timeZoneOffset", "0"))));
         ftpCfg.setUseSsl(Boolean.parseBoolean(cfg.getOrDefault("ssl", "false")));
 
         // proxy

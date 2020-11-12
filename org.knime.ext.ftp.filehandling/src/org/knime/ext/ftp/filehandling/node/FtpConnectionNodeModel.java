@@ -148,8 +148,8 @@ public class FtpConnectionNodeModel extends NodeModel {
         conf.setMinConnectionPoolSize(settings.getMinConnectionPoolSize());
         conf.setCoreConnectionPoolSize(settings.getCoreConnectionPoolSize());
         conf.setMaxIdleTime(TimeUnit.SECONDS.toMillis(settings.getMaxIdleTime()));
-        conf.setConnectionTimeOut((int) TimeUnit.SECONDS.toMillis(settings.getConnectionTimeout()));
-        conf.setServerTimeZoneOffset(TimeUnit.MINUTES.toMillis(settings.getTimeZoneOffset()));
+        conf.setConnectionTimeOut(settings.getConnectionTimeout());
+        conf.setServerTimeZoneOffset(settings.getTimeZoneOffset());
         conf.setUseSsl(settings.isUseSsl());
         conf.setWorkingDirectory(settings.getWorkingDirectory());
 

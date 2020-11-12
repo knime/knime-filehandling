@@ -48,6 +48,8 @@
  */
 package org.knime.ext.ftp.filehandling.fs;
 
+import java.time.Duration;
+
 /**
  * Connection configuration.
  *
@@ -67,9 +69,9 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
      */
     public static final int DEFAULT_MAX_POOL_SIZE = 15;
     /**
-     * Default connections limit.
+     * Default connection timeout.
      */
-    public static final int DEFAULT_CONNECTION_TIMEOUT = 60000;
+    public static final Duration DEFAULT_CONNECTION_TIMEOUT = Duration.ofSeconds(60);
     /**
      * Minimal connection pools size.
      */
@@ -86,8 +88,8 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
     private int m_coreConnectionPoolSize = (DEFAULT_MIN_POOL_SIZE + DEFAULT_MAX_POOL_SIZE) / 2;
     private long m_maxIdleTime = DEFAULT_MAX_IDLE_TIME;
 
-    private int m_connectionTimeOut = DEFAULT_CONNECTION_TIMEOUT;
-    private long m_serverTimeZoneOffset;
+    private Duration m_connectionTimeOut = DEFAULT_CONNECTION_TIMEOUT;
+    private Duration m_serverTimeZoneOffset;
     private boolean m_testMode;
     private String m_workingDirectory = "/";
     private boolean m_useSsl;
@@ -181,22 +183,22 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
     /**
      * @return connection time out.
      */
-    public int getConnectionTimeOut() {
+    public Duration getConnectionTimeOut() {
         return m_connectionTimeOut;
     }
 
     /**
-     * @param timeOut
+     * @param duration
      *            connection time out.
      */
-    public void setConnectionTimeOut(final int timeOut) {
-        m_connectionTimeOut = timeOut;
+    public void setConnectionTimeOut(final Duration duration) {
+        m_connectionTimeOut = duration;
     }
 
     /**
      * @return FTP server time zone offset.
      */
-    public long getServerTimeZoneOffset() {
+    public Duration getServerTimeZoneOffset() {
         return m_serverTimeZoneOffset;
     }
 
@@ -204,7 +206,7 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
      * @param offset
      *            FTP server time zone offset.
      */
-    public void setServerTimeZoneOffset(final long offset) {
+    public void setServerTimeZoneOffset(final Duration offset) {
         m_serverTimeZoneOffset = offset;
     }
 

@@ -121,7 +121,7 @@ public class FtpConnectionNodeModelTest {
         assertEquals(config.getCoreConnectionPoolSize(), settings.getCoreConnectionPoolSize());
         assertEquals(config.getMaxIdleTime(), TimeUnit.SECONDS.toMillis(settings.getMaxIdleTime()));
         assertEquals(config.getWorkingDirectory(), settings.getWorkingDirectory());
-        assertEquals(config.getServerTimeZoneOffset(), TimeUnit.MINUTES.toMillis(settings.getTimeZoneOffset()));
+        assertEquals(config.getServerTimeZoneOffset(), settings.getTimeZoneOffset());
         assertEquals(config.isUseSsl(), settings.isUseSsl());
     }
 

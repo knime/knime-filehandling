@@ -51,7 +51,7 @@ package org.knime.ext.ftp.filehandling.fs;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.SocketException;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import org.apache.commons.net.PrintCommandListener;
 import org.apache.commons.net.ftp.FTP;
@@ -126,15 +126,15 @@ public class FtpClientFactory {
         }
         client.configure(ftpConfig);
 
-        final int timeOut = m_configuration.getConnectionTimeOut();
-        client.setConnectTimeout(timeOut);
-        client.setDefaultTimeout(timeOut);
+        final Duration timeOut = m_configuration.getConnectionTimeOut();
+        client.setConnectTimeout((int) timeOut.toMillis());
+        client.setDefaultTimeout((int) timeOut.toMillis());
 
         // connect
         client.connect(m_configuration.getHost(), m_configuration.getPort());
 
         // setup any after connected
-        client.setSoTimeout(timeOut);
+        client.setSoTimeout((int) timeOut.toMillis());
         client.setListHiddenFiles(true);
         client.enterLocalPassiveMode();
 
@@ -175,28 +175,19 @@ public class FtpClientFactory {
      * @return time zone ID in form GMT+XX:XX
      */
     private String constructServerTimeZoneId() {
-        long serverTimeZoneOffset = Math.abs(m_configuration.getServerTimeZoneOffset());
+        final Duration serverTimeZoneOffset = m_configuration.getServerTimeZoneOffset();
 
-        long hoursOffset = TimeUnit.MILLISECONDS.toHours(serverTimeZoneOffset);
+        final long absHoursOffset = Math.abs(serverTimeZoneOffset.toHours());
+        final long absMinutesOffset = Math.abs(serverTimeZoneOffset.toMinutes()) - absHoursOffset * 60;
 
         StringBuilder sb = new StringBuilder("GMT");
         // add sign
-        sb.append(m_configuration.getServerTimeZoneOffset() < 0 ? '-' : '+');
+        sb.append(serverTimeZoneOffset.isNegative() ? '-' : '+');
         // add hours
-        sb.append(hoursOffset);
-        if (sb.length() < 6) {
-            sb.insert(4, '0');
-        }
-
+        sb.append(String.format("%02d", absHoursOffset));
         sb.append(':');
-
         // add minutes
-        long minutesOffset = TimeUnit.MILLISECONDS
-                .toHours(Math.abs(serverTimeZoneOffset) - TimeUnit.HOURS.toMillis(hoursOffset));
-        sb.append(minutesOffset);
-        if (sb.length() < 9) {
-            sb.insert(7, '0');
-        }
+        sb.append(String.format("%02d", absMinutesOffset));
 
         return sb.toString();
     }
