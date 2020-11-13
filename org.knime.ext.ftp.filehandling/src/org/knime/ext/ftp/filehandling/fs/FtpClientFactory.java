@@ -53,6 +53,8 @@ import java.io.PrintWriter;
 import java.net.SocketException;
 import java.time.Duration;
 
+import javax.net.ssl.SSLException;
+
 import org.apache.commons.net.PrintCommandListener;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -131,7 +133,15 @@ public class FtpClientFactory {
         client.setDefaultTimeout((int) connectionTimeOut.toMillis());
 
         // connect
-        client.connect(m_configuration.getHost(), m_configuration.getPort());
+        try {
+            client.connect(m_configuration.getHost(), m_configuration.getPort());
+        } catch (SSLException e) {
+            if (m_configuration.isUseFTPS()) {
+                throw new IOException("Failed to connect with FTPS", e);
+            } else {
+                throw e;
+            }
+        }
 
         // setup any after connected
         client.setSoTimeout((int) m_configuration.getReadTimeout().toMillis());
@@ -148,13 +158,13 @@ public class FtpClientFactory {
 
         client.login(m_configuration.getUser(), m_configuration.getPassword());
         if (!FTPReply.isPositiveCompletion(client.getReplyCode())) {
-            throw new IOException("Authentication failed: " + client.getReplyString());
+            throw new IOException("Authentication failed: " + client.getReplyString().trim());
         }
 
         // postconfigure connection
         if (!client.setFileTransferMode(FTP.STREAM_TRANSFER_MODE) || !client.setFileStructure(FTP.FILE_STRUCTURE)
                 || !client.setFileType(FTP.BINARY_FILE_TYPE)) {
-            throw new IOException("Failed to correct configure client: " + client.getReplyString());
+            throw new IOException("Failed to correct configure client: " + client.getReplyString().trim());
         }
 
         return client;

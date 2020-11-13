@@ -196,7 +196,7 @@ public class FtpClient {
     public OutputStream openForRewrite(final String file) throws IOException {
         OutputStream stream = m_client.storeFileStream(file);
         if (stream == null) {
-            throw new IOException(m_client.getReplyString());
+            throw new IOException(m_client.getReplyString().trim());
         }
         return wrapToCompletePendingCommand(stream);
     }
@@ -211,7 +211,7 @@ public class FtpClient {
     public OutputStream openForAppend(final String file) throws IOException {
         OutputStream stream = m_client.appendFileStream(file);
         if (stream == null) {
-            throw new IOException(m_client.getReplyString());
+            throw new IOException(m_client.getReplyString().trim());
         }
         return wrapToCompletePendingCommand(stream);
     }
@@ -234,7 +234,7 @@ public class FtpClient {
 
     void completePendingCommand() throws IOException {
         if (!m_client.completePendingCommand()) {
-            throw new IOException(m_client.getReplyString());
+            throw new IOException(m_client.getReplyString().trim());
         }
     }
 
@@ -259,7 +259,7 @@ public class FtpClient {
     public InputStream getFileContentAsStream(final String path) throws IOException {
         final InputStream stream = m_client.retrieveFileStream(path);
         if (stream == null) {
-            throw new IOException(m_client.getReplyString());
+            throw new IOException(m_client.getReplyString().trim());
         }
 
         return new FilterInputStream(stream) {
@@ -279,7 +279,7 @@ public class FtpClient {
 
     private void checkPositiveResponse() throws IOException {
         if (!isPositiveResponse()) {
-            throw new IOException(m_client.getReplyString());
+            throw new IOException(m_client.getReplyString().trim());
         }
     }
 
@@ -295,7 +295,7 @@ public class FtpClient {
      */
     public static void checkPositiveResponse(final FTPClient client) throws IOException {
         if (!FTPReply.isPositiveCompletion(client.getReplyCode())) {
-            throw new IOException(client.getReplyString());
+            throw new IOException(client.getReplyString().trim());
         }
     }
 
@@ -308,7 +308,7 @@ public class FtpClient {
      */
     public void rename(final String from, final String to) throws IOException {
         if (!m_client.rename(from, to)) {
-            throw new IOException(m_client.getReplyString());
+            throw new IOException(m_client.getReplyString().trim());
         }
     }
 }
