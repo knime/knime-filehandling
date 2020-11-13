@@ -113,13 +113,26 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
     }
 
     private JComponent createSettingsPanel() {
-        final JPanel panel = new JPanel();
-        final BoxLayout parentLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(parentLayout);
+        final JPanel panel = new JPanel(new GridBagLayout());
 
-        panel.add(createConnectionSettingsPanel());
-        panel.add(createAuthenticationSettingsPanel());
-        panel.add(createFileSystemSettingsPanel());
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.insets = new Insets(5, 0, 10, 5);
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(createConnectionSettingsPanel(), gbc);
+
+        gbc.gridy++;
+        panel.add(createAuthenticationSettingsPanel(), gbc);
+
+        gbc.gridy++;
+        panel.add(createFileSystemSettingsPanel(), gbc);
+
+        gbc.gridy++;
+        addVerticalFiller(panel, gbc.gridy, 1);
 
         return panel;
     }
@@ -176,6 +189,21 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
         gbc.weightx = 1;
         panel.add(Box.createHorizontalGlue(), gbc);
 
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        panel.add(new JLabel("Use FTPS: "), gbc);
+
+        gbc.gridx++;
+        gbc.insets = new Insets(0, 0, 0, 5);
+        panel.add(new DialogComponentBoolean(m_settings.getUseFTPSModel(), "").getComponentPanel(), gbc);
+
+        gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        panel.add(Box.createHorizontalGlue(), gbc);
+
         return panel;
     }
 
@@ -203,25 +231,53 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
     private JComponent createAdvancedPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
 
-        addGbcRow(panel, 0,
-                "Connection timeout (seconds)  :", new DialogComponentNumber(m_settings.getConnectionTimeoutModel(), "", 1));
-        addGbcRow(panel, 1,
-                "Time zone offset from GMT (minutes)  :",
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.insets = new Insets(5, 0, 10, 5);
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(createAdvancedConnectionSettingsPanel(), gbc);
+
+        gbc.gridy++;
+        panel.add(createOtherSettingsPanel(), gbc);
+
+        gbc.gridy++;
+        addVerticalFiller(panel, gbc.gridy, 1);
+
+        return panel;
+    }
+
+    private Component createOtherSettingsPanel() {
+        final JPanel panel = new JPanel(new GridBagLayout());
+
+        panel.setBorder(createTitledBorder("Other settings"));
+
+        addGbcRow(panel, 1, //
+                "Time zone offset from GMT (minutes)  :", //
                 new DialogComponentNumber(m_settings.getTimeZoneOffsetModel(), "", 1));
-        // connection pool
-        addGbcRow(panel, 2, "Minimum pool size:",
-                new DialogComponentNumber(m_settings.getMinConnectionPoolSizeModel(), "", 1));
-        addGbcRow(panel, 3, "Core pool size:",
-                new DialogComponentNumber(m_settings.getCoreConnectionPoolSizeModel(), "", 1));
-        addGbcRow(panel, 4, "Maximum pool size:",
-                new DialogComponentNumber(m_settings.getMaxConnectionPoolSizeModel(), "", 1));
-        addGbcRow(panel, 5, "Maximum idle time (seconds)  :",
-                new DialogComponentNumber(m_settings.getMaxIdleTimeModel(), "", 1));
 
-        addGbcRow(panel, 6, "Use SSL:", new DialogComponentBoolean(m_settings.getUseSslModel(), ""));
-        addGbcRow(panel, 7, "Use Proxy:", new DialogComponentBoolean(m_settings.getUseProxyModel(), ""));
+        return panel;
+    }
 
-        addVerticalFiller(panel, 8, 3);
+    private Component createAdvancedConnectionSettingsPanel() {
+        final JPanel panel = new JPanel(new GridBagLayout());
+
+        panel.setBorder(createTitledBorder("Connection settings"));
+
+        addGbcRow(panel, 0, //
+                "Connection timeout (seconds)  :", //
+                new DialogComponentNumber(m_settings.getConnectionTimeoutModel(), "", 1));
+        addGbcRow(panel, 1, //
+                "Read timeout (seconds)  :", //
+                new DialogComponentNumber(m_settings.getReadTimeoutModel(), "", 1));
+        addGbcRow(panel, 2, "Minimum FTP connections:", //
+                new DialogComponentNumber(m_settings.getMinConnectionsModel(), "", 1));
+        addGbcRow(panel, 3, "Maximum FTP connections:", //
+                new DialogComponentNumber(m_settings.getMaxConnectionsModel(), "", 1));
+        addGbcRow(panel, 4, "Use Proxy:", new DialogComponentBoolean(m_settings.getUseProxyModel(), ""));
 
         return panel;
     }
@@ -270,7 +326,7 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO input, final PortObjectSpec[] specs)
             throws NotConfigurableException {
-        m_settings.getUseSslModel().removeChangeListener(m_enablenessUpdater);
+        m_settings.getUseFTPSModel().removeChangeListener(m_enablenessUpdater);
 
         try {
             m_authPanel.loadSettingsFrom(input.getNodeSettings(FtpConnectionSettingsModel.KEY_AUTH), specs);
@@ -278,14 +334,14 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
         } catch (final InvalidSettingsException e) { // NOSONAR can be ignored
         }
 
-        m_settings.getUseSslModel().addChangeListener(m_enablenessUpdater);
+        m_settings.getUseFTPSModel().addChangeListener(m_enablenessUpdater);
     }
 
     private void updateEnabledness() {
-        boolean isSslUsed = m_settings.getUseSslModel().getBooleanValue();
+        boolean isFtpsUsed = m_settings.getUseFTPSModel().getBooleanValue();
 
         SettingsModelBoolean proxyModel = m_settings.getUseProxyModel();
-        if (isSslUsed) {
+        if (isFtpsUsed) {
             if (!proxyModel.isEnabled()) {
                 // this is the fix
                 // if proxy model is already disabled the model will
@@ -297,7 +353,7 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
             }
             proxyModel.setBooleanValue(false);
         }
-        proxyModel.setEnabled(!isSslUsed);
+        proxyModel.setEnabled(!isFtpsUsed);
     }
 
     @Override

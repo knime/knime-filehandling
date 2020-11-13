@@ -51,7 +51,6 @@ package org.knime.ext.ftp.filehandling.node;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.eclipse.core.net.proxy.IProxyData;
@@ -91,8 +90,6 @@ public class FtpConnectionNodeModelTest {
         final int connectionTimeOut = 321;
         final int maxSessionsCount = 4567;
         final int minSessionsCount = 4000;
-        final int coreSessionsCount = 4111;
-        final int maxIdleTime = 10;
         final String workingDir = "/junit/tests/workingDir";
         final int timeZoneOffsetMinutes = 425;
         final boolean useSsl = true;
@@ -101,13 +98,11 @@ public class FtpConnectionNodeModelTest {
         settings.getHostModel().setStringValue(host);
         settings.getPortModel().setIntValue(port);
         settings.getConnectionTimeoutModel().setIntValue(connectionTimeOut);
-        settings.getMaxConnectionPoolSizeModel().setIntValue(maxSessionsCount);
-        settings.getMinConnectionPoolSizeModel().setIntValue(minSessionsCount);
-        settings.getCoreConnectionPoolSizeModel().setIntValue(coreSessionsCount);
-        settings.getMaxIdleTimeModel().setIntValue(maxIdleTime);
+        settings.getMaxConnectionsModel().setIntValue(maxSessionsCount);
+        settings.getMinConnectionsModel().setIntValue(minSessionsCount);
         settings.getWorkingDirectoryModel().setStringValue(workingDir);
         settings.getTimeZoneOffsetModel().setIntValue(timeZoneOffsetMinutes);
-        settings.getUseSslModel().setBooleanValue(useSsl);
+        settings.getUseFTPSModel().setBooleanValue(useSsl);
 
         final FtpConnectionConfiguration config = FtpConnectionNodeModel.createConfiguration(settings,
                 createCredentialsProvider(), m_proxyService);
@@ -115,14 +110,12 @@ public class FtpConnectionNodeModelTest {
         // test correct created
         assertEquals(config.getHost(), settings.getHost());
         assertEquals(config.getPort(), settings.getPort());
-        assertEquals(config.getConnectionTimeOut(), 1000 * settings.getConnectionTimeout());
-        assertEquals(config.getMaxConnectionPoolSize(), settings.getMaxConnectionPoolSize());
-        assertEquals(config.getMinConnectionPoolSize(), settings.getMinConnectionPoolSize());
-        assertEquals(config.getCoreConnectionPoolSize(), settings.getCoreConnectionPoolSize());
-        assertEquals(config.getMaxIdleTime(), TimeUnit.SECONDS.toMillis(settings.getMaxIdleTime()));
+        assertEquals(config.getConnectionTimeOut(), settings.getConnectionTimeout());
+        assertEquals(config.getMaxConnectionPoolSize(), settings.getMaxConnections());
+        assertEquals(config.getMinConnectionPoolSize(), settings.getMinConnections());
         assertEquals(config.getWorkingDirectory(), settings.getWorkingDirectory());
         assertEquals(config.getServerTimeZoneOffset(), settings.getTimeZoneOffset());
-        assertEquals(config.isUseSsl(), settings.isUseSsl());
+        assertEquals(config.isUseFTPS(), settings.isUseFTPS());
     }
 
     /**
@@ -237,29 +230,15 @@ public class FtpConnectionNodeModelTest {
     }
 
     /**
-     * Test validate settings with incorrect minimal and core pool sizes.
+     * Test validate settings with incorrect minimum and maximum pool sizes.
      *
      * @throws InvalidSettingsException
      */
     @Test(expected = InvalidSettingsException.class)
     public void testValidateMinCorePoolSize() throws InvalidSettingsException {
         FtpConnectionSettingsModel settings = createSettings();
-        settings.getCoreConnectionPoolSizeModel().setIntValue(1);
-        settings.getMinConnectionPoolSizeModel().setIntValue(2);
-        settings.validate();
-    }
-
-    /**
-     * Test validate settings with incorrect maximal and core pool sizes.
-     *
-     * @throws InvalidSettingsException
-     */
-    @Test(expected = InvalidSettingsException.class)
-    public void testValidateMaxCorePoolSize() throws InvalidSettingsException {
-        FtpConnectionSettingsModel settings = createSettings();
-        settings.getMinConnectionPoolSizeModel().setIntValue(1);
-        settings.getCoreConnectionPoolSizeModel().setIntValue(3);
-        settings.getMaxConnectionPoolSizeModel().setIntValue(2);
+        settings.getMaxConnectionsModel().setIntValue(1);
+        settings.getMinConnectionsModel().setIntValue(2);
         settings.validate();
     }
 
@@ -354,10 +333,10 @@ public class FtpConnectionNodeModelTest {
         settings.getHostModel().setStringValue(host);
         settings.getPortModel().setIntValue(port);
         settings.getConnectionTimeoutModel().setIntValue(connectionTimeOut);
-        settings.getMaxConnectionPoolSizeModel().setIntValue(maxSessionsCount);
+        settings.getMaxConnectionsModel().setIntValue(maxSessionsCount);
         settings.getWorkingDirectoryModel().setStringValue(workingDir);
         settings.getTimeZoneOffsetModel().setIntValue(timeZoneOffsetMinutes);
-        settings.getUseSslModel().setBooleanValue(useSsl);
+        settings.getUseFTPSModel().setBooleanValue(useSsl);
         return settings;
     }
 

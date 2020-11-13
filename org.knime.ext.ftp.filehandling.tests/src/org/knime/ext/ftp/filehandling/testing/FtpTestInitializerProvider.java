@@ -85,7 +85,7 @@ public class FtpTestInitializerProvider extends DefaultFSTestInitializerProvider
         ftpCfg.setPassword(cfg.getOrDefault("password", "password"));
         ftpCfg.setWorkingDirectory(workingDir);
         ftpCfg.setServerTimeZoneOffset(Duration.ofMinutes(Long.parseLong(cfg.getOrDefault("timeZoneOffset", "0"))));
-        ftpCfg.setUseSsl(Boolean.parseBoolean(cfg.getOrDefault("ssl", "false")));
+        ftpCfg.setUseFTPS(Boolean.parseBoolean(cfg.getOrDefault("ftps", "false")));
 
         // proxy
         final String proxyHost = cfg.get("proxy.host");

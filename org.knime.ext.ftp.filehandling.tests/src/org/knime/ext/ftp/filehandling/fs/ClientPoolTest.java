@@ -52,6 +52,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -228,7 +229,7 @@ public class ClientPoolTest extends ClientPool {
     // @Test(expected = IOException.class)
     public void testWaitResourceTimeOut() throws IOException, InterruptedException {
         setPoolSizes(0, 1, 2);
-        m_config.setConnectionTimeOut(2000);
+        m_config.setConnectionTimeOut(Duration.ofSeconds(2));
         start();
 
         m_freeResources.clear();

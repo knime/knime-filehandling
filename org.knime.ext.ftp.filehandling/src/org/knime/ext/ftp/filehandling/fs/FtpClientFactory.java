@@ -104,14 +104,14 @@ public class FtpClientFactory {
         final FTPClient client;
         if (m_configuration.getProxy() != null) {
 
-            if (m_configuration.isUseSsl()) {
+            if (m_configuration.isUseFTPS()) {
                 // in given implementation FTPS can't run over HTTP proxy
                 throw new IOException("FTPS over HTTP proxy is not supported");
             }
 
             final ProtectedHostConfiguration proxy = m_configuration.getProxy();
             client = new FTPHTTPClient(proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
-        } else if (m_configuration.isUseSsl()) {
+        } else if (m_configuration.isUseFTPS()) {
 
             final FTPSClient ftpsClient = new FtpsClientWithSslSessionReuse();
             ftpsClient.setUseClientMode(true);
@@ -126,19 +126,19 @@ public class FtpClientFactory {
         }
         client.configure(ftpConfig);
 
-        final Duration timeOut = m_configuration.getConnectionTimeOut();
-        client.setConnectTimeout((int) timeOut.toMillis());
-        client.setDefaultTimeout((int) timeOut.toMillis());
+        final Duration connectionTimeOut = m_configuration.getConnectionTimeOut();
+        client.setConnectTimeout((int) connectionTimeOut.toMillis());
+        client.setDefaultTimeout((int) connectionTimeOut.toMillis());
 
         // connect
         client.connect(m_configuration.getHost(), m_configuration.getPort());
 
         // setup any after connected
-        client.setSoTimeout((int) timeOut.toMillis());
+        client.setSoTimeout((int) m_configuration.getReadTimeout().toMillis());
         client.setListHiddenFiles(true);
         client.enterLocalPassiveMode();
 
-        if (m_configuration.isUseSsl()) {
+        if (m_configuration.isUseFTPS()) {
             final FTPSClient ftpsClient = (FTPSClient) client;
             // remove data buffer limit
             ftpsClient.execPBSZ(0);
@@ -165,7 +165,7 @@ public class FtpClientFactory {
      *            FTP client.
      */
     private void configureTestMode(final FTPClient client) {
-        if (m_configuration.isUseSsl()) {
+        if (m_configuration.isUseFTPS()) {
             ((FTPSClient) client).setHostnameVerifier((h, s) -> true); // NOSONAR just for test mode.
         }
         client.addProtocolCommandListener(new PrintCommandListener(new PrintWriter(System.out))); // NOSONAR just

@@ -50,7 +50,6 @@ package org.knime.ext.ftp.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.eclipse.core.net.proxy.IProxyData;
@@ -144,13 +143,13 @@ public class FtpConnectionNodeModel extends NodeModel {
         final FtpConnectionConfiguration conf = new FtpConnectionConfiguration();
         conf.setHost(settings.getHost());
         conf.setPort(settings.getPort());
-        conf.setMaxConnectionPoolSize(settings.getMaxConnectionPoolSize());
-        conf.setMinConnectionPoolSize(settings.getMinConnectionPoolSize());
-        conf.setCoreConnectionPoolSize(settings.getCoreConnectionPoolSize());
-        conf.setMaxIdleTime(TimeUnit.SECONDS.toMillis(settings.getMaxIdleTime()));
+        conf.setMaxConnectionPoolSize(settings.getMaxConnections());
+        conf.setMinConnectionPoolSize(settings.getMinConnections());
+        conf.setCoreConnectionPoolSize((settings.getMinConnections() + settings.getMaxConnections()) / 2);
         conf.setConnectionTimeOut(settings.getConnectionTimeout());
+        conf.setReadTimeout(settings.getReadTimeout());
         conf.setServerTimeZoneOffset(settings.getTimeZoneOffset());
-        conf.setUseSsl(settings.isUseSsl());
+        conf.setUseFTPS(settings.isUseFTPS());
         conf.setWorkingDirectory(settings.getWorkingDirectory());
 
         // authentication

@@ -334,7 +334,6 @@ public class FtpAuthenticationSettingsModel {
      */
     public void saveSettingsForDialog(final NodeSettingsWO settings) {
         save(settings);
-        // m_keyFile must be saved by dialog component
     }
 
     /**

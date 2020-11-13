@@ -81,21 +81,19 @@ public class FtpConnectionSettingsModel {
 
     private static final String KEY_CONNECTION_TIMEOUT = "connectionTimeout";
 
+    private static final String KEY_READ_TIMEOUT = "readTimeout";
+
     private static final String KEY_PORT = "port";
 
     private static final String KEY_HOST = "host";
 
-    private static final String KEY_MAX_POOL_SIZE = "maxPoolSize";
+    private static final String KEY_MIN_POOL_SIZE = "minConnections";
 
-    private static final String KEY_MIN_POOL_SIZE = "minPoolSize";
-
-    private static final String KEY_CORE_POOL_SIZE = "corePoolSize";
-
-    private static final String KEY_MAX_IDLE_TIME = "maxIdleTime";
+    private static final String KEY_MAX_POOL_SIZE = "maxConnections";
 
     private static final String KEY_USE_PROXY = "useProxy";
 
-    private static final String KEY_USE_SSL = "useSsl";
+    private static final String KEY_USE_FTPS = "useFTPS";
 
     private static final int DEFAULT_TIMEOUT = 30;
 
@@ -106,13 +104,12 @@ public class FtpConnectionSettingsModel {
     private final FtpAuthenticationSettingsModel m_authSettings;
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelIntegerBounded m_connectionTimeout;
-    private final SettingsModelIntegerBounded m_maxConnectionPoolSize;
-    private final SettingsModelIntegerBounded m_minConnectionPoolSize;
-    private final SettingsModelIntegerBounded m_coreConnectionPoolSize;
-    private final SettingsModelIntegerBounded m_maxIdleTime;
+    private final SettingsModelIntegerBounded m_readTimeout;
+    private final SettingsModelIntegerBounded m_minConnections;
+    private final SettingsModelIntegerBounded m_maxConnections;
     private final SettingsModelIntegerBounded m_timeZoneOffset;
     private final SettingsModelBoolean m_useProxy;
-    private final SettingsModelBoolean m_useSsl;
+    private final SettingsModelBoolean m_useFTPS;
 
     /**
      */
@@ -122,20 +119,15 @@ public class FtpConnectionSettingsModel {
         m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT, DEFAULT_TIMEOUT,
                 0,
                 Integer.MAX_VALUE);
-        m_maxConnectionPoolSize = new SettingsModelIntegerBounded(KEY_MAX_POOL_SIZE,
-                FtpConnectionConfiguration.DEFAULT_MAX_POOL_SIZE, 1, Integer.MAX_VALUE);
-        m_minConnectionPoolSize = new SettingsModelIntegerBounded(KEY_MIN_POOL_SIZE,
-                FtpConnectionConfiguration.DEFAULT_MIN_POOL_SIZE, 1, Integer.MAX_VALUE);
-        m_coreConnectionPoolSize = new SettingsModelIntegerBounded(KEY_CORE_POOL_SIZE,
-                (FtpConnectionConfiguration.DEFAULT_MIN_POOL_SIZE + FtpConnectionConfiguration.DEFAULT_MAX_POOL_SIZE)
-                        / 2,
-                1, Integer.MAX_VALUE);
-        m_maxIdleTime = new SettingsModelIntegerBounded(KEY_MAX_IDLE_TIME, 60, 0, Integer.MAX_VALUE);
-
+        m_readTimeout = new SettingsModelIntegerBounded(KEY_READ_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
+        m_minConnections = new SettingsModelIntegerBounded(KEY_MIN_POOL_SIZE,
+                FtpConnectionConfiguration.DEFAULT_MIN_CONNECTIONS, 1, Integer.MAX_VALUE);
+        m_maxConnections = new SettingsModelIntegerBounded(KEY_MAX_POOL_SIZE,
+                FtpConnectionConfiguration.DEFAULT_MAX_CONNECTIONS, 1, Integer.MAX_VALUE);
         m_timeZoneOffset = new SettingsModelIntegerBounded(KEY_TIME_ZONE_OFFSET, 0, (int) -TimeUnit.HOURS.toMinutes(24),
                 (int) TimeUnit.HOURS.toMinutes(24));
         m_useProxy = new SettingsModelBoolean(KEY_USE_PROXY, false);
-        m_useSsl = new SettingsModelBoolean(KEY_USE_SSL, false);
+        m_useFTPS = new SettingsModelBoolean(KEY_USE_FTPS, false);
         m_authSettings = new FtpAuthenticationSettingsModel();
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, FtpFileSystem.PATH_SEPARATOR);
     }
@@ -145,12 +137,11 @@ public class FtpConnectionSettingsModel {
         m_port.saveSettingsTo(settings);
         m_workingDirectory.saveSettingsTo(settings);
         m_connectionTimeout.saveSettingsTo(settings);
-        m_minConnectionPoolSize.saveSettingsTo(settings);
-        m_maxConnectionPoolSize.saveSettingsTo(settings);
-        m_coreConnectionPoolSize.saveSettingsTo(settings);
-        m_maxIdleTime.saveSettingsTo(settings);
+        m_readTimeout.saveSettingsTo(settings);
+        m_minConnections.saveSettingsTo(settings);
+        m_maxConnections.saveSettingsTo(settings);
         m_useProxy.saveSettingsTo(settings);
-        m_useSsl.saveSettingsTo(settings);
+        m_useFTPS.saveSettingsTo(settings);
         m_timeZoneOffset.saveSettingsTo(settings);
     }
 
@@ -181,12 +172,11 @@ public class FtpConnectionSettingsModel {
         m_port.loadSettingsFrom(settings);
         m_workingDirectory.loadSettingsFrom(settings);
         m_connectionTimeout.loadSettingsFrom(settings);
-        m_minConnectionPoolSize.loadSettingsFrom(settings);
-        m_maxConnectionPoolSize.loadSettingsFrom(settings);
-        m_coreConnectionPoolSize.loadSettingsFrom(settings);
-        m_maxIdleTime.loadSettingsFrom(settings);
+        m_readTimeout.loadSettingsFrom(settings);
+        m_minConnections.loadSettingsFrom(settings);
+        m_maxConnections.loadSettingsFrom(settings);
         m_useProxy.loadSettingsFrom(settings);
-        m_useSsl.loadSettingsFrom(settings);
+        m_useFTPS.loadSettingsFrom(settings);
         m_timeZoneOffset.loadSettingsFrom(settings);
     }
 
@@ -241,12 +231,11 @@ public class FtpConnectionSettingsModel {
         m_authSettings.validateSettings(settings.getNodeSettings(KEY_AUTH));
         m_workingDirectory.validateSettings(settings);
         m_connectionTimeout.validateSettings(settings);
-        m_minConnectionPoolSize.validateSettings(settings);
-        m_maxConnectionPoolSize.validateSettings(settings);
-        m_coreConnectionPoolSize.validateSettings(settings);
-        m_maxIdleTime.validateSettings(settings);
+        m_readTimeout.validateSettings(settings);
+        m_minConnections.validateSettings(settings);
+        m_maxConnections.validateSettings(settings);
         m_useProxy.validateSettings(settings);
-        m_useSsl.validateSettings(settings);
+        m_useFTPS.validateSettings(settings);
         m_timeZoneOffset.validateSettings(settings);
 
         final FtpConnectionSettingsModel temp = new FtpConnectionSettingsModel();
@@ -272,12 +261,9 @@ public class FtpConnectionSettingsModel {
             throw new InvalidSettingsException("Working directory must be specified.");
         }
 
-        if (getCoreConnectionPoolSize() < getMinConnectionPoolSize()) {
-            throw new InvalidSettingsException("Minimal pool size is more then core pool size.");
-        }
-
-        if (getMaxConnectionPoolSize() < getCoreConnectionPoolSize()) {
-            throw new InvalidSettingsException("Core pool size is more then max pool size.");
+        if (getMinConnections() > getMaxConnections()) {
+            throw new InvalidSettingsException(
+                    "Minimum number of FTP connections must be less or equal to maximum number of FTP connections");
         }
 
         getAuthenticationSettings().validate();
@@ -322,6 +308,13 @@ public class FtpConnectionSettingsModel {
     }
 
     /**
+     * @return socket read time out.
+     */
+    public Duration getReadTimeout() {
+        return Duration.ofSeconds(m_readTimeout.getIntValue());
+    }
+
+    /**
      * @param location
      *            location to test.
      * @return true if the location is NULL location in fact.
@@ -352,6 +345,13 @@ public class FtpConnectionSettingsModel {
     }
 
     /**
+     * @return read time out settings model.
+     */
+    public SettingsModelIntegerBounded getReadTimeoutModel() {
+        return m_readTimeout;
+    }
+
+    /**
      * @return authentication settings.
      */
     public FtpAuthenticationSettingsModel getAuthenticationSettings() {
@@ -361,57 +361,29 @@ public class FtpConnectionSettingsModel {
     /**
      * @return maximum number of FTP connections.
      */
-    public int getMaxConnectionPoolSize() {
-        return m_maxConnectionPoolSize.getIntValue();
+    public int getMaxConnections() {
+        return m_maxConnections.getIntValue();
     }
 
     /**
      * @return settings model of maximum number of FTP connections.
      */
-    public SettingsModelIntegerBounded getMaxConnectionPoolSizeModel() {
-        return m_maxConnectionPoolSize;
+    public SettingsModelIntegerBounded getMaxConnectionsModel() {
+        return m_maxConnections;
     }
 
     /**
-     * @return minimum connection pool size.
+     * @return minimum number of FTP connections.
      */
-    public int getMinConnectionPoolSize() {
-        return m_minConnectionPoolSize.getIntValue();
+    public int getMinConnections() {
+        return m_minConnections.getIntValue();
     }
 
     /**
-     * @return minimum connection pool size model.
+     * @return settings model of minimum number of FTP connections.
      */
-    public SettingsModelIntegerBounded getMinConnectionPoolSizeModel() {
-        return m_minConnectionPoolSize;
-    }
-
-    /**
-     * @return core connection pool size.
-     */
-    public int getCoreConnectionPoolSize() {
-        return m_coreConnectionPoolSize.getIntValue();
-    }
-
-    /**
-     * @return core connection pool size model.
-     */
-    public SettingsModelIntegerBounded getCoreConnectionPoolSizeModel() {
-        return m_coreConnectionPoolSize;
-    }
-
-    /**
-     * @return max idle time in seconds.
-     */
-    public int getMaxIdleTime() {
-        return m_maxIdleTime.getIntValue();
-    }
-
-    /**
-     * @return max idle time model.
-     */
-    public SettingsModelIntegerBounded getMaxIdleTimeModel() {
-        return m_maxIdleTime;
+    public SettingsModelIntegerBounded getMinConnectionsModel() {
+        return m_minConnections;
     }
 
     /**
@@ -429,17 +401,17 @@ public class FtpConnectionSettingsModel {
     }
 
     /**
-     * @return true if use SSL.
+     * @return true if use FTPS.
      */
-    public boolean isUseSsl() {
-        return m_useSsl.getBooleanValue();
+    public boolean isUseFTPS() {
+        return m_useFTPS.getBooleanValue();
     }
 
     /**
-     * @return use SSL model.
+     * @return use FTPS model.
      */
-    public SettingsModelBoolean getUseSslModel() {
-        return m_useSsl;
+    public SettingsModelBoolean getUseFTPSModel() {
+        return m_useFTPS;
     }
 
     /**

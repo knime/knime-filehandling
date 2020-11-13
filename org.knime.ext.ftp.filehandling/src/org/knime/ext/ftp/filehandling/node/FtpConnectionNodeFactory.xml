@@ -16,11 +16,12 @@
             the <i>files</i> of the remote server, e.g. to read or write, or to perform other file system operations (browse/list files, copy, move, ...).
             </p>
             
-            <p><b>Path syntax:</b> Paths for FTP are specified with a UNIX-like syntax such as /myfolder/myfile. An absolute
-            path for FTP consists of:
+            <p><b>Path syntax:</b> Paths for FTP are specified with a UNIX-like syntax, for example
+            <tt>/myfolder/file.csv</tt>, which is an absolute path that consists of:
                 <ol>
-                    <li>A leading slash ("/").</li>
-                    <li>Followed by the path to the file ("myfolder/myfile" in the above example).</li>
+                    <li>A leading slash (<tt>/</tt>).</li>
+                    <li>The name of a folder (<tt>myfolder</tt>), followed by a slash.</li>
+                    <li>Followed by the name of a file (<tt>file.csv</tt>).</li>
                 </ol>
             </p>
         </intro>
@@ -32,6 +33,10 @@
 	        <option name="Port">
 	            Port that the FTP server is listening on for incoming connections.
 	        </option>
+	        <option name="Use FTPS">
+	            Attempts to communicate with the server using TLS-encryption (FTPS in explicit mode). If this option is selected, then
+	            it is not possible to connect using a proxy.
+	        </option>
 	        <option name="Authentication">
 	            Method of authentication to use.
 	            <ul>
@@ -39,8 +44,8 @@
 	            		<b>Credentials:</b> Authenticate with the username and password of the selected credentials flow variable.
 	            	</li>
 	            	<li>
-	            		<b>Username/password:</b> Authenticate with the provided <b>Username</b> and <b>Password</b>. The password is persistently stored
-	            		(in encrypted form) in the settings of this node. The password may be empty if the SSH server permits empty passwords. 
+	            		<b>Username/password:</b> Authenticate with the provided <i>Username</i> and <i>Password</i>. The password is persistently stored
+	            		(in encrypted form) in the settings of this node. 
 	            	</li>
 	            	<li>
 	            		<b>Anonymous:</b> Authenticate with the <b>anonymous</b> user name and blank password.
@@ -58,31 +63,21 @@
 		    <option name="Connection timeout">
 		        Timeout in seconds to establish a connection or 0 for an infinite timeout. 
 		    </option>
-		    <option name="Time zone offset from GMT">
-		        Server time zone offset from Greenwich Mean Time (minutes). 
+		    <option name="Read timeout">
+		        Timeout in seconds to read a server response from a connection, or 0 for an infinite timeout. 
 		    </option>
-		    
-		    <option name="Minimum pool size">
-		        Minimal number of connected and logged in FTP clients in resource pool
-		        the node will try to open. Actual number of connections may be less,
-		        depending on the limits of the FTP server. 
+		    <option name="Minimum FTP connections">
+		        Minimum number of (control) connections to open to the FTP server.
 		    </option>
-		    <option name="Core pool size">
-		        Core FTP clients pool size.
-		    </option>
-		    <option name="Maximum pool size">
-		        Maximum possible FTP clients in pool size. 
-		    </option>
-		    <option name="Maximum idle time">
-		        The number of seconds which FTP client can be inactive before close if the number of clients in pool
-		        is more then minimum pool size. 
-		    </option>
-		    <option name="Use SSL">
-		        If this options selected, then FTPS protocol with explicit mode and TLS will used for connection.
+		    <option name="Maximum FTP connections">
+		        Maximum number of (control) connections to open to the FTP server.
 		    </option>
 		    <option name="Use Proxy">
-		        If this options selected, then configured HTTP Proxy from global Eclipse preferences will used for connection.
-		        This option is incompatible with 'Use SSL'.
+		        If this option is selected, then the currently configured HTTP proxy from the KNIME preferences Eclipse
+		        preferences will used to connect. This option is incompatible with 'Use FTPS'.
+		    </option>
+		    <option name="Time zone offset from GMT">
+		        Server time zone offset from Greenwich Mean Time (minutes). 
 		    </option>
 		</tab>
     </fullDescription>

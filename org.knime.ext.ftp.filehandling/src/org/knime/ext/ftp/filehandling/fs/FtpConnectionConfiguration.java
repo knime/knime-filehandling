@@ -67,7 +67,7 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
     /**
      * Default connection time out.
      */
-    public static final int DEFAULT_MAX_POOL_SIZE = 15;
+    public static final int DEFAULT_MAX_CONNECTIONS = 10;
     /**
      * Default connection timeout.
      */
@@ -75,24 +75,25 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
     /**
      * Minimal connection pools size.
      */
-    public static final int DEFAULT_MIN_POOL_SIZE = 1;
+    public static final int DEFAULT_MIN_CONNECTIONS = 1;
     /**
      * Default max inactive time of resource between minimum pool size and core pool
      * size.
      */
-    private static final long DEFAULT_MAX_IDLE_TIME = 10000l;
+    private static final long DEFAULT_MAX_IDLE_TIME = 20000l;
 
     private ProtectedHostConfiguration m_proxy;
-    private int m_maxConnectionPoolSize = DEFAULT_MAX_POOL_SIZE;
-    private int m_minConnectionPoolSize = DEFAULT_MIN_POOL_SIZE;
-    private int m_coreConnectionPoolSize = (DEFAULT_MIN_POOL_SIZE + DEFAULT_MAX_POOL_SIZE) / 2;
+    private int m_maxConnectionPoolSize = DEFAULT_MAX_CONNECTIONS;
+    private int m_minConnectionPoolSize = DEFAULT_MIN_CONNECTIONS;
+    private int m_coreConnectionPoolSize = (DEFAULT_MIN_CONNECTIONS + DEFAULT_MAX_CONNECTIONS) / 2;
     private long m_maxIdleTime = DEFAULT_MAX_IDLE_TIME;
 
     private Duration m_connectionTimeOut = DEFAULT_CONNECTION_TIMEOUT;
     private Duration m_serverTimeZoneOffset;
     private boolean m_testMode;
     private String m_workingDirectory = "/";
-    private boolean m_useSsl;
+    private boolean m_useFTPS;
+    private Duration m_readTimeout;
 
     /**
      * Default constructor.
@@ -196,6 +197,21 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
     }
 
     /**
+     * @param readTimeout
+     *            The socket read timeout.
+     */
+    public void setReadTimeout(final Duration readTimeout) {
+        m_readTimeout = readTimeout;
+    }
+
+    /**
+     * @return socket read time out.
+     */
+    public Duration getReadTimeout() {
+        return m_readTimeout;
+    }
+
+    /**
      * @return FTP server time zone offset.
      */
     public Duration getServerTimeZoneOffset() {
@@ -211,18 +227,18 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
     }
 
     /**
-     * @param useSsl
-     *            use SSL.
+     * @param useFTPS
+     *            use FTPS
      */
-    public void setUseSsl(final boolean useSsl) {
-        m_useSsl = useSsl;
+    public void setUseFTPS(final boolean useFTPS) {
+        m_useFTPS = useFTPS;
     }
 
     /**
-     * @return true if should use SSL.
+     * @return true if should use FTPS.
      */
-    public boolean isUseSsl() {
-        return m_useSsl;
+    public boolean isUseFTPS() {
+        return m_useFTPS;
     }
 
     /**

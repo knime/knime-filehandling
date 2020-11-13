@@ -228,7 +228,7 @@ public class EmbeddedFtpServerContainer {
         }
 
         // configure SSL
-        if (m_configuration.isUseSsl()) {
+        if (m_configuration.isUseFTPS()) {
             final SslConfigurationFactory ssl = new SslConfigurationFactory();
             ssl.setKeystorePassword("changeit");
             ssl.setKeyAlias("ftpd");
