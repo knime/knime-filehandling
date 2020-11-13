@@ -48,8 +48,6 @@
  */
 package org.knime.ext.ftp.filehandling.fs;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
@@ -182,21 +180,27 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("resource")
     @Override
     protected InputStream newInputStreamInternal(final FtpPath path, final OpenOption... options) throws IOException {
         final FtpClientResource resource = takeResource();
-        final InputStream stream = new BufferedInputStream(resource.get().getFileContentAsStream(path.toString()));
+        final InputStream stream = resource.get().getFileContentAsStream(path.toString());
 
         return new FilterInputStream(stream) {
-            /**
-             * {@inheritDoc}
-             */
+            boolean m_isOpen = true;
+
             @Override
-            public void close() throws IOException {
-                try {
-                    super.close();
-                } finally {
-                    releaseResource(resource);
+            public synchronized void close() throws IOException {
+                if (m_isOpen) {
+                    // we have to protect the underlying stream from being closed multiple times
+                    // as closing it will read a server response from the control connection
+                    m_isOpen = false;
+
+                    try {
+                        super.close();
+                    } finally {
+                        releaseResource(resource);
+                    }
                 }
             }
         };
@@ -219,16 +223,22 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
             out = resource.get().openForRewrite(path.toString());
         }
 
-        return new FilterOutputStream(new BufferedOutputStream(out)) {
-            /**
-             * {@inheritDoc}
-             */
+        return new FilterOutputStream(out) {
+            boolean m_isOpen = true;
+
             @Override
-            public void close() throws IOException {
-                try {
-                    super.close();
-                } finally {
-                    releaseResource(resource);
+            public synchronized void close() throws IOException {
+                if (m_isOpen) {
+                    // we have to protect the underlying stream from being closed multiple times
+                    // as closing it will read a server response from the control connection
+                    m_isOpen = false;
+
+                    try {
+                        flush();
+                        super.close();
+                    } finally {
+                        releaseResource(resource);
+                    }
                 }
             }
         };

@@ -72,6 +72,12 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
      * Default connection timeout.
      */
     public static final Duration DEFAULT_CONNECTION_TIMEOUT = Duration.ofSeconds(60);
+
+    /**
+     * Default connection timeout.
+     */
+    public static final Duration DEFAULT_READ_TIMEOUT = Duration.ofSeconds(60);
+
     /**
      * Minimal connection pools size.
      */
@@ -89,11 +95,11 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
     private long m_maxIdleTime = DEFAULT_MAX_IDLE_TIME;
 
     private Duration m_connectionTimeOut = DEFAULT_CONNECTION_TIMEOUT;
+    private Duration m_readTimeout = DEFAULT_READ_TIMEOUT;
     private Duration m_serverTimeZoneOffset;
     private boolean m_testMode;
     private String m_workingDirectory = "/";
     private boolean m_useFTPS;
-    private Duration m_readTimeout;
 
     /**
      * Default constructor.

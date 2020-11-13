@@ -233,7 +233,9 @@ public class FtpClient {
     }
 
     void completePendingCommand() throws IOException {
-        if (!m_client.completePendingCommand()) {
+        if (!m_client.completePendingCommand() && m_client.getReplyCode() != 426) {
+            // reply code 426 means that the TCP connection was established but then broken
+            // by the client, which happens if an input stream is closed before end-of-file.
             throw new IOException(m_client.getReplyString().trim());
         }
     }
