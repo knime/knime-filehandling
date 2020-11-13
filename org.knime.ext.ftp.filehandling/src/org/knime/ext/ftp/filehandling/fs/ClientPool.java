@@ -177,8 +177,9 @@ public class ClientPool {
      * @param resource resource.
      */
     public synchronized void release(final FtpClientResource resource) {
-        m_busyResources.remove(resource);
-        if (m_isStarted.get()) {
+
+        final boolean wasBusy = m_busyResources.remove(resource);
+        if (wasBusy && m_isStarted.get()) {
             if (getNumResources() + 1 > m_configuration.getCoreConnectionPoolSize()) {
                 // close resource immediately and not return it into pool
                 resource.close();
