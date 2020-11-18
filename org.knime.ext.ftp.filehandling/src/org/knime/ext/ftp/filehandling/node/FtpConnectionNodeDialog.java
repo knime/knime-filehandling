@@ -268,16 +268,16 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
         panel.setBorder(createTitledBorder("Connection settings"));
 
         addGbcRow(panel, 0, //
-                "Connection timeout (seconds)  :", //
+                "Connection timeout (seconds):", //
                 new DialogComponentNumber(m_settings.getConnectionTimeoutModel(), "", 1));
         addGbcRow(panel, 1, //
-                "Read timeout (seconds)  :", //
+                "Read timeout (seconds):", //
                 new DialogComponentNumber(m_settings.getReadTimeoutModel(), "", 1));
         addGbcRow(panel, 2, "Minimum FTP connections:", //
                 new DialogComponentNumber(m_settings.getMinConnectionsModel(), "", 1));
         addGbcRow(panel, 3, "Maximum FTP connections:", //
                 new DialogComponentNumber(m_settings.getMaxConnectionsModel(), "", 1));
-        addGbcRow(panel, 4, "Use Proxy:", new DialogComponentBoolean(m_settings.getUseProxyModel(), ""));
+        addGbcRow(panel, 4, "Use HTTP Proxy:", new DialogComponentBoolean(m_settings.getUseProxyModel(), ""));
 
         return panel;
     }

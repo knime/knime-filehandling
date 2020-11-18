@@ -35,7 +35,7 @@
 	        </option>
 	        <option name="Use FTPS">
 	            Attempts to communicate with the server using TLS-encryption (FTPS in explicit mode). If this option is selected, then
-	            it is not possible to connect using a proxy.
+	            it is not possible to connect using an HTTP proxy (see below).
 	        </option>
 	        <option name="Authentication">
 	            Method of authentication to use.
@@ -72,9 +72,9 @@
 		    <option name="Maximum FTP connections">
 		        Maximum number of (control) connections to open to the FTP server.
 		    </option>
-		    <option name="Use Proxy">
-		        If this option is selected, then the currently configured HTTP proxy from the KNIME preferences Eclipse
-		        preferences will used to connect. This option is incompatible with 'Use FTPS'.
+		    <option name="Use HTTP Proxy">
+		        If this option is selected, then the currently configured HTTP proxy from the KNIME preferences 
+		        will used to connect. This option is incompatible with 'Use FTPS'.
 		    </option>
 		    <option name="Time zone offset from GMT">
 		        Server time zone offset from Greenwich Mean Time (minutes). 
