@@ -140,22 +140,6 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
      * {@inheritDoc}
      */
     @Override
-    public String getSchemeString() {
-        return provider().getScheme();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getHostString() {
-        return m_settings.getHost();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public SshPath getPath(final String first, final String... more) {
         return new SshPath(this, first, more);
     }

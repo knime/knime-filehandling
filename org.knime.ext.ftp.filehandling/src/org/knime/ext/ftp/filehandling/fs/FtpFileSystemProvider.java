@@ -329,14 +329,6 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
      * {@inheritDoc}
      */
     @Override
-    public String getScheme() {
-        return FtpFileSystem.FS_TYPE;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     protected boolean isHiddenInternal(final FtpPath path) throws IOException {
         return path != null && path.getFileName().toString().startsWith(".");
     }

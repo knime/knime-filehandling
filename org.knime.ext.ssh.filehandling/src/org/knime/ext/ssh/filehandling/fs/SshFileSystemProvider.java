@@ -283,14 +283,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         getFileSystemInternal().removeFromAttributeCache(path);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getScheme() {
-        return SshFileSystem.FS_TYPE;
-    }
-
     void prepareClose() {
         m_resources.stop();
     }
