@@ -89,7 +89,10 @@ public class HttpConnectorNodeSettings {
 
     private static final String KEY_FOLLOW_REDIRECTS = "followRedirects";
 
-    private static final int DEFAULT_TIMEOUT = 30;
+    /**
+     * Default timeout to use in seconds.
+     */
+    public static final int DEFAULT_TIMEOUT = 30;
 
     private final SettingsModelString m_url;
     private final SettingsModelBoolean m_sslIgnoreHostnameMismatches;
@@ -103,7 +106,7 @@ public class HttpConnectorNodeSettings {
      * Constructor.
      */
     public HttpConnectorNodeSettings() {
-        m_url = new SettingsModelString(KEY_URL, "https://");
+        m_url = new SettingsModelString(KEY_URL, "");
         m_sslIgnoreHostnameMismatches = new SettingsModelBoolean(KEY_SSL_IGNORE_HOSTNAME_MISMATCHES, false);
         m_sslTrustAllCertificates = new SettingsModelBoolean(KEY_SSL_TRUST_ALL_CERTIFICATES, false);
         m_authSettings = new HttpAuthenticationSettings();
@@ -218,11 +221,11 @@ public class HttpConnectorNodeSettings {
      * @throws InvalidSettingsException
      */
     public void validate() throws InvalidSettingsException {
-        if (isEmpty(getURL())) {
+        if (isEmpty(m_url.getStringValue())) {
             throw new InvalidSettingsException("URL must be specified.");
         }
         try {
-            final URI url = new URI(getURL());
+            final URI url = new URI(m_url.getStringValue());
 
             final String scheme = url.getScheme();
             if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
@@ -238,7 +241,7 @@ public class HttpConnectorNodeSettings {
                         "URL must not specify a query (indicated by '?') or fragment (indicated by '#').");
             }
         } catch (URISyntaxException ex) {
-            throw new InvalidSettingsException("Invalud URL: " + ex.getMessage(), ex);
+            throw new InvalidSettingsException("Invalid URL: " + ex.getMessage(), ex);
         }
 
         getAuthenticationSettings().validate();
@@ -249,9 +252,9 @@ public class HttpConnectorNodeSettings {
     }
 
     /**
-     * @return remote host.
+     * @return the url
      */
-    public String getURL() {
+    public String getUrl() {
         return m_url.getStringValue();
     }
 
@@ -363,13 +366,5 @@ public class HttpConnectorNodeSettings {
             // won't happen
         }
         return toReturn;
-    }
-
-    /**
-     * @return
-     */
-    public String determineWorkingDirectory() {
-        // TODO Auto-generated method stub
-        return null;
     }
 }

@@ -66,7 +66,6 @@ import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
-import org.knime.core.node.defaultnodesettings.DialogComponent;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
@@ -274,24 +273,6 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
         gbc.fill = GridBagConstraints.VERTICAL;
         gbc.weighty = 1;
         panel.add(Box.createVerticalGlue(), gbc);
-    }
-
-    private static void addGbcRow(final JPanel panel, final int row, final String label, final DialogComponent comp) {
-        final GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.insets = new Insets(0, 5, 0, 5);
-        gbc.anchor = GridBagConstraints.LINE_START;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(new JLabel(label), gbc);
-
-        gbc.gridx++;
-        panel.add(comp.getComponentPanel(), gbc);
-
-        gbc.gridx++;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1;
-        panel.add(Box.createHorizontalGlue(), gbc);
     }
 
     @Override

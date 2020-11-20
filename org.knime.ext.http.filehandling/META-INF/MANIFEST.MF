@@ -7,9 +7,15 @@ Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Require-Bundle: org.knime.core;bundle-version="[4.3.0,5.0.0]",
  org.knime.filehandling.core;bundle-version="[4.3.0,5.0.0)",
  org.knime.workbench.core;bundle-version="[4.3.0,5.0.0)",
- org.apache.commons.lang3;bundle-version="3.9.0"
+ org.apache.commons.lang3;bundle-version="3.9.0",
+ org.apache.cxf.cxf-core;bundle-version="[3.2.0,4.0.0)",
+ org.apache.cxf.cxf-rt-frontend-jaxrs;bundle-version="[3.2.0,4.0.0)",
+ org.apache.cxf.cxf-rt-rs-client;bundle-version="[3.2.0,4.0.0)",
+ org.apache.cxf.cxf-rt-rs-extension-providers;bundle-version="[3.2.0,4.0.0)",
+ org.apache.cxf.cxf-rt-transports-http;bundle-version="[3.2.0,4.0.0)",
+ org.apache.cxf.cxf-rt-transports-http-hc;bundle-version="[3.2.0,4.0.0)",
+ javax.ws.rs-api;bundle-version="[2.1.0,3.0.0)"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Automatic-Module-Name: org.knime.ext.http.filehandling
 Bundle-ClassPath: .
-Bundle-Activator: org.knime.ext.http.filehandling.Activator

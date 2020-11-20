@@ -180,7 +180,7 @@ public class HttpAuthenticationSettings {
      */
     public HttpAuthenticationSettings() {
         // authentication
-        m_authType = AuthType.BASIC;
+        m_authType = AuthType.NONE;
         m_basicUser = new SettingsModelString(KEY_USER, "");
         m_basicPassword = new SettingsModelPassword(KEY_PASSWORD, SECRET_KEY, "");
         m_basicUseCredentials = new SettingsModelBoolean(KEY_USE_CREDENTIALS, false);

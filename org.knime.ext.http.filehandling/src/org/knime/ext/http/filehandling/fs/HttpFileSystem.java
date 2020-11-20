@@ -53,23 +53,29 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.WatchService;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.knime.ext.http.filehandling.node.HttpConnectorNodeSettings;
+import org.apache.commons.lang3.StringUtils;
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
+import org.knime.filehandling.core.connections.FSFileSystem;
 import org.knime.filehandling.core.connections.FSLocationSpec;
-import org.knime.filehandling.core.connections.base.BaseFileSystem;
+import org.knime.filehandling.core.connections.base.BaseFileStore;
 
 /**
  * HTTP implementation of the {@link FileSystem}.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpFileSystem extends BaseFileSystem<HttpPath> {
-    private static final long CACHE_TTL = 6000;
+public class HttpFileSystem extends FSFileSystem<HttpPath> {
 
     /**
      * HTTP URI scheme.
@@ -81,24 +87,34 @@ public class HttpFileSystem extends BaseFileSystem<HttpPath> {
      */
     public static final String PATH_SEPARATOR = "/";
 
+    private final HttpConnectionConfig m_config;
+
+    private final HttpFileSystemProvider m_provider;
+
+    private final HttpClient m_client;
+
     /**
-     * @param settings
-     *            HTTP connection settings.
+     * @param cfg
+     *            HTTP connection config.
      * @throws IOException
      */
-    protected HttpFileSystem(final HttpConnectorNodeSettings settings) throws IOException {
-        super(createProvider(settings), createUri(settings), CACHE_TTL, settings.determineWorkingDirectory(),
-                createFSLocationSpec(settings));
-    }
-
-    private static HttpFileSystemProvider createProvider(final HttpConnectorNodeSettings settings)
-            throws IOException {
-        return new HttpFileSystemProvider(settings);
+    protected HttpFileSystem(final HttpConnectionConfig cfg) throws IOException {
+        super(createUri(cfg), //
+                createFSLocationSpec(cfg.getUrl()), //
+                determineWorkingDirectory(cfg));
+        m_config = cfg;
+        m_provider = new HttpFileSystemProvider();
+        m_provider.setFileSystem(this); // NOSONAR
+        m_client = HttpClient.create(cfg);
     }
 
     @Override
     public HttpFileSystemProvider provider() {
-        return (HttpFileSystemProvider) super.provider();
+        return m_provider;
+    }
+
+    HttpClient getClient() {
+        return m_client;
     }
 
     /**
@@ -107,25 +123,18 @@ public class HttpFileSystem extends BaseFileSystem<HttpPath> {
      * @return URI from configuration.
      * @throws URISyntaxException
      */
-    private static URI createUri(final HttpConnectorNodeSettings cfg) throws IOException {
-        // TODO
-        return null;
-        // try {
-        // // return new URI(FS_TYPE, null, cfg.getHost(), cfg.getPort(), null, null,
-        // // null);
-        // } catch (final URISyntaxException e) {
-        // throw new IOException("Failed to create URI", e);
-        // }
+    private static URI createUri(final HttpConnectionConfig cfg) {
+        final URI parsedUrl = URI.create(cfg.getUrl());
+        return URI.create(String.format("%s://%s", FS_TYPE, parsedUrl.getHost()));
     }
 
     /**
-     * @param settings
-     *            host name from configuration.
+     * @param url
+     *            The base URL of the connection.
      * @return the {@link FSLocationSpec} for an HTTP file system.
      */
-    public static DefaultFSLocationSpec createFSLocationSpec(final HttpConnectorNodeSettings settings) {
-        // TODO
-        String resolvedHost = null;
+    public static DefaultFSLocationSpec createFSLocationSpec(final String url) {
+        String resolvedHost = URI.create(url).getHost();
         try {
             resolvedHost = InetAddress.getByName(resolvedHost).getCanonicalHostName();
         } catch (UnknownHostException ex) { // NOSONAR is possible if host can't be resolved
@@ -134,9 +143,9 @@ public class HttpFileSystem extends BaseFileSystem<HttpPath> {
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, HttpFileSystem.FS_TYPE + ":" + resolvedHost);
     }
 
-    @Override
-    protected void prepareClose() {
-        // TODO
+    private static String determineWorkingDirectory(final HttpConnectionConfig cfg) {
+        final URI url = URI.create(cfg.getUrl());
+        return StringUtils.isEmpty(url.getPath()) ? HttpFileSystem.PATH_SEPARATOR : url.getRawPath();
     }
 
     @Override
@@ -152,5 +161,46 @@ public class HttpFileSystem extends BaseFileSystem<HttpPath> {
     @Override
     public Iterable<Path> getRootDirectories() {
         return Collections.singletonList(getPath(PATH_SEPARATOR));
+    }
+
+    @Override
+    protected void ensureClosedInternal() throws IOException {
+        m_client.close();
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return false;
+    }
+
+    @Override
+    public Iterable<FileStore> getFileStores() {
+        return Collections.singletonList(new BaseFileStore(getFileSystemBaseURI().getScheme(), "default_file_store"));
+    }
+
+    @Override
+    public Set<String> supportedFileAttributeViews() {
+        final Set<String> supportedViews = new HashSet<>();
+        supportedViews.add("basic");
+        return supportedViews;
+    }
+
+    @Override
+    public PathMatcher getPathMatcher(final String syntaxAndPattern) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public UserPrincipalLookupService getUserPrincipalLookupService() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public WatchService newWatchService() throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    String getBaseUrl() {
+        return m_config.getUrl();
     }
 }

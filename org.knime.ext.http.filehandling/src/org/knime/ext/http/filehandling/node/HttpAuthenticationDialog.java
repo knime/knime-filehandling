@@ -257,6 +257,7 @@ public class HttpAuthenticationDialog extends JPanel {
         return panel;
     }
 
+    @SuppressWarnings("deprecation")
     private void updateComponentsEnablement() {
         final AuthType authType = m_settings.getAuthType();
 

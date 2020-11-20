@@ -49,7 +49,10 @@
 package org.knime.ext.http.filehandling.fs;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Set;
@@ -64,8 +67,11 @@ import org.knime.filehandling.core.connections.base.TempFileSeekableByteChannel;
 public class HttpSeekableByteChannel extends TempFileSeekableByteChannel<HttpPath> {
 
     /**
-     * * @param file * file to streaming. * @param options * open file options.
-     * * @throws IOException
+     * Constructor.
+     *
+     * @param file
+     * @param options
+     * @throws IOException
      */
     public HttpSeekableByteChannel(final HttpPath file, final Set<? extends OpenOption> options) throws IOException {
         super(file, options);
@@ -73,16 +79,15 @@ public class HttpSeekableByteChannel extends TempFileSeekableByteChannel<HttpPat
 
     @Override
     public void copyFromRemote(final HttpPath path, final Path tempFile) throws IOException {
-        throw new UnsupportedOperationException("Cannot move files with HTTP.");
+        try (final InputStream in = Files.newInputStream(path)) {
+            Files.copy(in, tempFile);
+        }
     }
 
     @Override
     public void copyToRemote(final HttpPath path, final Path tempFile) throws IOException {
-        throw new UnsupportedOperationException("Cannot move files with HTTP.");
-    }
-
-    @SuppressWarnings("resource")
-    private static HttpFileSystemProvider getProvider(final HttpPath path) {
-        return path.getFileSystem().provider();
+        try (final OutputStream out = Files.newOutputStream(tempFile)) {
+            Files.copy(tempFile, out);
+        }
     }
 }

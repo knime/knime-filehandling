@@ -51,9 +51,7 @@ package org.knime.ext.http.filehandling.fs;
 import java.io.IOException;
 
 import org.knime.core.node.util.FileSystemBrowser;
-import org.knime.ext.http.filehandling.node.HttpConnectorNodeSettings;
 import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
 
 /**
  * HTTP file system connection.
@@ -64,22 +62,12 @@ public class HttpFSConnection implements FSConnection {
     private final HttpFileSystem m_fileSystem;
 
     /**
-     * @param nodeSettings
-     *            HTTP connection node settings.
+     * @param cfg
+     *            HTTP connection settings.
      * @throws IOException
      */
-    @SuppressWarnings("resource")
-    public HttpFSConnection(final HttpConnectorNodeSettings nodeSettings) throws IOException {
-        this(new HttpFileSystem(nodeSettings));
-    }
-
-    /**
-     *
-     * @param fileSystem
-     *            file system.
-     */
-    protected HttpFSConnection(final HttpFileSystem fileSystem) {
-        m_fileSystem = fileSystem;
+    public HttpFSConnection(final HttpConnectionConfig cfg) throws IOException {
+        m_fileSystem = new HttpFileSystem(cfg);
     }
 
     @Override
@@ -89,6 +77,6 @@ public class HttpFSConnection implements FSConnection {
 
     @Override
     public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
+        return null; // browsing is not supported
     }
 }

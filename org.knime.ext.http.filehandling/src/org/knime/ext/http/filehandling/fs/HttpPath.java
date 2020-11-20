@@ -48,6 +48,7 @@
  */
 package org.knime.ext.http.filehandling.fs;
 
+import java.net.URI;
 import java.nio.file.Path;
 
 import org.knime.filehandling.core.connections.base.UnixStylePath;
@@ -71,25 +72,29 @@ public class HttpPath extends UnixStylePath {
         super(fileSystem, first, more);
     }
 
-    /**
-     * * @param fileSystem The file system. * @param path path.
-     */
-    public HttpPath(final HttpFileSystem fileSystem, final String path) {
-        super(fileSystem, path);
-    }
-
     @Override
     public HttpFileSystem getFileSystem() {
         return (HttpFileSystem) super.getFileSystem();
     }
 
-    @Override
-    public HttpPath getParent() {
-        return (HttpPath) super.getParent();
-    }
-
-    @Override
-    public HttpPath resolve(final String other) {
-        return (HttpPath) super.resolve(other);
+    /**
+     * @return the URL for the HTTP request to make, when trying to access this file
+     *         over HTTP.
+     */
+    public String getRequestUrl() {
+        @SuppressWarnings("resource")
+        final URI baseUrl = URI.create(getFileSystem().getBaseUrl());
+        final StringBuilder url = new StringBuilder(
+                String.format("%s://%s", baseUrl.getScheme(), baseUrl.getAuthority()));
+        if (url.charAt(url.length() - 1) == '/') {
+            url.deleteCharAt(url.length() - 1);
+        }
+        // note: we are not doing any percent-encoding here, hence the user has to
+        // provide correctly percent-encoded paths. This allows the user to embed query
+        // and fragment components into the request URL by appending them to the path.
+        // Percent encoding the user-provided path would also encode the reserved
+        // characters in the query and fragment, thus breaking that feature.
+        url.append(toAbsolutePath().toString());
+        return url.toString();
     }
 }

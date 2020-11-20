@@ -50,6 +50,9 @@ package org.knime.ext.http.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Function;
 
 import org.knime.core.node.CanceledExecutionException;
@@ -62,11 +65,11 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
-import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.ICredentials;
+import org.knime.ext.http.filehandling.fs.HttpConnectionConfig;
 import org.knime.ext.http.filehandling.fs.HttpFSConnection;
 import org.knime.ext.http.filehandling.fs.HttpFileSystem;
-import org.knime.filehandling.core.connections.FSConnection;
+import org.knime.ext.http.filehandling.node.HttpAuthenticationSettings.AuthType;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -96,30 +99,32 @@ public class HttpConnectorNodeModel extends NodeModel {
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+        m_settings.validate();
         m_fsId = FSConnectionRegistry.getInstance().getKey();
         return new PortObjectSpec[] { createSpec() };
     }
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        m_fsConnection = new HttpFSConnection(m_settings);
+        final HttpFSConnection fsConnection = createConnection(m_settings, name -> getCredentialsProvider().get(name));
+        testConnection(fsConnection);
+        m_fsConnection = fsConnection;
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
         return new PortObject[] { new FileSystemPortObject(createSpec()) };
     }
 
-
-    private static ICredentials getCredentials(final Function<String, ICredentials> credentialsProvider,
-            final String credential) throws InvalidSettingsException {
-        final ICredentials creds = credentialsProvider.apply(credential);
-        if (creds == null) {
-            throw new InvalidSettingsException("Credentials '" + credential + "' not found");
+    private static void testConnection(final HttpFSConnection fsConnection) throws IOException {
+        @SuppressWarnings("resource")
+        final HttpFileSystem fs = fsConnection.getFileSystem();
+        try {
+            Files.readAttributes(fs.getWorkingDirectory(), BasicFileAttributes.class);
+        } catch (NoSuchFileException e) { // NOSONAR ignore, all good for now
         }
-        return creds;
     }
 
     private FileSystemPortObjectSpec createSpec() {
         return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
-                HttpFileSystem.createFSLocationSpec(m_settings));
+                HttpFileSystem.createFSLocationSpec(m_settings.getUrl()));
     }
 
     @Override
@@ -166,12 +171,53 @@ public class HttpConnectorNodeModel extends NodeModel {
 
     /**
      * @param settings
+     *            The connector node settings.
      * @param credentialsProvider
-     * @return
+     *            A credentials provider.
+     * @return the {@link HttpFSConnection}
+     * @throws IOException
+     * @throws InvalidSettingsException
      */
-    public static FSConnection createConnection(final HttpConnectorNodeSettings settings,
-            final CredentialsProvider credentialsProvider) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+    private static HttpFSConnection createConnection(final HttpConnectorNodeSettings settings,
+            final Function<String, ICredentials> credentialsProvider) throws IOException, InvalidSettingsException {
+
+        final HttpConnectionConfig cfg = new HttpConnectionConfig(settings.getUrl());
+        cfg.setSslIgnoreHostnameMismatches(settings.sslIgnoreHostnameMismatches());
+        cfg.setSslTrustAllCertificates(settings.sslTrustAllCertificates());
+
+        if (settings.getAuthenticationSettings().getAuthType() == AuthType.BASIC) {
+            cfg.setAuthType(AuthType.BASIC);
+
+            final String username;
+            final String password;
+
+            if (settings.getAuthenticationSettings().useBasicCredentials()) {
+                final ICredentials credentials = getCredentials(credentialsProvider,
+                        settings.getAuthenticationSettings().getBasicCredentialsName());
+                username = credentials.getLogin();
+                password = credentials.getPassword();
+            } else {
+                username = settings.getAuthenticationSettings().getBasicUser();
+                password = settings.getAuthenticationSettings().getBasicPassword();
+            }
+
+            cfg.setUsername(username);
+            cfg.setPassword(password);
+        }
+
+        cfg.setConnectionTimeout(settings.getConnectionTimeout());
+        cfg.setReadTimeout(settings.getReadTimeout());
+        cfg.setFollowRedirects(settings.followRedirects());
+
+        return new HttpFSConnection(cfg);
+    }
+
+    private static ICredentials getCredentials(final Function<String, ICredentials> credentialsProvider,
+            final String credential) throws InvalidSettingsException {
+        final ICredentials creds = credentialsProvider.apply(credential);
+        if (creds == null) {
+            throw new InvalidSettingsException("Credentials '" + credential + "' not found");
+        }
+        return creds;
     }
 }
