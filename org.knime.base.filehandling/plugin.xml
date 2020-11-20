@@ -96,6 +96,12 @@
          factory-class="org.knime.base.filehandling.zip.ZipNodeFactory"
          hidden="false">
    </node>
+   <node
+         category-path="/io/binaryobjects"
+         deprecated="false"
+         factory-class="org.knime.base.filehandling.binaryobjects.writer.BinaryObjectsToFilesNodeFactory"
+         hidden="false">
+   </node>
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category
