@@ -59,6 +59,7 @@ import org.knime.core.data.def.StringCell;
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
+@Deprecated
 enum Attributes {
 
     /**

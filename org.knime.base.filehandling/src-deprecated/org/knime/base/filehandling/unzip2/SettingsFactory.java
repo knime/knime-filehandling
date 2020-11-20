@@ -45,9 +45,8 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.filemetainfo;
+package org.knime.base.filehandling.unzip2;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -64,32 +63,43 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the URI column setting.
+     * Factory method for the source setting.
      *
      *
-     * @return URI column <code>SettingsModel</code>
+     * @return Source <code>SettingsModel</code>
      */
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
+    static SettingsModelString createSourceSettings() {
+        return new SettingsModelString("source", "");
     }
 
     /**
-     * Factory method for the abort if not local setting.
+     * Factory method for the target directory setting.
      *
      *
-     * @return Abort if not local <code>SettingsModel</code>
+     * @return Target directory <code>SettingsModel</code>
      */
-    static SettingsModelBoolean createAbortIfNotLocalSettings() {
-        return new SettingsModelBoolean("abortifnotlocal", false);
+    static SettingsModelString createTargetDirectorySettings() {
+        return new SettingsModelString("targetdirectory", "");
     }
 
     /**
-     * Factory method for the fail if file does not exist setting.
+     * Factory method for the output setting.
      *
      *
-     * @return Fail if file does not exist <code>SettingsModel</code>
+     * @return Output <code>SettingsModel</code>
      */
-    static SettingsModelBoolean createFailIfDoesNotExistSettings() {
-        return new SettingsModelBoolean("failiffiledoesnotexist", false);
+    static SettingsModelString createOutputSettings() {
+        return new SettingsModelString("output", OutputSelection.URI.getName());
     }
+
+    /**
+     * Factory method for the if exists setting.
+     *
+     *
+     * @return If exists <code>SettingsModel</code>
+     */
+    static SettingsModelString createIfExistsSettings() {
+        return new SettingsModelString("ifexists", OverwritePolicy.ABORT.getName());
+    }
+
 }

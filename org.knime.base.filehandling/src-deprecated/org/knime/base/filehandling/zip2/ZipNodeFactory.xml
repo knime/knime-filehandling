@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./zip16x16.png" type="Other" deprecated="true">
+	<name>Zip Files</name>
+
+	<shortDescription>
+		Zips files into an archive.
+	</shortDescription>
+
+	<fullDescription>
+		<intro>This node zips files into an archive. The path to the
+			files has
+			to be contained in the input table.
+		</intro>
+
+
+		<option name="Location column">
+			The column that contains the location to the files
+			that
+			should be archived.
+			The location has to contain the absolute path.
+			It can either be a
+			String or an URI.
+		</option>
+		<option name="Output format">
+			Specifies the format of the output file.
+			<br />
+			<b>zip</b>
+			<br />
+			A zip file.
+			<br />
+			<b>tar.gz</b>
+			<br />
+			Tar file compressed with gzip.
+			<br />
+			<b>tar.bz2</b>
+			<br />
+			Tar file compressed with bzip2.
+		</option>
+		<option name="Output file">
+			Path of the archive that will be created. You can use local filesystem paths or URL, given that they are
+			allow for writing.
+		</option>
+		<option name="Path handling">
+			Specifies how the file path shall be handled inside the archive.
+			<br />
+			<b>Use full path</b>
+			<br />
+			The full filepath will be used for every file.
+			<br />
+			<b>Use only filename</b>
+			<br />
+			Only the filename will be used, so the archive will contain no
+			directories.
+			<br />
+			<b>Truncate prefix</b>
+			<br />
+			The given prefix will be cut off of the file paths inside the
+			archive.
+			To locate the files, the full path is still required in the
+			input
+			table.
+		</option>
+		<option name="Prefix directory">
+			Prefix of the path that will be truncated.
+		</option>
+		<option name="If file exists...">
+			Specifies the behavior if a file with the same name
+			already
+			exists.
+			<br />
+			<b>Overwrite</b>
+			<br />
+			Overwrites the whole file and ignores its content.
+			<br />
+			<b>Append (Overwrite)</b>
+			<br />
+			Appends the new files into the existing archive. It will
+			overwrite
+			files within the archive that have the same name as new ones.
+			<br />
+			<b>Append (Abort)</b>
+			<br />
+			Appends the new files into the existing archive. It will
+			abort if
+			the
+			archive contains files that would need to be overwritten. In
+			this case
+			the old file will be retained as it is.
+			<br />
+			<b>Abort</b>
+			<br />
+			Will abort if the file already exists, while keeping the
+			file
+			untouched.
+		</option>
+	</fullDescription>
+
+	<ports>
+		<inPort index="0" name="Input table">Has to have a column that contains
+			the
+			path to the files that should be archived.
+		</inPort>
+	</ports>
+</knimeNode>

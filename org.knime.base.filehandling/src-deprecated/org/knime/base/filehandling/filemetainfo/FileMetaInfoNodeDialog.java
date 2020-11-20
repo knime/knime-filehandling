@@ -63,6 +63,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
+@Deprecated
 class FileMetaInfoNodeDialog extends DefaultNodeSettingsPane {
 
     private SettingsModelString m_uricolumn;

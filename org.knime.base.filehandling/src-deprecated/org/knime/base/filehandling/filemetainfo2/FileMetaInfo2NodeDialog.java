@@ -45,51 +45,64 @@
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.filemetainfo;
+package org.knime.base.filehandling.filemetainfo2;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import org.knime.core.data.uri.URIDataValue;
+import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
+import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * Factory for SettingsModels.
+ * <code>NodeDialog</code> for the node.
  *
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 @Deprecated
-final class SettingsFactory {
+class FileMetaInfo2NodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsFactory() {
-        // Disables default constructor
-    }
+    private SettingsModelString m_uricolumn;
 
-    /**
-     * Factory method for the URI column setting.
-     *
-     *
-     * @return URI column <code>SettingsModel</code>
-     */
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
-    }
+    private SettingsModelBoolean m_abortifnotlocal;
+
+    private SettingsModelBoolean m_failiffiledoesnotexist;
+
 
     /**
-     * Factory method for the abort if not local setting.
-     *
-     *
-     * @return Abort if not local <code>SettingsModel</code>
+     * New pane for configuring the node dialog.
      */
-    static SettingsModelBoolean createAbortIfNotLocalSettings() {
-        return new SettingsModelBoolean("abortifnotlocal", false);
+    @SuppressWarnings("unchecked")
+    protected FileMetaInfo2NodeDialog() {
+        super();
+        m_uricolumn = SettingsFactory.createURIColumnSettings();
+        m_abortifnotlocal = SettingsFactory.createAbortIfNotLocalSettings();
+        m_failiffiledoesnotexist = SettingsFactory.createFailIfDoesNotExistSettings();
+        m_failiffiledoesnotexist.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                updateEnabledStatus();
+            }
+        });
+        updateEnabledStatus();
+        // URI column
+        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn, "URI column", 0, URIDataValue.class));
+        // Fail if file does not exist
+        addDialogComponent(new DialogComponentBoolean(m_failiffiledoesnotexist, "Fail if file does not exist"));
+        // Abort if not local
+        addDialogComponent(new DialogComponentBoolean(m_abortifnotlocal,
+                "Fail execution if URI does not point to local file"));
     }
 
-    /**
-     * Factory method for the fail if file does not exist setting.
-     *
-     *
-     * @return Fail if file does not exist <code>SettingsModel</code>
-     */
-    static SettingsModelBoolean createFailIfDoesNotExistSettings() {
-        return new SettingsModelBoolean("failiffiledoesnotexist", false);
+    private void updateEnabledStatus() {
+        m_abortifnotlocal.setEnabled(!m_failiffiledoesnotexist.getBooleanValue());
+        if (m_failiffiledoesnotexist.getBooleanValue()) {
+            m_abortifnotlocal.setBooleanValue(true);
+        }
     }
+
 }

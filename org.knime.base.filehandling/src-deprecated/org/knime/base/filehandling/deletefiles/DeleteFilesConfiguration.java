@@ -43,53 +43,102 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Nov 9, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.filemetainfo;
+package org.knime.base.filehandling.deletefiles;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
 
 /**
- * Factory for SettingsModels.
+ * Configuration for the node.
  *
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 @Deprecated
-final class SettingsFactory {
+class DeleteFilesConfiguration {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    private String m_target;
+
+    private boolean m_abortonfail;
+
+    /**
+     * @return the target
+     */
+    public String getTarget() {
+        return m_target;
     }
 
     /**
-     * Factory method for the URI column setting.
-     *
-     *
-     * @return URI column <code>SettingsModel</code>
+     * @param target the target to set
      */
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
+    public void setTarget(final String target) {
+        m_target = target;
     }
 
     /**
-     * Factory method for the abort if not local setting.
-     *
-     *
-     * @return Abort if not local <code>SettingsModel</code>
+     * @return the abortonfail
      */
-    static SettingsModelBoolean createAbortIfNotLocalSettings() {
-        return new SettingsModelBoolean("abortifnotlocal", false);
+    public boolean getAbortonfail() {
+        return m_abortonfail;
     }
 
     /**
-     * Factory method for the fail if file does not exist setting.
-     *
-     *
-     * @return Fail if file does not exist <code>SettingsModel</code>
+     * @param abortonfail the abortonfail to set
      */
-    static SettingsModelBoolean createFailIfDoesNotExistSettings() {
-        return new SettingsModelBoolean("failiffiledoesnotexist", false);
+    public void setAbortonfail(final boolean abortonfail) {
+        m_abortonfail = abortonfail;
     }
+
+    /**
+     * Save the configuration.
+     *
+     *
+     * @param settings The <code>NodeSettings</code> to write to
+     */
+    void save(final NodeSettingsWO settings) {
+        settings.addString("target", m_target);
+        settings.addBoolean("abortonfail", m_abortonfail);
+    }
+
+    /**
+     * Load the configuration.
+     *
+     *
+     * @param settings The <code>NodeSettings</code> to read from
+     */
+    void load(final NodeSettingsRO settings) {
+        m_target = settings.getString("target", "");
+        m_abortonfail = settings.getBoolean("abortonfail", true);
+    }
+
+    /**
+     * Load the configuration and check for validity.
+     *
+     *
+     * @param settings The <code>NodeSettings</code> to read from
+     * @throws InvalidSettingsException If one of the settings is not valid
+     */
+    void loadAndValidate(final NodeSettingsRO settings) throws InvalidSettingsException {
+        m_target = settings.getString("target");
+        validate("Target", m_target);
+        m_abortonfail = settings.getBoolean("abortonfail");
+    }
+
+    /**
+     * Checks if the setting is not null or empty.
+     *
+     *
+     * @param name The name that will be displayed in case of error
+     * @param setting The setting to check
+     * @throws InvalidSettingsException If the string is null or empty
+     */
+    private void validate(final String name, final String setting) throws InvalidSettingsException {
+        if (setting == null || setting.length() == 0) {
+            throw new InvalidSettingsException(name + " missing");
+        }
+    }
+
 }

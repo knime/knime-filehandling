@@ -43,11 +43,10 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.filemetainfo;
+package org.knime.base.filehandling.zip2;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
@@ -64,32 +63,68 @@ final class SettingsFactory {
     }
 
     /**
-     * Factory method for the URI column setting.
+     * Factory method for the location column setting.
      *
      *
-     * @return URI column <code>SettingsModel</code>
+     * @return Location column <code>SettingsModel</code>
      */
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
+    static SettingsModelString createLocationColumnSettings() {
+        return new SettingsModelString("locationcolumn", "");
     }
 
     /**
-     * Factory method for the abort if not local setting.
+     * Factory method for the target setting.
      *
      *
-     * @return Abort if not local <code>SettingsModel</code>
+     * @return Target <code>SettingsModel</code>
      */
-    static SettingsModelBoolean createAbortIfNotLocalSettings() {
-        return new SettingsModelBoolean("abortifnotlocal", false);
+    static SettingsModelString createTargetSettings() {
+        return new SettingsModelString("target", "");
     }
 
     /**
-     * Factory method for the fail if file does not exist setting.
+     * Factory method for the path handling setting.
      *
      *
-     * @return Fail if file does not exist <code>SettingsModel</code>
+     * @return Path handling <code>SettingsModel</code>
      */
-    static SettingsModelBoolean createFailIfDoesNotExistSettings() {
-        return new SettingsModelBoolean("failiffiledoesnotexist", false);
+    static SettingsModelString createPathHandlingSettings() {
+        return new SettingsModelString("pathhandling", PathHandling.FULL_PATH.getName());
     }
+
+    /**
+     * Factory method for the prefix setting.
+     *
+     *
+     * @param pathhandling <code>SettingsModel</code> for the path handling
+     *            setting
+     *
+     * @return Prefix <code>SettingsModel</code>
+     */
+    static SettingsModelString createPrefixSettings(final SettingsModelString pathhandling) {
+        SettingsModelString prefix = new SettingsModelString("prefix", "");
+        prefix.setEnabled(pathhandling.getStringValue().equals(PathHandling.TRUNCATE_PREFIX.getName()));
+        return prefix;
+    }
+
+    /**
+     * Factory method for the if exists setting.
+     *
+     *
+     * @return If exists <code>SettingsModel</code>
+     */
+    static SettingsModelString createIfExistsSettings() {
+        return new SettingsModelString("ifexists", OverwritePolicy.ABORT.getName());
+    }
+
+    /**
+     * Factory method for the format setting.
+     *
+     *
+     * @return Format <code>SettingsModel</code>
+     */
+    static SettingsModelString createFormatSettings() {
+        return new SettingsModelString("format", Format.ZIP.getName());
+    }
+
 }

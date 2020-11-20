@@ -43,53 +43,61 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Nov 13, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.filemetainfo;
+package org.knime.base.filehandling.downloaduploadfromlist2;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
- * Factory for SettingsModels.
+ * <code>NodeFactory</code> for node.
  *
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 @Deprecated
-final class SettingsFactory {
+public class DownloadUploadFromListNodeFactory extends NodeFactory<DownloadUploadFromListNodeModel> {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DownloadUploadFromListNodeModel createNodeModel() {
+        return new DownloadUploadFromListNodeModel();
     }
 
     /**
-     * Factory method for the URI column setting.
-     *
-     *
-     * @return URI column <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
+    @Override
+    public int getNrNodeViews() {
+        return 0;
     }
 
     /**
-     * Factory method for the abort if not local setting.
-     *
-     *
-     * @return Abort if not local <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelBoolean createAbortIfNotLocalSettings() {
-        return new SettingsModelBoolean("abortifnotlocal", false);
+    @Override
+    public NodeView<DownloadUploadFromListNodeModel> createNodeView(final int viewIndex,
+            final DownloadUploadFromListNodeModel nodeModel) {
+        return null;
     }
 
     /**
-     * Factory method for the fail if file does not exist setting.
-     *
-     *
-     * @return Fail if file does not exist <code>SettingsModel</code>
+     * {@inheritDoc}
      */
-    static SettingsModelBoolean createFailIfDoesNotExistSettings() {
-        return new SettingsModelBoolean("failiffiledoesnotexist", false);
+    @Override
+    public boolean hasDialog() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeDialogPane createNodeDialogPane() {
+        return new DownloadUploadFromListNodeDialog();
     }
 }

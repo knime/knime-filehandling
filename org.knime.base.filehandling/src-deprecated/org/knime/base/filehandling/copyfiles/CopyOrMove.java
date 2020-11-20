@@ -43,53 +43,50 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.filemetainfo;
-
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+package org.knime.base.filehandling.copyfiles;
 
 /**
- * Factory for SettingsModels.
+ * Enums for copy or move setting.
  *
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 @Deprecated
-final class SettingsFactory {
+enum CopyOrMove {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    /**
+     * Copy the files.
+     */
+    COPY("Copy"),
+
+    /**
+     * Move the original files.
+     */
+    MOVE("Move");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this option
+     */
+    CopyOrMove(final String name) {
+        m_name = name;
     }
 
     /**
-     * Factory method for the URI column setting.
-     *
-     *
-     * @return URI column <code>SettingsModel</code>
+     * @return Name of this option
      */
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
+    String getName() {
+        return m_name;
     }
 
     /**
-     * Factory method for the abort if not local setting.
-     *
-     *
-     * @return Abort if not local <code>SettingsModel</code>
+     * @return Array of all copy or move settings
      */
-    static SettingsModelBoolean createAbortIfNotLocalSettings() {
-        return new SettingsModelBoolean("abortifnotlocal", false);
+    static String[] getAllSettings() {
+        return new String[]{COPY.getName(), MOVE.getName()};
     }
 
-    /**
-     * Factory method for the fail if file does not exist setting.
-     *
-     *
-     * @return Fail if file does not exist <code>SettingsModel</code>
-     */
-    static SettingsModelBoolean createFailIfDoesNotExistSettings() {
-        return new SettingsModelBoolean("failiffiledoesnotexist", false);
-    }
 }

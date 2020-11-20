@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
@@ -53,10 +53,11 @@ import org.knime.core.node.NodeView;
 
 /**
  * <code>NodeFactory</code> for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
+@Deprecated
 public class FileMetaInfoNodeFactory extends NodeFactory<FileMetaInfoNodeModel> {
 
     /**

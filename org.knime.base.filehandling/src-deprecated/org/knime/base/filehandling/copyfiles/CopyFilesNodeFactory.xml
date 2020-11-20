@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./copymovefiles16x16.png" type="Other" deprecated="true">
+    <name>Copy/Move Files</name>
+    <shortDescription>
+        Copy or move files.
+    </shortDescription>
+    <fullDescription>
+        <intro>
+            This node copies or moves the files indicated by the selected
+            URI
+            column of
+            the input table.
+        </intro>
+        <option name="Copy or move">
+            <b>Copy</b>
+            <br />
+            Copy the files to a new location.
+            <br />
+            <b>Move</b>
+            <br />
+            Move/rename the files.
+        </option>
+        <option name="Source">
+            Column with the URI to the files.
+        </option>
+        <option name="Target filenames">
+            <b>Use path from target column</b>
+            <br />
+            The target filenames are present in an URI column.
+            <br />
+            <b>Use source name and output directory</b>
+            <br />
+            Use the sources filename and put them into the output
+            directory.
+        </option>
+        <option name="If a file exists">
+            <b>Overwrite</b>
+            <br />
+            Overwrite existing files.
+            <br />
+            <b>Abort</b>
+            <br />
+            Abort the execution if a file already exists.
+        </option>
+    </fullDescription>
+    <ports>
+        <inPort name="Input table" index="0">
+            Table that contains one or
+            more URI columns.
+        </inPort>
+        <outPort name="Output table" index="0">
+            Input table with the URI of
+            the new files appended. It will only be appended if the table does
+            not already contain this information.
+        </outPort>
+    </ports>
+</knimeNode>

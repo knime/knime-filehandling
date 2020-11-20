@@ -43,53 +43,104 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 21, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.filemetainfo;
+package org.knime.base.filehandling.filemetainfo2;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.data.DataType;
+import org.knime.core.data.def.BooleanCell;
+import org.knime.core.data.def.LongCell;
+import org.knime.core.data.def.StringCell;
+import org.knime.core.data.time.localdatetime.LocalDateTimeCellFactory;
 
 /**
- * Factory for SettingsModels.
+ * Enums for attributes.
  *
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 @Deprecated
-final class SettingsFactory {
+enum Attributes {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    /**
+     * Is the file a directory?
+     */
+    DIRECTORY(0, "Directory", BooleanCell.TYPE),
+
+    /**
+     * Is the file hidden?
+     */
+    HIDDEN(1, "Hidden", BooleanCell.TYPE),
+
+    /**
+     * Size of the file in bytes.
+     */
+    SIZE(2, "Size", LongCell.TYPE),
+
+    /**
+     * Size of the file in bytes, in human readable form.
+     */
+    HUMANSIZE(3, "Size (human readable)", StringCell.TYPE),
+
+    /**
+     * Last time the file was modified.
+     */
+    MODIFIED(4, "Last modified", LocalDateTimeCellFactory.TYPE),
+
+    /**
+     * Read, write and execute permissions for the file.
+     */
+    PERMISSIONS(5, "Permissions", StringCell.TYPE),
+
+    /**
+     * If the file exists.
+     */
+    EXISTS(6, "Exists", BooleanCell.TYPE);
+
+
+    private final int m_position;
+
+    private final String m_name;
+
+    private final DataType m_type;
+
+    /**
+     * @param position Position of this attribute
+     * @param name Name of this attribute
+     * @param type Type of this attribute
+     */
+    Attributes(final int position, final String name, final DataType type) {
+        m_position = position;
+        m_name = name;
+        m_type = type;
     }
 
     /**
-     * Factory method for the URI column setting.
-     *
-     *
-     * @return URI column <code>SettingsModel</code>
+     * @return Position of this attribute
      */
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
+    int getPosition() {
+        return m_position;
     }
 
     /**
-     * Factory method for the abort if not local setting.
-     *
-     *
-     * @return Abort if not local <code>SettingsModel</code>
+     * @return Name of this attribute
      */
-    static SettingsModelBoolean createAbortIfNotLocalSettings() {
-        return new SettingsModelBoolean("abortifnotlocal", false);
+    String getName() {
+        return m_name;
     }
 
     /**
-     * Factory method for the fail if file does not exist setting.
-     *
-     *
-     * @return Fail if file does not exist <code>SettingsModel</code>
+     * @return Type of this attribute
      */
-    static SettingsModelBoolean createFailIfDoesNotExistSettings() {
-        return new SettingsModelBoolean("failiffiledoesnotexist", false);
+    DataType getType() {
+        return m_type;
     }
+
+    /**
+     * @return Array of all attributes
+     */
+    static Attributes[] getAllAttributes() {
+        return new Attributes[]{DIRECTORY, HIDDEN, SIZE, HUMANSIZE, MODIFIED, PERMISSIONS, EXISTS};
+    }
+
 }

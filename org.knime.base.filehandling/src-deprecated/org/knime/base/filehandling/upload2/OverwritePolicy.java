@@ -43,53 +43,55 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
-package org.knime.base.filehandling.filemetainfo;
-
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+package org.knime.base.filehandling.upload2;
 
 /**
- * Factory for SettingsModels.
+ * Enums for overwrite policies.
  *
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 @Deprecated
-final class SettingsFactory {
+enum OverwritePolicy {
 
-    private SettingsFactory() {
-        // Disables default constructor
+    /**
+     * Overwrite existing file.
+     */
+    OVERWRITE("Overwrite"),
+
+    /**
+     * Overwrite only if newer.
+     */
+    OVERWRITEIFNEWER("Overwrite if newer"),
+
+    /**
+     * Abort if file exists.
+     */
+    ABORT("Abort");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this policy
+     */
+    OverwritePolicy(final String name) {
+        m_name = name;
     }
 
     /**
-     * Factory method for the URI column setting.
-     *
-     *
-     * @return URI column <code>SettingsModel</code>
+     * @return Name of this policy
      */
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
+    String getName() {
+        return m_name;
     }
 
     /**
-     * Factory method for the abort if not local setting.
-     *
-     *
-     * @return Abort if not local <code>SettingsModel</code>
+     * @return Array of all overwrite policy settings
      */
-    static SettingsModelBoolean createAbortIfNotLocalSettings() {
-        return new SettingsModelBoolean("abortifnotlocal", false);
+    static String[] getAllSettings() {
+        return new String[]{OVERWRITE.getName(), ABORT.getName()};
     }
 
-    /**
-     * Factory method for the fail if file does not exist setting.
-     *
-     *
-     * @return Fail if file does not exist <code>SettingsModel</code>
-     */
-    static SettingsModelBoolean createFailIfDoesNotExistSettings() {
-        return new SettingsModelBoolean("failiffiledoesnotexist", false);
-    }
 }

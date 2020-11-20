@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./deletefiles16x16.png" type="Other" deprecated="true">
+    <name>Delete Files</name>
+
+    <shortDescription>
+        Delete files and folders on a remote location.
+    </shortDescription>
+
+    <fullDescription>
+        <intro>
+            This node deletes the files and folders contained in the
+            input table. The location may be a remote
+            location. Folders
+            will also be deleted if they still contain files.
+        </intro>
+
+
+        <option name="URI">
+            Column of the input table with the URIs to
+            the files that should be deleted.
+        </option>
+        <option name="Abort if delete fails">
+            If this is checked the node will abort if
+            one of the files could not be deleted. If it is unchecked
+            the output table will contain a column that indicates if the
+            file could be successfully deleted or not.
+        </option>
+    </fullDescription>
+
+    <ports>
+        <inPort name="Connection information port" index="0">
+            Port
+            object
+            containing the connection information to the server.
+            (Optional)
+        </inPort>
+        <inPort name="Filelist port" index="1">
+            Table containing the
+            list of files that should be deleted.
+        </inPort>
+        <outPort name="Filelist table" index="0">
+            Table containing
+            the
+            list of files that have been deleted. If files are
+            allowed to fail there is an additional column, that will indicate
+            if the deletion was successful or did fail.
+        </outPort>
+    </ports>
+</knimeNode>
