@@ -115,7 +115,7 @@
         <outPort name="Output table" index="0">
             The input table containing two additional columns. The one containing the path to the just written binary 
             files and the other encodes the corresponding write status (created, unmodified, overwritten). If <i>remove 
-            column</i> has been checked the selected <i>binary object column</i> is omitted from the out.
+            column</i> has been checked the selected <i>binary object column</i> is removed from the output.
         </outPort>
     </ports>
 </knimeNode>
