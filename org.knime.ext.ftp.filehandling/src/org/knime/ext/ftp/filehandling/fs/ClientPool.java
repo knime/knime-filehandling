@@ -83,7 +83,7 @@ public class ClientPool {
 
     private final AtomicBoolean m_isStarted = new AtomicBoolean();
 
-    private ScheduledFuture<?> m_idleTimeCheckerTask;
+    private List<ScheduledFuture<?>> m_scheduledTasks = new LinkedList<>();
 
     /**
      * @param cfg
@@ -224,18 +224,34 @@ public class ClientPool {
 
         // if and only if resource pool is initialized should
         // start resource idle time handler
-        ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-        m_idleTimeCheckerTask = scheduler.scheduleAtFixedRate(this::processIdleResources, 3, 3, TimeUnit.SECONDS);
+        startTasks();
+    }
+
+    private void startTasks() {
+        final ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+
+        // start and save scheduled tasks
+        m_scheduledTasks.add(scheduler.scheduleAtFixedRate(this::processIdleResources, 3, 3, TimeUnit.SECONDS));
+
+        // start connection keep alive task
+        long keepAliveTimeOut = m_configuration.getConnectionTimeOut().toMillis() / 2;
+        if (keepAliveTimeOut > 0) {
+            m_scheduledTasks.add(scheduler.scheduleAtFixedRate(this::sendKeepAlive, keepAliveTimeOut, keepAliveTimeOut,
+                    TimeUnit.MILLISECONDS));
+        }
+    }
+
+    private void cancelTasks() {
+        while (!m_scheduledTasks.isEmpty()) {
+            m_scheduledTasks.remove(0).cancel(false);
+        }
     }
 
     /**
      * Stops resource pool.
      */
     public synchronized void stop() {
-        if (m_idleTimeCheckerTask != null) {
-            m_idleTimeCheckerTask.cancel(false);
-            m_idleTimeCheckerTask = null;
-        }
+        cancelTasks();
 
         // close resources
         List<FtpClientResource> toClose = new LinkedList<>(m_freeResources);
@@ -287,6 +303,21 @@ public class ClientPool {
 
         for (FtpClientResource res : toClose) {
             res.close();
+        }
+    }
+
+    private synchronized void sendKeepAlive() {
+        final Iterator<FtpClientResource> iter = m_freeResources.iterator();
+
+        while (iter.hasNext()) {
+            final FtpClientResource next = iter.next();
+            try {
+                next.get().sendKeepAlive();
+            } catch (IOException ex) {
+                LOGGER.error("Keep alive request failed. Connection closed", ex);
+                iter.remove();
+                next.close();
+            }
         }
     }
 

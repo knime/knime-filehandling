@@ -196,7 +196,7 @@ public class FtpClient {
     public OutputStream openForRewrite(final String file) throws IOException {
         OutputStream stream = m_client.storeFileStream(file);
         if (stream == null) {
-            throw new IOException(m_client.getReplyString().trim());
+            throw new IOException(getReplyString());
         }
         return wrapToCompletePendingCommand(stream);
     }
@@ -211,7 +211,7 @@ public class FtpClient {
     public OutputStream openForAppend(final String file) throws IOException {
         OutputStream stream = m_client.appendFileStream(file);
         if (stream == null) {
-            throw new IOException(m_client.getReplyString().trim());
+            throw new IOException(getReplyString());
         }
         return wrapToCompletePendingCommand(stream);
     }
@@ -236,7 +236,7 @@ public class FtpClient {
         if (!m_client.completePendingCommand() && m_client.getReplyCode() != 426) {
             // reply code 426 means that the TCP connection was established but then broken
             // by the client, which happens if an input stream is closed before end-of-file.
-            throw new IOException(m_client.getReplyString().trim());
+            throw new IOException(getReplyString());
         }
     }
 
@@ -261,7 +261,7 @@ public class FtpClient {
     public InputStream getFileContentAsStream(final String path) throws IOException {
         final InputStream stream = m_client.retrieveFileStream(path);
         if (stream == null) {
-            throw new IOException(m_client.getReplyString().trim());
+            throw new IOException(getReplyString());
         }
 
         return new FilterInputStream(stream) {
@@ -281,7 +281,7 @@ public class FtpClient {
 
     private void checkPositiveResponse() throws IOException {
         if (!isPositiveResponse()) {
-            throw new IOException(m_client.getReplyString().trim());
+            throw new IOException(getReplyString());
         }
     }
 
@@ -310,7 +310,22 @@ public class FtpClient {
      */
     public void rename(final String from, final String to) throws IOException {
         if (!m_client.rename(from, to)) {
-            throw new IOException(m_client.getReplyString().trim());
+            throw new IOException(getReplyString());
         }
+    }
+
+    /**
+     * Sends keep alive requests.
+     *
+     * @throws IOException
+     */
+    public void sendKeepAlive() throws IOException {
+        if (!m_client.sendNoOp()) {
+            throw new IOException(getReplyString());
+        }
+    }
+
+    private String getReplyString() {
+        return m_client.getReplyString().trim();
     }
 }

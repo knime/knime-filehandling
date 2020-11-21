@@ -105,20 +105,9 @@ public class FtpClientFactory {
         // create native FTP client configuration.
         final FTPClient client;
         if (m_configuration.getProxy() != null) {
-
-            if (m_configuration.isUseFTPS()) {
-                // in given implementation FTPS can't run over HTTP proxy
-                throw new IOException("FTPS over HTTP proxy is not supported");
-            }
-
-            final ProtectedHostConfiguration proxy = m_configuration.getProxy();
-            client = new FTPHTTPClient(proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
+            client = createClientWithProxy();
         } else if (m_configuration.isUseFTPS()) {
-
-            final FTPSClient ftpsClient = new FtpsClientWithSslSessionReuse();
-            ftpsClient.setUseClientMode(true);
-            ftpsClient.setDefaultPort(m_configuration.getPort());
-            client = ftpsClient;
+            client = createFtpsClient();
         } else {
             client = new FTPClient();
         }
@@ -168,6 +157,32 @@ public class FtpClientFactory {
         }
 
         return client;
+    }
+
+    /**
+     * @return FTP client with proxy.
+     * @throws IOException
+     */
+    private FTPClient createClientWithProxy() throws IOException {
+        final FTPClient client;
+        if (m_configuration.isUseFTPS()) {
+            // in given implementation FTPS can't run over HTTP proxy
+            throw new IOException("FTPS over HTTP proxy is not supported");
+        }
+
+        final ProtectedHostConfiguration proxy = m_configuration.getProxy();
+        client = new FTPHTTPClient(proxy.getHost(), proxy.getPort(), proxy.getUser(), proxy.getPassword());
+        return client;
+    }
+
+    /**
+     * @return FTP client with SSL.
+     */
+    private FTPSClient createFtpsClient() {
+        final FTPSClient ftpsClient = new FtpsClientWithSslSessionReuse();
+        ftpsClient.setUseClientMode(true);
+        ftpsClient.setDefaultPort(m_configuration.getPort());
+        return ftpsClient;
     }
 
     /**
