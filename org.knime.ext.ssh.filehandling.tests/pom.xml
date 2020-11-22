@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.knime</groupId>
-		<artifactId>knime-filehandling-connectors</artifactId>
+		<artifactId>knime-filehandling</artifactId>
 		<version>${revision}${changelist}</version>
 	</parent>
 	<artifactId>org.knime.ext.ssh.filehandling.tests</artifactId>
