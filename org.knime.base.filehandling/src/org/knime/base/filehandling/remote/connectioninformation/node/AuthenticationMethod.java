@@ -108,6 +108,14 @@ public enum AuthenticationMethod {
         return m_label;
     }
 
+    /** Some auth require storing passwords and that is in some configurations disallowed.
+     * {@link org.knime.core.node.KNIMEConstants#PROPERTY_WEAK_PASSWORDS_IN_SETTINGS_FORBIDDEN}, AP-15442
+     * @return true for PASSWORD or TOKEN
+     */
+    boolean requiresPasswordOrToken() {
+        return this == PASSWORD || this == TOKEN;
+    }
+
     /**
      * @return Array of all authentication method settings
      */

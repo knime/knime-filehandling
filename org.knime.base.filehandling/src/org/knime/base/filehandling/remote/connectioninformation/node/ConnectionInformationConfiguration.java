@@ -47,6 +47,8 @@
  */
 package org.knime.base.filehandling.remote.connectioninformation.node;
 
+import java.util.Arrays;
+
 import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.FTPRemoteFileHandler;
@@ -373,10 +375,19 @@ class ConnectionInformationConfiguration {
         // m_passwordPlain is usually empty, except when loaded from
         // an old workflow (<3.4.1) or when controlled via flow variable.
         settings.addString("password", m_passwordPlain);
-        settings.addPassword("xpassword", ">$:g~l63t(uc1[y#[u", m_passwordEncrypted); // added in 3.4.1
-        // Only save if the protocol support tokens
-        if (m_protocol.hasTokenSupport()) {
-            settings.addPassword("xtoken", ">$:g~l63t(uc1[y#[u", m_tokenEncrypted); // added in 4.1
+
+        // use #addPassword only when really needed (disallowed in some installations, see AP-15442)
+        boolean savePasswordAndToken = Arrays.stream(AuthenticationMethod.values()). //
+            filter(a -> a.getName().equals(m_authenticationmethod)) //
+            .map(AuthenticationMethod::requiresPasswordOrToken) //
+            .findFirst() //
+            .orElse(Boolean.FALSE);
+        if (savePasswordAndToken && !m_useworkflowcredentials) {
+            settings.addPassword("xpassword", ">$:g~l63t(uc1[y#[u", m_passwordEncrypted); // added in 3.4.1
+            // Only save if the protocol support tokens
+            if (m_protocol.hasTokenSupport()) {
+                settings.addPassword("xtoken", ">$:g~l63t(uc1[y#[u", m_tokenEncrypted); // added in 4.1
+            }
         }
         // Only save if the protocol supports keyfiles
         if (m_protocol.hasKeyfileSupport()) {
@@ -513,7 +524,7 @@ class ConnectionInformationConfiguration {
      * @param settingName The name of the setting
      * @throws InvalidSettingsException If the string is null or empty
      */
-    private void validate(final String string, final String settingName) throws InvalidSettingsException {
+    private static void validate(final String string, final String settingName) throws InvalidSettingsException {
         if (StringUtils.isEmpty(string)) {
             throw new InvalidSettingsException(settingName + " missing");
         }
@@ -526,7 +537,7 @@ class ConnectionInformationConfiguration {
      *
      * @author ferry.abt
      */
-    class FTPProxyConfiguration {
+    static class FTPProxyConfiguration {
 
         private boolean m_useFTPProxy = false;
 
@@ -715,8 +726,10 @@ class ConnectionInformationConfiguration {
             proxySettings.addBoolean(KEY_USE_USER_AUTH, m_userAuth);
             proxySettings.addBoolean(KEY_USE_WF_CRED, m_useWorkflowCredentials);
             proxySettings.addString(KEY_WF_CRED, m_ftpProxyWorkflowCredentials);
-            proxySettings.addString(KEY_USER, m_ftpProxyUser);
-            proxySettings.addPassword(KEY_PASSWORD, ">$:g~l63t(uc1[y#[u", m_password);
+            if (!m_useWorkflowCredentials) {
+                proxySettings.addString(KEY_USER, m_ftpProxyUser);
+                proxySettings.addPassword(KEY_PASSWORD, ">$:g~l63t(uc1[y#[u", m_password);
+            }
         }
 
         /**
