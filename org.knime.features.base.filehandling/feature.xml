@@ -735,6 +735,28 @@ propagated with or for interoperation with KNIME.
          install-size="0"
          version="0.0.0"
          unpack="false"/>
+         
+         
+   <plugin
+         id="org.knime.ext.ftp.filehandling"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.knime.ext.http.filehandling"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.knime.ext.ssh.filehandling"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
 
    <plugin
          id="it.sauronsoftware.ftp4j"

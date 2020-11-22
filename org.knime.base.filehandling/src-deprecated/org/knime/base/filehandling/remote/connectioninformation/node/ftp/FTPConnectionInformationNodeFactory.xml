@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./ftpconnection16x16.png" type="Source">
+<knimeNode icon="./ftpconnection16x16.png" type="Source" deprecated="true">
     <name>FTP Connection</name>
 
     <shortDescription>

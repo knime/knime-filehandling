@@ -5,7 +5,7 @@ library "knime-pipeline@$BN"
 
 properties([
     pipelineTriggers([
-        upstream('knime-core/' + env.BRANCH_NAME.replaceAll('/', '%2F'))
+        upstream('knime-base/' + env.BRANCH_NAME.replaceAll('/', '%2F'))
     ]),
     parameters(workflowTests.getConfigurationsAsParameters()),
     buildDiscarder(logRotator(numToKeepStr: '5')),
@@ -38,7 +38,8 @@ try {
             repositories: [
                 'knime-filehandling', 'knime-datageneration', 'knime-xml',
                 'knime-js-core', 'knime-js-base', 'knime-server-client', 'knime-com-shared',
-                'knime-productivity-oss', 'knime-reporting', 'knime-jfreechart', 'knime-distance'
+                'knime-productivity-oss', 'knime-reporting', 'knime-jfreechart', 'knime-distance',
+                'knime-streaming'
             ]
         ],
         sidecarContainers: [

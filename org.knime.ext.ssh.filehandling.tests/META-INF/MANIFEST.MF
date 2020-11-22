@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Tests for SSH filehandling extension
+Bundle-Name: Tests for SSH Connector
 Bundle-SymbolicName: org.knime.ext.ssh.filehandling.tests
 Bundle-Version: 4.3.0.qualifier
 Automatic-Module-Name: org.knime.ext.ssh.filehandling.tests

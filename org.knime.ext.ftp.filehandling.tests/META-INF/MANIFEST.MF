@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Tests for FTP filehandling extension
+Bundle-Name: Tests for FTP Connector
 Bundle-SymbolicName: org.knime.ext.ftp.filehandling.tests;singleton:=true
 Bundle-Version: 4.3.0.qualifier
 Automatic-Module-Name: org.knime.ext.ftp.filehandling.tests

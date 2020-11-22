@@ -35,10 +35,22 @@
          category-path="/io/filehandling"
          deprecated="true"
          factory-class="org.knime.base.filehandling.copyfiles.CopyFilesNodeFactory"/>
-   <node category-path="/io/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.ftp.FTPConnectionInformationNodeFactory"  />
-   <node category-path="/io/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.http.HTTPConnectionInformationNodeFactory"  />
-   <node category-path="/io/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.https.HTTPSConnectionInformationNodeFactory"  />
-   <node category-path="/io/filehandling/remote/connections" factory-class="org.knime.base.filehandling.remote.connectioninformation.node.ssh.SSHConnectionInformationNodeFactory"  />
+   <node
+         category-path="/io/filehandling/remote/connections"
+         deprecated="true"
+         factory-class="org.knime.base.filehandling.remote.connectioninformation.node.ftp.FTPConnectionInformationNodeFactory"/>
+   <node
+         category-path="/io/filehandling/remote/connections"
+         deprecated="true"
+         factory-class="org.knime.base.filehandling.remote.connectioninformation.node.http.HTTPConnectionInformationNodeFactory"/>
+   <node
+         category-path="/io/filehandling/remote/connections"
+         deprecated="true"
+         factory-class="org.knime.base.filehandling.remote.connectioninformation.node.https.HTTPSConnectionInformationNodeFactory"/>
+   <node
+         category-path="/io/filehandling/remote/connections"
+         deprecated="true"
+         factory-class="org.knime.base.filehandling.remote.connectioninformation.node.ssh.SSHConnectionInformationNodeFactory"/>
    <node
          category-path="/io/filehandling/remote"
          deprecated="true"

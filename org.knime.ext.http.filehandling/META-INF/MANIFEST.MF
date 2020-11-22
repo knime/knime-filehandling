@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: HTTP filehandling extension for KNIME Workbench
+Bundle-Name: HTTP Connector node
 Bundle-SymbolicName: org.knime.ext.http.filehandling;singleton:=true
 Bundle-Version: 4.3.0.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
