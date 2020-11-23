@@ -313,5 +313,7 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
     @Override
     public void onClose() {
         m_workingDirChooser.onClose();
+        m_knownHostsChooser.onClose();
+        m_authPanel.onClose();
     }
 }

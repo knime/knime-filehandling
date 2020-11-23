@@ -271,4 +271,8 @@ final class BinaryObjectsToFilesNodeDialog extends NodeDialogPane {
         m_destinationFolderSelection.saveSettingsTo(settings);
     }
 
+    @Override
+    public void onClose() {
+        m_destinationFolderSelection.onClose();
+    }
 }

@@ -365,6 +365,13 @@ public class AuthenticationDialog extends JPanel {
     }
 
     /**
+     * Method which should be called in the onClose method of the node dialog.
+     */
+    public void onClose() {
+        m_keyFileChooser.onClose();
+    }
+
+    /**
      * @param settings
      * @param specs
      * @throws NotConfigurableException
