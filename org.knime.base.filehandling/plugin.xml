@@ -17,15 +17,15 @@
          category-path="/io/f-f-util/archive"
          deprecated="true"
          factory-class="org.knime.base.filehandling.unzip2.UnzipNodeFactory"/>
-   <node category-path="/io/binaryobjects" factory-class="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory" />
+   <node category-path="/io/io-other/binaryobjects" factory-class="org.knime.base.filehandling.filestobinaryobjects.FilesToBinaryObjectsNodeFactory" />
    <node
-         category-path="/io/binaryobjects"
+         category-path="/io/io-other/binaryobjects"
          deprecated="true"
          factory-class="org.knime.base.filehandling.binaryobjectstofiles.BinaryObjectsToFilesNodeFactory"/>
-   <node category-path="/io/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstopngs.BinaryObjectsToPNGsNodeFactory" />
-   <node category-path="/io/binaryobjects" factory-class="org.knime.base.filehandling.pngstobinaryobjects.PNGsToBinaryObjectsNodeFactory" />
-   <node category-path="/io/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstostrings.BinaryObjectsToStringsNodeFactory" />
-   <node category-path="/io/binaryobjects" factory-class="org.knime.base.filehandling.stringstobinaryobjects.StringsToBinaryObjectsNodeFactory" />
+   <node category-path="/io/io-other/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstopngs.BinaryObjectsToPNGsNodeFactory" />
+   <node category-path="/io/io-other/binaryobjects" factory-class="org.knime.base.filehandling.pngstobinaryobjects.PNGsToBinaryObjectsNodeFactory" />
+   <node category-path="/io/io-other/binaryobjects" factory-class="org.knime.base.filehandling.binaryobjectstostrings.BinaryObjectsToStringsNodeFactory" />
+   <node category-path="/io/io-other/binaryobjects" factory-class="org.knime.base.filehandling.stringstobinaryobjects.StringsToBinaryObjectsNodeFactory" />
    <node category-path="/io/io-other/uri" factory-class="org.knime.base.filehandling.stringtouri.StringToURINodeFactory"  />
    <node category-path="/io/io-other/uri" factory-class="org.knime.base.filehandling.uritostring.URIToStringNodeFactory"  />
    <node category-path="/io/io-other/uri" factory-class="org.knime.base.filehandling.uritoport.URIToPortNodeFactory"  />
@@ -109,7 +109,7 @@
          hidden="false">
    </node>
    <node
-         category-path="/io/binaryobjects"
+         category-path="/io/io-other/binaryobjects"
          deprecated="false"
          factory-class="org.knime.base.filehandling.binaryobjects.writer.BinaryObjectsToFilesNodeFactory"
          hidden="false">
@@ -123,7 +123,7 @@
             level-id="filehandling"
             name="File Handling"
             path="/io"/>
-      <category description="Nodes to handle binary objects" icon="icons/cbinaryobjects16x16.png" level-id="binaryobjects" name="Binary Objects" path="/io" />
+      <category description="Nodes to handle binary objects" icon="icons/cbinaryobjects16x16.png" level-id="binaryobjects" name="Binary Objects" path="/io/io-other" />
       <category description="Nodes to handle URI conversion" icon="icons/curi16x16.png" level-id="uri" name="URI" path="/io/io-other" />
       <category description="Nodes to handle remote file operations" icon="icons/cremote16x16.png" level-id="remote" name="Remote" path="/io/filehandling" />
       <category description="Nodes to create connections for remote file operations" icon="icons/cconnections16x16.png" level-id="connections" name="Connections" path="/io/filehandling/remote" />
