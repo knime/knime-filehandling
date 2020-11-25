@@ -65,7 +65,6 @@ import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
 import org.knime.core.data.DataValue;
 import org.knime.core.data.StringValue;
-import org.knime.core.data.blob.BinaryObjectDataCell;
 import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.core.data.container.AbstractCellFactory;
 import org.knime.core.data.container.ColumnRearranger;
@@ -433,7 +432,7 @@ final class BinaryObjectsToFilesNodeModel extends NodeModel {
                 return new DataCell[]{DataType.getMissingCell(), DataType.getMissingCell()};
             }
 
-            final BinaryObjectDataCell binaryObjDataCell = (BinaryObjectDataCell)row.getCell(m_binaryObjColIdx);
+            final BinaryObjectDataValue binaryObjDataCell = (BinaryObjectDataValue)row.getCell(m_binaryObjColIdx);
 
             final String outputFilename = getOutputFilename(row);
 
@@ -479,14 +478,14 @@ final class BinaryObjectsToFilesNodeModel extends NodeModel {
         /**
          * Create the Binary files using NIO library, also responsible for checking FileOverwritePolicy settings
          *
-         * @param binaryObjDataCell the BinaryObjectDataCell
+         * @param binaryObjDataValue the {@link BinaryObjectDataValue}
          * @param outputFileFSPath the FSPath instance for the output file
          * @throws IOException Throws IOExceptions most likely FileAlreadyExistsException
          */
-        private FileStatus createBinaryFile(final BinaryObjectDataCell binaryObjDataCell, final FSPath outputFileFSPath)
-            throws IOException {
+        private FileStatus createBinaryFile(final BinaryObjectDataValue binaryObjDataValue,
+            final FSPath outputFileFSPath) throws IOException {
             final boolean fileAlreadyExists = Files.exists(outputFileFSPath);
-            try (final InputStream iS = binaryObjDataCell.openInputStream()) {
+            try (final InputStream iS = binaryObjDataValue.openInputStream()) {
                 switch (m_overwritePolicy) {
                     case OVERWRITE:
                         return overwrite(outputFileFSPath, fileAlreadyExists, iS);
