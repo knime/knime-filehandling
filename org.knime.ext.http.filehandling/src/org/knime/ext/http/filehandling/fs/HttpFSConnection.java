@@ -79,4 +79,9 @@ public class HttpFSConnection implements FSConnection {
     public FileSystemBrowser getFileSystemBrowser() {
         return null; // browsing is not supported
     }
+
+    @Override
+    public boolean supportsBrowsing() {
+        return false;
+    }
 }
