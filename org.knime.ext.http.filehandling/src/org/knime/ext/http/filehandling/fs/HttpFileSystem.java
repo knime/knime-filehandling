@@ -61,6 +61,7 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -134,7 +135,7 @@ public class HttpFileSystem extends FSFileSystem<HttpPath> {
      * @return the {@link FSLocationSpec} for an HTTP file system.
      */
     public static DefaultFSLocationSpec createFSLocationSpec(final String url) {
-        String resolvedHost = URI.create(url).getHost();
+        String resolvedHost = URI.create(url).getHost().toLowerCase(Locale.ENGLISH);
         try {
             resolvedHost = InetAddress.getByName(resolvedHost).getCanonicalHostName();
         } catch (UnknownHostException ex) { // NOSONAR is possible if host can't be resolved

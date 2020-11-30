@@ -56,6 +56,7 @@ import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Locale;
 
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
@@ -121,7 +122,7 @@ public class FtpFileSystem extends BaseFileSystem<FtpPath> {
      * @return the {@link FSLocationSpec} for a FTP file system.
      */
     public static DefaultFSLocationSpec createFSLocationSpec(final String host) {
-        String resolvedHost = host;
+        String resolvedHost = host.toLowerCase(Locale.ENGLISH);
         try {
             resolvedHost = InetAddress.getByName(host).getCanonicalHostName();
         } catch (UnknownHostException ex) { // NOSONAR is possible if host can't be resolved

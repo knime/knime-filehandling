@@ -57,6 +57,7 @@ import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Locale;
 
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
@@ -119,10 +120,10 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
      * @return the {@link FSLocationSpec} for a Sharepoint file system.
      */
     public static DefaultFSLocationSpec createFSLocationSpec(final String host) {
-        String resolvedHost = host;
+        String resolvedHost = host.toLowerCase(Locale.ENGLISH);
         try {
             resolvedHost = InetAddress.getByName(host).getCanonicalHostName();
-        } catch (UnknownHostException ex) {
+        } catch (UnknownHostException ex) { // NOSONAR ignore if thrown
         }
 
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, SshFileSystem.FS_TYPE + ":" + resolvedHost);
