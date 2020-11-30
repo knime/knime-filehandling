@@ -45,6 +45,7 @@
  *
  * History
  *   2020-10-03 (Vyacheslav Soldatov): created
+ *   2020-11-25 (Vyacheslav Soldatov): added access denied handling
  */
 package org.knime.ext.ftp.filehandling.fs;
 
@@ -53,6 +54,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 
 import org.apache.commons.net.ftp.FTPClient;
@@ -65,6 +67,17 @@ import org.apache.commons.net.ftp.FTPReply;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class FtpClient {
+
+    /**
+     * Requested action not taken. File unavailable (e.g., file not found, no
+     * access).
+     */
+    private static final int ERR_FILE_NOT_FOUND_OR_NOT_ACCESS = 550;
+    /**
+     * Requested action not taken. File name not allowed.
+     */
+    private static final int ERR_COULD_NOT_CREATE_FILE_OR_OTHER = 553;
+
     private final FTPClient m_client;
     private final FtpClientFeatures m_features;
 
@@ -140,8 +153,11 @@ public class FtpClient {
      * @throws IOException
      */
     public void mkdir(final String path) throws IOException {
-        m_client.mkd(path);
-        checkPositiveResponse();
+        tryCatchAccessDenied(path, () -> {
+            m_client.mkd(path);
+            checkPositiveResponse();
+            return null;
+        });
     }
 
     /**
@@ -151,8 +167,11 @@ public class FtpClient {
      * @throws IOException
      */
     public FTPFile[] listFiles(final String dir) throws IOException {
-        return m_client.listFiles(dir,
-                f -> f != null && !".".equals(f.getName()) && !"..".equals(f.getName()));
+        return tryCatchAccessDenied(dir, () -> {
+            FTPFile[] files = m_client.listFiles(dir, f -> f != null && !".".equals(f.getName()) && !"..".equals(f.getName()));
+            checkPositiveResponse();
+            return files;
+        });
     }
 
     /**
@@ -161,8 +180,11 @@ public class FtpClient {
      * @throws IOException
      */
     public void deleteFile(final String path) throws IOException {
-        m_client.deleteFile(path);
-        checkPositiveResponse();
+        tryCatchAccessDenied(path, () -> {
+            m_client.deleteFile(path);
+            checkPositiveResponse();
+            return null;
+        });
     }
 
     /**
@@ -171,8 +193,11 @@ public class FtpClient {
      * @throws IOException
      */
     public void deleteDirectory(final String path) throws IOException {
-        m_client.removeDirectory(path);
-        checkPositiveResponse();
+        tryCatchAccessDenied(path, () -> {
+            m_client.removeDirectory(path);
+            checkPositiveResponse();
+            return null;
+        });
     }
 
     /**
@@ -183,7 +208,10 @@ public class FtpClient {
      * @throws IOException
      */
     public void createFile(final String path, final InputStream in) throws IOException {
-        m_client.storeFile(path, in);
+        tryCatchAccessDenied(path, () -> {
+            m_client.storeFile(path, in);
+            return null;
+        });
     }
 
     /**
@@ -194,11 +222,13 @@ public class FtpClient {
      */
     @SuppressWarnings("resource")
     public OutputStream openForRewrite(final String file) throws IOException {
-        OutputStream stream = m_client.storeFileStream(file);
-        if (stream == null) {
-            throw new IOException(getReplyString());
-        }
-        return wrapToCompletePendingCommand(stream);
+        return tryCatchAccessDenied(file, () -> {
+            OutputStream stream = m_client.storeFileStream(file);
+            if (stream == null) {
+                throw new IOException(getReplyString());
+            }
+            return wrapToCompletePendingCommand(stream);
+        });
     }
 
     /**
@@ -209,11 +239,13 @@ public class FtpClient {
      */
     @SuppressWarnings("resource")
     public OutputStream openForAppend(final String file) throws IOException {
-        OutputStream stream = m_client.appendFileStream(file);
-        if (stream == null) {
-            throw new IOException(getReplyString());
-        }
-        return wrapToCompletePendingCommand(stream);
+        return tryCatchAccessDenied(file, () -> {
+            OutputStream stream = m_client.appendFileStream(file);
+            if (stream == null) {
+                throw new IOException(getReplyString());
+            }
+            return wrapToCompletePendingCommand(stream);
+        });
     }
 
     private OutputStream wrapToCompletePendingCommand(final OutputStream stream) {
@@ -248,7 +280,10 @@ public class FtpClient {
      * @throws IOException
      */
     public void getFileContent(final String path, final OutputStream out) throws IOException {
-        m_client.retrieveFile(path, out);
+        tryCatchAccessDenied(path, () -> {
+            m_client.retrieveFile(path, out);
+            return null;
+        });
     }
 
     /**
@@ -290,18 +325,6 @@ public class FtpClient {
     }
 
     /**
-     * @param client
-     *            FTP client.
-     * @throws IOException
-     *             I/O exception with details if not positive response.
-     */
-    public static void checkPositiveResponse(final FTPClient client) throws IOException {
-        if (!FTPReply.isPositiveCompletion(client.getReplyCode())) {
-            throw new IOException(client.getReplyString().trim());
-        }
-    }
-
-    /**
      * @param from
      *            from path.
      * @param to
@@ -309,8 +332,42 @@ public class FtpClient {
      * @throws IOException
      */
     public void rename(final String from, final String to) throws IOException {
-        if (!m_client.rename(from, to)) {
-            throw new IOException(getReplyString());
+        tryCatchAccessDenied(from, to, () -> {
+            if (!m_client.rename(from, to)) {
+                throw new IOException(getReplyString());
+            }
+            return null;
+        });
+    }
+
+    private <T> T tryCatchAccessDenied(final String file, final PossibleAccessDenied<T> invokable)
+            throws IOException {
+        return tryCatchAccessDenied(file, null, invokable);
+    }
+
+    /**
+     * @param <T>
+     *            result type.
+     * @param file
+     *            source file name.
+     * @param to
+     *            target file name.
+     * @param invocable
+     *            invokable.
+     * @return invocation result.
+     * @throws IOException
+     */
+    private <T> T tryCatchAccessDenied(final String file, final String to, final PossibleAccessDenied<T> invokable)
+            throws IOException {
+        try {
+            return invokable.invoke();
+        } catch (IOException ex) {
+            int code = m_client.getReplyCode();
+            if (code == ERR_FILE_NOT_FOUND_OR_NOT_ACCESS || code == ERR_COULD_NOT_CREATE_FILE_OR_OTHER) {
+                throw new AccessDeniedException(file, to, getReplyString());
+            }
+
+            throw ex;
         }
     }
 
