@@ -57,14 +57,14 @@ import org.knime.core.node.NodeView;
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpConnectionNodeFactory extends NodeFactory<FtpConnectionNodeModel> {
+public class FtpConnectorNodeFactory extends NodeFactory<FtpConnectorNodeModel> {
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public FtpConnectionNodeModel createNodeModel() {
-        return new FtpConnectionNodeModel();
+    public FtpConnectorNodeModel createNodeModel() {
+        return new FtpConnectorNodeModel();
     }
 
     /**
@@ -79,8 +79,8 @@ public class FtpConnectionNodeFactory extends NodeFactory<FtpConnectionNodeModel
      * {@inheritDoc}
      */
     @Override
-    public NodeView<FtpConnectionNodeModel> createNodeView(final int viewIndex,
-            final FtpConnectionNodeModel nodeModel) {
+    public NodeView<FtpConnectorNodeModel> createNodeView(final int viewIndex,
+            final FtpConnectorNodeModel nodeModel) {
         return null;
     }
 
@@ -97,6 +97,6 @@ public class FtpConnectionNodeFactory extends NodeFactory<FtpConnectionNodeModel
      */
     @Override
     protected NodeDialogPane createNodeDialogPane() {
-        return new FtpConnectionNodeDialog();
+        return new FtpConnectorNodeDialog();
     }
 }

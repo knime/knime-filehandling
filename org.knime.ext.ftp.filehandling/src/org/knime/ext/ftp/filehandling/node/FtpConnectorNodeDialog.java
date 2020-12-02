@@ -89,10 +89,10 @@ import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpConnectionNodeDialog extends NodeDialogPane {
+public class FtpConnectorNodeDialog extends NodeDialogPane {
     private static final String WORKING_DIR_HISTORY_ID = "ftp.workingDir";
 
-    private final FtpConnectionSettingsModel m_settings;
+    private final FtpConnectorNodeSettings m_settings;
 
     private AuthPanel m_authPanel;
 
@@ -104,8 +104,8 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
     /**
      * Creates new instance.
      */
-    public FtpConnectionNodeDialog() {
-        m_settings = new FtpConnectionSettingsModel();
+    public FtpConnectorNodeDialog() {
+        m_settings = new FtpConnectorNodeSettings();
 
         initFields();
 
@@ -236,8 +236,8 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
 
     private FSConnection createFSConnection() throws IOException {
         try {
-            final FtpConnectionSettingsModel settings = m_settings.createClone();
-            return FtpConnectionNodeModel.createConnection(settings, getCredentialsProvider());
+            final FtpConnectorNodeSettings settings = m_settings.createClone();
+            return FtpConnectorNodeModel.createConnection(settings, getCredentialsProvider());
         } catch (IOException e) {
             throw e;
         } catch (InvalidSettingsException e) {

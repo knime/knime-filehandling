@@ -83,11 +83,11 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpConnectionNodeModel extends NodeModel {
+public class FtpConnectorNodeModel extends NodeModel {
 
     private static final String FILE_SYSTEM_NAME = "FTP";
 
-    private final FtpConnectionSettingsModel m_settings;
+    private final FtpConnectorNodeSettings m_settings;
 
     private String m_fsId;
 
@@ -96,9 +96,9 @@ public class FtpConnectionNodeModel extends NodeModel {
     /**
      * Creates new instance.
      */
-    protected FtpConnectionNodeModel() {
+    protected FtpConnectorNodeModel() {
         super(new PortType[0], new PortType[] { FileSystemPortObject.TYPE });
-        m_settings = new FtpConnectionSettingsModel();
+        m_settings = new FtpConnectorNodeSettings();
     }
 
     @Override
@@ -126,7 +126,7 @@ public class FtpConnectionNodeModel extends NodeModel {
      * @throws IOException
      * @throws InvalidSettingsException
      */
-    public static FtpFSConnection createConnection(final FtpConnectionSettingsModel settings,
+    public static FtpFSConnection createConnection(final FtpConnectorNodeSettings settings,
             final CredentialsProvider credentialsProvider) throws IOException, InvalidSettingsException {
         FtpConnectionConfiguration conf = createConfiguration(settings, credentialsProvider::get,
                 Activator.getProxyService());
@@ -143,7 +143,7 @@ public class FtpConnectionNodeModel extends NodeModel {
      * @return FTP connection configuration.
      * @throws InvalidSettingsException
      */
-    public static FtpConnectionConfiguration createConfiguration(final FtpConnectionSettingsModel settings,
+    public static FtpConnectionConfiguration createConfiguration(final FtpConnectorNodeSettings settings,
             final Function<String, ICredentials> credentialsProvider, final IProxyService proxyService)
             throws InvalidSettingsException {
         final FtpConnectionConfiguration conf = new FtpConnectionConfiguration();

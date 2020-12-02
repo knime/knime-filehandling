@@ -5,6 +5,6 @@
          point="org.knime.workbench.repository.nodes">
       <node
             category-path="/io/connectors"
-            factory-class="org.knime.ext.ftp.filehandling.node.FtpConnectionNodeFactory"/>
+            factory-class="org.knime.ext.ftp.filehandling.node.FtpConnectorNodeFactory"/>
    </extension>
 </plugin>

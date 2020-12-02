@@ -70,11 +70,11 @@ import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProvide
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
- * Settings for {@link FtpConnectionNodeModel}.
+ * Settings for {@link FtpConnectorNodeModel}.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpConnectionSettingsModel {
+public class FtpConnectorNodeSettings {
 
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
 
@@ -112,7 +112,7 @@ public class FtpConnectionSettingsModel {
 
     /**
      */
-    public FtpConnectionSettingsModel() {
+    public FtpConnectorNodeSettings() {
         m_host = new SettingsModelString(KEY_HOST, "localhost");
         m_port = new SettingsModelIntegerBounded(KEY_PORT, 21, 1, 65535);
         m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT, DEFAULT_TIMEOUT,
@@ -412,11 +412,11 @@ public class FtpConnectionSettingsModel {
     /**
      * @return a (deep) clone of this node settings object.
      */
-    public FtpConnectionSettingsModel createClone() {
+    public FtpConnectorNodeSettings createClone() {
         final NodeSettings tempSettings = new NodeSettings("ignored");
         saveSettingsForModel(tempSettings);
 
-        final FtpConnectionSettingsModel toReturn = new FtpConnectionSettingsModel();
+        final FtpConnectorNodeSettings toReturn = new FtpConnectorNodeSettings();
         try {
             toReturn.loadSettingsForModel(tempSettings);
         } catch (InvalidSettingsException ex) { // NOSONAR can never happen
