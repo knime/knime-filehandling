@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="org.knime.features.base.filehandling"
-      label="KNIME File Handling Nodes"
+      label="KNIME Basic File System Connectors"
       version="4.3.0.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland"
       plugin="org.knime.base.filehandling">
 
    <description>
-      This feature contains nodes to do basic file handling, 
-such as copy &amp; move or zip and unzip.
+      This feature contains nodes to connect to FTP, HTTPS and SSH
+file systems, as well as nodes to support URIs and binary
+objects.
    </description>
 
    <copyright>
@@ -735,8 +736,7 @@ propagated with or for interoperation with KNIME.
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-         
-         
+
    <plugin
          id="org.knime.ext.ftp.filehandling"
          download-size="0"
