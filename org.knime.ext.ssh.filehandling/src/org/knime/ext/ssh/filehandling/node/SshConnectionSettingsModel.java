@@ -55,14 +55,18 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelNumber;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
+import org.knime.ext.ssh.filehandling.node.auth.SshAuth;
 import org.knime.filehandling.core.connections.FSLocation;
+import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.filtermode.SettingsModelFilterMode.FilterMode;
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
@@ -84,11 +88,6 @@ public class SshConnectionSettingsModel {
      */
     public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 30;
 
-    /**
-     * Settings key for the authentication sub-settings. Must be public for dialog.
-     */
-    public static final String KEY_AUTH = "auth";
-
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
 
     private static final String KEY_CONNECTION_TIMEOUT = "connectionTimeout";
@@ -103,12 +102,11 @@ public class SshConnectionSettingsModel {
 
     private static final String KEY_KNOWN_HOSTS_FILE = "knownHostsFile";
 
-
     private NodeCreationConfiguration m_nodeCreationConfig;
 
     private final SettingsModelString m_host;
     private final SettingsModelIntegerBounded m_port;
-    private final SshAuthenticationSettingsModel m_authSettings;
+    private final AuthSettings m_authSettings;
     private final SettingsModelString m_workingDirectory;
 
     private final SettingsModelIntegerBounded m_connectionTimeout;
@@ -131,7 +129,7 @@ public class SshConnectionSettingsModel {
                 Integer.MAX_VALUE);
         m_maxSessionCount = new SettingsModelIntegerBounded(KEY_MAX_SESSION_COUNT, DEFAULT_MAX_SESSION_COUNT, 1, Integer.MAX_VALUE);
 
-        m_authSettings = new SshAuthenticationSettingsModel(cfg);
+        m_authSettings = SshAuth.createAuthSettings(cfg);
 
         m_useKnownHostsFile = new SettingsModelBoolean(KEY_USE_KNOWN_HOSTS, false);
 
@@ -179,7 +177,7 @@ public class SshConnectionSettingsModel {
     public void saveSettingsForModel(final NodeSettingsWO settings) {
         save(settings);
         m_knownHostsFile.saveSettingsTo(settings);
-        m_authSettings.saveSettingsForModel(settings.addNodeSettings(KEY_AUTH));
+        m_authSettings.saveSettingsForModel(settings.addNodeSettings(AuthSettings.KEY_AUTH));
     }
 
     private void load(final NodeSettingsRO settings) throws InvalidSettingsException {
@@ -200,12 +198,15 @@ public class SshConnectionSettingsModel {
      * node dialog).
      *
      * @param settings
-     * @throws InvalidSettingsException
+     * @throws NotConfigurableException
      */
-    public void loadSettingsForDialog(final NodeSettingsRO settings) throws InvalidSettingsException {
-        load(settings);
-        // m_knownHostsFile must be loaded by the dialog component
-        // m_authSettings are loaded by AuthenticationDialog
+    public void loadSettingsForDialog(final NodeSettingsRO settings) throws NotConfigurableException {
+        try {
+            load(settings);
+            // m_knownHostsFile and m_authSettings must be loaded by dialog
+        } catch (InvalidSettingsException ex) {
+            throw new NotConfigurableException(ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -218,7 +219,7 @@ public class SshConnectionSettingsModel {
     public void loadSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
         load(settings);
         m_knownHostsFile.loadSettingsFrom(settings);
-        m_authSettings.loadSettingsForModel(settings.getNodeSettings(KEY_AUTH));
+        m_authSettings.loadSettingsForModel(settings.getNodeSettings(AuthSettings.KEY_AUTH));
     }
 
     /**
@@ -229,16 +230,18 @@ public class SshConnectionSettingsModel {
      *            input specifications.
      * @param statusConsumer
      *            status consumer.
+     * @param credentialsProvider
      * @throws InvalidSettingsException
      */
-    public void configureInModel(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer)
+    public void configureInModel(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer,
+            final CredentialsProvider credentialsProvider)
             throws InvalidSettingsException {
 
         if (m_useKnownHostsFile.getBooleanValue()) {
             m_knownHostsFile.configureInModel(inSpecs, statusConsumer);
         }
 
-        m_authSettings.configureInModel(inSpecs, statusConsumer);
+        m_authSettings.configureInModel(inSpecs, statusConsumer, credentialsProvider);
     }
 
     /**
@@ -250,7 +253,7 @@ public class SshConnectionSettingsModel {
     public void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_host.validateSettings(settings);
         m_port.validateSettings(settings);
-        m_authSettings.validateSettings(settings.getNodeSettings(KEY_AUTH));
+        m_authSettings.validateSettings(settings.getNodeSettings(AuthSettings.KEY_AUTH));
         m_workingDirectory.validateSettings(settings);
         m_connectionTimeout.validateSettings(settings);
         m_maxSessionCount.validateSettings(settings);
@@ -386,7 +389,7 @@ public class SshConnectionSettingsModel {
     /**
      * @return authentication settings.
      */
-    public SshAuthenticationSettingsModel getAuthenticationSettings() {
+    public AuthSettings getAuthenticationSettings() {
         return m_authSettings;
     }
 

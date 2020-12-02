@@ -53,6 +53,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -73,7 +75,13 @@ import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.ext.ssh.filehandling.node.auth.KeyFileAuthProviderPanel;
+import org.knime.ext.ssh.filehandling.node.auth.SshAuth;
 import org.knime.filehandling.core.connections.FSConnection;
+import org.knime.filehandling.core.connections.base.auth.AuthPanel;
+import org.knime.filehandling.core.connections.base.auth.AuthProviderPanel;
+import org.knime.filehandling.core.connections.base.auth.AuthSettings;
+import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderPanel;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 import org.knime.filehandling.core.data.location.variable.FSLocationVariableType;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.DialogComponentReaderFileChooser;
@@ -91,7 +99,7 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
 
     private final SshConnectionSettingsModel m_settings;
 
-    private AuthenticationDialog m_authPanel;
+    private AuthPanel m_authPanel;
 
     private final WorkingDirectoryChooser m_workingDirChooser = new WorkingDirectoryChooser(WORKING_DIR_HISTORY_ID,
             this::createFSConnection);
@@ -115,10 +123,13 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
     }
 
     private void initFields() {
-        m_authPanel = new AuthenticationDialog(m_settings.getAuthenticationSettings(),
-                createFlowVariableModel(m_settings.getAuthenticationSettings().getKeyFileModel().getKeysForFSLocation(), //
-                        FSLocationVariableType.INSTANCE), //
-                this);
+
+        final AuthSettings authSettings = m_settings.getAuthenticationSettings();
+        final List<AuthProviderPanel<?>> authProviderPanels = Arrays.<AuthProviderPanel<?>>asList( //
+                new UserPasswordAuthProviderPanel(authSettings.getSettingsForAuthType(SshAuth.USER_PASSWORD_AUTH_TYPE),
+                        this), //
+                new KeyFileAuthProviderPanel(authSettings.getSettingsForAuthType(SshAuth.KEY_FILE_AUTH_TYPE), this));
+        m_authPanel = new AuthPanel(m_settings.getAuthenticationSettings(), authProviderPanels);
 
         m_knownHostsChooser = new DialogComponentReaderFileChooser(m_settings.getKnownHostsFileModel(),
                 KNOWN_HOSTS_HISTORY_ID, //
@@ -149,9 +160,17 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
     }
 
     private Component createAuthenticationSettingsPanel() {
-        final JPanel panel = new JPanel();
+        final JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(createTitledBorder("Authentication settings"));
-        panel.add(m_authPanel);
+
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        panel.add(m_authPanel, gbc);
         return panel;
     }
 
@@ -284,7 +303,7 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
 
         m_settings.saveSettingsForDialog(settings);
         m_knownHostsChooser.saveSettingsTo(settings);
-        m_authPanel.saveSettingsTo(settings.addNodeSettings(SshConnectionSettingsModel.KEY_AUTH));
+        m_authPanel.saveSettingsTo(settings.addNodeSettings(AuthSettings.KEY_AUTH));
     }
 
     private void preSettingsSave() {
@@ -296,18 +315,16 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
             throws NotConfigurableException {
 
         try {
-            m_authPanel.loadSettingsFrom(input.getNodeSettings(SshConnectionSettingsModel.KEY_AUTH), specs);
-            m_knownHostsChooser.loadSettingsFrom(input, specs);
             m_settings.loadSettingsForDialog(input);
+            m_authPanel.loadSettingsFrom(input.getNodeSettings(AuthSettings.KEY_AUTH), specs);
+            m_knownHostsChooser.loadSettingsFrom(input, specs);
         } catch (final InvalidSettingsException e) { // NOSONAR can be ignored
         }
     }
 
-
     @Override
     public void onOpen() {
         m_workingDirChooser.setSelectedWorkingDirectory(m_settings.getWorkingDirectory());
-        m_authPanel.onOpen();
     }
 
     @Override

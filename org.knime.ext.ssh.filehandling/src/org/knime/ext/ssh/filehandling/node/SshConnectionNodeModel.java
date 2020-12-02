@@ -66,15 +66,17 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.node.workflow.ICredentials;
 import org.knime.core.node.workflow.NodeContext;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
 import org.knime.ext.ssh.filehandling.fs.SshConnection;
 import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
-import org.knime.ext.ssh.filehandling.node.SshAuthenticationSettingsModel.AuthType;
+import org.knime.ext.ssh.filehandling.node.auth.KeyFileAuthProviderSettings;
+import org.knime.ext.ssh.filehandling.node.auth.SshAuth;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.connections.FSPath;
+import org.knime.filehandling.core.connections.base.auth.AuthSettings;
+import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.ReadPathAccessor;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.status.NodeModelStatusConsumer;
@@ -119,8 +121,9 @@ public class SshConnectionNodeModel extends NodeModel {
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+        m_settings.validate();
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-        m_settings.configureInModel(inSpecs, m_statusConsumer);
+        m_settings.configureInModel(inSpecs, m_statusConsumer, getCredentialsProvider());
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
         return new PortObjectSpec[] { createSpec() };
     }
@@ -159,23 +162,19 @@ public class SshConnectionNodeModel extends NodeModel {
         cfg.setMaxSftpSessionLimit(settings.getMaxSessionCount());
 
         // auth
-        final SshAuthenticationSettingsModel auth = settings.getAuthenticationSettings();
-        cfg.setUseKeyFile(auth.getAuthType() == AuthType.KEY_FILE);
+        final AuthSettings auth = settings.getAuthenticationSettings();
+        cfg.setUseKeyFile(auth.getAuthType() == SshAuth.KEY_FILE_AUTH_TYPE);
         cfg.setUseKnownHosts(settings.useKnownHostsFile());
 
-        if (auth.getAuthType() == AuthType.USER_PWD) {
-            cfg.setUserName(auth.getUserModel().getStringValue());
-            cfg.setPassword(auth.getPasswordModel().getStringValue());
-        } else if (auth.getAuthType() == AuthType.KEY_FILE){
-            cfg.setUserName(auth.getKeyUserModel().getStringValue());
-            cfg.setKeyFilePassword(auth.getKeyPassphraseModel().getStringValue());
-        } else {
-            final ICredentials cred = credentials.get(auth.getCredential());
-            if (cred == null) {
-                throw new InvalidSettingsException("Unable to find credential flow variable: " + auth.getCredential());
-            }
-            cfg.setUserName(cred.getLogin());
-            cfg.setPassword(cred.getPassword());
+        if (auth.getAuthType() == SshAuth.USER_PASSWORD_AUTH_TYPE) {
+            final UserPasswordAuthProviderSettings userPwdSettings = auth
+                    .getSettingsForAuthType(SshAuth.USER_PASSWORD_AUTH_TYPE);
+            cfg.setUserName(userPwdSettings.getUser(credentials));
+            cfg.setPassword(userPwdSettings.getPassword(credentials));
+        } else if (auth.getAuthType() == SshAuth.KEY_FILE_AUTH_TYPE) {
+            final KeyFileAuthProviderSettings keyFileSettings = auth.getSettingsForAuthType(SshAuth.KEY_FILE_AUTH_TYPE);
+            cfg.setUserName(keyFileSettings.getKeyUserModel().getStringValue());
+            cfg.setKeyFilePassword(keyFileSettings.getKeyPassphraseModel().getStringValue());
         }
 
         cfg.setBridge(new DefaultBridge(settings, statusConsumer));
@@ -269,7 +268,9 @@ public class SshConnectionNodeModel extends NodeModel {
 
         @Override
         public void doWithKeysFile(final Consumer<Path> operation) throws IOException, InvalidSettingsException {
-            doWithFileChooserModel(m_settings.getAuthenticationSettings().getKeyFileModel(), operation);
+            doWithFileChooserModel(m_settings.getAuthenticationSettings()
+                    .<KeyFileAuthProviderSettings>getSettingsForAuthType(SshAuth.KEY_FILE_AUTH_TYPE).getKeyFileModel(),
+                    operation);
         }
 
         private void doWithFileChooserModel(final SettingsModelReaderFileChooser chooser,
