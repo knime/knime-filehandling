@@ -81,6 +81,7 @@ import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.auth.AuthPanel;
 import org.knime.filehandling.core.connections.base.auth.AuthProviderPanel;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
+import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderPanel;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 import org.knime.filehandling.core.data.location.variable.FSLocationVariableType;
@@ -126,7 +127,7 @@ public class SshConnectorNodeDialog extends NodeDialogPane {
 
         final AuthSettings authSettings = m_settings.getAuthenticationSettings();
         final List<AuthProviderPanel<?>> authProviderPanels = Arrays.<AuthProviderPanel<?>>asList( //
-                new UserPasswordAuthProviderPanel(authSettings.getSettingsForAuthType(SshAuth.USER_PASSWORD_AUTH_TYPE),
+                new UserPasswordAuthProviderPanel(authSettings.getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD),
                         this), //
                 new KeyFileAuthProviderPanel(authSettings.getSettingsForAuthType(SshAuth.KEY_FILE_AUTH_TYPE), this));
         m_authPanel = new AuthPanel(m_settings.getAuthenticationSettings(), authProviderPanels);

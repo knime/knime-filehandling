@@ -72,6 +72,9 @@ import org.knime.ext.ftp.filehandling.fs.FtpFSConnection;
 import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
 import org.knime.ext.ftp.filehandling.fs.ProtectedHostConfiguration;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
+import org.knime.filehandling.core.connections.base.auth.AuthSettings;
+import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
+import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
@@ -100,6 +103,9 @@ public class FtpConnectionNodeModel extends NodeModel {
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+        m_settings.validate();
+        m_settings.configureInModel(inSpecs, m -> {
+        }, getCredentialsProvider());
         m_fsId = FSConnectionRegistry.getInstance().getKey();
         return new PortObjectSpec[] { createSpec() };
     }
@@ -153,23 +159,15 @@ public class FtpConnectionNodeModel extends NodeModel {
         conf.setWorkingDirectory(settings.getWorkingDirectory());
 
         // authentication
-        final FtpAuthenticationSettingsModel auth = settings.getAuthenticationSettings();
-        switch (auth.getAuthType()) {
-        case ANONYMOUS:
+        final AuthSettings auth = settings.getAuthenticationSettings();
+        if (auth.getAuthType() == StandardAuthTypes.USER_PASSWORD) {
+            final UserPasswordAuthProviderSettings userPassSettings = auth
+                    .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
+            conf.setUser(userPassSettings.getUser(credentialsProvider));
+            conf.setPassword(userPassSettings.getPassword(credentialsProvider));
+        } else {
             conf.setUser("anonymous");
             conf.setPassword("");
-            break;
-        case CREDENTIALS:
-            ICredentials creds = getCredentials(credentialsProvider, auth.getCredential());
-            conf.setUser(creds.getLogin());
-            conf.setPassword(creds.getPassword());
-            break;
-        case USER_PWD:
-            conf.setUser(auth.getUserModel().getStringValue());
-            conf.setPassword(auth.getPasswordModel().getStringValue());
-            break;
-        default:
-            break;
         }
 
         // Proxy
@@ -189,15 +187,6 @@ public class FtpConnectionNodeModel extends NodeModel {
         }
 
         return conf;
-    }
-
-    private static ICredentials getCredentials(final Function<String, ICredentials> credentialsProvider,
-            final String credential) throws InvalidSettingsException {
-        final ICredentials creds = credentialsProvider.apply(credential);
-        if (creds == null) {
-            throw new InvalidSettingsException("Credentials '" + credential + "' not found");
-        }
-        return creds;
     }
 
     private FileSystemPortObjectSpec createSpec() {

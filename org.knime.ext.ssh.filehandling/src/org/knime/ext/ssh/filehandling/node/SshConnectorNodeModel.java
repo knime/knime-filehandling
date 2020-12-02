@@ -76,6 +76,7 @@ import org.knime.ext.ssh.filehandling.node.auth.SshAuth;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
+import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.ReadPathAccessor;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
@@ -166,11 +167,11 @@ public class SshConnectorNodeModel extends NodeModel {
         cfg.setUseKeyFile(auth.getAuthType() == SshAuth.KEY_FILE_AUTH_TYPE);
         cfg.setUseKnownHosts(settings.useKnownHostsFile());
 
-        if (auth.getAuthType() == SshAuth.USER_PASSWORD_AUTH_TYPE) {
+        if (auth.getAuthType() == StandardAuthTypes.USER_PASSWORD) {
             final UserPasswordAuthProviderSettings userPwdSettings = auth
-                    .getSettingsForAuthType(SshAuth.USER_PASSWORD_AUTH_TYPE);
-            cfg.setUserName(userPwdSettings.getUser(credentials));
-            cfg.setPassword(userPwdSettings.getPassword(credentials));
+                    .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
+            cfg.setUserName(userPwdSettings.getUser(credentials::get));
+            cfg.setPassword(userPwdSettings.getPassword(credentials::get));
         } else if (auth.getAuthType() == SshAuth.KEY_FILE_AUTH_TYPE) {
             final KeyFileAuthProviderSettings keyFileSettings = auth.getSettingsForAuthType(SshAuth.KEY_FILE_AUTH_TYPE);
             cfg.setUserName(keyFileSettings.getKeyUserModel().getStringValue());

@@ -53,6 +53,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -76,6 +77,11 @@ import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.filehandling.core.connections.FSConnection;
+import org.knime.filehandling.core.connections.base.auth.AuthPanel;
+import org.knime.filehandling.core.connections.base.auth.AuthSettings;
+import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderPanel;
+import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
+import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderPanel;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 
 /**
@@ -88,7 +94,7 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
 
     private final FtpConnectionSettingsModel m_settings;
 
-    private AuthenticationDialog m_authPanel;
+    private AuthPanel m_authPanel;
 
     private final WorkingDirectoryChooser m_workingDirChooser = new WorkingDirectoryChooser(WORKING_DIR_HISTORY_ID,
             this::createFSConnection);
@@ -108,8 +114,11 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
     }
 
     private void initFields() {
-        m_authPanel = new AuthenticationDialog(m_settings.getAuthenticationSettings(),
-                this);
+        final AuthSettings authSettings = m_settings.getAuthenticationSettings();
+        m_authPanel = new AuthPanel(authSettings, //
+                Arrays.asList( //
+                        new UserPasswordAuthProviderPanel(authSettings.getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD), this), //
+                        new EmptyAuthProviderPanel(authSettings.getSettingsForAuthType(StandardAuthTypes.ANONYMOUS))));
     }
 
     private JComponent createSettingsPanel() {
@@ -148,9 +157,18 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
     }
 
     private Component createAuthenticationSettingsPanel() {
-        final JPanel panel = new JPanel();
+        final JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(createTitledBorder("Authentication settings"));
-        panel.add(m_authPanel);
+
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(m_authPanel, gbc);
+
         return panel;
     }
 
@@ -316,7 +334,7 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
         m_settings.validate();
 
         m_settings.saveSettingsForDialog(settings);
-        m_authPanel.saveSettingsTo(settings.addNodeSettings(FtpConnectionSettingsModel.KEY_AUTH));
+        m_authPanel.saveSettingsTo(settings.addNodeSettings(AuthSettings.KEY_AUTH));
     }
 
     private void preSettingsSave() {
@@ -329,12 +347,15 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
         m_settings.getUseFTPSModel().removeChangeListener(m_enablenessUpdater);
 
         try {
-            m_authPanel.loadSettingsFrom(input.getNodeSettings(FtpConnectionSettingsModel.KEY_AUTH), specs);
+            m_authPanel.loadSettingsFrom(input.getNodeSettings(AuthSettings.KEY_AUTH), specs);
             m_settings.loadSettingsForDialog(input);
         } catch (final InvalidSettingsException e) { // NOSONAR can be ignored
         }
 
         m_settings.getUseFTPSModel().addChangeListener(m_enablenessUpdater);
+
+        m_workingDirChooser.setSelectedWorkingDirectory(m_settings.getWorkingDirectory());
+        updateEnabledness();
     }
 
     private void updateEnabledness() {
@@ -357,14 +378,8 @@ public class FtpConnectionNodeDialog extends NodeDialogPane {
     }
 
     @Override
-    public void onOpen() {
-        m_workingDirChooser.setSelectedWorkingDirectory(m_settings.getWorkingDirectory());
-        m_authPanel.onOpen();
-        updateEnabledness();
-    }
-
-    @Override
     public void onClose() {
         m_workingDirChooser.onClose();
+        m_authPanel.onClose();
     }
 }

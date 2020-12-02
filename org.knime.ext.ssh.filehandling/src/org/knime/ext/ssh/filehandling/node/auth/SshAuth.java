@@ -51,6 +51,7 @@ package org.knime.ext.ssh.filehandling.node.auth;
 import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.AuthType;
+import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 
 /**
@@ -62,12 +63,6 @@ public final class SshAuth {
 
     private SshAuth() {
     }
-
-    /**
-     * {@link AuthType} for password authentication in SSH.
-     */
-    public static final AuthType USER_PASSWORD_AUTH_TYPE = new AuthType("user_pwd", "Username/password",
-            "Username and password based authentication");
 
     /**
      * {@link AuthType} for public/private key authentication in SSH.
@@ -83,9 +78,9 @@ public final class SshAuth {
      */
     public static AuthSettings createAuthSettings(final NodeCreationConfiguration cfg) {
         return new AuthSettings.Builder() //
-                .add(new UserPasswordAuthProviderSettings(USER_PASSWORD_AUTH_TYPE, true)) //
+                .add(new UserPasswordAuthProviderSettings(StandardAuthTypes.USER_PASSWORD, true)) //
                 .add(new KeyFileAuthProviderSettings(cfg)) //
-                .defaultType(USER_PASSWORD_AUTH_TYPE) //
+                .defaultType(StandardAuthTypes.USER_PASSWORD) //
                 .build();
     }
 }
