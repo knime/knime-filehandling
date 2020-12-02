@@ -57,7 +57,7 @@
 	            Method of authentication to use.
 	            <ul>
 	            	<li>
-	            		<b>Basic:</b> Use with the provided <i>Username</i> and <i>Password</i> to authenticate with HTTP Basic authentication.
+	            		<b>Basic:</b> Use the provided <i>Username</i> and <i>Password</i> to authenticate with HTTP Basic authentication.
 	            		If entered here, the password is persistently stored (in encrypted form) in the settings of this node. Alternatively,
 	            		if <i>Use credentials</i>
 	            		is selected, the username and password of the selected credentials flow variable will be used for authentication.

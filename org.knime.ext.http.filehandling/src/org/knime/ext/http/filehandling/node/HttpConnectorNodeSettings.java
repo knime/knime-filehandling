@@ -62,7 +62,11 @@ import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.filehandling.core.connections.FSLocation;
+import org.knime.filehandling.core.connections.base.auth.AuthSettings;
+import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderSettings;
+import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
@@ -71,11 +75,6 @@ import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 public class HttpConnectorNodeSettings {
-
-    /**
-     * Settings key for the authentication sub-settings. Must be public for dialog.
-     */
-    public static final String KEY_AUTH = "auth";
 
     private static final String KEY_URL = "url";
 
@@ -97,7 +96,7 @@ public class HttpConnectorNodeSettings {
     private final SettingsModelString m_url;
     private final SettingsModelBoolean m_sslIgnoreHostnameMismatches;
     private final SettingsModelBoolean m_sslTrustAllCertificates;
-    private final HttpAuthenticationSettings m_authSettings;
+    private final AuthSettings m_authSettings;
     private final SettingsModelIntegerBounded m_connectionTimeout;
     private final SettingsModelIntegerBounded m_readTimeout;
     private final SettingsModelBoolean m_followRedirects;
@@ -109,7 +108,13 @@ public class HttpConnectorNodeSettings {
         m_url = new SettingsModelString(KEY_URL, "");
         m_sslIgnoreHostnameMismatches = new SettingsModelBoolean(KEY_SSL_IGNORE_HOSTNAME_MISMATCHES, false);
         m_sslTrustAllCertificates = new SettingsModelBoolean(KEY_SSL_TRUST_ALL_CERTIFICATES, false);
-        m_authSettings = new HttpAuthenticationSettings();
+
+        m_authSettings = new AuthSettings.Builder() //
+                .add(new UserPasswordAuthProviderSettings(HttpAuth.BASIC, true)) //
+                .add(new EmptyAuthProviderSettings(HttpAuth.NONE)) //
+                .defaultType(HttpAuth.NONE) //
+                .build();
+
         m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT, DEFAULT_TIMEOUT, 0,
                 Integer.MAX_VALUE);
         m_readTimeout = new SettingsModelIntegerBounded(KEY_READ_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
@@ -144,7 +149,7 @@ public class HttpConnectorNodeSettings {
      */
     public void saveSettingsForModel(final NodeSettingsWO settings) {
         save(settings);
-        m_authSettings.saveSettingsForModel(settings.addNodeSettings(KEY_AUTH));
+        m_authSettings.saveSettingsForModel(settings.addNodeSettings(AuthSettings.KEY_AUTH));
     }
 
     private void load(final NodeSettingsRO settings) throws InvalidSettingsException {
@@ -177,22 +182,13 @@ public class HttpConnectorNodeSettings {
      */
     public void loadSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
         load(settings);
-        m_authSettings.loadSettingsForModel(settings.getNodeSettings(KEY_AUTH));
+        m_authSettings.loadSettingsForModel(settings.getNodeSettings(AuthSettings.KEY_AUTH));
     }
 
-    /**
-     * Forwards the given {@link PortObjectSpec} and status message consumer to the
-     * file chooser settings models to they can configure themselves properly.
-     *
-     * @param inSpecs
-     *            input specifications.
-     * @param statusConsumer
-     *            status consumer.
-     * @throws InvalidSettingsException
-     */
-    public void configureInModel(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer)
+    void configureInModel(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer,
+            final CredentialsProvider credentialsProvider)
             throws InvalidSettingsException {
-        // nothing
+        m_authSettings.configureInModel(inSpecs, statusConsumer, credentialsProvider);
     }
 
     /**
@@ -205,14 +201,10 @@ public class HttpConnectorNodeSettings {
         m_url.validateSettings(settings);
         m_sslIgnoreHostnameMismatches.validateSettings(settings);
         m_sslTrustAllCertificates.validateSettings(settings);
-        m_authSettings.validateSettings(settings.getNodeSettings(KEY_AUTH));
+        m_authSettings.validateSettings(settings.getNodeSettings(AuthSettings.KEY_AUTH));
         m_connectionTimeout.validateSettings(settings);
         m_readTimeout.validateSettings(settings);
         m_followRedirects.validateSettings(settings);
-
-        final HttpConnectorNodeSettings temp = new HttpConnectorNodeSettings();
-        temp.loadSettingsForModel(settings);
-        temp.validate();
     }
 
     /**
@@ -305,7 +297,7 @@ public class HttpConnectorNodeSettings {
     /**
      * @return authentication settings.
      */
-    public HttpAuthenticationSettings getAuthenticationSettings() {
+    public AuthSettings getAuthenticationSettings() {
         return m_authSettings;
     }
 

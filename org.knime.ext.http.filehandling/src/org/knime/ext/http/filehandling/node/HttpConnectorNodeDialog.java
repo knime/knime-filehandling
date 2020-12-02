@@ -52,6 +52,7 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.Arrays;
 
 import javax.swing.Box;
 import javax.swing.JComponent;
@@ -70,6 +71,10 @@ import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.filehandling.core.connections.base.auth.AuthPanel;
+import org.knime.filehandling.core.connections.base.auth.AuthSettings;
+import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderPanel;
+import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderPanel;
 
 /**
  * HTTP(S) Connector node dialog.
@@ -80,7 +85,7 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
 
     private final HttpConnectorNodeSettings m_settings;
 
-    private HttpAuthenticationDialog m_authPanel;
+    private AuthPanel m_authPanel;
 
     /**
      * Creates new instance.
@@ -95,7 +100,12 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
     }
 
     private void initFields() {
-        m_authPanel = new HttpAuthenticationDialog(m_settings.getAuthenticationSettings(), this);
+        final AuthSettings authSettings = m_settings.getAuthenticationSettings();
+        m_authPanel = new AuthPanel(authSettings, //
+                Arrays.asList( //
+                        new UserPasswordAuthProviderPanel(
+                                authSettings.getSettingsForAuthType(HttpAuth.BASIC), this), //
+                        new EmptyAuthProviderPanel(authSettings.getSettingsForAuthType(HttpAuth.NONE))));
     }
 
     private JComponent createSettingsPanel() {
@@ -157,9 +167,18 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
     }
 
     private Component createAuthenticationSettingsPanel() {
-        final JPanel panel = new JPanel();
+        final JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(createTitledBorder("Authentication settings"));
-        panel.add(m_authPanel);
+
+        final GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(m_authPanel, gbc);
+
         return panel;
     }
 
@@ -280,7 +299,7 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
         m_settings.validate();
 
         m_settings.saveSettingsForDialog(settings);
-        m_authPanel.saveSettingsTo(settings.addNodeSettings(HttpConnectorNodeSettings.KEY_AUTH));
+        m_authPanel.saveSettingsTo(settings.addNodeSettings(AuthSettings.KEY_AUTH));
     }
 
     @Override
@@ -288,7 +307,7 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
             throws NotConfigurableException {
 
         try {
-            m_authPanel.loadSettingsFrom(input.getNodeSettings(HttpConnectorNodeSettings.KEY_AUTH), specs);
+            m_authPanel.loadSettingsFrom(input.getNodeSettings(AuthSettings.KEY_AUTH), specs);
             m_settings.loadSettingsForDialog(input);
         } catch (final InvalidSettingsException e) { // NOSONAR can be ignored
         }
@@ -296,12 +315,7 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
     }
 
     @Override
-    public void onOpen() {
-        m_authPanel.onOpen();
-    }
-
-    @Override
     public void onClose() {
-        // nothing to do
+        m_authPanel.onClose();
     }
 }

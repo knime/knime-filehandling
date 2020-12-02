@@ -71,6 +71,7 @@ import org.knime.ext.http.filehandling.fs.HttpFSConnection;
 import org.knime.ext.http.filehandling.fs.HttpFileSystem;
 import org.knime.ext.http.filehandling.node.HttpAuthenticationSettings.AuthType;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
+import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
@@ -100,6 +101,8 @@ public class HttpConnectorNodeModel extends NodeModel {
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         m_settings.validate();
+        m_settings.configureInModel(inSpecs, m -> {
+        }, getCredentialsProvider());
         m_fsId = FSConnectionRegistry.getInstance().getKey();
         return new PortObjectSpec[] { createSpec() };
     }
@@ -185,24 +188,13 @@ public class HttpConnectorNodeModel extends NodeModel {
         cfg.setSslIgnoreHostnameMismatches(settings.sslIgnoreHostnameMismatches());
         cfg.setSslTrustAllCertificates(settings.sslTrustAllCertificates());
 
-        if (settings.getAuthenticationSettings().getAuthType() == AuthType.BASIC) {
+        if (settings.getAuthenticationSettings().getAuthType().equals(HttpAuth.BASIC)) {
             cfg.setAuthType(AuthType.BASIC);
 
-            final String username;
-            final String password;
-
-            if (settings.getAuthenticationSettings().useBasicCredentials()) {
-                final ICredentials credentials = getCredentials(credentialsProvider,
-                        settings.getAuthenticationSettings().getBasicCredentialsName());
-                username = credentials.getLogin();
-                password = credentials.getPassword();
-            } else {
-                username = settings.getAuthenticationSettings().getBasicUser();
-                password = settings.getAuthenticationSettings().getBasicPassword();
-            }
-
-            cfg.setUsername(username);
-            cfg.setPassword(password);
+            final UserPasswordAuthProviderSettings userPassSettings = settings.getAuthenticationSettings()
+                    .getSettingsForAuthType(HttpAuth.BASIC);
+            cfg.setUsername(userPassSettings.getUser(credentialsProvider));
+            cfg.setPassword(userPassSettings.getPassword(credentialsProvider));
         }
 
         cfg.setConnectionTimeout(settings.getConnectionTimeout());
@@ -210,14 +202,5 @@ public class HttpConnectorNodeModel extends NodeModel {
         cfg.setFollowRedirects(settings.followRedirects());
 
         return new HttpFSConnection(cfg);
-    }
-
-    private static ICredentials getCredentials(final Function<String, ICredentials> credentialsProvider,
-            final String credential) throws InvalidSettingsException {
-        final ICredentials creds = credentialsProvider.apply(credential);
-        if (creds == null) {
-            throw new InvalidSettingsException("Credentials '" + credential + "' not found");
-        }
-        return creds;
     }
 }
