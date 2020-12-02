@@ -62,7 +62,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelPassword;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.ext.ssh.filehandling.node.SshConnectionNodeFactory;
+import org.knime.ext.ssh.filehandling.node.SshConnectorNodeFactory;
 import org.knime.filehandling.core.connections.FSLocation;
 import org.knime.filehandling.core.connections.base.auth.AuthProviderSettings;
 import org.knime.filehandling.core.connections.base.auth.AuthType;
@@ -112,7 +112,7 @@ public class KeyFileAuthProviderSettings implements AuthProviderSettings {
         m_keyPassphrase = new SettingsModelPassword(KEY_PASSPHRASE, SECRET_KEY, "");
         m_keyFile = new SettingsModelReaderFileChooser(KEY_FILE,
                 cfg.getPortConfig().orElseThrow(() -> new IllegalStateException("port creation config is absent")),
-                SshConnectionNodeFactory.FS_CONNECT_GRP_ID, FilterMode.FILE);
+                SshConnectorNodeFactory.FS_CONNECT_GRP_ID, FilterMode.FILE);
 
         m_useKeyPassphrase.addChangeListener(e -> m_keyPassphrase
                 .setEnabled(m_useKeyPassphrase.getBooleanValue() && m_useKeyPassphrase.isEnabled()));

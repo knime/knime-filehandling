@@ -90,14 +90,14 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshConnectionNodeModel extends NodeModel {
+public class SshConnectorNodeModel extends NodeModel {
 
     private static final String FILE_SYSTEM_NAME = "SSH";
 
     private static final Consumer<StatusMessage> NOOP_STATUS_CONSUMER = s -> {
     };
 
-    private final SshConnectionSettingsModel m_settings;
+    private final SshConnectorNodeSettings m_settings;
 
     private final NodeModelStatusConsumer m_statusConsumer = new NodeModelStatusConsumer(
             EnumSet.of(MessageType.ERROR, MessageType.WARNING));
@@ -112,11 +112,11 @@ public class SshConnectionNodeModel extends NodeModel {
      * @param creationConfig
      *            node creation configuration.
      */
-    protected SshConnectionNodeModel(final NodeCreationConfiguration creationConfig) {
+    protected SshConnectorNodeModel(final NodeCreationConfiguration creationConfig) {
         super(creationConfig.getPortConfig().orElseThrow(IllegalStateException::new).getInputPorts(),
                 creationConfig.getPortConfig().orElseThrow(IllegalStateException::new).getOutputPorts());
 
-        m_settings = new SshConnectionSettingsModel(creationConfig);
+        m_settings = new SshConnectorNodeSettings(creationConfig);
     }
 
     @Override
@@ -145,13 +145,13 @@ public class SshConnectionNodeModel extends NodeModel {
      * @throws InvalidSettingsException
      * @throws IOException
      */
-    public static SshConnection createConnection(final SshConnectionSettingsModel settings,
+    public static SshConnection createConnection(final SshConnectorNodeSettings settings,
             final CredentialsProvider credentials)
             throws InvalidSettingsException, IOException {
         return createConnection(settings, credentials, NOOP_STATUS_CONSUMER);
     }
 
-    private static SshConnection createConnection(final SshConnectionSettingsModel settings,
+    private static SshConnection createConnection(final SshConnectorNodeSettings settings,
             final CredentialsProvider credentials,
             final Consumer<StatusMessage> statusConsumer) throws InvalidSettingsException, IOException {
 
@@ -249,13 +249,13 @@ public class SshConnectionNodeModel extends NodeModel {
 
     private static class DefaultBridge implements ConnectionToNodeModelBridge {
 
-        private final SshConnectionSettingsModel m_settings;
+        private final SshConnectorNodeSettings m_settings;
 
         private final Consumer<StatusMessage> m_statusConsumer;
 
         private final NodeContext m_nodeContext;
 
-        DefaultBridge(final SshConnectionSettingsModel settings, final Consumer<StatusMessage> statusConsumer) {
+        DefaultBridge(final SshConnectorNodeSettings settings, final Consumer<StatusMessage> statusConsumer) {
             m_settings = settings;
             m_statusConsumer = statusConsumer;
             m_nodeContext = CheckUtils.checkArgumentNotNull(NodeContext.getContext(), "Node context required");

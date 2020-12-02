@@ -61,7 +61,7 @@ import org.knime.filehandling.core.port.FileSystemPortObject;
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshConnectionNodeFactory extends ConfigurableNodeFactory<SshConnectionNodeModel> {
+public class SshConnectorNodeFactory extends ConfigurableNodeFactory<SshConnectorNodeModel> {
     /**
      * Connect group ID of dynamic port.
      */
@@ -69,13 +69,13 @@ public class SshConnectionNodeFactory extends ConfigurableNodeFactory<SshConnect
 
     @Override
     protected NodeDialogPane createNodeDialogPane(final NodeCreationConfiguration cfg) {
-        return new SshConnectionNodeDialog(cfg);
+        return new SshConnectorNodeDialog(cfg);
     }
 
     @Override
-    protected SshConnectionNodeModel createNodeModel(
+    protected SshConnectorNodeModel createNodeModel(
             final NodeCreationConfiguration creationConfig) {
-        return new SshConnectionNodeModel(creationConfig);
+        return new SshConnectorNodeModel(creationConfig);
     }
     @Override
     protected Optional<PortsConfigurationBuilder> createPortsConfigBuilder() {
@@ -99,8 +99,8 @@ public class SshConnectionNodeFactory extends ConfigurableNodeFactory<SshConnect
      * {@inheritDoc}
      */
     @Override
-    public NodeView<SshConnectionNodeModel> createNodeView(final int viewIndex,
-            final SshConnectionNodeModel nodeModel) {
+    public NodeView<SshConnectorNodeModel> createNodeView(final int viewIndex,
+            final SshConnectorNodeModel nodeModel) {
         throw new UnsupportedOperationException();
     }
 

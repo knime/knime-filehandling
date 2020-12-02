@@ -91,13 +91,13 @@ import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.Dialog
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshConnectionNodeDialog extends NodeDialogPane {
+public class SshConnectorNodeDialog extends NodeDialogPane {
 
     private static final String KNOWN_HOSTS_HISTORY_ID = "ssh.knownHostsFile";
 
     private static final String WORKING_DIR_HISTORY_ID = "ssh.workingDir";
 
-    private final SshConnectionSettingsModel m_settings;
+    private final SshConnectorNodeSettings m_settings;
 
     private AuthPanel m_authPanel;
 
@@ -112,8 +112,8 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
      * @param cfg
      *            node creation configuration.
      */
-    public SshConnectionNodeDialog(final NodeCreationConfiguration cfg) {
-        m_settings = new SshConnectionSettingsModel(cfg);
+    public SshConnectorNodeDialog(final NodeCreationConfiguration cfg) {
+        m_settings = new SshConnectorNodeSettings(cfg);
         // add user name synchronizer
 
         initFields();
@@ -223,8 +223,8 @@ public class SshConnectionNodeDialog extends NodeDialogPane {
 
     private FSConnection createFSConnection() throws IOException {
         try {
-            final SshConnectionSettingsModel settings = m_settings.createClone();
-            return SshConnectionNodeModel.createConnection(settings, getCredentialsProvider());
+            final SshConnectorNodeSettings settings = m_settings.createClone();
+            return SshConnectorNodeModel.createConnection(settings, getCredentialsProvider());
         } catch (IOException e) {
             throw e;
         } catch (InvalidSettingsException e) {

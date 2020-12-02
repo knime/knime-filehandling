@@ -72,11 +72,11 @@ import org.knime.filehandling.core.defaultnodesettings.filtermode.SettingsModelF
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
- * Settings for {@link SshConnectionNodeModel}.
+ * Settings for {@link SshConnectorNodeModel}.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshConnectionSettingsModel {
+public class SshConnectorNodeSettings {
 
     /**
      * Default value for the maximum number of SFTP sessions to open.
@@ -118,7 +118,7 @@ public class SshConnectionSettingsModel {
      * @param cfg
      *            node creation configuration.
      */
-    public SshConnectionSettingsModel(final NodeCreationConfiguration cfg) {
+    public SshConnectorNodeSettings(final NodeCreationConfiguration cfg) {
         m_nodeCreationConfig = cfg;
 
         m_host = new SettingsModelString(KEY_HOST, "localhost");
@@ -136,7 +136,7 @@ public class SshConnectionSettingsModel {
         m_knownHostsFile = new SettingsModelReaderFileChooser( //
                 KEY_KNOWN_HOSTS_FILE, //
                 cfg.getPortConfig().orElseThrow(() -> new IllegalStateException("port creation config is absent")), //
-                SshConnectionNodeFactory.FS_CONNECT_GRP_ID, FilterMode.FILE);
+                SshConnectorNodeFactory.FS_CONNECT_GRP_ID, FilterMode.FILE);
 
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, SshFileSystem.PATH_SEPARATOR);
 
@@ -260,7 +260,7 @@ public class SshConnectionSettingsModel {
         m_useKnownHostsFile.validateSettings(settings);
         m_knownHostsFile.validateSettings(settings);
 
-        final SshConnectionSettingsModel temp = new SshConnectionSettingsModel(m_nodeCreationConfig);
+        final SshConnectorNodeSettings temp = new SshConnectorNodeSettings(m_nodeCreationConfig);
         temp.loadSettingsForModel(settings);
         temp.validate();
     }
@@ -410,11 +410,11 @@ public class SshConnectionSettingsModel {
     /**
      * @return a (deep) clone of this node settings object.
      */
-    public SshConnectionSettingsModel createClone() {
+    public SshConnectorNodeSettings createClone() {
         final NodeSettings tempSettings = new NodeSettings("ignored");
         saveSettingsForModel(tempSettings);
 
-        final SshConnectionSettingsModel toReturn = new SshConnectionSettingsModel(m_nodeCreationConfig);
+        final SshConnectorNodeSettings toReturn = new SshConnectorNodeSettings(m_nodeCreationConfig);
         try {
             toReturn.loadSettingsForModel(tempSettings);
         } catch (InvalidSettingsException ex) { // NOSONAR can never happen
