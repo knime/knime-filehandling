@@ -122,9 +122,6 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
         panel.add(createConnectionSettingsPanel(), gbc);
 
         gbc.gridy++;
-        panel.add(createSslSettingsPanel(), gbc);
-
-        gbc.gridy++;
         panel.add(createAuthenticationSettingsPanel(), gbc);
 
         gbc.gridy++;
@@ -135,7 +132,7 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
 
     private Component createSslSettingsPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(createTitledBorder("Connection settings"));
+        panel.setBorder(createTitledBorder("SSL/TLS"));
 
         final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -168,7 +165,7 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
 
     private Component createAuthenticationSettingsPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(createTitledBorder("Authentication settings"));
+        panel.setBorder(createTitledBorder("Authentication"));
 
         final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -184,7 +181,7 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
 
     private Component createConnectionSettingsPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(createTitledBorder("Connection settings"));
+        panel.setBorder(createTitledBorder("Connection"));
 
         final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -228,6 +225,9 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
         panel.add(createAdvancedConnectionSettingsPanel(), gbc);
 
         gbc.gridy++;
+        panel.add(createSslSettingsPanel(), gbc);
+
+        gbc.gridy++;
         addVerticalFiller(panel, gbc.gridy, 1);
 
         return panel;
@@ -235,7 +235,7 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
 
     private Component createAdvancedConnectionSettingsPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(createTitledBorder("Connection settings"));
+        panel.setBorder(createTitledBorder("Connection"));
 
         final GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;

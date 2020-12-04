@@ -35,13 +35,11 @@
 	        <option name="Authentication">
 	            Specify the authentication method to use:
 	            <ul>
-	            	<li>
-	            		<b>Credentials:</b> Authenticate with the username and password of the selected credentials flow variable.
-	            	</li>
-	            	<li>
-	            		<b>Username/password:</b> Authenticate with the provided <i>Username</i> and <i>Password</i>. The password is persistently stored
-	            		(in encrypted form) in the settings of this node and will be saved with the workflow. The password may be empty if the SSH server
-	            		permits empty passwords. 
+                	<li>
+	            		<b>Username &amp; password:</b> Authenticate with a username and password. Either enter a <i>username</i> and
+	            		<i>password</i>, in which case the password will be persistently stored (in encrypted form) with
+	            		the workflow. Or check <i>Use credentials</i> and a select a credentials flow variable to supply
+	            		the username and password. The password may be empty if the SSH server permits empty passwords. 
 	            	</li>
 	            	<li>
 	            		<b>Key file:</b> Authenticate using a private key file. You have to specify the <i>Username</i> and the private <i>Key file</i>. 

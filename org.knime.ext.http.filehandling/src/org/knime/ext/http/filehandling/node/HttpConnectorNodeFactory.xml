@@ -47,20 +47,14 @@
 	            i.e. paths that do not have a leading slash. If no path is specified in the URL, then the 
 	            working directory is assumed to be <tt>/</tt>.
 	        </option>
-	        <option name="Ignore hostname mismatches">
-	            If checked, the node trusts the server's SSL certificate even if it was generated for a different host.
-	        </option>
-	        <option name="Trust all certificates">
-	            If checked, the node trusts all certificates regardless of their origin or expiration date.
-	        </option>
 	        <option name="Authentication">
 	            Method of authentication to use.
 	            <ul>
 	            	<li>
-	            		<b>Basic:</b> Use the provided <i>Username</i> and <i>Password</i> to authenticate with HTTP Basic authentication.
-	            		If entered here, the password is persistently stored (in encrypted form) in the settings of this node. Alternatively,
-	            		if <i>Use credentials</i>
-	            		is selected, the username and password of the selected credentials flow variable will be used for authentication.
+	            		<b>Basic:</b> Authenticate with HTTP Basic authentication. Either enter a <i>username</i> and
+	            		<i>password</i>, in which case the password will be persistently stored (in encrypted form) with
+	            		the workflow. Or check <i>Use credentials</i> and a select a credentials flow variable to supply
+	            		the username and password.
 	            	</li>
 	            	<li>
 	            		<b>None:</b> No authentication will be performed.
@@ -78,6 +72,12 @@
 		    </option>
 	        <option name="Follow redirects">
 	            If checked, the node will follow redirects (HTTP status code <tt>3xx</tt>).
+	        </option>
+	        <option name="Ignore hostname mismatches">
+	            If checked, the node trusts the server's SSL certificate even if it was generated for a different host.
+	        </option>
+	        <option name="Trust all certificates">
+	            If checked, the node trusts all certificates regardless of their origin or expiration date.
 	        </option>
 		</tab>
     </fullDescription>

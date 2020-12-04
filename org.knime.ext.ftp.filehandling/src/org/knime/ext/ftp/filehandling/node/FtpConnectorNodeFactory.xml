@@ -41,14 +41,13 @@
 	            Method of authentication to use.
 	            <ul>
 	            	<li>
-	            		<b>Credentials:</b> Authenticate with the username and password of the selected credentials flow variable.
+	            		<b>Username &amp; password:</b> Authenticate with a username and password. Either enter a <i>username</i> and
+	            		<i>password</i>, in which case the password will be persistently stored (in encrypted form) with
+	            		the workflow. Or check <i>Use credentials</i> and a select a credentials flow variable to supply
+	            		the username and password.
 	            	</li>
 	            	<li>
-	            		<b>Username/password:</b> Authenticate with the provided <i>Username</i> and <i>Password</i>. The password is persistently stored
-	            		(in encrypted form) in the settings of this node. 
-	            	</li>
-	            	<li>
-	            		<b>Anonymous:</b> Authenticate with the <b>anonymous</b> user name and blank password.
+	            		<b>Anonymous:</b> Authenticate with the <i>anonymous</i> user and a blank password.
 	            	</li>
 	           	</ul>
 	        </option>
