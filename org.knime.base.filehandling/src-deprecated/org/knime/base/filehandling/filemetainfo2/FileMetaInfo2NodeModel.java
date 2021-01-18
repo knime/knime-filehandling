@@ -58,6 +58,7 @@ import java.time.ZoneId;
 
 import org.apache.commons.io.FileUtils;
 import org.knime.base.filehandling.NodeUtils;
+import org.knime.base.filehandling.filemetainfo.SettingsFactory;
 import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;

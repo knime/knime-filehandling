@@ -50,6 +50,7 @@ package org.knime.base.filehandling.filemetainfo2;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.knime.base.filehandling.filemetainfo.SettingsFactory;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;

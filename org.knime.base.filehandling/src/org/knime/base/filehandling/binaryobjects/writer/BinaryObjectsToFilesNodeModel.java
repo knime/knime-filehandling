@@ -71,7 +71,6 @@ import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.data.def.StringCell.StringCellFactory;
 import org.knime.core.node.BufferedDataTable;
-import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
@@ -346,14 +345,12 @@ final class BinaryObjectsToFilesNodeModel extends NodeModel {
     }
 
     @Override
-    protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
-        throws IOException, CanceledExecutionException {
+    protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec) {
         // nothing to do here
     }
 
     @Override
-    protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
-        throws IOException, CanceledExecutionException {
+    protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec) {
         // nothing to do here
     }
 
@@ -446,8 +443,8 @@ final class BinaryObjectsToFilesNodeModel extends NodeModel {
                     m_multiFSLocationCellFactory.createCell(m_executionContext, outputFileFSPath.toFSLocation()),
                     StringCellFactory.create(createBinaryFile(binaryObjDataCell, outputFileFSPath).getText())};
             } catch (IOException creatFileException) {
-                LOGGER.error(creatFileException);
-                throw new RuntimeException(creatFileException.getMessage(), creatFileException.getCause()); //NOSONAR
+                LOGGER.error("Binary file could not be written", creatFileException);
+                throw new RuntimeException(creatFileException.getMessage(), creatFileException); //NOSONAR
             }
         }
 
@@ -484,7 +481,7 @@ final class BinaryObjectsToFilesNodeModel extends NodeModel {
          */
         private FileStatus createBinaryFile(final BinaryObjectDataValue binaryObjDataValue,
             final FSPath outputFileFSPath) throws IOException {
-            final boolean fileAlreadyExists = Files.exists(outputFileFSPath);
+            final boolean fileAlreadyExists = FSFiles.exists(outputFileFSPath);
             try (final InputStream iS = binaryObjDataValue.openInputStream()) {
                 switch (m_overwritePolicy) {
                     case OVERWRITE:
@@ -507,7 +504,7 @@ final class BinaryObjectsToFilesNodeModel extends NodeModel {
         }
 
         private static FileStatus fail(final FSPath outputFileFSPath, final boolean fileAlreadyExists,
-            final InputStream iS) throws FileAlreadyExistsException, IOException {
+            final InputStream iS) throws IOException {
             if (fileAlreadyExists) {
                 throw new FileAlreadyExistsException(String
                     .format("The file '%s' already exists and must not be overwritten", outputFileFSPath.toString()));
@@ -528,7 +525,7 @@ final class BinaryObjectsToFilesNodeModel extends NodeModel {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             if (m_multiFSLocationCellFactory != null) {
                 m_multiFSLocationCellFactory.close();
             }

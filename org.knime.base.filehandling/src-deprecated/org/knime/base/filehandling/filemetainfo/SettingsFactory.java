@@ -57,7 +57,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 @Deprecated
-final class SettingsFactory {
+public final class SettingsFactory {
 
     private SettingsFactory() {
         // Disables default constructor
@@ -69,7 +69,7 @@ final class SettingsFactory {
      *
      * @return URI column <code>SettingsModel</code>
      */
-    static SettingsModelString createURIColumnSettings() {
+    public static SettingsModelString createURIColumnSettings() {
         return new SettingsModelString("uricolumn", "");
     }
 
@@ -79,7 +79,7 @@ final class SettingsFactory {
      *
      * @return Abort if not local <code>SettingsModel</code>
      */
-    static SettingsModelBoolean createAbortIfNotLocalSettings() {
+    public static SettingsModelBoolean createAbortIfNotLocalSettings() {
         return new SettingsModelBoolean("abortifnotlocal", false);
     }
 
@@ -89,7 +89,7 @@ final class SettingsFactory {
      *
      * @return Fail if file does not exist <code>SettingsModel</code>
      */
-    static SettingsModelBoolean createFailIfDoesNotExistSettings() {
+    public static SettingsModelBoolean createFailIfDoesNotExistSettings() {
         return new SettingsModelBoolean("failiffiledoesnotexist", false);
     }
 }
