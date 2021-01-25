@@ -10,8 +10,14 @@
 	</shortDescription>
 	<fullDescription>
 		<intro>
+            <p><i>This node supports the 
+            </i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html#path"><i>path flow variable.</i></a>
+            <i> For further information about file handling in general see the 
+            </i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.</i></a><br/></p>
+            <p>
 			This node writes binary objects to files. It will append the paths of binary files to the 
 			input table as well as the corresponding write status (created, unmodified, overwritten).
+			</p>
 		</intro>
 		<option name="Binary object">
 			Options for selecting a column with binary data from input table. And whether the original binary column 
