@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
-<knimeNode icon="./unzip16x16.png" type="Other" deprecated="true">
-	<name>Unzip Files</name>
+<knimeNode icon="./unzip16x16.png" type="Other"
+	xmlns="http://knime.org/node/v4.1"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://knime.org/node/v4.1 http://knime.org/node/v4.1.xsd">
+	<name>Unzip Files (legacy)</name>
 
 	<shortDescription>
 		Unzips files from an archive.
@@ -9,6 +11,14 @@
 
 	<fullDescription>
 		<intro>
+			<p>
+				<i>This legacy file handling node has been replaced by the
+				</i><a href="https://kni.me/n/Idv4NOkow3wYGr_Z"><i>Decompress Files</i></a><i>
+				and will become deprecated in the foreseeable future. For further information about the 
+				new file handling framework see the
+				</i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.
+				</i></a><br/>
+			</p>
 			This node unzips files from an archive. The path to the
 			files
 			will
