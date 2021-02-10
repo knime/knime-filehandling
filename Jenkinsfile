@@ -23,7 +23,7 @@ try {
         UnitTests: {
             stage('Testing remote FS'){
                 // The integrated workflowtests only work on ubunutu at the moment
-                workflowTests.runIntegratedWorkflowTests(configurations: ['ubuntu20.04'],
+                workflowTests.runIntegratedWorkflowTests(configurations: workflowTests.DEFAULT_FEATURE_BRANCH_CONFIGURATIONS,
                     profile: "test", sidecarContainers: [
                         [ image: SSHD_IMAGE, namePrefix: "SSHD", port: 22 ]
                 ])
