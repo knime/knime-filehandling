@@ -98,7 +98,8 @@ public class SshTestInitializerProvider extends DefaultFSTestInitializerProvider
 
                 @Override
                 public void doWithKeysFile(final Consumer<Path> consumer) throws IOException, InvalidSettingsException {
-                    consumer.accept(Paths.get(cfg.get("keyFile")));
+                    consumer.accept(Paths.get(cfg.get("keyFile"))); // NOSONAR filename intentionally comes from a
+                                                                    // user-defined parameter
                 }
             });
         }

@@ -193,7 +193,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
                     client -> NativeSftpProviderUtils.readRemoteAttributes(client, path));
             getFileSystemInternal().addToAttributeCache(path, attrs);
             return true;
-        } catch (final NoSuchFileException e) {
+        } catch (final NoSuchFileException e) { // NOSONAR by contract this exception is not rethrown
             return false;
         }
     }
