@@ -270,7 +270,7 @@ final class HttpClient {
                 }
 
                 if (errorMsg == null) {
-                    throw ExceptionUtil.wrapAsIOException(t);
+                    throw ExceptionUtil.wrapAsIOException(t); // NOSONAR we are rethrowing the cause
                 } else {
                     throw new IOException(errorMsg, t);
                 }
@@ -278,7 +278,7 @@ final class HttpClient {
                 throw ExceptionUtil.wrapAsIOException(e);
             } catch (InterruptedException e) { // NOSONAR rethrown as InterruptedIOException
                 responseFuture.cancel(true);
-                throw new InterruptedIOException();
+                throw (IOException) new InterruptedIOException().initCause(e);
             }
         }
     }
