@@ -1,6 +1,6 @@
 autoEnabled=true
 eclipse.preferences.version=1
 idePrefixKey=
-projectKey=org.knime\:knime-filehandling-connectors
+projectKey=org.knime\:knime-filehandling
 serverId=sonar.knime.com
 sqPrefixKey=org.knime.ext.ftp.filehandling.tests
