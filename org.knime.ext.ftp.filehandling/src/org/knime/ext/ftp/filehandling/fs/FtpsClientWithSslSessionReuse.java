@@ -61,6 +61,7 @@ import javax.net.ssl.SSLSocket;
 
 import org.apache.commons.net.ftp.FTPSClient;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.node.util.CheckUtils;
 
 /**
  * This is hacking style implementation of session reuse FTPS client. </br>
@@ -77,17 +78,31 @@ import org.knime.core.node.NodeLogger;
  * retrieving data, thereby preventing someone from hijacking a data connection
  * after authentication in a classic man-in-the-middle attack"
  *
+ * There is also an unresolved Jira issue for SSL session reuse in the Apache
+ * Commons Net project: https://issues.apache.org/jira/browse/NET-408
+ *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 class FtpsClientWithSslSessionReuse extends FTPSClient {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(FtpsClientWithSslSessionReuse.class);
 
+    private final SslSessionReuseFailureListener m_sessionReuseFailureListener;
+
+    interface SslSessionReuseFailureListener {
+        void notifyFailure();
+    }
+
     /**
      * Default constructor.
+     *
+     * @param failureListener
+     *            Listener that gets notified when SSL session reuse has failed.
      */
-    public FtpsClientWithSslSessionReuse() {
+    public FtpsClientWithSslSessionReuse(final SslSessionReuseFailureListener failureListener) {
         super("TLS", false);
+        CheckUtils.checkArgumentNotNull(failureListener, "SslSessionReuseFailureListener must not be null");
+        m_sessionReuseFailureListener = failureListener;
     }
 
     /**
@@ -102,6 +117,15 @@ class FtpsClientWithSslSessionReuse extends FTPSClient {
 
         try {
             final SSLSession sslSession = ((SSLSocket) _socket_).getSession();
+            if (!sslSession.isValid()) {
+                // Some servers do not support SSL session reuse. In this case, the SSLSession
+                // will have been invalidated prior to invoking this method and we cannot
+                // reuse it (see AP-16122)
+                m_sessionReuseFailureListener.notifyFailure();
+                super._prepareDataSocket_(socket);
+                return;
+            }
+
             final SSLSessionContext sslSessionContext = sslSession.getSessionContext();
 
             // get session cache
