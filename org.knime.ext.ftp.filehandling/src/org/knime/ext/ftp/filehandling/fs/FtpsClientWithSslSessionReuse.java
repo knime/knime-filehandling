@@ -60,6 +60,7 @@ import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.SSLSocket;
 
 import org.apache.commons.net.ftp.FTPSClient;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.util.CheckUtils;
 
@@ -103,6 +104,11 @@ class FtpsClientWithSslSessionReuse extends FTPSClient {
         super("TLS", false);
         CheckUtils.checkArgumentNotNull(failureListener, "SslSessionReuseFailureListener must not be null");
         m_sessionReuseFailureListener = failureListener;
+
+        // By default, FTPSClient does not check the hostname against the server
+        // certificate. This sets the Apache HttpClient hostname verifier which
+        // seems like a solid choice.
+        setHostnameVerifier(new DefaultHostnameVerifier());
     }
 
     /**
