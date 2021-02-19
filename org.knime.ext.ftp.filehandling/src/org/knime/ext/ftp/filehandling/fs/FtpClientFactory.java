@@ -72,12 +72,15 @@ public class FtpClientFactory {
     private final FtpConnectionConfiguration m_configuration;
     private FtpClientFeatures m_features;
 
+    private volatile boolean m_reuseSslSessions;
+
     /**
      * @param cfg
      *            connection configuration.
      */
     public FtpClientFactory(final FtpConnectionConfiguration cfg) {
         m_configuration = cfg;
+        m_reuseSslSessions = true;
     }
 
     /**
@@ -145,6 +148,7 @@ public class FtpClientFactory {
             ftpsClient.execPROT("P");
         }
 
+
         client.login(m_configuration.getUser(), m_configuration.getPassword());
         if (!FTPReply.isPositiveCompletion(client.getReplyCode())) {
             throw new IOException("Authentication failed: " + client.getReplyString().trim());
@@ -153,7 +157,7 @@ public class FtpClientFactory {
         // postconfigure connection
         if (!client.setFileTransferMode(FTP.STREAM_TRANSFER_MODE) || !client.setFileStructure(FTP.FILE_STRUCTURE)
                 || !client.setFileType(FTP.BINARY_FILE_TYPE)) {
-            throw new IOException("Failed to correct configure client: " + client.getReplyString().trim());
+            throw new IOException("Failed to correctly configure client: " + client.getReplyString().trim());
         }
 
         return client;
@@ -179,7 +183,13 @@ public class FtpClientFactory {
      * @return FTP client with SSL.
      */
     private FTPSClient createFtpsClient() {
-        final FTPSClient ftpsClient = new FtpsClientWithSslSessionReuse();
+        final FTPSClient ftpsClient;
+        if (m_reuseSslSessions) {
+            ftpsClient = new FtpsClientWithSslSessionReuse(() -> m_reuseSslSessions = false);
+        } else {
+            ftpsClient = new FTPSClient("TLS", false);
+        }
+
         ftpsClient.setUseClientMode(true);
         ftpsClient.setDefaultPort(m_configuration.getPort());
         return ftpsClient;
