@@ -59,6 +59,7 @@ import org.knime.core.node.context.ports.PortsConfiguration;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.filehandling.core.connections.FSCategory;
+import org.knime.filehandling.core.defaultnodesettings.EnumConfig;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.writer.FileOverwritePolicy;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.writer.SettingsModelWriterFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.filtermode.SettingsModelFilterMode.FilterMode;
@@ -106,11 +107,11 @@ final class BinaryObjectsToFilesNodeConfig {
     BinaryObjectsToFilesNodeConfig(final PortsConfiguration portsConfiguration) {
         m_binaryObjectsSelectionColumnModel = new SettingsModelString(CFG_BINARY_COLUMN_NAME, null);
         m_removeBinaryObjColumnModel = new SettingsModelBoolean(CFG_REMOVE_BINARY_COLUMN_NAME, false);
-        m_fileWriterSelectionModel = new SettingsModelWriterFileChooser(CFG_WRITER_FILE_CHOOSER_NAME,
-            portsConfiguration, BinaryObjectsToFilesNodeFactory.CONNECTION_INPUT_PORT_GRP_NAME, FilterMode.FOLDER,
-            FileOverwritePolicy.IGNORE,
-            EnumSet.of(FileOverwritePolicy.FAIL, FileOverwritePolicy.OVERWRITE, FileOverwritePolicy.IGNORE),
-            EnumSet.of(FSCategory.LOCAL, FSCategory.MOUNTPOINT, FSCategory.RELATIVE));
+        m_fileWriterSelectionModel =
+            new SettingsModelWriterFileChooser(CFG_WRITER_FILE_CHOOSER_NAME, portsConfiguration,
+                BinaryObjectsToFilesNodeFactory.CONNECTION_INPUT_PORT_GRP_NAME, EnumConfig.create(FilterMode.FOLDER),
+                EnumConfig.create(FileOverwritePolicy.IGNORE, FileOverwritePolicy.FAIL, FileOverwritePolicy.OVERWRITE),
+                EnumSet.of(FSCategory.LOCAL, FSCategory.MOUNTPOINT, FSCategory.RELATIVE));
         m_generateFileNames = true;
         m_outputFilenameColumnModel = new SettingsModelString(CFG_OUTPUT_FILENAME_COLUMN_NAME, null);
         m_outputFilenameColumnModel.setEnabled(!m_generateFileNames);
