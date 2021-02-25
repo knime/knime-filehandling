@@ -87,8 +87,8 @@ import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.data.location.FSLocationValueMetaData;
-import org.knime.filehandling.core.data.location.cell.FSLocationCellFactory;
-import org.knime.filehandling.core.data.location.cell.MultiFSLocationCellFactory;
+import org.knime.filehandling.core.data.location.cell.SimpleFSLocationCellFactory;
+import org.knime.filehandling.core.data.location.cell.MultiSimpleFSLocationCellFactory;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.writer.FileOverwritePolicy;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.writer.SettingsModelWriterFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.writer.WritePathAccessor;
@@ -285,7 +285,7 @@ final class BinaryObjectsToFilesNodeModel extends NodeModel {
         final DataColumnSpecCreator fsLocationSpec = new DataColumnSpecCreator(
             inSpec.containsName(OUTPUT_LOCATION_COL_NAME) ? getUniqueColumnName(inSpec, OUTPUT_LOCATION_COL_NAME)
                 : OUTPUT_LOCATION_COL_NAME,
-            FSLocationCellFactory.TYPE);
+            SimpleFSLocationCellFactory.TYPE);
 
         fsLocationSpec.addMetaData(metaData, true);
 
@@ -384,7 +384,7 @@ final class BinaryObjectsToFilesNodeModel extends NodeModel {
 
         private final int m_binaryObjColIdx;
 
-        private final MultiFSLocationCellFactory m_multiFSLocationCellFactory;
+        private final MultiSimpleFSLocationCellFactory m_multiFSLocationCellFactory;
 
         private final ExecutionContext m_executionContext;
 
@@ -403,7 +403,7 @@ final class BinaryObjectsToFilesNodeModel extends NodeModel {
             final FileOverwritePolicy overwritePolicy, final FSPath outputPath, final ExecutionContext execContext) {
             super(columnsSpec);
             m_binaryObjColIdx = binaryColId;
-            m_multiFSLocationCellFactory = new MultiFSLocationCellFactory();
+            m_multiFSLocationCellFactory = new MultiSimpleFSLocationCellFactory();
             m_outputPath = outputPath;
             m_executionContext = execContext;
             m_iteratorCount = 0;
