@@ -155,8 +155,7 @@ public class FtpClientFactory {
         }
 
         // postconfigure connection
-        if (!client.setFileTransferMode(FTP.STREAM_TRANSFER_MODE) || !client.setFileStructure(FTP.FILE_STRUCTURE)
-                || !client.setFileType(FTP.BINARY_FILE_TYPE)) {
+        if (!client.setFileTransferMode(FTP.STREAM_TRANSFER_MODE) || !client.setFileType(FTP.BINARY_FILE_TYPE)) {
             throw new IOException("Failed to correctly configure client: " + client.getReplyString().trim());
         }
 
