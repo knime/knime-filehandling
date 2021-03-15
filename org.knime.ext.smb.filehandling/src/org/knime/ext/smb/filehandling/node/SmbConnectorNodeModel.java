@@ -104,7 +104,7 @@ public class SmbConnectorNodeModel extends NodeModel {
         String host = System.getProperty("smb.host");
         String share = System.getProperty("smb.share");
         String username = System.getProperty("smb.username");
-        String password = System.getProperty("smb.password") + "123";
+        String password = System.getProperty("smb.password");
 
         m_fsConnection = new SmbFSConnection(SmbFileSystem.PATH_SEPARATOR, host, share, username, password);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);

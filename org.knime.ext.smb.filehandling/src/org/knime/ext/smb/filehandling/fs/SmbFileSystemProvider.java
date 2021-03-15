@@ -58,11 +58,17 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.knime.ext.smb.filehandling.SmbUtils;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
+
+import com.hierynomus.msfscc.fileinformation.FileAllInformation;
+import com.hierynomus.mssmb2.SMBApiException;
+import com.hierynomus.smbj.share.DiskShare;
 
 /**
  * File system provider for the {@link SmbFileSystem}.
@@ -102,20 +108,36 @@ public class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFi
 
     @Override
     protected Iterator<SmbPath> createPathIterator(final SmbPath dir, final Filter<? super Path> filter) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return new SmbPathIterator(dir, filter);
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected void createDirectoryInternal(final SmbPath dir, final FileAttribute<?>... attrs) throws IOException {
-        // TODO Auto-generated method stub
-
+        DiskShare client = dir.getFileSystem().getClient();
+        client.mkdir(dir.getSmbjPath());
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected BaseFileAttributes fetchAttributesInternal(final SmbPath path, final Class<?> type) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        DiskShare client = path.getFileSystem().getClient();
+        try {
+            FileAllInformation info = client.getFileInformation(path.getSmbjPath());
+            return createAttributes(path, info);
+        } catch (SMBApiException ex) {
+            throw SmbUtils.toIOE(ex, path.toString());
+        }
+    }
+
+    private static BaseFileAttributes createAttributes(final SmbPath path, final FileAllInformation fileInfo) {
+        boolean isDirectory = fileInfo.getStandardInformation().isDirectory();
+        FileTime createdAt = FileTime.fromMillis(fileInfo.getBasicInformation().getCreationTime().toEpochMillis());
+        FileTime modifiedAt = FileTime.fromMillis(fileInfo.getBasicInformation().getChangeTime().toEpochMillis());
+        FileTime accessedAt = FileTime.fromMillis(fileInfo.getBasicInformation().getLastAccessTime().toEpochMillis());
+        long size = fileInfo.getStandardInformation().getAllocationSize();
+
+        return new BaseFileAttributes(!isDirectory, path, modifiedAt, accessedAt, createdAt, size, false, false, null);
     }
 
     @Override

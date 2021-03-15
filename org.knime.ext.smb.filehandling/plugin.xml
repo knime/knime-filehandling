@@ -7,4 +7,10 @@
             category-path="/io/connectors"
             factory-class="org.knime.ext.smb.filehandling.node.SmbConnectorNodeFactory"/>
    </extension>
+   <extension
+         point="org.knime.filehandling.FSTestInitializerProvider">
+      <FSTestInitializerProvider
+            ProviderClass="org.knime.ext.smb.filehandling.testing.SmbFSTestInitializerProvider">
+      </FSTestInitializerProvider>
+   </extension>
 </plugin>

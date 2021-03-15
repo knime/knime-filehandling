@@ -44,48 +44,81 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2021-03-05 (Alexander Bondaletov): created
+ *   2021-03-08 (Alexander Bondaletov): created
  */
-package org.knime.ext.smb.filehandling.fs;
+package org.knime.ext.smb.filehandling;
 
-import java.nio.file.Path;
+import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.base.UnixStylePath;
+import com.hierynomus.msfscc.FileAttributes;
+import com.hierynomus.mssmb2.SMBApiException;
 
 /**
- * {@link Path} implementation for the {@link SmbFileSystem}.
+ * Utility class for Samba
  *
  * @author Alexander Bondaletov
  */
-public class SmbPath extends UnixStylePath {
+public final class SmbUtils {
 
-    /**
-     * Creates path from the given path string.
-     *
-     * @param fileSystem
-     *            the file system.
-     * @param first
-     *            The first name component.
-     * @param more
-     *            More name components. the string representation of the path.
-     */
-    protected SmbPath(final FSFileSystem<?> fileSystem, final String first, final String[] more) {
-        super(fileSystem, first, more);
-    }
-
-    @Override
-    public SmbFileSystem getFileSystem() {
-        return (SmbFileSystem) super.getFileSystem();
+    private SmbUtils() {
     }
 
     /**
-     * Returns the path string in a form accepted by smbj client (e.g without
-     * leading separator)
+     * Converts {@link SMBApiException} to {@link IOException}. Makes an attempt to
+     * derive an appropriate sub-type of {@link IOException} from the status code.
      *
-     * @return The path string.
+     *
+     * @param ex
+     *            The {@link SMBApiException} instance.
+     * @param file
+     *            A string identifying the file or {@code null} if not known.
+     * @return The {@link IOException} instance.
      */
-    public String getSmbjPath() {
-        return String.join(m_pathSeparator, m_pathParts);
+    public static IOException toIOE(final SMBApiException ex, final String file) {
+        return toIOE(ex, file, null);
+    }
+
+    /**
+     * Converts {@link SMBApiException} to {@link IOException}. Makes an attempt to
+     * derive an appropriate sub-type of {@link IOException} from the status code.
+     *
+     *
+     * @param ex
+     *            The {@link SMBApiException} instance.
+     * @param file
+     *            A string identifying the file or {@code null} if not known.
+     * @param other
+     *            A string identifying the other file or {@code null} if not known.
+     * @return The {@link IOException} instance.
+     */
+    public static IOException toIOE(final SMBApiException ex, final String file, final String other) {
+        IOException result = null;
+
+        switch (ex.getStatus()) {
+        case STATUS_OBJECT_NAME_NOT_FOUND:
+        case STATUS_OBJECT_PATH_NOT_FOUND:
+            result = new NoSuchFileException(file, other, ex.getMessage());
+            break;
+        default:
+            result = new IOException(ex.getMessage());
+            break;
+        }
+
+        result.initCause(ex);
+        return result;
+    }
+
+    /**
+     * @param attributes
+     *            The file attributes value.
+     * @return Whether provided file attributes have 'FILE_ATTRIBUTE_DIRECTORY' set.
+     */
+    public static boolean isDirectory(final long attributes) {
+        return checkFileAttribute(attributes, FileAttributes.FILE_ATTRIBUTE_DIRECTORY);
+    }
+
+    private static boolean checkFileAttribute(final long attributes, final FileAttributes flag) {
+        return (attributes & flag.getValue()) != 0;
     }
 }

@@ -64,7 +64,7 @@ import com.hierynomus.smbj.SMBClient;
 import com.hierynomus.smbj.auth.AuthenticationContext;
 import com.hierynomus.smbj.connection.Connection;
 import com.hierynomus.smbj.session.Session;
-import com.hierynomus.smbj.share.Share;
+import com.hierynomus.smbj.share.DiskShare;
 
 /**
  * Samba implementation of the {@link FileSystem} interface.
@@ -79,7 +79,7 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
     public static final String PATH_SEPARATOR = "\\";
 
     private final SMBClient m_client;
-    private final Share m_share;
+    private final DiskShare m_share;
 
 
     /**
@@ -108,13 +108,13 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
 
         Connection connection = m_client.connect(host);
         Session session = connection.authenticate(new AuthenticationContext(username, password.toCharArray(), ""));
-        m_share = session.connectShare(share);
+        m_share = (DiskShare) session.connectShare(share);
     }
 
     /**
      * @return The share client
      */
-    public Share getClient() {
+    public DiskShare getClient() {
         return m_share;
     }
 

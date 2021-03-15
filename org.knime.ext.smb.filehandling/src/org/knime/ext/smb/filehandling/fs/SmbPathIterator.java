@@ -44,48 +44,75 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2021-03-05 (Alexander Bondaletov): created
+ *   2021-03-08 (Alexander Bondaletov): created
  */
 package org.knime.ext.smb.filehandling.fs;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.base.UnixStylePath;
+import org.knime.ext.smb.filehandling.SmbUtils;
+import org.knime.filehandling.core.connections.base.BasePathIterator;
+import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
+
+import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
+import com.hierynomus.smbj.share.DiskShare;
 
 /**
- * {@link Path} implementation for the {@link SmbFileSystem}.
+ * Iterator to iterate through {@link SmbPath}.
  *
  * @author Alexander Bondaletov
  */
-public class SmbPath extends UnixStylePath {
+public class SmbPathIterator extends BasePathIterator<SmbPath> {
+
+    private static final Set<String> RESERVED_NAMES = new HashSet<>(Arrays.asList(".", ".."));
 
     /**
-     * Creates path from the given path string.
-     *
-     * @param fileSystem
-     *            the file system.
-     * @param first
-     *            The first name component.
-     * @param more
-     *            More name components. the string representation of the path.
+     * @param path
+     *            path to iterate.
+     * @param filter
+     *            {@link Filter} instance.
+     * @throws IOException
      */
-    protected SmbPath(final FSFileSystem<?> fileSystem, final String first, final String[] more) {
-        super(fileSystem, first, more);
+    protected SmbPathIterator(final SmbPath path, final Filter<? super Path> filter) throws IOException {
+        super(path, filter);
+
+        @SuppressWarnings("resource")
+        DiskShare client = path.getFileSystem().getClient();
+
+        Iterator<SmbPath> iterator = client.list(path.getSmbjPath()) //
+                .stream() //
+                .filter(this::isRegularPath) //
+                .map(this::toPath) //
+                .iterator();
+
+        setFirstPage(iterator);
     }
 
-    @Override
-    public SmbFileSystem getFileSystem() {
-        return (SmbFileSystem) super.getFileSystem();
+    private boolean isRegularPath(final FileIdBothDirectoryInformation fileInfo) {
+        return !RESERVED_NAMES.contains(fileInfo.getFileName());
     }
 
-    /**
-     * Returns the path string in a form accepted by smbj client (e.g without
-     * leading separator)
-     *
-     * @return The path string.
-     */
-    public String getSmbjPath() {
-        return String.join(m_pathSeparator, m_pathParts);
+    @SuppressWarnings("resource")
+    private SmbPath toPath(final FileIdBothDirectoryInformation fileInfo) {
+        SmbFileSystem fs = m_path.getFileSystem();
+        SmbPath path = (SmbPath) m_path.resolve(fileInfo.getFileName());
+
+        boolean isDirectory = SmbUtils.isDirectory(fileInfo.getFileAttributes());
+        FileTime createdAt = FileTime.fromMillis(fileInfo.getChangeTime().toEpochMillis());
+        FileTime modifiedAt = FileTime.fromMillis(fileInfo.getChangeTime().toEpochMillis());
+        FileTime accessedAt = FileTime.fromMillis(fileInfo.getLastAccessTime().toEpochMillis());
+
+        BaseFileAttributes attrs = new BaseFileAttributes(!isDirectory, path, modifiedAt, accessedAt, createdAt,
+                fileInfo.getAllocationSize(), false, false, null);
+        fs.addToAttributeCache(path, attrs);
+
+        return path;
     }
 }

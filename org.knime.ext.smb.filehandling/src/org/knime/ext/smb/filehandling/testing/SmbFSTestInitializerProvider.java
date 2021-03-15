@@ -44,48 +44,54 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2021-03-05 (Alexander Bondaletov): created
+ *   2021-03-07 (Alexander Bondaletov): created
  */
-package org.knime.ext.smb.filehandling.fs;
+package org.knime.ext.smb.filehandling.testing;
 
-import java.nio.file.Path;
+import java.io.IOException;
+import java.util.Map;
 
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.base.UnixStylePath;
+import org.knime.ext.smb.filehandling.fs.SmbFSConnection;
+import org.knime.ext.smb.filehandling.fs.SmbFileSystem;
+import org.knime.ext.smb.filehandling.fs.SmbFileSystemProvider;
+import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
 /**
- * {@link Path} implementation for the {@link SmbFileSystem}.
+ * FS test initializer provider for Samba
  *
  * @author Alexander Bondaletov
  */
-public class SmbPath extends UnixStylePath {
+public class SmbFSTestInitializerProvider extends DefaultFSTestInitializerProvider {
+    private static final String HOST = "host";
+    private static final String SHARE = "share";
+    private static final String USERNAME = "username";
+    private static final String PASSWORD = "password";
 
-    /**
-     * Creates path from the given path string.
-     *
-     * @param fileSystem
-     *            the file system.
-     * @param first
-     *            The first name component.
-     * @param more
-     *            More name components. the string representation of the path.
-     */
-    protected SmbPath(final FSFileSystem<?> fileSystem, final String first, final String[] more) {
-        super(fileSystem, first, more);
+    @SuppressWarnings("resource")
+    @Override
+    public SmbFSTestInitializer setup(final Map<String, String> configuration) throws IOException {
+        String workDir = generateRandomizedWorkingDir(getParameter(configuration, "workingDirPrefix"),
+                SmbFileSystem.PATH_SEPARATOR);
+
+        SmbFSConnection fsConnection = new SmbFSConnection(workDir, getParameter(configuration, HOST),
+                getParameter(configuration, SHARE), getParameter(configuration, USERNAME),
+                getParameter(configuration, PASSWORD));
+
+        return new SmbFSTestInitializer(fsConnection);
+    }
+
+
+    @Override
+    public String getFSType() {
+        return SmbFileSystemProvider.FS_TYPE;
     }
 
     @Override
-    public SmbFileSystem getFileSystem() {
-        return (SmbFileSystem) super.getFileSystem();
+    public FSLocationSpec createFSLocationSpec(final Map<String, String> configuration) {
+        return SmbFileSystem.createFSLocationSpec(getParameter(configuration, HOST),
+                getParameter(configuration, SHARE));
     }
 
-    /**
-     * Returns the path string in a form accepted by smbj client (e.g without
-     * leading separator)
-     *
-     * @return The path string.
-     */
-    public String getSmbjPath() {
-        return String.join(m_pathSeparator, m_pathParts);
-    }
+
 }
