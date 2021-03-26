@@ -44,60 +44,42 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-11-18 (Bjoern Lohrmann): created
+ *   2021-03-26 (Bjoern Lohrmann, KNIME GmbH): created
  */
 package org.knime.ext.http.filehandling.fs;
 
-import java.io.IOException;
-import java.util.Map;
+import java.net.URI;
 
-import org.knime.core.node.util.FileSystemBrowser;
-import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactoryMapBuilder;
 import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
+import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporterMetaInfo;
+import org.knime.filehandling.core.connections.uriexport.noconfig.NoConfigURIExporterFactory;
 
 /**
- * HTTP file system connection.
+ * {@link URIExporterFactory} that generates http(s) URLs.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpFSConnection implements FSConnection {
-
-    private static final Map<URIExporterID, URIExporterFactory> URI_EXPORTERS = new URIExporterFactoryMapBuilder() //
-            .add(URIExporterIDs.DEFAULT, HttpURIExporterFactory.getInstance()) //
-            .add(HttpURIExporterFactory.EXPORTER_ID, HttpURIExporterFactory.getInstance()) //
-            .build();
-
-    private final HttpFileSystem m_fileSystem;
+public class HttpURIExporterFactory extends NoConfigURIExporterFactory {
 
     /**
-     * @param cfg
-     *            HTTP connection settings.
-     * @throws IOException
+     * Unique identifier of this exporter.
      */
-    public HttpFSConnection(final HttpConnectionConfig cfg) throws IOException {
-        m_fileSystem = new HttpFileSystem(cfg);
+    public static final URIExporterID EXPORTER_ID = new URIExporterID("http-url");
+
+    private static final BaseURIExporterMetaInfo META_INFO = new BaseURIExporterMetaInfo("http(s)",
+            "Generates a http(s) URL.");
+
+    private static final HttpURIExporterFactory INSTANCE = new HttpURIExporterFactory();
+
+    private HttpURIExporterFactory() {
+        super(META_INFO, p -> new URI(((HttpPath) p.toAbsolutePath().normalize()).getRequestUrl()));
     }
 
-    @Override
-    public HttpFileSystem getFileSystem() {
-        return m_fileSystem;
-    }
-
-    @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return null; // browsing is not supported
-    }
-
-    @Override
-    public boolean supportsBrowsing() {
-        return false;
-    }
-
-    @Override
-    public Map<URIExporterID, URIExporterFactory> getURIExporterFactories() {
-        return URI_EXPORTERS;
+    /**
+     * @return the only available instance of this class.
+     */
+    public static HttpURIExporterFactory getInstance() {
+        return INSTANCE;
     }
 }
