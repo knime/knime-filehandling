@@ -59,7 +59,7 @@ import java.util.function.Consumer;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
-import org.knime.ext.ssh.filehandling.fs.SshConnection;
+import org.knime.ext.ssh.filehandling.fs.SshFSConnection;
 import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.filehandling.core.connections.FSLocationSpec;
@@ -107,7 +107,7 @@ public class SshTestInitializerProvider extends DefaultFSTestInitializerProvider
         sshCfg.setConnectionTimeout(Duration.ofSeconds(300)); // set a big time out for easier debugging
 
         // create connection
-        final SshConnection connection = new SshConnection(sshCfg, workingDir);
+        final SshFSConnection connection = new SshFSConnection(sshCfg, workingDir);
         return new SshTestInitializer(connection);
     }
 
