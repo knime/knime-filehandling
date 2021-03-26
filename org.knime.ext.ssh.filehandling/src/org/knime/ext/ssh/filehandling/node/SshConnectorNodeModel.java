@@ -68,7 +68,7 @@ import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.NodeContext;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
-import org.knime.ext.ssh.filehandling.fs.SshConnection;
+import org.knime.ext.ssh.filehandling.fs.SshFSConnection;
 import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.ext.ssh.filehandling.node.auth.KeyFileAuthProviderSettings;
@@ -105,7 +105,7 @@ public class SshConnectorNodeModel extends NodeModel {
 
     private String m_fsId;
 
-    private SshConnection m_connection;
+    private SshFSConnection m_connection;
 
     /**
      * Creates new instance.
@@ -146,13 +146,13 @@ public class SshConnectorNodeModel extends NodeModel {
      * @throws InvalidSettingsException
      * @throws IOException
      */
-    public static SshConnection createConnection(final SshConnectorNodeSettings settings,
+    public static SshFSConnection createConnection(final SshConnectorNodeSettings settings,
             final CredentialsProvider credentials)
             throws InvalidSettingsException, IOException {
         return createConnection(settings, credentials, NOOP_STATUS_CONSUMER);
     }
 
-    private static SshConnection createConnection(final SshConnectorNodeSettings settings,
+    private static SshFSConnection createConnection(final SshConnectorNodeSettings settings,
             final CredentialsProvider credentials,
             final Consumer<StatusMessage> statusConsumer) throws InvalidSettingsException, IOException {
 
@@ -180,7 +180,7 @@ public class SshConnectorNodeModel extends NodeModel {
 
         cfg.setBridge(new DefaultBridge(settings, statusConsumer));
 
-        return new SshConnection(cfg, settings.getWorkingDirectory());
+        return new SshFSConnection(cfg, settings.getWorkingDirectory());
     }
 
     private FileSystemPortObjectSpec createSpec() {

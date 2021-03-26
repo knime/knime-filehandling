@@ -56,7 +56,7 @@ import java.util.function.Consumer;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
-import org.knime.ext.ssh.filehandling.fs.SshConnection;
+import org.knime.ext.ssh.filehandling.fs.SshFSConnection;
 import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
 
 /**
@@ -76,7 +76,7 @@ public class FsTestUtils {
      * @return file system connection.
      * @throws IOException
      */
-    public static SshConnection createConnection() throws IOException {
+    public static SshFSConnection createConnection() throws IOException {
         // working directory
         final String workingDirectory = "/tmp";
         final SshConnectionConfiguration cfg = new SshConnectionConfiguration();
@@ -113,6 +113,6 @@ public class FsTestUtils {
             }
         });
 
-        return new SshConnection(cfg, workingDirectory);
+        return new SshFSConnection(cfg, workingDirectory);
     }
 }

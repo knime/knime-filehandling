@@ -53,7 +53,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
-import org.knime.ext.ssh.filehandling.fs.SshConnection;
+import org.knime.ext.ssh.filehandling.fs.SshFSConnection;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.ext.ssh.filehandling.fs.SshPath;
 import org.knime.filehandling.core.connections.FSConnection;
@@ -73,7 +73,7 @@ public class SshTestInitializer extends DefaultFSTestInitializer<SshPath, SshFil
      * Creates new instance
      * @param connection {@link FSConnection} object.
      */
-    public SshTestInitializer(final SshConnection connection) {
+    public SshTestInitializer(final SshFSConnection connection) {
         super(connection);
         m_fileSystem = connection.getFileSystem();
     }
