@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Tests for SSH Connector
 Bundle-SymbolicName: org.knime.ext.ssh.filehandling.tests
-Bundle-Version: 4.3.0.qualifier
+Bundle-Version: 4.3.3.qualifier
 Automatic-Module-Name: org.knime.ext.ssh.filehandling.tests
-Fragment-Host: org.knime.ext.ssh.filehandling;bundle-version="4.3.0"
+Fragment-Host: org.knime.ext.ssh.filehandling;bundle-version="4.3.3"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: org.junit,
  org.junit.runner,

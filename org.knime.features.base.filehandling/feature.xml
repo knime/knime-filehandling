@@ -2,7 +2,7 @@
 <feature
       id="org.knime.features.base.filehandling"
       label="KNIME Basic File System Connectors"
-      version="4.3.2.qualifier"
+      version="4.3.3.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland"
       plugin="org.knime.base.filehandling">
 
