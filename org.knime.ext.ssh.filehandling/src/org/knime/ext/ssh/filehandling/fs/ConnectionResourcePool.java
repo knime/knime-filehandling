@@ -57,11 +57,11 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.sshd.client.session.ClientSession;
-import org.apache.sshd.client.subsystem.sftp.SftpClient;
-import org.apache.sshd.client.subsystem.sftp.SftpClientFactory;
 import org.apache.sshd.common.channel.exception.SshChannelOpenException;
 import org.apache.sshd.common.session.Session;
 import org.apache.sshd.common.session.SessionListener;
+import org.apache.sshd.sftp.client.SftpClient;
+import org.apache.sshd.sftp.client.SftpClientFactory;
 import org.knime.core.node.NodeLogger;
 
 /**

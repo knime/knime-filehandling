@@ -51,7 +51,7 @@ package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
 
-import org.apache.sshd.client.subsystem.sftp.SftpClient;
+import org.apache.sshd.sftp.client.SftpClient;
 
 /**
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>

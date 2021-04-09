@@ -74,7 +74,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.sshd.client.subsystem.sftp.SftpClient;
+import org.apache.sshd.sftp.client.SftpClient;
 import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;

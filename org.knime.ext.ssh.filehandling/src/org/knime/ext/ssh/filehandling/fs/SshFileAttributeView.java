@@ -58,8 +58,8 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Set;
 
-import org.apache.sshd.client.subsystem.sftp.SftpClient;
 import org.apache.sshd.common.util.GenericUtils;
+import org.apache.sshd.sftp.client.SftpClient;
 
 /**
  * Implementation of {@link PosixFileAttributeView}

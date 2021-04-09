@@ -78,20 +78,20 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.sshd.client.subsystem.sftp.SftpClient;
-import org.apache.sshd.client.subsystem.sftp.SftpClient.Attributes;
-import org.apache.sshd.client.subsystem.sftp.SftpClient.DirEntry;
-import org.apache.sshd.client.subsystem.sftp.SftpClient.OpenMode;
-import org.apache.sshd.client.subsystem.sftp.extensions.CopyFileExtension;
-import org.apache.sshd.client.subsystem.sftp.fs.SftpFileSystem;
-import org.apache.sshd.client.subsystem.sftp.fs.SftpFileSystemProvider;
-import org.apache.sshd.client.subsystem.sftp.impl.SftpRemotePathChannel;
 import org.apache.sshd.common.SshException;
-import org.apache.sshd.common.subsystem.sftp.SftpConstants;
-import org.apache.sshd.common.subsystem.sftp.SftpException;
 import org.apache.sshd.common.util.GenericUtils;
 import org.apache.sshd.common.util.ValidateUtils;
 import org.apache.sshd.common.util.io.IoUtils;
+import org.apache.sshd.sftp.client.SftpClient;
+import org.apache.sshd.sftp.client.SftpClient.Attributes;
+import org.apache.sshd.sftp.client.SftpClient.DirEntry;
+import org.apache.sshd.sftp.client.SftpClient.OpenMode;
+import org.apache.sshd.sftp.client.extensions.CopyFileExtension;
+import org.apache.sshd.sftp.client.fs.SftpFileSystem;
+import org.apache.sshd.sftp.client.fs.SftpFileSystemProvider;
+import org.apache.sshd.sftp.client.impl.SftpRemotePathChannel;
+import org.apache.sshd.sftp.common.SftpConstants;
+import org.apache.sshd.sftp.common.SftpException;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
 /**

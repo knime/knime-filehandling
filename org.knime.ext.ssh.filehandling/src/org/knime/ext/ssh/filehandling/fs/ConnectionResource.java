@@ -49,12 +49,12 @@
 
 package org.knime.ext.ssh.filehandling.fs;
 
-import org.apache.sshd.client.subsystem.sftp.SftpClient;
+import org.apache.sshd.sftp.client.SftpClient;
 
 /**
  * This class holds native SFTP Client and provides the method for safely closed
  * it and check whether or not is Client closed.
- * 
+ *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  *
  */

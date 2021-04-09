@@ -67,14 +67,11 @@ import org.apache.sshd.client.auth.pubkey.UserAuthPublicKeyFactory;
 import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
 import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
 import org.apache.sshd.client.session.ClientSession;
-import org.apache.sshd.common.FactoryManager;
-import org.apache.sshd.common.PropertyResolverUtils;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.common.config.keys.loader.KeyPairResourceParser;
 import org.apache.sshd.common.config.keys.loader.openssh.OpenSSHKeyPairResourceParser;
 import org.apache.sshd.common.config.keys.loader.pem.PEMResourceParserUtils;
-import org.apache.sshd.common.config.keys.loader.putty.PuttyKeyUtils;
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory;
 import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
 import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
@@ -83,6 +80,8 @@ import org.apache.sshd.common.util.security.SecurityUtils;
 import org.apache.sshd.common.util.threads.CloseableExecutorService;
 import org.apache.sshd.common.util.threads.SshThreadPoolExecutor;
 import org.apache.sshd.common.util.threads.SshdThreadFactory;
+import org.apache.sshd.core.CoreModuleProperties;
+import org.apache.sshd.putty.PuttyKeyUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
@@ -197,9 +196,8 @@ public class SftpSessionFactory {
 
             // set idle time out one year for avoid of unexpected
             // session closing
-            PropertyResolverUtils.updateProperty(session, FactoryManager.IDLE_TIMEOUT, TimeUnit.DAYS.toMillis(365));
-            PropertyResolverUtils.updateProperty(session, FactoryManager.AUTH_TIMEOUT,
-                    connectionTimeOut);
+            CoreModuleProperties.IDLE_TIMEOUT.set(session, Duration.ofDays(365));
+            CoreModuleProperties.AUTH_TIMEOUT.set(session, connectionTimeOut);
 
             // do authorization
             session.auth().verify(connectionTimeOut);
