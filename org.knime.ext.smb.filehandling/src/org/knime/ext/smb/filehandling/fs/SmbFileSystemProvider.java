@@ -57,8 +57,11 @@ import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -84,8 +87,7 @@ public class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFi
     @Override
     protected SeekableByteChannel newByteChannelInternal(final SmbPath path, final Set<? extends OpenOption> options,
             final FileAttribute<?>... attrs) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return new SmbSeekableFileChannel(path, options);
     }
 
     @Override
@@ -96,14 +98,13 @@ public class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFi
 
     @Override
     protected InputStream newInputStreamInternal(final SmbPath path, final OpenOption... options) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return new SmbInputStream(path);
     }
 
     @Override
     protected OutputStream newOutputStreamInternal(final SmbPath path, final OpenOption... options) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        final Set<OpenOption> opts = new HashSet<>(Arrays.asList(options));
+        return new SmbOutputStream(path, opts.contains(StandardOpenOption.APPEND));
     }
 
     @Override

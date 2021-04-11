@@ -44,82 +44,66 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2021-03-08 (Alexander Bondaletov): created
+ *   2021-03-13 (Alexander Bondaletov): created
  */
-package org.knime.ext.smb.filehandling;
+package org.knime.ext.smb.filehandling.fs;
 
+import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.nio.file.NoSuchFileException;
+import java.io.OutputStream;
+import java.util.EnumSet;
 
-import com.hierynomus.msfscc.FileAttributes;
+import org.knime.ext.smb.filehandling.SmbUtils;
+
+import com.hierynomus.msdtyp.AccessMask;
+import com.hierynomus.mssmb2.SMB2CreateDisposition;
+import com.hierynomus.mssmb2.SMB2CreateOptions;
+import com.hierynomus.mssmb2.SMB2ShareAccess;
 import com.hierynomus.mssmb2.SMBApiException;
+import com.hierynomus.smbj.share.DiskShare;
+import com.hierynomus.smbj.share.File;
 
 /**
- * Utility class for Samba
+ * {@link OutputStream} implementation to write files to SMB. Actual writing is
+ * delegated to the {@link OutputStream} provided by SMBJ library. The main
+ * purpose of this class is proper opening/closing the {@link File} object and
+ * error handling.
  *
  * @author Alexander Bondaletov
  */
-public final class SmbUtils {
+public class SmbOutputStream extends FilterOutputStream {
 
-    private SmbUtils() {
-    }
-
-    /**
-     * Converts {@link SMBApiException} to {@link IOException}. Makes an attempt to
-     * derive an appropriate sub-type of {@link IOException} from the status code.
-     *
-     *
-     * @param ex
-     *            The {@link SMBApiException} instance.
-     * @param file
-     *            A string identifying the file or {@code null} if not known.
-     * @return The {@link IOException} instance.
-     */
-    public static IOException toIOE(final SMBApiException ex, final String file) {
-        return toIOE(ex, file, null);
-    }
+    private final File m_file;
 
     /**
-     * Converts {@link SMBApiException} to {@link IOException}. Makes an attempt to
-     * derive an appropriate sub-type of {@link IOException} from the status code.
+     * @param path
+     *            The file to write.
+     * @param append
+     *            Whether new data should be appended to existing file.
+     * @throws IOException
      *
-     *
-     * @param ex
-     *            The {@link SMBApiException} instance.
-     * @param file
-     *            A string identifying the file or {@code null} if not known.
-     * @param other
-     *            A string identifying the other file or {@code null} if not known.
-     * @return The {@link IOException} instance.
      */
-    public static IOException toIOE(final SMBApiException ex, final String file, final String other) {
-        IOException result = null;
-
-        switch (ex.getStatus()) {
-        case STATUS_OBJECT_NAME_NOT_FOUND:
-        case STATUS_OBJECT_PATH_NOT_FOUND:
-        case STATUS_OBJECT_NAME_INVALID:
-            result = new NoSuchFileException(file, other, ex.getMessage());
-            break;
-        default:
-            result = new IOException(ex.getMessage());
-            break;
+    @SuppressWarnings("resource")
+    public SmbOutputStream(final SmbPath path, final boolean append) throws IOException {
+        super(null);
+        DiskShare client = path.getFileSystem().getClient();
+        try {
+            m_file = client.openFile(path.getSmbjPath(), EnumSet.of(AccessMask.GENERIC_WRITE), null,
+                    EnumSet.of(SMB2ShareAccess.FILE_SHARE_WRITE),
+                    append ? SMB2CreateDisposition.FILE_OPEN_IF : SMB2CreateDisposition.FILE_OVERWRITE_IF,
+                    EnumSet.noneOf(SMB2CreateOptions.class));
+            out = m_file.getOutputStream(append);
+        } catch (SMBApiException ex) {
+            throw SmbUtils.toIOE(ex, path.toString());
         }
-
-        result.initCause(ex);
-        return result;
     }
 
-    /**
-     * @param attributes
-     *            The file attributes value.
-     * @return Whether provided file attributes have 'FILE_ATTRIBUTE_DIRECTORY' set.
-     */
-    public static boolean isDirectory(final long attributes) {
-        return checkFileAttribute(attributes, FileAttributes.FILE_ATTRIBUTE_DIRECTORY);
-    }
-
-    private static boolean checkFileAttribute(final long attributes, final FileAttributes flag) {
-        return (attributes & flag.getValue()) != 0;
+    @Override
+    public void close() throws IOException {
+        try {
+            super.close();
+        } finally {
+            m_file.close();
+        }
     }
 }

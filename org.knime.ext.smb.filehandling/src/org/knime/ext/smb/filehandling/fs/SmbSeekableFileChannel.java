@@ -44,82 +44,55 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2021-03-08 (Alexander Bondaletov): created
+ *   2021-03-13 (Alexander Bondaletov): created
  */
-package org.knime.ext.smb.filehandling;
+package org.knime.ext.smb.filehandling.fs;
 
 import java.io.IOException;
-import java.nio.file.NoSuchFileException;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.util.Set;
 
-import com.hierynomus.msfscc.FileAttributes;
+import org.knime.ext.smb.filehandling.SmbUtils;
+import org.knime.filehandling.core.connections.base.TempFileSeekableByteChannel;
+
 import com.hierynomus.mssmb2.SMBApiException;
+import com.hierynomus.smbj.utils.SmbFiles;
 
 /**
- * Utility class for Samba
+ * SMB implementation of the {@link TempFileSeekableByteChannel}.
  *
  * @author Alexander Bondaletov
  */
-public final class SmbUtils {
-
-    private SmbUtils() {
-    }
+public class SmbSeekableFileChannel extends TempFileSeekableByteChannel<SmbPath> {
 
     /**
-     * Converts {@link SMBApiException} to {@link IOException}. Makes an attempt to
-     * derive an appropriate sub-type of {@link IOException} from the status code.
+     * Creates new instance.
      *
-     *
-     * @param ex
-     *            The {@link SMBApiException} instance.
      * @param file
-     *            A string identifying the file or {@code null} if not known.
-     * @return The {@link IOException} instance.
+     *            The file for the channel.
+     * @param options
+     *            Open options.
+     * @throws IOException
      */
-    public static IOException toIOE(final SMBApiException ex, final String file) {
-        return toIOE(ex, file, null);
+    protected SmbSeekableFileChannel(final SmbPath file, final Set<? extends OpenOption> options) throws IOException {
+        super(file, options);
     }
 
-    /**
-     * Converts {@link SMBApiException} to {@link IOException}. Makes an attempt to
-     * derive an appropriate sub-type of {@link IOException} from the status code.
-     *
-     *
-     * @param ex
-     *            The {@link SMBApiException} instance.
-     * @param file
-     *            A string identifying the file or {@code null} if not known.
-     * @param other
-     *            A string identifying the other file or {@code null} if not known.
-     * @return The {@link IOException} instance.
-     */
-    public static IOException toIOE(final SMBApiException ex, final String file, final String other) {
-        IOException result = null;
+    @Override
+    public void copyFromRemote(final SmbPath remoteFile, final Path tempFile) throws IOException {
+        Files.copy(remoteFile, tempFile);
+    }
 
-        switch (ex.getStatus()) {
-        case STATUS_OBJECT_NAME_NOT_FOUND:
-        case STATUS_OBJECT_PATH_NOT_FOUND:
-        case STATUS_OBJECT_NAME_INVALID:
-            result = new NoSuchFileException(file, other, ex.getMessage());
-            break;
-        default:
-            result = new IOException(ex.getMessage());
-            break;
+    @SuppressWarnings("resource")
+    @Override
+    public void copyToRemote(final SmbPath remoteFile, final Path tempFile) throws IOException {
+        try {
+            SmbFiles.copy(tempFile.toFile(), remoteFile.getFileSystem().getClient(), remoteFile.getSmbjPath(), true);
+        } catch (SMBApiException ex) {
+            throw SmbUtils.toIOE(ex, remoteFile.getSmbjPath());
         }
-
-        result.initCause(ex);
-        return result;
     }
 
-    /**
-     * @param attributes
-     *            The file attributes value.
-     * @return Whether provided file attributes have 'FILE_ATTRIBUTE_DIRECTORY' set.
-     */
-    public static boolean isDirectory(final long attributes) {
-        return checkFileAttribute(attributes, FileAttributes.FILE_ATTRIBUTE_DIRECTORY);
-    }
-
-    private static boolean checkFileAttribute(final long attributes, final FileAttributes flag) {
-        return (attributes & flag.getValue()) != 0;
-    }
 }
