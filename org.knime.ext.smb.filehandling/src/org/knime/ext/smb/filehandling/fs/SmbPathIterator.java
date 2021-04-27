@@ -62,6 +62,7 @@ import org.knime.filehandling.core.connections.base.BasePathIterator;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
 import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
+import com.hierynomus.mssmb2.SMBApiException;
 import com.hierynomus.smbj.share.DiskShare;
 
 /**
@@ -80,19 +81,22 @@ public class SmbPathIterator extends BasePathIterator<SmbPath> {
      *            {@link Filter} instance.
      * @throws IOException
      */
+    @SuppressWarnings("resource")
     protected SmbPathIterator(final SmbPath path, final Filter<? super Path> filter) throws IOException {
         super(path, filter);
 
-        @SuppressWarnings("resource")
         DiskShare client = path.getFileSystem().getClient();
+        try {
+            Iterator<SmbPath> iterator = client.list(path.getSmbjPath()) //
+                    .stream() //
+                    .filter(this::isRegularPath) //
+                    .map(this::toPath) //
+                    .iterator();
 
-        Iterator<SmbPath> iterator = client.list(path.getSmbjPath()) //
-                .stream() //
-                .filter(this::isRegularPath) //
-                .map(this::toPath) //
-                .iterator();
-
-        setFirstPage(iterator);
+            setFirstPage(iterator);
+        } catch (SMBApiException exb) {
+            throw SmbUtils.toIOE(exb, path.toString());
+        }
     }
 
     private boolean isRegularPath(final FileIdBothDirectoryInformation fileInfo) {

@@ -52,26 +52,37 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 import org.knime.ext.smb.filehandling.SmbUtils;
+import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
+import com.hierynomus.msdtyp.AccessMask;
 import com.hierynomus.msfscc.fileinformation.FileAllInformation;
+import com.hierynomus.mssmb2.SMB2CreateDisposition;
+import com.hierynomus.mssmb2.SMB2CreateOptions;
+import com.hierynomus.mssmb2.SMB2ShareAccess;
 import com.hierynomus.mssmb2.SMBApiException;
+import com.hierynomus.protocol.commons.buffer.Buffer.BufferException;
+import com.hierynomus.smbj.share.DiskEntry;
 import com.hierynomus.smbj.share.DiskShare;
+import com.hierynomus.smbj.share.File;
 
 /**
  * File system provider for the {@link SmbFileSystem}.
@@ -90,10 +101,63 @@ public class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFi
         return new SmbSeekableFileChannel(path, options);
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected void copyInternal(final SmbPath source, final SmbPath target, final CopyOption... options) throws IOException {
-        // TODO Auto-generated method stub
+        if (FSFiles.isDirectory(source)) {
+            if (!existsCached(target)) {
+                createDirectory(target);
+            }
+        } else {
+            DiskShare client = source.getFileSystem().getClient();
+            File srcFile = null;
+            File dstFile = null;
+            try {
+                srcFile = client.openFile(source.getSmbjPath(), EnumSet.of(AccessMask.GENERIC_READ), null,
+                        EnumSet.of(SMB2ShareAccess.FILE_SHARE_READ), SMB2CreateDisposition.FILE_OPEN, null);
+                dstFile = client.openFile(target.getSmbjPath(), EnumSet.of(AccessMask.GENERIC_WRITE), null,
+                        EnumSet.of(SMB2ShareAccess.FILE_SHARE_WRITE), SMB2CreateDisposition.FILE_OVERWRITE_IF,
+                        EnumSet.noneOf(SMB2CreateOptions.class));
+                srcFile.remoteCopyTo(dstFile);
+            } catch (BufferException ex) {
+                throw new IOException(ex);
+            } catch (SMBApiException ex) {
+                throw SmbUtils.toIOE(ex, source.toString(), target.toString());
+            } finally {
+                if (srcFile != null) {
+                    srcFile.close();
+                }
+                if (dstFile != null) {
+                    dstFile.close();
+                }
+            }
+        }
+    }
 
+    @Override
+    protected void moveInternal(final SmbPath source, final SmbPath target, final CopyOption... options)
+            throws IOException {
+        try (DiskEntry file = openFileForRename(source)) {
+            file.rename(target.getSmbjPath(), true);
+        } catch (SMBApiException ex) {
+            throw SmbUtils.toIOE(ex, source.toString(), target.toString());
+        }
+    }
+
+    @SuppressWarnings("resource")
+    private static DiskEntry openFileForRename(final SmbPath path) throws AccessDeniedException {
+        String pathString = path.getSmbjPath();
+        Set<AccessMask> accessMask = EnumSet.of(AccessMask.DELETE);
+        Set<SMB2ShareAccess> shareAccess = EnumSet.of(SMB2ShareAccess.FILE_SHARE_DELETE);
+        SMB2CreateDisposition createDisposition = SMB2CreateDisposition.FILE_OPEN;
+
+        DiskShare client = path.getFileSystem().getClient();
+
+        if (FSFiles.isDirectory(path)) {
+            return client.openDirectory(pathString, accessMask, null, shareAccess, createDisposition, null);
+        } else {
+            return client.openFile(pathString, accessMask, null, shareAccess, createDisposition, null);
+        }
     }
 
     @Override
@@ -147,10 +211,19 @@ public class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFi
 
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected void deleteInternal(final SmbPath path) throws IOException {
-        // TODO Auto-generated method stub
-
+        DiskShare client = path.getFileSystem().getClient();
+        try {
+            if (Files.isDirectory(path)) {
+                client.rmdir(path.getSmbjPath(), false);
+            } else {
+                client.rm(path.getSmbjPath());
+            }
+        } catch (SMBApiException ex) {
+            throw SmbUtils.toIOE(ex, path.toString());
+        }
     }
 
 }
