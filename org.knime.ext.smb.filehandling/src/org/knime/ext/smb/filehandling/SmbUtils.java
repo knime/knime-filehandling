@@ -49,6 +49,7 @@
 package org.knime.ext.smb.filehandling;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 
 import com.hierynomus.msfscc.FileAttributes;
@@ -100,6 +101,12 @@ public final class SmbUtils {
         case STATUS_OBJECT_PATH_NOT_FOUND:
         case STATUS_OBJECT_NAME_INVALID:
             result = new NoSuchFileException(file, other, ex.getMessage());
+            break;
+        case STATUS_ACCESS_DENIED:
+        case STATUS_SHARING_VIOLATION:
+        case STATUS_CANNOT_DELETE:
+        case STATUS_FILE_ENCRYPTED:
+            result = new AccessDeniedException(file, other, ex.getMessage());
             break;
         default:
             result = new IOException(ex.getMessage());

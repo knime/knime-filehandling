@@ -180,7 +180,11 @@ public class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFi
     @Override
     protected void createDirectoryInternal(final SmbPath dir, final FileAttribute<?>... attrs) throws IOException {
         DiskShare client = dir.getFileSystem().getClient();
-        client.mkdir(dir.getSmbjPath());
+        try {
+            client.mkdir(dir.getSmbjPath());
+        } catch (SMBApiException ex) {
+            throw SmbUtils.toIOE(ex, dir.toString());
+        }
     }
 
     @SuppressWarnings("resource")
