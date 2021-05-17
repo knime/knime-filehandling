@@ -55,6 +55,8 @@ import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSFileSystem;
 import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
 
+import com.hierynomus.smbj.auth.AuthenticationContext;
+
 /**
  * Samba implementation of the {@link FSConnection} interface.
  *
@@ -72,16 +74,14 @@ public class SmbFSConnection implements FSConnection {
      *            The Samba host.
      * @param share
      *            The Samba share name.
-     * @param username
-     *            The user name.
-     * @param password
-     *            The user password.
+     * @param authContext
+     *            The authentication context.
      * @throws IOException
      *
      */
     public SmbFSConnection(final String workingDirectory, final String host, final String share,
-            final String username, final String password) throws IOException {
-        m_filesystem = new SmbFileSystem(CACHE_TTL, workingDirectory, host, share, username, password);
+            final AuthenticationContext authContext) throws IOException {
+        m_filesystem = new SmbFileSystem(CACHE_TTL, workingDirectory, host, share, authContext);
     }
 
     @Override

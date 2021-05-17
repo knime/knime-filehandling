@@ -50,7 +50,18 @@ package org.knime.ext.smb.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.AccessController;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
+import javax.security.auth.Subject;
+import javax.security.auth.kerberos.KerberosPrincipal;
+
+import org.ietf.jgss.GSSCredential;
+import org.ietf.jgss.GSSManager;
+import org.ietf.jgss.GSSName;
+import org.ietf.jgss.Oid;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -66,6 +77,11 @@ import org.knime.ext.smb.filehandling.fs.SmbFileSystem;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
+import org.knime.kerberos.api.KerberosCallback;
+import org.knime.kerberos.api.KerberosProvider;
+
+import com.hierynomus.smbj.auth.AuthenticationContext;
+import com.hierynomus.smbj.auth.GSSAuthenticationContext;
 
 /**
  * Samba connector node.
@@ -103,13 +119,32 @@ public class SmbConnectorNodeModel extends NodeModel {
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         String host = System.getProperty("smb.host");
         String share = System.getProperty("smb.share");
-        String username = System.getProperty("smb.username");
-        String password = System.getProperty("smb.password");
 
-        m_fsConnection = new SmbFSConnection(SmbFileSystem.PATH_SEPARATOR, host, share, username, password);
+        m_fsConnection = new SmbFSConnection(SmbFileSystem.PATH_SEPARATOR, host, share, createAuthContext(exec));
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
         return new PortObject[] { new FileSystemPortObject(createSpec(host, share)) };
+    }
+
+    private static AuthenticationContext createAuthContext(final ExecutionMonitor exec) throws Exception {
+        boolean useKerberos = Boolean.valueOf(System.getProperty("smb.kerberos", "false"));
+        if (useKerberos) {
+            return createKerberosAuthContext(exec);
+        } else {
+            return createUsernamePasswordAuthContext();
+        }
+    }
+
+    private static AuthenticationContext createUsernamePasswordAuthContext() {
+        String username = System.getProperty("smb.username");
+        String password = System.getProperty("smb.password");
+
+        return new AuthenticationContext(username, password.toCharArray(), "");
+    }
+
+    private static AuthenticationContext createKerberosAuthContext(final ExecutionMonitor exec) throws Exception {
+        KerberosProvider.ensureInitialized();
+        return KerberosProvider.doWithKerberosAuthBlocking(new SmbKerberosCallback(), exec);
     }
 
     @Override
@@ -150,4 +185,38 @@ public class SmbConnectorNodeModel extends NodeModel {
 
     }
 
+    private static class SmbKerberosCallback implements KerberosCallback<GSSAuthenticationContext> {
+
+        private static final String SPNEGO_OID = "1.3.6.1.5.5.2";
+        private static final String KERBEROS5_OID = "1.2.840.113554.1.2.2";
+
+        @Override
+        public GSSAuthenticationContext doAuthenticated() throws Exception {
+            Subject subject = Subject.getSubject(AccessController.getContext());
+
+            KerberosPrincipal krbPrincipal = subject.getPrincipals(KerberosPrincipal.class).iterator().next();
+
+            Oid spnego = new Oid(SPNEGO_OID);
+            Oid kerberos5 = new Oid(KERBEROS5_OID);
+
+            final GSSManager manager = GSSManager.getInstance();
+
+            final GSSName name = manager.createName(krbPrincipal.toString(), GSSName.NT_USER_NAME);
+            Set<Oid> mechs = new HashSet<>(Arrays.asList(manager.getMechsForName(name.getStringNameType())));
+            final Oid mech;
+            if (mechs.contains(kerberos5)) {
+                mech = kerberos5;
+            } else if (mechs.contains(spnego)) {
+                mech = spnego;
+            } else {
+                throw new IllegalArgumentException("No mechanism found");
+            }
+
+            GSSCredential creds = manager.createCredential(name, GSSCredential.DEFAULT_LIFETIME, mech,
+                            GSSCredential.INITIATE_ONLY);
+
+            return new GSSAuthenticationContext(krbPrincipal.getName(), krbPrincipal.getRealm(), subject, creds);
+        }
+
+    }
 }

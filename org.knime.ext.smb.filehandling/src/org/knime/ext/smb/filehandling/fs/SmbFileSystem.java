@@ -91,23 +91,21 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
      *            The Samba host.
      * @param share
      *            The Samba share name.
-     * @param username
-     *            The user name.
-     * @param password
-     *            The user password.
+     * @param authContext
+     *            The authentication context.
      * @throws IOException
      */
     @SuppressWarnings("resource")
     protected SmbFileSystem(
             final long cacheTTL, final String workingDirectory, final String host, final String share,
-            final String username, final String password) throws IOException {
+            final AuthenticationContext authContext) throws IOException {
         super(new SmbFileSystemProvider(), createUri(host, share), cacheTTL, workingDirectory,
                 createFSLocationSpec(host, share));
 
         m_client = new SMBClient();
 
         Connection connection = m_client.connect(host);
-        Session session = connection.authenticate(new AuthenticationContext(username, password.toCharArray(), ""));
+        Session session = connection.authenticate(authContext);
         m_share = (DiskShare) session.connectShare(share);
     }
 

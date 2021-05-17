@@ -57,6 +57,8 @@ import org.knime.ext.smb.filehandling.fs.SmbFileSystemProvider;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
+import com.hierynomus.smbj.auth.AuthenticationContext;
+
 /**
  * FS test initializer provider for Samba
  *
@@ -73,10 +75,11 @@ public class SmbFSTestInitializerProvider extends DefaultFSTestInitializerProvid
     public SmbFSTestInitializer setup(final Map<String, String> configuration) throws IOException {
         String workDir = generateRandomizedWorkingDir(getParameter(configuration, "workingDirPrefix"),
                 SmbFileSystem.PATH_SEPARATOR);
+        AuthenticationContext authContext = new AuthenticationContext(getParameter(configuration, USERNAME),
+                getParameter(configuration, PASSWORD).toCharArray(), "");
 
         SmbFSConnection fsConnection = new SmbFSConnection(workDir, getParameter(configuration, HOST),
-                getParameter(configuration, SHARE), getParameter(configuration, USERNAME),
-                getParameter(configuration, PASSWORD));
+                getParameter(configuration, SHARE), authContext);
 
         return new SmbFSTestInitializer(fsConnection);
     }
