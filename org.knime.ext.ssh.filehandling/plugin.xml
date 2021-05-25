@@ -8,10 +8,4 @@
             factory-class="org.knime.ext.ssh.filehandling.node.SshConnectorNodeFactory"
             id="org.knime.ext.ssh.filehandling.nodes.connection.SshConnectorNodeFactory"/>
    </extension>
-   <extension
-         point="org.knime.filehandling.FSTestInitializerProvider">
-      <FSTestInitializerProvider
-            ProviderClass="org.knime.ext.ssh.filehandling.testing.SshTestInitializerProvider">
-      </FSTestInitializerProvider>
-   </extension>
 </plugin>
