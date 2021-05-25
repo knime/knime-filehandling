@@ -485,11 +485,17 @@ public final class NativeSftpProviderUtils {
     }
 
     private static BaseFileAttributes toBaseFileAttributes(final SshPath path, final Attributes attrs) {
+        // SFTP v3 does not provide ctime file attributes, see
+        // https://datatracker.ietf.org/doc/html/draft-ietf-secsh-filexfer-02#section-5
+        // SFTP v3 is by far the most widely used SFTP version (e.g. OpenSSH only
+        // supports v3)
+        final FileTime creationTime = attrs.getCreateTime() != null ? attrs.getCreateTime() : attrs.getModifyTime();
+
         return new BaseFileAttributes(attrs.isRegularFile(), //
                 path, //
                 attrs.getModifyTime(), //
                 attrs.getAccessTime(), //
-                attrs.getCreateTime(), //
+                creationTime, //
                 attrs.getSize(), //
                 attrs.isSymbolicLink(), //
                 attrs.isOther(), //
