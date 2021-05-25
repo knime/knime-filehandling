@@ -425,6 +425,10 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      */
     @Override
     protected boolean isHiddenInternal(final SshPath path) throws IOException {
-        return path != null && path.getFileName().toString().startsWith(".");
+        if (path.isRoot()) {
+            return false;
+        } else {
+            return path != null && path.getFileName().toString().startsWith(".");
+        }
     }
 }
