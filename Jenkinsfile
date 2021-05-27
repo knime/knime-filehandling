@@ -36,7 +36,7 @@ try {
                         'knime-filehandling', 'knime-datageneration', 'knime-xml',
                         'knime-js-core', 'knime-js-base', 'knime-server-client', 'knime-com-shared',
                         'knime-productivity-oss', 'knime-reporting', 'knime-jfreechart', 'knime-distance',
-                        'knime-streaming'
+                        'knime-streaming', 'knime-kerberos'
                     ]
                 ],
                 sidecarContainers: [
@@ -48,7 +48,7 @@ try {
             workflowTests.runFilehandlingTests (
                 dependencies: [
                     repositories: [
-                        "knime-filehandling",
+                        "knime-filehandling", "knime-kerberos"
                     ]
                 ],
             )
