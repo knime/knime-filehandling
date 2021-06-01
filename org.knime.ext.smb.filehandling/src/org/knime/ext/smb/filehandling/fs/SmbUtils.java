@@ -46,7 +46,7 @@
  * History
  *   2021-03-08 (Alexander Bondaletov): created
  */
-package org.knime.ext.smb.filehandling;
+package org.knime.ext.smb.filehandling.fs;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -56,11 +56,11 @@ import com.hierynomus.msfscc.FileAttributes;
 import com.hierynomus.mssmb2.SMBApiException;
 
 /**
- * Utility class for Samba
+ * Utility class for the SMB file system.
  *
  * @author Alexander Bondaletov
  */
-public final class SmbUtils {
+final class SmbUtils {
 
     private SmbUtils() {
     }

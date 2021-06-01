@@ -52,12 +52,11 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.knime.ext.smb.filehandling.fs.SmbFSConnection;
-import org.knime.ext.smb.filehandling.fs.SmbFileSystem;
-import org.knime.ext.smb.filehandling.fs.SmbFileSystemProvider;
+import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig;
+import org.knime.ext.smb.filehandling.node.SmbConnectorSettings.ConnectionMode;
 import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
-
-import com.hierynomus.smbj.auth.AuthenticationContext;
 
 /**
  * FS test initializer provider for Samba
@@ -73,28 +72,35 @@ public class SmbFSTestInitializerProvider extends DefaultFSTestInitializerProvid
     @SuppressWarnings("resource")
     @Override
     public SmbFSTestInitializer setup(final Map<String, String> configuration) throws IOException {
-        String workDir = generateRandomizedWorkingDir(getParameter(configuration, "workingDirPrefix"),
-                SmbFileSystem.PATH_SEPARATOR);
-        AuthenticationContext authContext = new AuthenticationContext(getParameter(configuration, USERNAME),
-                getParameter(configuration, PASSWORD).toCharArray(), "");
-
-        SmbFSConnection fsConnection = new SmbFSConnection(workDir, getParameter(configuration, HOST),
-                getParameter(configuration, SHARE), authContext);
-
+        final SmbFSConnectionConfig config = createFSConnectionConfig(configuration);
+        final SmbFSConnection fsConnection = new SmbFSConnection(config);
         return new SmbFSTestInitializer(fsConnection);
+    }
+
+    private SmbFSConnectionConfig createFSConnectionConfig(final Map<String, String> configuration) {
+        final String workDir = generateRandomizedWorkingDir(getParameter(configuration, "workingDirPrefix"),
+                SmbFSConnection.PATH_SEPARATOR);
+
+        final SmbFSConnectionConfig config = new SmbFSConnectionConfig();
+        config.setConnectionMode(ConnectionMode.FILESERVER);
+        config.setFileserverHost(getParameter(configuration, HOST));
+        config.setFileserverPort(445);
+        config.setFileserverShare(getParameter(configuration, SHARE));
+        config.setAuthType(StandardAuthTypes.USER_PASSWORD);
+        config.setUser(getParameter(configuration, USERNAME));
+        config.setPassword(getParameter(configuration, PASSWORD));
+        config.setWorkingDirectory(workDir);
+        return config;
     }
 
 
     @Override
     public String getFSType() {
-        return SmbFileSystemProvider.FS_TYPE;
+        return SmbFSConnection.FS_TYPE;
     }
 
     @Override
     public FSLocationSpec createFSLocationSpec(final Map<String, String> configuration) {
-        return SmbFileSystem.createFSLocationSpec(getParameter(configuration, HOST),
-                getParameter(configuration, SHARE));
+        return createFSConnectionConfig(configuration).createFSLocationSpec();
     }
-
-
 }

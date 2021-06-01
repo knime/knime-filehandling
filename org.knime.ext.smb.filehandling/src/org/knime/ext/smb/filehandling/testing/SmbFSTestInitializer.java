@@ -52,7 +52,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
-import java.util.Stack;
+import java.util.LinkedList;
 
 import org.knime.ext.smb.filehandling.fs.SmbFileSystem;
 import org.knime.ext.smb.filehandling.fs.SmbPath;
@@ -109,15 +109,15 @@ public class SmbFSTestInitializer extends DefaultFSTestInitializer<SmbPath, SmbF
     }
 
     private void ensureDirectoryExists(SmbPath dir) {
-        Stack<String> paths = new Stack<>();
+        final LinkedList<String> paths = new LinkedList<>();
 
         while (!dir.isRoot() && !m_client.folderExists(dir.getSmbjPath())) {
-            paths.push(dir.getSmbjPath());
+            paths.add(dir.getSmbjPath());
             dir = (SmbPath) dir.getParent();
         }
 
         while (!paths.isEmpty()) {
-            m_client.mkdir(paths.pop());
+            m_client.mkdir(paths.removeLast());
         }
     }
 

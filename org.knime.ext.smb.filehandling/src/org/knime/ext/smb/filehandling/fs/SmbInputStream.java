@@ -53,8 +53,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.EnumSet;
 
-import org.knime.ext.smb.filehandling.SmbUtils;
-
 import com.hierynomus.msdtyp.AccessMask;
 import com.hierynomus.mssmb2.SMB2CreateDisposition;
 import com.hierynomus.mssmb2.SMB2ShareAccess;
@@ -70,7 +68,7 @@ import com.hierynomus.smbj.share.File;
  *
  * @author Alexander Bondaletov
  */
-public class SmbInputStream extends FilterInputStream {
+class SmbInputStream extends FilterInputStream {
 
     private final File m_file;
 

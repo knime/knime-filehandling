@@ -70,7 +70,7 @@ public class SmbPath extends UnixStylePath {
      * @param more
      *            More name components. the string representation of the path.
      */
-    protected SmbPath(final FSFileSystem<?> fileSystem, final String first, final String[] more) {
+    SmbPath(final FSFileSystem<?> fileSystem, final String first, final String[] more) {
         super(fileSystem, first, more);
     }
 

@@ -49,21 +49,26 @@
 package org.knime.ext.smb.filehandling.fs;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
-import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
-import org.knime.filehandling.core.connections.FSCategory;
-import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.core.node.ExecutionContext;
+import org.knime.core.node.NodeLogger;
+import org.knime.ext.smb.filehandling.node.SmbConnectorSettings.ConnectionMode;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
 import com.hierynomus.smbj.SMBClient;
+import com.hierynomus.smbj.SmbConfig;
+import com.hierynomus.smbj.SmbConfig.Builder;
 import com.hierynomus.smbj.auth.AuthenticationContext;
-import com.hierynomus.smbj.connection.Connection;
-import com.hierynomus.smbj.session.Session;
 import com.hierynomus.smbj.share.DiskShare;
 
 /**
@@ -73,40 +78,95 @@ import com.hierynomus.smbj.share.DiskShare;
  */
 public class SmbFileSystem extends BaseFileSystem<SmbPath> {
 
-    /**
-     * Character to use as path separator
-     */
-    public static final String PATH_SEPARATOR = "\\";
+    private static final NodeLogger LOG = NodeLogger.getLogger(SmbFileSystem.class);
 
     private final SMBClient m_client;
     private final DiskShare m_share;
 
-
     /**
+     * Constructor.
+     *
      * @param cacheTTL
      *            The time to live for cached elements in milliseconds.
-     * @param workingDirectory
-     *            The working directory.
-     * @param host
-     *            The Samba host.
-     * @param share
-     *            The Samba share name.
-     * @param authContext
-     *            The authentication context.
+     * @param config
+     *            The file system configuration
+     * @param exec
+     *            An optional {@link ExecutionContext} to be able to cancel Kerberos
+     *            authentication. May be null.
      * @throws IOException
      */
     @SuppressWarnings("resource")
-    protected SmbFileSystem(
-            final long cacheTTL, final String workingDirectory, final String host, final String share,
-            final AuthenticationContext authContext) throws IOException {
-        super(new SmbFileSystemProvider(), createUri(host, share), cacheTTL, workingDirectory,
-                createFSLocationSpec(host, share));
+    protected SmbFileSystem(final long cacheTTL, final SmbFSConnectionConfig config, final ExecutionContext exec)
+            throws IOException {
+        super(new SmbFileSystemProvider(), //
+                createUri(), //
+                cacheTTL, //
+                config.getWorkingDirectory(), //
+                config.createFSLocationSpec());
 
-        m_client = new SMBClient();
+        Builder builder = SmbConfig.builder() //
+                .withMultiProtocolNegotiate(true) //
+                .withDfsEnabled(true) //
+                .withTimeout(config.getTimeout().getSeconds(), TimeUnit.SECONDS);
 
-        Connection connection = m_client.connect(host);
-        Session session = connection.authenticate(authContext);
-        m_share = (DiskShare) session.connectShare(share);
+        final AuthenticationContext authContext = AuthenticationContextFactory.create(config, exec);
+        final boolean usingKerberos = config.getAuthType() == SmbFSConnectionConfig.KERBEROS_AUTH_TYPE;
+
+        m_client = new SMBClient(builder.build());
+
+        if (config.getConnectionMode() == ConnectionMode.DOMAIN) {
+            final String host = canonicalizeIfNecessary(config.getDomainName(), usingKerberos);
+            m_share = (DiskShare) m_client.connect(host) //
+                    .authenticate(authContext) //
+                    .connectShare(config.getDomainNamespace());
+        } else {
+            final String host = canonicalizeIfNecessary(config.getFileserverHost(), usingKerberos);
+            m_share = (DiskShare) m_client
+                    .connect(host, config.getFileserverPort()) //
+                    .authenticate(authContext) //
+                    .connectShare(config.getFileserverShare());
+        }
+    }
+
+    private static final Pattern IPV4_PATTERN = Pattern.compile("(?:[0-9]{1,3}\\.){3}[0-9]{1,3}");
+
+    private static final Pattern IPV6_PATTERN = Pattern.compile("(?:[A-F0-9]{0,4}:){7}[A-F0-9]{0,4}");
+
+    private static String canonicalizeIfNecessary(final String hostOrDomain, final boolean usingKerberos) {
+        if (!usingKerberos) {
+            return hostOrDomain;
+        }
+
+        try {
+            // when mode=FILESERVER, this is meant to resolve host -> host.mydomain.com
+            // when mode=DOMAIN, then smbj needs to connect to the domain controller which
+            // can be obtained by resolving the domain to a canonical hostname.
+            final String canonicalized = InetAddress.getByName(hostOrDomain).getCanonicalHostName();
+
+            // if the canonical hostname is an IP address we may be making things worse, so
+            // fall back to user-provided value
+            if (canonicalized.equals(hostOrDomain) //
+                    || IPV4_PATTERN.matcher(canonicalized).matches() //
+                    || IPV6_PATTERN.matcher(canonicalized).matches()) {
+                return hostOrDomain;
+            } else {
+                LOG.debugWithFormat("Making SMB connection to canonicalized host/domain %s (instead of %s)",
+                        canonicalized, hostOrDomain);
+                return canonicalized;
+            }
+
+        } catch (UnknownHostException | SecurityException e) { // NOSONAR if canonicalization not possible, then
+                                                               // fallback to user-provided value
+            return hostOrDomain;
+        }
+    }
+
+    private static URI createUri() {
+        try {
+            return new URI(SmbFSConnection.FS_TYPE, UUID.randomUUID().toString(), null, null);
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 
     /**
@@ -114,26 +174,6 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
      */
     public DiskShare getClient() {
         return m_share;
-    }
-
-    private static URI createUri(final String host, final String share) {
-        try {
-            return new URI(SmbFileSystemProvider.FS_TYPE, host, "/" + share, null);
-        } catch (URISyntaxException ex) {
-            throw new IllegalArgumentException(ex);
-        }
-    }
-
-    /**
-     * @param host
-     *            The Samba host.
-     * @param share
-     *            The Samba share name.
-     * @return the {@link FSLocationSpec} for a ADLS file system.
-     */
-    public static DefaultFSLocationSpec createFSLocationSpec(final String host, final String share) {
-        return new DefaultFSLocationSpec(FSCategory.CONNECTED, //
-                String.format("%s:\\\\%s\\", SmbFileSystemProvider.FS_TYPE, host, share));
     }
 
     @Override
@@ -148,12 +188,11 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
 
     @Override
     public String getSeparator() {
-        return PATH_SEPARATOR;
+        return SmbFSConnection.PATH_SEPARATOR;
     }
 
     @Override
     public Iterable<Path> getRootDirectories() {
-        return Collections.singletonList(getPath(PATH_SEPARATOR));
+        return Collections.singletonList(getPath(SmbFSConnection.PATH_SEPARATOR));
     }
-
 }

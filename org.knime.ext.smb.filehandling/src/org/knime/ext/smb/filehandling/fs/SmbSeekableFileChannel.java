@@ -54,7 +54,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Set;
 
-import org.knime.ext.smb.filehandling.SmbUtils;
 import org.knime.filehandling.core.connections.base.TempFileSeekableByteChannel;
 
 import com.hierynomus.mssmb2.SMBApiException;
@@ -65,7 +64,7 @@ import com.hierynomus.smbj.utils.SmbFiles;
  *
  * @author Alexander Bondaletov
  */
-public class SmbSeekableFileChannel extends TempFileSeekableByteChannel<SmbPath> {
+class SmbSeekableFileChannel extends TempFileSeekableByteChannel<SmbPath> {
 
     /**
      * Creates new instance.
@@ -76,7 +75,7 @@ public class SmbSeekableFileChannel extends TempFileSeekableByteChannel<SmbPath>
      *            Open options.
      * @throws IOException
      */
-    protected SmbSeekableFileChannel(final SmbPath file, final Set<? extends OpenOption> options) throws IOException {
+    SmbSeekableFileChannel(final SmbPath file, final Set<? extends OpenOption> options) throws IOException {
         super(file, options);
     }
 

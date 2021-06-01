@@ -68,7 +68,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.knime.ext.smb.filehandling.SmbUtils;
 import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
@@ -89,11 +88,7 @@ import com.hierynomus.smbj.share.File;
  *
  * @author Alexander Bondaletov
  */
-public class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFileSystem> {
-    /**
-     * Samba URI scheme.
-     */
-    public static final String FS_TYPE = "smb";
+class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFileSystem> {
 
     @Override
     protected SeekableByteChannel newByteChannelInternal(final SmbPath path, final Set<? extends OpenOption> options,
@@ -211,8 +206,7 @@ public class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFi
 
     @Override
     protected void checkAccessInternal(final SmbPath path, final AccessMode... modes) throws IOException {
-        // TODO Auto-generated method stub
-
+        // nothing to do
     }
 
     @SuppressWarnings("resource")

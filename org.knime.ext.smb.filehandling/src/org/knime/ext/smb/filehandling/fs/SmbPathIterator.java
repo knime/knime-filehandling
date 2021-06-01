@@ -57,7 +57,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.knime.ext.smb.filehandling.SmbUtils;
 import org.knime.filehandling.core.connections.base.BasePathIterator;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
@@ -70,7 +69,7 @@ import com.hierynomus.smbj.share.DiskShare;
  *
  * @author Alexander Bondaletov
  */
-public class SmbPathIterator extends BasePathIterator<SmbPath> {
+class SmbPathIterator extends BasePathIterator<SmbPath> {
 
     private static final Set<String> RESERVED_NAMES = new HashSet<>(Arrays.asList(".", ".."));
 
@@ -82,24 +81,24 @@ public class SmbPathIterator extends BasePathIterator<SmbPath> {
      * @throws IOException
      */
     @SuppressWarnings("resource")
-    protected SmbPathIterator(final SmbPath path, final Filter<? super Path> filter) throws IOException {
+    SmbPathIterator(final SmbPath path, final Filter<? super Path> filter) throws IOException {
         super(path, filter);
 
         DiskShare client = path.getFileSystem().getClient();
         try {
             Iterator<SmbPath> iterator = client.list(path.getSmbjPath()) //
                     .stream() //
-                    .filter(this::isRegularPath) //
+                    .filter(SmbPathIterator::isRegularPath) //
                     .map(this::toPath) //
                     .iterator();
 
-            setFirstPage(iterator);
+            setFirstPage(iterator); // NOSONAR standard pattern
         } catch (SMBApiException exb) {
             throw SmbUtils.toIOE(exb, path.toString());
         }
     }
 
-    private boolean isRegularPath(final FileIdBothDirectoryInformation fileInfo) {
+    private static boolean isRegularPath(final FileIdBothDirectoryInformation fileInfo) {
         return !RESERVED_NAMES.contains(fileInfo.getFileName());
     }
 

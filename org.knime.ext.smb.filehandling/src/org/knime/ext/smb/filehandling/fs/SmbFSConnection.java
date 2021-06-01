@@ -50,12 +50,11 @@ package org.knime.ext.smb.filehandling.fs;
 
 import java.io.IOException;
 
+import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSFileSystem;
 import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
-
-import com.hierynomus.smbj.auth.AuthenticationContext;
 
 /**
  * Samba implementation of the {@link FSConnection} interface.
@@ -63,25 +62,47 @@ import com.hierynomus.smbj.auth.AuthenticationContext;
  * @author Alexander Bondaletov
  */
 public class SmbFSConnection implements FSConnection {
+
+    /**
+     * Samba URI scheme.
+     */
+    public static final String FS_TYPE = "smb";
+
+    /**
+     * Character to use as path separator
+     */
+    public static final String PATH_SEPARATOR = "\\";
+
     private static final long CACHE_TTL = 6000;
 
     private final SmbFileSystem m_filesystem;
 
     /**
-     * @param workingDirectory
-     *            The working directory.
-     * @param host
-     *            The Samba host.
-     * @param share
-     *            The Samba share name.
-     * @param authContext
-     *            The authentication context.
+     * Constructor.
+     *
+     * @param config
+     *            The SMB connection config to use.
      * @throws IOException
      *
      */
-    public SmbFSConnection(final String workingDirectory, final String host, final String share,
-            final AuthenticationContext authContext) throws IOException {
-        m_filesystem = new SmbFileSystem(CACHE_TTL, workingDirectory, host, share, authContext);
+    public SmbFSConnection(final SmbFSConnectionConfig config)
+            throws IOException {
+        this(config, null);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param config
+     *            The SMB connection config to use.
+     * @param exec
+     *            An optional {@link ExecutionContext} to use when doing Kerberos
+     *            authentication. May be null.
+     * @throws IOException
+     *
+     */
+    public SmbFSConnection(final SmbFSConnectionConfig config, final ExecutionContext exec) throws IOException {
+        m_filesystem = new SmbFileSystem(CACHE_TTL, config, exec);
     }
 
     @Override
@@ -93,5 +114,4 @@ public class SmbFSConnection implements FSConnection {
     public FileSystemBrowser getFileSystemBrowser() {
         return new NioFileSystemBrowser(this);
     }
-
 }
