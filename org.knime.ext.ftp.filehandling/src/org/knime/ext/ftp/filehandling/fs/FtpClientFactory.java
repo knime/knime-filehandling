@@ -59,6 +59,7 @@ import org.apache.commons.net.PrintCommandListener;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPClientConfig;
+import org.apache.commons.net.ftp.FTPConnectionClosedException;
 import org.apache.commons.net.ftp.FTPHTTPClient;
 import org.apache.commons.net.ftp.FTPReply;
 import org.apache.commons.net.ftp.FTPSClient;
@@ -102,9 +103,6 @@ public class FtpClientFactory {
      * @throws SocketException
      */
     private FTPClient createNativeClient() throws IOException {
-        final FTPClientConfig ftpConfig = new FTPClientConfig();
-        ftpConfig.setServerTimeZoneId(constructServerTimeZoneId());
-
         // create native FTP client configuration.
         final FTPClient client;
         if (m_configuration.getProxy() != null) {
@@ -118,7 +116,6 @@ public class FtpClientFactory {
         if (m_configuration.isTestMode()) {
             configureTestMode(client);
         }
-        client.configure(ftpConfig);
 
         final Duration connectionTimeOut = m_configuration.getConnectionTimeOut();
         client.setConnectTimeout((int) connectionTimeOut.toMillis());
@@ -140,6 +137,8 @@ public class FtpClientFactory {
         client.setListHiddenFiles(true);
         client.enterLocalPassiveMode();
 
+        configureClientParser(client);
+
         if (m_configuration.isUseFTPS()) {
             final FTPSClient ftpsClient = (FTPSClient) client;
             // remove data buffer limit
@@ -160,6 +159,26 @@ public class FtpClientFactory {
         }
 
         return client;
+    }
+
+    /**
+     * Configures client-side parser that parses e.g. the LIST response (to list
+     * files).
+     *
+     * @param client
+     * @throws FTPConnectionClosedException
+     */
+    private void configureClientParser(final FTPClient client) throws FTPConnectionClosedException {
+        FTPClientConfig ftpConfig;
+        try {
+            ftpConfig = new FTPClientConfig(client.getSystemType());
+        } catch (FTPConnectionClosedException e) {
+            throw e;
+        } catch (IOException e) { // NOSONAR ignore and proceed with default system type UNIX
+            ftpConfig = new FTPClientConfig();
+        }
+        ftpConfig.setServerTimeZoneId(constructServerTimeZoneId());
+        client.configure(ftpConfig);
     }
 
     /**
