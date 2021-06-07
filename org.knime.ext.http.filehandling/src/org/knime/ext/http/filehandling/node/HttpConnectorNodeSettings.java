@@ -52,6 +52,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
@@ -63,6 +64,9 @@ import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.node.workflow.ICredentials;
+import org.knime.ext.http.filehandling.fs.HttpFSConnectionConfig;
+import org.knime.ext.http.filehandling.fs.HttpFSConnectionConfig.Auth;
 import org.knime.filehandling.core.connections.FSLocation;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderSettings;
@@ -70,11 +74,11 @@ import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProvide
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
- * Settings for {@link HttpConnectorNodeModel}.
+ * Node settings for the HTTP(S) Connector node.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpConnectorNodeSettings {
+class HttpConnectorNodeSettings {
 
     private static final String KEY_URL = "url";
 
@@ -88,11 +92,6 @@ public class HttpConnectorNodeSettings {
 
     private static final String KEY_FOLLOW_REDIRECTS = "followRedirects";
 
-    /**
-     * Default timeout to use in seconds.
-     */
-    public static final int DEFAULT_TIMEOUT = 30;
-
     private final SettingsModelString m_url;
     private final SettingsModelBoolean m_sslIgnoreHostnameMismatches;
     private final SettingsModelBoolean m_sslTrustAllCertificates;
@@ -104,7 +103,7 @@ public class HttpConnectorNodeSettings {
     /**
      * Constructor.
      */
-    public HttpConnectorNodeSettings() {
+    HttpConnectorNodeSettings() {
         m_url = new SettingsModelString(KEY_URL, "");
         m_sslIgnoreHostnameMismatches = new SettingsModelBoolean(KEY_SSL_IGNORE_HOSTNAME_MISMATCHES, false);
         m_sslTrustAllCertificates = new SettingsModelBoolean(KEY_SSL_TRUST_ALL_CERTIFICATES, false);
@@ -115,9 +114,11 @@ public class HttpConnectorNodeSettings {
                 .defaultType(HttpAuth.NONE) //
                 .build();
 
-        m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT, DEFAULT_TIMEOUT, 0,
+        m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT,
+                HttpFSConnectionConfig.DEFAULT_TIMEOUT_SECONDS, 0,
                 Integer.MAX_VALUE);
-        m_readTimeout = new SettingsModelIntegerBounded(KEY_READ_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
+        m_readTimeout = new SettingsModelIntegerBounded(KEY_READ_TIMEOUT,
+                HttpFSConnectionConfig.DEFAULT_TIMEOUT_SECONDS, 0, Integer.MAX_VALUE);
         m_followRedirects = new SettingsModelBoolean(KEY_FOLLOW_REDIRECTS, true);
     }
 
@@ -358,5 +359,35 @@ public class HttpConnectorNodeSettings {
             // won't happen
         }
         return toReturn;
+    }
+
+    /**
+     * Creates a {@link HttpFSConnectionConfig} that is based on the current settings.
+     *
+     * @param credentialsProvider
+     *            Supplies credentials flow variables if necessary.
+     * @return a {@link HttpFSConnectionConfig} based on the current settings
+     */
+    HttpFSConnectionConfig toFSConnectionConfig(final Function<String, ICredentials> credentialsProvider) {
+
+        final HttpFSConnectionConfig cfg = new HttpFSConnectionConfig(getUrl());
+        cfg.setSslIgnoreHostnameMismatches(sslIgnoreHostnameMismatches());
+        cfg.setSslTrustAllCertificates(sslTrustAllCertificates());
+
+        if (getAuthenticationSettings().getAuthType().equals(HttpAuth.BASIC)) {
+            final UserPasswordAuthProviderSettings userPassSettings = getAuthenticationSettings()
+                    .getSettingsForAuthType(HttpAuth.BASIC);
+            cfg.setAuthType(Auth.BASIC);
+            cfg.setUsername(userPassSettings.getUser(credentialsProvider));
+            cfg.setPassword(userPassSettings.getPassword(credentialsProvider));
+        } else {
+            cfg.setAuthType(Auth.NONE);
+        }
+
+        cfg.setConnectionTimeout(getConnectionTimeout());
+        cfg.setReadTimeout(getReadTimeout());
+        cfg.setFollowRedirects(followRedirects());
+
+        return cfg;
     }
 }

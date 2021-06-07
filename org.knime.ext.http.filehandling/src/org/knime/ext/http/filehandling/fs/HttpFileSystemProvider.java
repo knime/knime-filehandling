@@ -79,11 +79,11 @@ import org.knime.filehandling.core.connections.base.attributes.BaseFileAttribute
 import org.knime.filehandling.core.connections.base.attributes.BasicFileAttributesUtil;
 
 /**
- * File system provider for {@link HttpFileSystem}.
+ * File system provider for the HTTP(S) file system.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpFileSystemProvider extends FSFileSystemProvider<HttpPath, HttpFileSystem> {
+final class HttpFileSystemProvider extends FSFileSystemProvider<HttpPath, HttpFileSystem> {
 
     private HttpFileSystem m_fileSystem = null;
 
@@ -93,7 +93,7 @@ public class HttpFileSystemProvider extends FSFileSystemProvider<HttpPath, HttpF
 
     @Override
     public String getScheme() {
-        return HttpFileSystem.FS_TYPE;
+        return m_fileSystem.getFileSystemBaseURI().getScheme();
     }
 
     @Override

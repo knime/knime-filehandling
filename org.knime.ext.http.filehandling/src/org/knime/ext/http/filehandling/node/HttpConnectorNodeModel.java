@@ -53,7 +53,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.function.Function;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -65,13 +64,10 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
-import org.knime.core.node.workflow.ICredentials;
-import org.knime.ext.http.filehandling.fs.HttpConnectionConfig;
+import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.ext.http.filehandling.fs.HttpFSConnection;
-import org.knime.ext.http.filehandling.fs.HttpFileSystem;
-import org.knime.ext.http.filehandling.node.HttpAuthenticationSettings.AuthType;
+import org.knime.ext.http.filehandling.fs.HttpFSConnectionConfig;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
-import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
@@ -80,7 +76,7 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpConnectorNodeModel extends NodeModel {
+class HttpConnectorNodeModel extends NodeModel {
 
     private static final String FILE_SYSTEM_NAME = "HTTP";
 
@@ -93,7 +89,7 @@ public class HttpConnectorNodeModel extends NodeModel {
     /**
      * Creates new instance.
      */
-    protected HttpConnectorNodeModel() {
+    HttpConnectorNodeModel() {
         super(new PortType[0], new PortType[] { FileSystemPortObject.TYPE });
         m_settings = new HttpConnectorNodeSettings();
     }
@@ -109,25 +105,29 @@ public class HttpConnectorNodeModel extends NodeModel {
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        final HttpFSConnection fsConnection = createConnection(m_settings, name -> getCredentialsProvider().get(name));
+        final CredentialsProvider credProvider = getCredentialsProvider();
+        final HttpFSConnectionConfig config = m_settings.toFSConnectionConfig(credProvider::get);
+        final HttpFSConnection fsConnection = new HttpFSConnection(config);
         testConnection(fsConnection);
         m_fsConnection = fsConnection;
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
         return new PortObject[] { new FileSystemPortObject(createSpec()) };
     }
 
+    @SuppressWarnings("resource")
     private static void testConnection(final HttpFSConnection fsConnection) throws IOException {
-        @SuppressWarnings("resource")
-        final HttpFileSystem fs = fsConnection.getFileSystem();
         try {
-            Files.readAttributes(fs.getWorkingDirectory(), BasicFileAttributes.class);
+            Files.readAttributes(fsConnection.getFileSystem().getWorkingDirectory(), BasicFileAttributes.class);
         } catch (NoSuchFileException e) { // NOSONAR ignore, all good for now
         }
     }
 
     private FileSystemPortObjectSpec createSpec() {
-        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
-                HttpFileSystem.createFSLocationSpec(m_settings.getUrl()));
+        final CredentialsProvider credProvider = getCredentialsProvider();
+
+        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, //
+                m_fsId, //
+                m_settings.toFSConnectionConfig(credProvider::get).createFSLocationSpec());
     }
 
     @Override
@@ -170,37 +170,5 @@ public class HttpConnectorNodeModel extends NodeModel {
             m_fsConnection = null;
         }
         m_fsId = null;
-    }
-
-    /**
-     * @param settings
-     *            The connector node settings.
-     * @param credentialsProvider
-     *            A credentials provider.
-     * @return the {@link HttpFSConnection}
-     * @throws IOException
-     * @throws InvalidSettingsException
-     */
-    private static HttpFSConnection createConnection(final HttpConnectorNodeSettings settings,
-            final Function<String, ICredentials> credentialsProvider) throws IOException, InvalidSettingsException {
-
-        final HttpConnectionConfig cfg = new HttpConnectionConfig(settings.getUrl());
-        cfg.setSslIgnoreHostnameMismatches(settings.sslIgnoreHostnameMismatches());
-        cfg.setSslTrustAllCertificates(settings.sslTrustAllCertificates());
-
-        if (settings.getAuthenticationSettings().getAuthType().equals(HttpAuth.BASIC)) {
-            cfg.setAuthType(AuthType.BASIC);
-
-            final UserPasswordAuthProviderSettings userPassSettings = settings.getAuthenticationSettings()
-                    .getSettingsForAuthType(HttpAuth.BASIC);
-            cfg.setUsername(userPassSettings.getUser(credentialsProvider));
-            cfg.setPassword(userPassSettings.getPassword(credentialsProvider));
-        }
-
-        cfg.setConnectionTimeout(settings.getConnectionTimeout());
-        cfg.setReadTimeout(settings.getReadTimeout());
-        cfg.setFollowRedirects(settings.followRedirects());
-
-        return new HttpFSConnection(cfg);
     }
 }

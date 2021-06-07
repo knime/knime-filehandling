@@ -48,16 +48,26 @@
  */
 package org.knime.ext.http.filehandling.fs;
 
+import java.net.URI;
 import java.time.Duration;
+import java.util.Locale;
 
-import org.knime.ext.http.filehandling.node.HttpAuthenticationSettings.AuthType;
-import org.knime.ext.http.filehandling.node.HttpConnectorNodeSettings;
+import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
+import org.knime.filehandling.core.connections.FSCategory;
+import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.connections.meta.FSConnectionConfig;
 
 /**
+ * {@link FSConnectionConfig} for the HTTP(S) file system.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpConnectionConfig {
+public class HttpFSConnectionConfig implements FSConnectionConfig {
+
+    /**
+     * Default timeout to use in seconds.
+     */
+    public static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
     private final String m_url;
 
@@ -65,17 +75,33 @@ public class HttpConnectionConfig {
 
     private boolean m_sslTrustAllCertificates = false;
 
-    private AuthType m_authType = AuthType.NONE;
+    private Auth m_authType;
 
     private String m_username = null;
 
     private String m_password = null;
 
-    private Duration m_connectionTimeout = Duration.ofSeconds(HttpConnectorNodeSettings.DEFAULT_TIMEOUT);
+    private Duration m_connectionTimeout = Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS);
 
-    private Duration m_readTimeout = Duration.ofSeconds(HttpConnectorNodeSettings.DEFAULT_TIMEOUT);
+    private Duration m_readTimeout = Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS);
 
     private boolean m_followRedirects = true;
+
+
+    /**
+     * How to authenticate.
+     */
+    public enum Auth {
+        /**
+         * No authentication.
+         */
+        NONE, //
+
+        /**
+         * HTTP Basic authentication.
+         */
+        BASIC;
+    }
 
     /**
      * Creates a new instance.
@@ -83,7 +109,7 @@ public class HttpConnectionConfig {
      * @param url
      *            The HTTP base URL.
      */
-    public HttpConnectionConfig(final String url) {
+    public HttpFSConnectionConfig(final String url) {
         m_url = url;
     }
 
@@ -118,17 +144,17 @@ public class HttpConnectionConfig {
     }
 
     /**
-     * @return the authentication type.
+     * @return the type if authentication to perform.
      */
-    public AuthType getAuthType() {
+    public Auth getAuthType() {
         return m_authType;
     }
 
     /**
      * @param authType
-     *            The authentication type.
+     *            the type if authentication to perform.
      */
-    public void setAuthType(final AuthType authType) {
+    public void setAuthType(final Auth authType) {
         m_authType = authType;
     }
 
@@ -214,4 +240,11 @@ public class HttpConnectionConfig {
         return m_url;
     }
 
+    /**
+     * @return the {@link FSLocationSpec} for an HTTP file system.
+     */
+    public DefaultFSLocationSpec createFSLocationSpec() {
+        final String host = URI.create(getUrl()).getHost().toLowerCase(Locale.ENGLISH);
+        return new DefaultFSLocationSpec(FSCategory.CONNECTED, HttpFSDescriptorProvider.FS_TYPE + ":" + host);
+    }
 }

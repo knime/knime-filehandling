@@ -44,42 +44,41 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2021-03-26 (Bjoern Lohrmann, KNIME GmbH): created
+ *   2021-06-08 (bjoern): created
  */
 package org.knime.ext.http.filehandling.fs;
 
-import java.net.URI;
-
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
-import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporterMetaInfo;
-import org.knime.filehandling.core.connections.uriexport.noconfig.NoConfigURIExporterFactory;
+import org.knime.filehandling.core.connections.meta.FSDescriptorProvider;
+import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.FSTypeRegistry;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptor;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptorProvider;
+import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
 
 /**
- * {@link URIExporterFactory} that generates http(s) URLs.
+ * {@link FSDescriptorProvider} for the HTTP(S) file system.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-final class HttpURIExporterFactory extends NoConfigURIExporterFactory {
+public class HttpFSDescriptorProvider extends BaseFSDescriptorProvider {
+
+    static final FSType FS_TYPE = FSTypeRegistry.getOrCreateFSType("http", "HTTP(S)");
 
     /**
-     * Unique identifier of this exporter.
+     * Constructor.
      */
-    public static final URIExporterID EXPORTER_ID = new URIExporterID("http-url");
-
-    private static final BaseURIExporterMetaInfo META_INFO = new BaseURIExporterMetaInfo("http(s)",
-            "Generates a http(s) URL.");
-
-    private static final HttpURIExporterFactory INSTANCE = new HttpURIExporterFactory();
-
-    private HttpURIExporterFactory() {
-        super(META_INFO, p -> new URI(((HttpPath) p.toAbsolutePath().normalize()).getRequestUrl()));
+    public HttpFSDescriptorProvider() {
+        super(FS_TYPE, new BaseFSDescriptor.Builder() //
+                .withConnectionFactory(HttpFSConnection::new) //
+                .withCanBrowse(false) //
+                .withCanListDirectories(false) //
+                .withCanCreateDirectories(false) //
+                .withCanDeleteDirectories(false) //
+                .withCanWriteFiles(false) //
+                .withCanDeleteFiles(false) //
+                .withURIExporterFactory(URIExporterIDs.DEFAULT, HttpURIExporterFactory.getInstance()) //
+                .withURIExporterFactory(HttpURIExporterFactory.EXPORTER_ID, HttpURIExporterFactory.getInstance()) //
+                .build());
     }
 
-    /**
-     * @return the only available instance of this class.
-     */
-    public static HttpURIExporterFactory getInstance() {
-        return INSTANCE;
-    }
 }

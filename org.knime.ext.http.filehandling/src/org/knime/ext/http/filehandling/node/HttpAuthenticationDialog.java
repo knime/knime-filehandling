@@ -84,7 +84,7 @@ import org.knime.ext.http.filehandling.node.HttpAuthenticationSettings.AuthType;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("serial")
-public class HttpAuthenticationDialog extends JPanel {
+class HttpAuthenticationDialog extends JPanel {
     private static final int LEFT_INSET = 23;
 
     private final HttpAuthenticationSettings m_settings; // NOSONAR we are not using serialization

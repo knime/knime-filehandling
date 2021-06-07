@@ -49,10 +49,7 @@
 package org.knime.ext.http.filehandling.fs;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -61,14 +58,10 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
-import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.BaseFileStore;
 
 /**
@@ -76,19 +69,14 @@ import org.knime.filehandling.core.connections.base.BaseFileStore;
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpFileSystem extends FSFileSystem<HttpPath> {
-
-    /**
-     * HTTP URI scheme.
-     */
-    public static final String FS_TYPE = "http";
+final class HttpFileSystem extends FSFileSystem<HttpPath> {
 
     /**
      * Character to use as path separator
      */
     public static final String PATH_SEPARATOR = "/";
 
-    private final HttpConnectionConfig m_config;
+    private final HttpFSConnectionConfig m_config;
 
     private final HttpFileSystemProvider m_provider;
 
@@ -99,9 +87,8 @@ public class HttpFileSystem extends FSFileSystem<HttpPath> {
      *            HTTP connection config.
      * @throws IOException
      */
-    protected HttpFileSystem(final HttpConnectionConfig cfg) throws IOException {
-        super(createUri(cfg), //
-                createFSLocationSpec(cfg.getUrl()), //
+    HttpFileSystem(final HttpFSConnectionConfig cfg) throws IOException {
+        super(cfg.createFSLocationSpec(), //
                 determineWorkingDirectory(cfg));
         m_config = cfg;
         m_provider = new HttpFileSystemProvider();
@@ -118,33 +105,7 @@ public class HttpFileSystem extends FSFileSystem<HttpPath> {
         return m_client;
     }
 
-    /**
-     * @param cfg
-     *            connection configuration.
-     * @return URI from configuration.
-     * @throws URISyntaxException
-     */
-    private static URI createUri(final HttpConnectionConfig cfg) {
-        final URI parsedUrl = URI.create(cfg.getUrl());
-        return URI.create(String.format("%s://%s", FS_TYPE, parsedUrl.getHost()));
-    }
-
-    /**
-     * @param url
-     *            The base URL of the connection.
-     * @return the {@link FSLocationSpec} for an HTTP file system.
-     */
-    public static DefaultFSLocationSpec createFSLocationSpec(final String url) {
-        String resolvedHost = URI.create(url).getHost().toLowerCase(Locale.ENGLISH);
-        try {
-            resolvedHost = InetAddress.getByName(resolvedHost).getCanonicalHostName();
-        } catch (UnknownHostException ex) { // NOSONAR is possible if host can't be resolved
-        }
-
-        return new DefaultFSLocationSpec(FSCategory.CONNECTED, HttpFileSystem.FS_TYPE + ":" + resolvedHost);
-    }
-
-    private static String determineWorkingDirectory(final HttpConnectionConfig cfg) {
+    private static String determineWorkingDirectory(final HttpFSConnectionConfig cfg) {
         final URI url = URI.create(cfg.getUrl());
         return StringUtils.isEmpty(url.getPath()) ? HttpFileSystem.PATH_SEPARATOR : url.getRawPath();
     }

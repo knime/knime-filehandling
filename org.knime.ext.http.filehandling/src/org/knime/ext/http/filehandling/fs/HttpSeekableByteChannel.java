@@ -64,7 +64,7 @@ import org.knime.filehandling.core.connections.base.TempFileSeekableByteChannel;
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpSeekableByteChannel extends TempFileSeekableByteChannel<HttpPath> {
+final class HttpSeekableByteChannel extends TempFileSeekableByteChannel<HttpPath> {
 
     /**
      * Constructor.
@@ -73,7 +73,7 @@ public class HttpSeekableByteChannel extends TempFileSeekableByteChannel<HttpPat
      * @param options
      * @throws IOException
      */
-    public HttpSeekableByteChannel(final HttpPath file, final Set<? extends OpenOption> options) throws IOException {
+    HttpSeekableByteChannel(final HttpPath file, final Set<? extends OpenOption> options) throws IOException {
         super(file, options);
     }
 

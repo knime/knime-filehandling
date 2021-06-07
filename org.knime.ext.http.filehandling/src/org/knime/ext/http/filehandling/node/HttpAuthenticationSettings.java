@@ -64,11 +64,11 @@ import org.knime.core.node.util.ButtonGroupEnumInterface;
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
- * Authentication settings for {@link HttpConnectorNodeModel}.
+ * Authentication settings for the HTTP(S) Connector node.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpAuthenticationSettings {
+class HttpAuthenticationSettings {
 
     private static final String KEY_AUTH_TYPE = "authType";
 
@@ -95,9 +95,9 @@ public class HttpAuthenticationSettings {
     /**
      * Authentication type enumeration.
      *
-     * @author Bjoern Lohrmann, KNIME GmbH
+     * @author Bjoern Lohrmann, KNIME GmbHDEFAULT_TIMEOUT
      */
-    public enum AuthType implements ButtonGroupEnumInterface {
+    enum AuthType implements ButtonGroupEnumInterface {
         /**
          * No authentication.
          */
@@ -178,7 +178,7 @@ public class HttpAuthenticationSettings {
     /**
      * Default constructor.
      */
-    public HttpAuthenticationSettings() {
+    HttpAuthenticationSettings() {
         // authentication
         m_authType = AuthType.NONE;
         m_basicUser = new SettingsModelString(KEY_USER, "");
@@ -427,5 +427,4 @@ public class HttpAuthenticationSettings {
             throws InvalidSettingsException {
         // nothing for now
     }
-
 }

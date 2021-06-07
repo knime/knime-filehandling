@@ -81,7 +81,7 @@ import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProvide
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpConnectorNodeDialog extends NodeDialogPane {
+class HttpConnectorNodeDialog extends NodeDialogPane {
 
     private final HttpConnectorNodeSettings m_settings;
 
@@ -90,7 +90,7 @@ public class HttpConnectorNodeDialog extends NodeDialogPane {
     /**
      * Creates new instance.
      */
-    public HttpConnectorNodeDialog() {
+    HttpConnectorNodeDialog() {
         m_settings = new HttpConnectorNodeSettings();
 
         initFields();

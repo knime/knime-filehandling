@@ -54,11 +54,11 @@ import java.nio.file.Path;
 import org.knime.filehandling.core.connections.base.UnixStylePath;
 
 /**
- * {@link Path} implementation for the {@link HttpFileSystem}.
+ * {@link Path} implementation for the HTTP(S) file system.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class HttpPath extends UnixStylePath {
+final class HttpPath extends UnixStylePath {
 
     /**
      * @param fileSystem
@@ -68,7 +68,7 @@ public class HttpPath extends UnixStylePath {
      * @param more
      *            More name components. the string representation of the path.
      */
-    public HttpPath(final HttpFileSystem fileSystem, final String first, final String[] more) {
+    HttpPath(final HttpFileSystem fileSystem, final String first, final String[] more) {
         super(fileSystem, first, more);
     }
 

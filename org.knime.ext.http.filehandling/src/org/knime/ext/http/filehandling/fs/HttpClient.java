@@ -89,7 +89,7 @@ import org.apache.cxf.transport.http.HTTPConduitFactory;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator.AuthenticationCloseable;
-import org.knime.ext.http.filehandling.node.HttpAuthenticationSettings.AuthType;
+import org.knime.ext.http.filehandling.fs.HttpFSConnectionConfig.Auth;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
@@ -104,11 +104,11 @@ final class HttpClient {
 
     private static final int MAX_RETRANSITS = 4;
 
-    private final HttpConnectionConfig m_config;
+    private final HttpFSConnectionConfig m_config;
 
     private final Client m_client;
 
-    private HttpClient(final HttpConnectionConfig config, final Client client) {
+    private HttpClient(final HttpFSConnectionConfig config, final Client client) {
         m_config = config;
         m_client = client;
     }
@@ -126,7 +126,7 @@ final class HttpClient {
         final Bus bus = BusFactory.getThreadDefaultBus();
         bus.setExtension(null, HTTPConduitFactory.class);
 
-        if (m_config.getAuthType() == AuthType.BASIC) {
+        if (m_config.getAuthType() == Auth.BASIC) {
             setBasicAuthentication(request);
         }
 
@@ -158,7 +158,7 @@ final class HttpClient {
      * @throws IOException
      */
     @SuppressWarnings("resource")
-    public InputStream getAsInputStream(final HttpPath path) throws IOException {
+    InputStream getAsInputStream(final HttpPath path) throws IOException {
         final String url = path.getRequestUrl();
         final Response response = invoke(createInvocationBuilder(url).buildGet());
 
@@ -291,7 +291,7 @@ final class HttpClient {
      * @return The client to be used for the request.
      * @throws IOException
      */
-    static HttpClient create(final HttpConnectionConfig cfg) throws IOException {
+    static HttpClient create(final HttpFSConnectionConfig cfg) throws IOException {
         final ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         if (cfg.isSslTrustAllCertificates()) {
             try {

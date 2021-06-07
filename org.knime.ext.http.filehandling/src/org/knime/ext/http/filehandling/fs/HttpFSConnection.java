@@ -49,14 +49,10 @@
 package org.knime.ext.http.filehandling.fs;
 
 import java.io.IOException;
-import java.util.Map;
 
 import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactoryMapBuilder;
-import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
+import org.knime.filehandling.core.connections.FSFileSystem;
 
 /**
  * HTTP file system connection.
@@ -65,11 +61,6 @@ import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
  */
 public class HttpFSConnection implements FSConnection {
 
-    private static final Map<URIExporterID, URIExporterFactory> URI_EXPORTERS = new URIExporterFactoryMapBuilder() //
-            .add(URIExporterIDs.DEFAULT, HttpURIExporterFactory.getInstance()) //
-            .add(HttpURIExporterFactory.EXPORTER_ID, HttpURIExporterFactory.getInstance()) //
-            .build();
-
     private final HttpFileSystem m_fileSystem;
 
     /**
@@ -77,27 +68,17 @@ public class HttpFSConnection implements FSConnection {
      *            HTTP connection settings.
      * @throws IOException
      */
-    public HttpFSConnection(final HttpConnectionConfig cfg) throws IOException {
+    public HttpFSConnection(final HttpFSConnectionConfig cfg) throws IOException {
         m_fileSystem = new HttpFileSystem(cfg);
     }
 
     @Override
-    public HttpFileSystem getFileSystem() {
+    public FSFileSystem<?> getFileSystem() {
         return m_fileSystem;
     }
 
     @Override
     public FileSystemBrowser getFileSystemBrowser() {
         return null; // browsing is not supported
-    }
-
-    @Override
-    public boolean supportsBrowsing() {
-        return false;
-    }
-
-    @Override
-    public Map<URIExporterID, URIExporterFactory> getURIExporterFactories() {
-        return URI_EXPORTERS;
     }
 }

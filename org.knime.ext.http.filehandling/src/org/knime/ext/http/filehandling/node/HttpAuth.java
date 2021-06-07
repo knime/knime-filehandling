@@ -51,6 +51,7 @@ package org.knime.ext.http.filehandling.node;
 import org.knime.filehandling.core.connections.base.auth.AuthType;
 
 /**
+ * Defines the {@link AuthType}s for this node.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
