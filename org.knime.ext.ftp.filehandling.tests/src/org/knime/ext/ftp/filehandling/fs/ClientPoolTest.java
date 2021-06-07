@@ -66,7 +66,7 @@ import org.junit.Test;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class ClientPoolTest extends ClientPool {
-    private FtpConnectionConfiguration m_config;
+    private FtpFSConnectionConfig m_config;
     private LinkedList<FtpClientResource> m_freeResources;
     private Set<FtpClientResource> m_busyResources;
     private final MockFtpClientFactory m_clientFactory;
@@ -75,10 +75,10 @@ public class ClientPoolTest extends ClientPool {
      * Default constructor.
      */
     public ClientPoolTest() {
-        this(new FtpConnectionConfiguration(), new LinkedList<>(), new HashSet<>(), new MockFtpClientFactory());
+        this(new FtpFSConnectionConfig(), new LinkedList<>(), new HashSet<>(), new MockFtpClientFactory());
     }
 
-    private ClientPoolTest(final FtpConnectionConfiguration cfg, final LinkedList<FtpClientResource> freeResources,
+    private ClientPoolTest(final FtpFSConnectionConfig cfg, final LinkedList<FtpClientResource> freeResources,
             final Set<FtpClientResource> busyResources, final MockFtpClientFactory clientFactory) {
         super(cfg, freeResources, busyResources, clientFactory);
         m_config = cfg;

@@ -46,7 +46,7 @@
  * History
  *   2020-10-02 (Vyacheslav Soldatov): created
  */
-package org.knime.ext.ftp.filehandling.testing;
+package org.knime.ext.ftp.filehandling.fs;
 
 import java.util.HashMap;
 import java.util.Map;

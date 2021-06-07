@@ -50,12 +50,14 @@ package org.knime.ext.ftp.filehandling.fs;
 
 import java.time.Duration;
 
+import org.knime.filehandling.core.connections.meta.FSConnectionConfig;
+
 /**
  * Connection configuration.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
+public class FtpFSConnectionConfig extends ProtectedHostConfiguration implements FSConnectionConfig {
     /**
      * Anonymous user name.
      */
@@ -104,7 +106,7 @@ public class FtpConnectionConfiguration extends ProtectedHostConfiguration {
     /**
      * Default constructor.
      */
-    public FtpConnectionConfiguration() {
+    public FtpFSConnectionConfig() {
         super();
         setPort(DEFAULT_FTP_PORT);
         setUser(ANONYMOUS_USER);

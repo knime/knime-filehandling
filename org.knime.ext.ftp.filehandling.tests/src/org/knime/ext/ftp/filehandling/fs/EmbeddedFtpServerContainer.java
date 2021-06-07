@@ -46,7 +46,7 @@
  * History
  *   2020-10-02 (Vyacheslav Soldatov): created
  */
-package org.knime.ext.ftp.filehandling.testing;
+package org.knime.ext.ftp.filehandling.fs;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,7 +84,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.knime.core.node.NodeLogger;
-import org.knime.ext.ftp.filehandling.fs.FtpConnectionConfiguration;
+import org.knime.ext.ftp.filehandling.fs.FtpFSConnectionConfig;
 import org.knime.ext.ftp.filehandling.fs.ProtectedHostConfiguration;
 import org.knime.filehandling.core.connections.FSFiles;
 
@@ -98,7 +98,7 @@ public class EmbeddedFtpServerContainer {
 
     private final Path m_testsHome;
     private final FtpServerFactory m_serverFactory;
-    private final FtpConnectionConfiguration m_configuration;
+    private final FtpFSConnectionConfig m_configuration;
     private final FtpServer m_server;
     private final Server m_proxyServer;
 
@@ -110,7 +110,7 @@ public class EmbeddedFtpServerContainer {
      * @throws FtpException
      *
      */
-    public EmbeddedFtpServerContainer(final FtpConnectionConfiguration ftpCfg) throws IOException, FtpException {
+    public EmbeddedFtpServerContainer(final FtpFSConnectionConfig ftpCfg) throws IOException, FtpException {
         // FTP server
         ftpCfg.setHost("localhost");
         ftpCfg.setPort(getFreePort());
@@ -290,7 +290,7 @@ public class EmbeddedFtpServerContainer {
      * @throws IOException
      * @throws FtpException
      */
-    public FtpConnectionConfiguration startAndGetConnectionConfiguration() throws IOException, FtpException {
+    public FtpFSConnectionConfig startAndGetConnectionConfiguration() throws IOException, FtpException {
         m_server.start();
         return m_configuration;
     }

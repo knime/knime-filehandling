@@ -46,7 +46,7 @@
  * History
  *   2020-07-28 (Vyacheslav Soldatov): created
  */
-package org.knime.ext.ftp.filehandling.testing;
+package org.knime.ext.ftp.filehandling.fs;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,7 +57,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import org.apache.ftpserver.ftplet.FtpException;
-import org.knime.ext.ftp.filehandling.fs.FtpConnectionConfiguration;
+import org.knime.ext.ftp.filehandling.fs.FtpFSConnectionConfig;
 import org.knime.ext.ftp.filehandling.fs.FtpFSConnection;
 import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
 import org.knime.ext.ftp.filehandling.fs.FtpPath;
@@ -85,7 +85,7 @@ public class EmbeddedFtpTestInitializer extends DefaultFSTestInitializer<FtpPath
      * @throws IOException
      * @throws FtpException
      */
-    public EmbeddedFtpTestInitializer(final FtpConnectionConfiguration ftpCfg) throws IOException, FtpException {
+    public EmbeddedFtpTestInitializer(final FtpFSConnectionConfig ftpCfg) throws IOException, FtpException {
         this(new EmbeddedFtpServerContainer(ftpCfg));
     }
 
@@ -106,7 +106,7 @@ public class EmbeddedFtpTestInitializer extends DefaultFSTestInitializer<FtpPath
     private static FtpFSConnection createConnection(final EmbeddedFtpServerContainer ftpContainer)
             throws IOException, FtpException {
         // starts embedded FTP server and creates client
-        FtpConnectionConfiguration config = ftpContainer.startAndGetConnectionConfiguration();
+        FtpFSConnectionConfig config = ftpContainer.startAndGetConnectionConfiguration();
         // extend file system for close embedded FTP server on file system closing.
         FtpFileSystem fs = new FtpFileSystem(config) {
             /**

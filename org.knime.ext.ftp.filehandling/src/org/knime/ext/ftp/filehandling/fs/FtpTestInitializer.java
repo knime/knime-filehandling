@@ -46,19 +46,13 @@
  * History
  *   2020-07-28 (Vyacheslav Soldatov): created
  */
-package org.knime.ext.ftp.filehandling.testing;
+package org.knime.ext.ftp.filehandling.fs;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-import org.knime.ext.ftp.filehandling.fs.FtpClient;
-import org.knime.ext.ftp.filehandling.fs.FtpClientFactory;
-import org.knime.ext.ftp.filehandling.fs.FtpConnectionConfiguration;
-import org.knime.ext.ftp.filehandling.fs.FtpFSConnection;
-import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
-import org.knime.ext.ftp.filehandling.fs.FtpPath;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
@@ -68,13 +62,13 @@ import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class RemoteFtpTestInitializer extends DefaultFSTestInitializer<FtpPath, FtpFileSystem> {
+public class FtpTestInitializer extends DefaultFSTestInitializer<FtpPath, FtpFileSystem> {
     private boolean m_initialized = false;
     /**
      * FTP file system.
      */
     private final FtpFileSystem m_fileSystem;
-    private final FtpConnectionConfiguration m_configuration;
+    private final FtpFSConnectionConfig m_configuration;
     // on this phase the FTP client is used just for create
     // file. On next phases possible better will use the file system
     // implementation for instead
@@ -88,11 +82,11 @@ public class RemoteFtpTestInitializer extends DefaultFSTestInitializer<FtpPath, 
      * @throws IOException
      */
     @SuppressWarnings("resource")
-    public RemoteFtpTestInitializer(final FtpConnectionConfiguration ftpCfg) throws IOException {
+    public FtpTestInitializer(final FtpFSConnectionConfig ftpCfg) throws IOException {
         this(new FtpFSConnection(ftpCfg), ftpCfg);
     }
 
-    private RemoteFtpTestInitializer(final FtpFSConnection connection, final FtpConnectionConfiguration ftpCfg)
+    private FtpTestInitializer(final FtpFSConnection connection, final FtpFSConnectionConfig ftpCfg)
             throws IOException {
         super(connection);
         m_fileSystem = connection.getFileSystem();

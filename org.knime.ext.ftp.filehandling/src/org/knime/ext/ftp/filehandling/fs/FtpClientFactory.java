@@ -70,7 +70,7 @@ import org.apache.commons.net.ftp.FTPSClient;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class FtpClientFactory {
-    private final FtpConnectionConfiguration m_configuration;
+    private final FtpFSConnectionConfig m_configuration;
     private FtpClientFeatures m_features;
 
     private volatile boolean m_reuseSslSessions;
@@ -79,7 +79,7 @@ public class FtpClientFactory {
      * @param cfg
      *            connection configuration.
      */
-    public FtpClientFactory(final FtpConnectionConfiguration cfg) {
+    public FtpClientFactory(final FtpFSConnectionConfig cfg) {
         m_configuration = cfg;
         m_reuseSslSessions = true;
     }

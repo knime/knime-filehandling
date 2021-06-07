@@ -52,6 +52,7 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.eclipse.core.net.proxy.IProxyData;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
@@ -61,8 +62,10 @@ import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.ext.ftp.filehandling.fs.FtpConnectionConfiguration;
+import org.knime.ext.ftp.filehandling.Activator;
+import org.knime.ext.ftp.filehandling.fs.FtpFSConnectionConfig;
 import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
+import org.knime.ext.ftp.filehandling.fs.ProtectedHostConfiguration;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderSettings;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
@@ -120,9 +123,9 @@ public class FtpConnectorNodeSettings {
                 Integer.MAX_VALUE);
         m_readTimeout = new SettingsModelIntegerBounded(KEY_READ_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
         m_minConnections = new SettingsModelIntegerBounded(KEY_MIN_POOL_SIZE,
-                FtpConnectionConfiguration.DEFAULT_MIN_CONNECTIONS, 1, Integer.MAX_VALUE);
+                FtpFSConnectionConfig.DEFAULT_MIN_CONNECTIONS, 1, Integer.MAX_VALUE);
         m_maxConnections = new SettingsModelIntegerBounded(KEY_MAX_POOL_SIZE,
-                FtpConnectionConfiguration.DEFAULT_MAX_CONNECTIONS, 1, Integer.MAX_VALUE);
+                FtpFSConnectionConfig.DEFAULT_MAX_CONNECTIONS, 1, Integer.MAX_VALUE);
         m_timeZoneOffset = new SettingsModelIntegerBounded(KEY_TIME_ZONE_OFFSET, 0, (int) -TimeUnit.HOURS.toMinutes(24),
                 (int) TimeUnit.HOURS.toMinutes(24));
         m_useProxy = new SettingsModelBoolean(KEY_USE_PROXY, false);
@@ -424,4 +427,58 @@ public class FtpConnectorNodeSettings {
         }
         return toReturn;
     }
+
+    /**
+     * Convert setting into a {@link FtpFSConnectionConfig} instance.
+     *
+     * @param credentialsProvider
+     *            credentials provider.
+     * @return FTP connection configuration.
+     * @throws InvalidSettingsException
+     */
+    public FtpFSConnectionConfig toFSConnectionConfig(final CredentialsProvider credentialsProvider)
+            throws InvalidSettingsException {
+        final FtpFSConnectionConfig conf = new FtpFSConnectionConfig();
+        conf.setHost(getHost());
+        conf.setPort(getPort());
+        conf.setMaxConnectionPoolSize(getMaxConnections());
+        conf.setMinConnectionPoolSize(getMinConnections());
+        conf.setCoreConnectionPoolSize((getMinConnections() + getMaxConnections()) / 2);
+        conf.setConnectionTimeOut(getConnectionTimeout());
+        conf.setReadTimeout(getReadTimeout());
+        conf.setServerTimeZoneOffset(getTimeZoneOffset());
+        conf.setUseFTPS(isUseFTPS());
+        conf.setWorkingDirectory(getWorkingDirectory());
+
+        // authentication
+        final AuthSettings auth = getAuthenticationSettings();
+        if (auth.getAuthType() == StandardAuthTypes.USER_PASSWORD) {
+            final UserPasswordAuthProviderSettings userPassSettings = auth
+                    .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
+            conf.setUser(userPassSettings.getUser(credentialsProvider::get));
+            conf.setPassword(userPassSettings.getPassword(credentialsProvider::get));
+        } else {
+            conf.setUser("anonymous");
+            conf.setPassword("");
+        }
+
+        // Proxy
+        if (isUseProxy()) {
+            final ProtectedHostConfiguration proxy = new ProtectedHostConfiguration();
+            IProxyData proxyData = Activator.getProxyService().getProxyData(IProxyData.HTTP_PROXY_TYPE);
+            if (proxyData == null) {
+                throw new InvalidSettingsException("Eclipse HTTP proxy is not configured");
+            }
+
+            proxy.setHost(proxyData.getHost());
+            proxy.setPort(proxyData.getPort());
+            proxy.setUser(proxyData.getUserId());
+            proxy.setPassword(proxyData.getPassword());
+
+            conf.setProxy(proxy);
+        }
+
+        return conf;
+    }
+
 }

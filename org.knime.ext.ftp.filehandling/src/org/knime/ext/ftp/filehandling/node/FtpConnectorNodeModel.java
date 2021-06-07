@@ -50,10 +50,7 @@ package org.knime.ext.ftp.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.function.Function;
 
-import org.eclipse.core.net.proxy.IProxyData;
-import org.eclipse.core.net.proxy.IProxyService;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -65,16 +62,10 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.node.workflow.ICredentials;
-import org.knime.ext.ftp.filehandling.Activator;
-import org.knime.ext.ftp.filehandling.fs.FtpConnectionConfiguration;
 import org.knime.ext.ftp.filehandling.fs.FtpFSConnection;
+import org.knime.ext.ftp.filehandling.fs.FtpFSConnectionConfig;
 import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
-import org.knime.ext.ftp.filehandling.fs.ProtectedHostConfiguration;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
-import org.knime.filehandling.core.connections.base.auth.AuthSettings;
-import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
-import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
@@ -84,8 +75,6 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class FtpConnectorNodeModel extends NodeModel {
-
-    private static final String FILE_SYSTEM_NAME = "FTP";
 
     private final FtpConnectorNodeSettings m_settings;
 
@@ -107,14 +96,16 @@ public class FtpConnectorNodeModel extends NodeModel {
         m_settings.configureInModel(inSpecs, m -> {
         }, getCredentialsProvider());
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-        return new PortObjectSpec[] { createSpec() };
+        final FtpFSConnectionConfig config = m_settings.toFSConnectionConfig(getCredentialsProvider());
+        return new PortObjectSpec[] { createSpec(config) };
     }
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        m_fsConnection = createConnection(m_settings, getCredentialsProvider());
+        final FtpFSConnectionConfig config = m_settings.toFSConnectionConfig(getCredentialsProvider());
+        m_fsConnection = new FtpFSConnection(config);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
-        return new PortObject[] { new FileSystemPortObject(createSpec()) };
+        return new PortObject[] { new FileSystemPortObject(createSpec(config)) };
     }
 
     /**
@@ -128,70 +119,13 @@ public class FtpConnectorNodeModel extends NodeModel {
      */
     public static FtpFSConnection createConnection(final FtpConnectorNodeSettings settings,
             final CredentialsProvider credentialsProvider) throws IOException, InvalidSettingsException {
-        FtpConnectionConfiguration conf = createConfiguration(settings, credentialsProvider::get,
-                Activator.getProxyService());
+        FtpFSConnectionConfig conf = settings.toFSConnectionConfig(credentialsProvider);
         return new FtpFSConnection(conf);
     }
 
-    /**
-     * @param settings
-     *            FTP model settings.
-     * @param credentialsProvider
-     *            credentials provider.
-     * @param proxyService
-     *            proxy service supplier
-     * @return FTP connection configuration.
-     * @throws InvalidSettingsException
-     */
-    public static FtpConnectionConfiguration createConfiguration(final FtpConnectorNodeSettings settings,
-            final Function<String, ICredentials> credentialsProvider, final IProxyService proxyService)
-            throws InvalidSettingsException {
-        final FtpConnectionConfiguration conf = new FtpConnectionConfiguration();
-        conf.setHost(settings.getHost());
-        conf.setPort(settings.getPort());
-        conf.setMaxConnectionPoolSize(settings.getMaxConnections());
-        conf.setMinConnectionPoolSize(settings.getMinConnections());
-        conf.setCoreConnectionPoolSize((settings.getMinConnections() + settings.getMaxConnections()) / 2);
-        conf.setConnectionTimeOut(settings.getConnectionTimeout());
-        conf.setReadTimeout(settings.getReadTimeout());
-        conf.setServerTimeZoneOffset(settings.getTimeZoneOffset());
-        conf.setUseFTPS(settings.isUseFTPS());
-        conf.setWorkingDirectory(settings.getWorkingDirectory());
-
-        // authentication
-        final AuthSettings auth = settings.getAuthenticationSettings();
-        if (auth.getAuthType() == StandardAuthTypes.USER_PASSWORD) {
-            final UserPasswordAuthProviderSettings userPassSettings = auth
-                    .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
-            conf.setUser(userPassSettings.getUser(credentialsProvider));
-            conf.setPassword(userPassSettings.getPassword(credentialsProvider));
-        } else {
-            conf.setUser("anonymous");
-            conf.setPassword("");
-        }
-
-        // Proxy
-        if (settings.isUseProxy()) {
-            final ProtectedHostConfiguration proxy = new ProtectedHostConfiguration();
-            IProxyData proxyData = proxyService.getProxyData(IProxyData.HTTP_PROXY_TYPE);
-            if (proxyData == null) {
-                throw new InvalidSettingsException("Eclipse HTTP proxy is not configured");
-            }
-
-            proxy.setHost(proxyData.getHost());
-            proxy.setPort(proxyData.getPort());
-            proxy.setUser(proxyData.getUserId());
-            proxy.setPassword(proxyData.getPassword());
-
-            conf.setProxy(proxy);
-        }
-
-        return conf;
-    }
-
-    private FileSystemPortObjectSpec createSpec() {
-        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
-                FtpFileSystem.createFSLocationSpec(m_settings.getHost()));
+    private FileSystemPortObjectSpec createSpec(final FtpFSConnectionConfig config) {
+        return new FileSystemPortObjectSpec(FtpFileSystem.FS_TYPE.getTypeId(), m_fsId,
+                FtpFileSystem.createFSLocationSpec(config));
     }
 
     @Override

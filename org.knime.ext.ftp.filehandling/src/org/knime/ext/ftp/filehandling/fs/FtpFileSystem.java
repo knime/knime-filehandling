@@ -50,8 +50,6 @@ package org.knime.ext.ftp.filehandling.fs;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -62,6 +60,8 @@ import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
+import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.FSTypeRegistry;
 
 /**
  * FTP implementation of the {@link FileSystem}.
@@ -72,9 +72,9 @@ public class FtpFileSystem extends BaseFileSystem<FtpPath> {
     private static final long CACHE_TTL = 6000;
 
     /**
-     * FTP URI scheme.
+     * The file system type of the FTP file system.
      */
-    public static final String FS_TYPE = "ftp";
+    public static final FSType FS_TYPE = FSTypeRegistry.getOrCreateFSType("ftp", "FTP");
 
     /**
      * Character to use as path separator
@@ -82,18 +82,18 @@ public class FtpFileSystem extends BaseFileSystem<FtpPath> {
     public static final String PATH_SEPARATOR = "/";
 
     /**
-     * @param settings
+     * @param config
      *            FTP connection settings.
      * @throws IOException
      */
-    protected FtpFileSystem(final FtpConnectionConfiguration settings)
-            throws IOException {
-        super(createProvider(settings), createUri(settings), CACHE_TTL,
-                settings.getWorkingDirectory(),
-                createFSLocationSpec(settings.getHost()));
+    protected FtpFileSystem(final FtpFSConnectionConfig config) throws IOException {
+        super(createProvider(config), //
+                CACHE_TTL, //
+                config.getWorkingDirectory(), //
+                createFSLocationSpec(config));
     }
 
-    private static FtpFileSystemProvider createProvider(final FtpConnectionConfiguration settings) throws IOException {
+    private static FtpFileSystemProvider createProvider(final FtpFSConnectionConfig settings) throws IOException {
         return new FtpFileSystemProvider(settings);
     }
 
@@ -103,32 +103,18 @@ public class FtpFileSystem extends BaseFileSystem<FtpPath> {
     }
 
     /**
-     * @param cfg
-     *            connection configuration.
-     * @return URI from configuration.
-     * @throws URISyntaxException
-     */
-    private static URI createUri(final FtpConnectionConfiguration cfg) throws IOException {
-        try {
-            return new URI(FS_TYPE, null, cfg.getHost(), cfg.getPort(), null, null, null);
-        } catch (final URISyntaxException e) {
-            throw new IOException("Failed to create URI", e);
-        }
-    }
-
-    /**
-     * @param host
-     *            host name from configuration.
+     * @param config
+     *            connection configuration
      * @return the {@link FSLocationSpec} for a FTP file system.
      */
-    public static DefaultFSLocationSpec createFSLocationSpec(final String host) {
-        String resolvedHost = host.toLowerCase(Locale.ENGLISH);
+    public static DefaultFSLocationSpec createFSLocationSpec(final FtpFSConnectionConfig config) {
+        String resolvedHost = config.getHost().toLowerCase(Locale.ENGLISH);
         try {
-            resolvedHost = InetAddress.getByName(host).getCanonicalHostName();
+            resolvedHost = InetAddress.getByName(config.getHost()).getCanonicalHostName();
         } catch (UnknownHostException ex) { // NOSONAR is possible if host can't be resolved
         }
 
-        return new DefaultFSLocationSpec(FSCategory.CONNECTED, FtpFileSystem.FS_TYPE + ":" + resolvedHost);
+        return new DefaultFSLocationSpec(FSCategory.CONNECTED, FS_TYPE.getTypeId() + ":" + resolvedHost);
     }
 
     /**

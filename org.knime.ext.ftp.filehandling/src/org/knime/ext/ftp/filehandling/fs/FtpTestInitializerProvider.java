@@ -46,24 +46,20 @@
  * History
  *   2020-07-28 (Vyacheslav Soldatov): created
  */
-package org.knime.ext.ftp.filehandling.testing;
+package org.knime.ext.ftp.filehandling.fs;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 
-import org.apache.ftpserver.ftplet.FtpException;
 import org.knime.core.node.util.CheckUtils;
-import org.knime.ext.ftp.filehandling.fs.FtpConnectionConfiguration;
-import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
-import org.knime.ext.ftp.filehandling.fs.FtpPath;
-import org.knime.ext.ftp.filehandling.fs.ProtectedHostConfiguration;
 import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
 /**
- * Initializer provider for FTP.
+ * Initializer provider for FTP tests.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
@@ -71,12 +67,16 @@ public class FtpTestInitializerProvider extends DefaultFSTestInitializerProvider
 
     @Override
     public DefaultFSTestInitializer<FtpPath, FtpFileSystem> setup(final Map<String, String> cfg) throws IOException {
+        return new FtpTestInitializer(toFSConnectionConfig(cfg));
+    }
+
+    private static FtpFSConnectionConfig toFSConnectionConfig(final Map<String, String> cfg) {
         validateParameters(cfg);
 
         final String workingDir = generateRandomizedWorkingDir(cfg.get("workingDirPrefix"),
                 FtpFileSystem.PATH_SEPARATOR);
 
-        final FtpConnectionConfiguration ftpCfg = new FtpConnectionConfiguration();
+        final FtpFSConnectionConfig ftpCfg = new FtpFSConnectionConfig();
         ftpCfg.setMaxConnectionPoolSize(2);
         ftpCfg.setTestMode(true);
         ftpCfg.setHost(cfg.getOrDefault("host", "localhost"));
@@ -90,7 +90,7 @@ public class FtpTestInitializerProvider extends DefaultFSTestInitializerProvider
         // proxy
         final String proxyHost = cfg.get("proxy.host");
         if (proxyHost != null) {
-            ProtectedHostConfiguration proxy = new FtpConnectionConfiguration();
+            ProtectedHostConfiguration proxy = new FtpFSConnectionConfig();
             ftpCfg.setProxy(proxy);
 
             proxy.setHost(proxyHost);
@@ -99,18 +99,10 @@ public class FtpTestInitializerProvider extends DefaultFSTestInitializerProvider
             proxy.setPassword(cfg.get("proxy.password"));
         }
 
-        if ("true".equals(cfg.get("embedded"))) {
-            try {
-                return new EmbeddedFtpTestInitializer(ftpCfg);
-            } catch (FtpException ex) {
-                throw new IOException("Failed to create test initializer", ex);
-            }
-        } else {
-            return new RemoteFtpTestInitializer(ftpCfg);
-        }
+        return ftpCfg;
     }
 
-    private static void validateParameters(final Map<String, String> cfg) throws IOException {
+    private static void validateParameters(final Map<String, String> cfg) {
         if (!"true".equals(cfg.get("embedded"))) {
             CheckUtils.checkArgumentNotNull(cfg.get("host"), "'host' must be specified.");
 
@@ -123,12 +115,12 @@ public class FtpTestInitializerProvider extends DefaultFSTestInitializerProvider
     }
 
     @Override
-    public String getFSType() {
+    public FSType getFSType() {
         return FtpFileSystem.FS_TYPE;
     }
 
     @Override
     public FSLocationSpec createFSLocationSpec(final Map<String, String> cfg) {
-        return FtpFileSystem.createFSLocationSpec(cfg.getOrDefault("host", "localhost"));
+        return FtpFileSystem.createFSLocationSpec(toFSConnectionConfig(cfg));
     }
 }

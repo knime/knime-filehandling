@@ -90,7 +90,7 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
      *            FTP connection configuration.
      * @throws IOException
      */
-    public FtpFileSystemProvider(final FtpConnectionConfiguration config) throws IOException {
+    public FtpFileSystemProvider(final FtpFSConnectionConfig config) throws IOException {
         m_clientPool = new ClientPool(config);
         m_clientPool.start();
     }

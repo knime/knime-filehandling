@@ -79,7 +79,7 @@ public class ClientPool {
 
     private final FtpClientFactory m_clientFactory;
 
-    private final FtpConnectionConfiguration m_configuration;
+    private final FtpFSConnectionConfig m_configuration;
 
     private final AtomicBoolean m_isStarted = new AtomicBoolean();
 
@@ -89,7 +89,7 @@ public class ClientPool {
      * @param cfg
      *            FTP connection configuration.
      */
-    public ClientPool(final FtpConnectionConfiguration cfg) {
+    public ClientPool(final FtpFSConnectionConfig cfg) {
         this(cfg, new LinkedList<>(), new HashSet<>(), new FtpClientFactory(cfg));
     }
 
@@ -103,7 +103,7 @@ public class ClientPool {
      * @param clientFactory
      *            client factory.
      */
-    protected ClientPool(final FtpConnectionConfiguration cfg, //
+    protected ClientPool(final FtpFSConnectionConfig cfg, //
             final LinkedList<FtpClientResource> freeResources,
             final Set<FtpClientResource> busyResources, final FtpClientFactory clientFactory) {
         super();

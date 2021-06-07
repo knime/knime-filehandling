@@ -44,27 +44,33 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-10-20 (Vyacheslav Soldatov): created
+ *   2021-06-07 (Sascha Wolke, KNIME GmbH): created
  */
 package org.knime.ext.ftp.filehandling.fs;
 
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptor;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptorProvider;
+import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
+import org.knime.filehandling.core.connections.uriexport.base.PathURIExporterFactory;
+
 /**
+ * SSH file system descriptor.
  *
- * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ * @author Sascha Wolke, KNIME GmbH
  */
-public class MockFtpClientFactory extends FtpClientFactory {
+public class FtpFSDescriptorProvider extends BaseFSDescriptorProvider {
+
     /**
      * Default constructor.
      */
-    public MockFtpClientFactory() {
-        super(new FtpFSConnectionConfig());
+    public FtpFSDescriptorProvider() {
+        super(FtpFileSystem.FS_TYPE, //
+                new BaseFSDescriptor.Builder() //
+                        .withSeparator(FtpFileSystem.PATH_SEPARATOR) //
+                        .<FtpFSConnectionConfig>withConnectionFactory(FtpFSConnection::new) //
+                        .withURIExporterFactory(URIExporterIDs.DEFAULT, PathURIExporterFactory.getInstance()) //
+                        .withTestInitializerProvider(new FtpTestInitializerProvider()) //
+                        .build());
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public FtpClient createClient() {
-        return new MockFtpClient();
-    }
 }

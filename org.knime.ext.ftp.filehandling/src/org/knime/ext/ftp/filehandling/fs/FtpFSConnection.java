@@ -64,23 +64,22 @@ public class FtpFSConnection implements FSConnection {
     private final FtpFileSystem m_fileSystem;
 
     /**
-     * @param connection
-     *            Google API connection.
+     * @param config
+     *            connection configuration
      * @throws IOException
      */
-    @SuppressWarnings("resource")
-    public FtpFSConnection(
-            final FtpConnectionConfiguration connection)
-            throws IOException {
-        this(new FtpFileSystem(connection));
+    public FtpFSConnection(final FtpFSConnectionConfig config) throws IOException {
+        m_fileSystem = new FtpFileSystem(config);
     }
 
     /**
+     * Non public constructor to create an instance using an existing file system in
+     * integration tests.
      *
      * @param fileSystem
-     *            file system.
+     * @throws IOException
      */
-    protected FtpFSConnection(final FtpFileSystem fileSystem) {
+    FtpFSConnection(final FtpFileSystem fileSystem) throws IOException {
         m_fileSystem = fileSystem;
     }
 
