@@ -58,6 +58,7 @@ import org.knime.ext.smb.filehandling.fs.SmbFileSystem;
 import org.knime.ext.smb.filehandling.fs.SmbPath;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
+import org.knime.filehandling.core.testing.FSTestInitializer;
 
 import com.hierynomus.msdtyp.AccessMask;
 import com.hierynomus.msfscc.FileAttributes;
@@ -68,11 +69,11 @@ import com.hierynomus.smbj.share.DiskShare;
 import com.hierynomus.smbj.share.File;
 
 /**
- * Samba FS test initializer.
+ * {@link FSTestInitializer} for SMB file system.
  *
  * @author Alexander Bondaletov
  */
-public class SmbFSTestInitializer extends DefaultFSTestInitializer<SmbPath, SmbFileSystem> {
+class SmbFSTestInitializer extends DefaultFSTestInitializer<SmbPath, SmbFileSystem> {
 
     private DiskShare m_client;
 

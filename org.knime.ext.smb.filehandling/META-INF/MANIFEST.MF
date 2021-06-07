@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Samba extension for KNIME Workbench
+Bundle-Name: SMB Connector extension
 Bundle-SymbolicName: org.knime.ext.smb.filehandling;singleton:=true
 Bundle-Version: 4.4.0.qualifier
 Bundle-Vendor: 

@@ -44,64 +44,38 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2021-03-06 (Alexander Bondaletov): created
+ *   2021-06-07 (bjoern): created
  */
 package org.knime.ext.smb.filehandling.fs;
 
-import java.io.IOException;
-
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.util.FileSystemBrowser;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
+import org.knime.filehandling.core.connections.meta.FSDescriptorProvider;
+import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.FSTypeRegistry;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptor;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptorProvider;
+import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
+import org.knime.filehandling.core.connections.uriexport.base.PathURIExporterFactory;
 
 /**
- * SMB implementation of the {@link FSConnection} interface.
+ * {@link FSDescriptorProvider} for the SMB file system.
  *
- * @author Alexander Bondaletov
+ * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class SmbFSConnection implements FSConnection {
+public class SmbFSDescriptorProvider extends BaseFSDescriptorProvider {
 
-    private static final long CACHE_TTL = 6000;
-
-    private final SmbFileSystem m_filesystem;
+    /**
+     * {@link FSType} for the SMB file system.
+     */
+    public static final FSType FS_TYPE = FSTypeRegistry.getOrCreateFSType("smb", "SMB");
 
     /**
      * Constructor.
-     *
-     * @param config
-     *            The SMB connection config to use.
-     * @throws IOException
-     *
      */
-    public SmbFSConnection(final SmbFSConnectionConfig config)
-            throws IOException {
-        this(config, null);
-    }
-
-    /**
-     * Constructor.
-     *
-     * @param config
-     *            The SMB connection config to use.
-     * @param exec
-     *            An optional {@link ExecutionContext} to use when doing Kerberos
-     *            authentication. May be null.
-     * @throws IOException
-     *
-     */
-    public SmbFSConnection(final SmbFSConnectionConfig config, final ExecutionContext exec) throws IOException {
-        m_filesystem = new SmbFileSystem(CACHE_TTL, config, exec);
-    }
-
-    @Override
-    public FSFileSystem<?> getFileSystem() {
-        return m_filesystem;
-    }
-
-    @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
+    public SmbFSDescriptorProvider() {
+        super(FS_TYPE, new BaseFSDescriptor.Builder() //
+                .withConnectionFactory((final SmbFSConnectionConfig config) -> new SmbFSConnection(config)) // NOSONAR
+                .withSeparator(SmbFileSystem.SEPARATOR) //
+                .withURIExporterFactory(URIExporterIDs.DEFAULT, PathURIExporterFactory.getInstance()) //
+                .build());
     }
 }

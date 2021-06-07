@@ -61,8 +61,9 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.ICredentials;
-import org.knime.ext.smb.filehandling.fs.SmbFSConnection;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig;
+import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
+import org.knime.ext.smb.filehandling.fs.SmbFileSystem;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderSettings;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
@@ -74,7 +75,7 @@ import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
  *
  * @author Alexander Bondaletov
  */
-public class SmbConnectorSettings {
+class SmbConnectorSettings {
 
     private static final String KEY_CONNECTION_MODE = "connectionMode";
     private static final String KEY_FILESERVER_HOST = "fileserver.host";
@@ -119,7 +120,7 @@ public class SmbConnectorSettings {
                 .defaultType(StandardAuthTypes.USER_PASSWORD) //
                 .build();
 
-        m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, SmbFSConnection.PATH_SEPARATOR);
+        m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, SmbFileSystem.SEPARATOR);
         m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
     }
 
@@ -249,7 +250,7 @@ public class SmbConnectorSettings {
     }
 
     private void save(final NodeSettingsWO settings) {
-        m_connectionMode.save(KEY_CONNECTION_MODE, settings);
+        settings.addString(KEY_CONNECTION_MODE, m_connectionMode.getSettingsValue());
         m_fileserverHost.saveSettingsTo(settings);
         m_fileserverPort.saveSettingsTo(settings);
         m_fileserverShare.saveSettingsTo(settings);
@@ -284,7 +285,7 @@ public class SmbConnectorSettings {
     }
 
     private void load(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_connectionMode = ConnectionMode.load(KEY_CONNECTION_MODE, settings);
+        m_connectionMode = ConnectionMode.fromSettingsValue(settings.getString(KEY_CONNECTION_MODE));
         m_fileserverHost.loadSettingsFrom(settings);
         m_fileserverPort.loadSettingsFrom(settings);
         m_fileserverShare.loadSettingsFrom(settings);
@@ -333,7 +334,7 @@ public class SmbConnectorSettings {
      * @throws InvalidSettingsException
      */
     public void validate(final NodeSettingsRO settings) throws InvalidSettingsException {
-        ConnectionMode.load(KEY_CONNECTION_MODE, settings);
+        ConnectionMode.fromSettingsValue(settings.getString(KEY_CONNECTION_MODE));
         m_fileserverHost.validateSettings(settings);
         m_fileserverPort.validateSettings(settings);
         m_fileserverShare.validateSettings(settings);
@@ -359,7 +360,7 @@ public class SmbConnectorSettings {
         m_authSettings.validate();
 
         String workDir = m_workingDirectory.getStringValue();
-        if (workDir.isEmpty() || !workDir.startsWith(SmbFSConnection.PATH_SEPARATOR)) {
+        if (workDir.isEmpty() || !workDir.startsWith(SmbFileSystem.SEPARATOR)) {
             throw new InvalidSettingsException("Working directory must be set to an absolute path.");
         }
     }
@@ -392,7 +393,7 @@ public class SmbConnectorSettings {
     }
 
     SmbFSConnectionConfig createFSConnectionConfig(final Function<String, ICredentials> credentialsProvider) {
-        final SmbFSConnectionConfig config = new SmbFSConnectionConfig();
+        final SmbFSConnectionConfig config = new SmbFSConnectionConfig(getWorkingDirectory());
 
         config.setConnectionMode(m_connectionMode);
         if (m_connectionMode == ConnectionMode.DOMAIN) {
@@ -412,71 +413,8 @@ public class SmbConnectorSettings {
             config.setPassword(userPassSettings.getPassword(credentialsProvider));
         }
 
-        config.setWorkingDirectory(getWorkingDirectory());
         config.setTimeout(getTimeout());
 
         return config;
-    }
-
-    /**
-     *
-     * Enum representing different connection modes.
-     */
-    public enum ConnectionMode {
-        /**
-         * Connect to Fileserver
-         */
-        FILESERVER("fileserver", "File server"),
-        /**
-         *
-         * Connect to Domain
-         */
-        DOMAIN("domain", "Domain");
-
-        private String m_key;
-        private String m_title;
-
-        private ConnectionMode(final String key, final String title) {
-            m_key = key;
-            m_title = title;
-        }
-
-        @Override
-        public String toString() {
-            return m_title;
-        }
-
-        /**
-         * Saves the mode into the given {@link NodeSettingsWO} with the given key.
-         *
-         * @param key
-         * @param settings
-         */
-        public void save(final String key, final NodeSettingsWO settings) {
-            settings.addString(key, m_key);
-        }
-
-        /**
-         * Loads the mode from the give {@link NodeSettingsRO} where it is stored under
-         * the given key.
-         *
-         * @param key
-         * @param settings
-         * @return The loaded mode.
-         * @throws InvalidSettingsException
-         *             In case the stored mode key is not corresponds to any of the
-         *             existing modes.
-         */
-        public static ConnectionMode load(final String key, final NodeSettingsRO settings)
-                throws InvalidSettingsException {
-            String modeKey = settings.getString(key);
-            for (ConnectionMode m : values()) {
-                if (m.m_key.equals(modeKey)) {
-                    return m;
-                }
-            }
-
-            throw new InvalidSettingsException("Unknown connection mode: " + modeKey);
-        }
     }
 }

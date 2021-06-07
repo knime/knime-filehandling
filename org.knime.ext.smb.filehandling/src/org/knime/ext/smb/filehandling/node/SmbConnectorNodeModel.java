@@ -69,11 +69,11 @@ import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
 /**
- * Samba connector node.
+ * SMB connector node.
  *
  * @author Alexander Bondaletov
  */
-public class SmbConnectorNodeModel extends NodeModel {
+class SmbConnectorNodeModel extends NodeModel {
     private static final String FILE_SYSTEM_NAME = "SMB";
 
     private String m_fsId;

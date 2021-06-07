@@ -50,19 +50,21 @@ package org.knime.ext.smb.filehandling.fs;
 
 import java.time.Duration;
 
-import org.knime.ext.smb.filehandling.node.SmbConnectorSettings.ConnectionMode;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettingsRO;
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.auth.AuthType;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
 
 /**
  * Configuration for the {@link SmbFSConnection}.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-public class SmbFSConnectionConfig {
+public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
 
     private ConnectionMode m_connectionMode;
 
@@ -82,9 +84,7 @@ public class SmbFSConnectionConfig {
 
     private String m_password;
 
-    private String m_workingDir;
-
-    private Duration m_timeout;
+    private Duration m_timeout = Duration.ofSeconds(30);
 
     /**
      * The {@link AuthType} for Kerberos authentication mode.
@@ -97,6 +97,72 @@ public class SmbFSConnectionConfig {
      */
     public static final AuthType GUEST_AUTH_TYPE = new AuthType("guest", "Guest",
             "Authenticate as the Guest user (without password)");
+
+    /**
+     *
+     * Enum representing different connection modes.
+     */
+    public enum ConnectionMode {
+        /**
+         * Connect to Fileserver
+         */
+        FILESERVER("fileserver", "File server"),
+        /**
+         *
+         * Connect to Domain
+         */
+        DOMAIN("domain", "Domain");
+
+        private String m_settingsValue;
+        private String m_title;
+
+        private ConnectionMode(final String settingsValue, final String title) {
+            m_settingsValue = settingsValue;
+            m_title = title;
+        }
+
+        /**
+         * @return the settings value under which to store this mode.
+         */
+        public String getSettingsValue() {
+            return m_settingsValue;
+        }
+
+        @Override
+        public String toString() {
+            return m_title;
+        }
+
+        /**
+         * Loads the mode from the give {@link NodeSettingsRO} where it is stored under
+         * the given key.
+         *
+         * @param settingsValue
+         *            A settings value to map to a {@link ConnectionMode} enum.
+         * @return The corresponding {@link ConnectionMode} enum.
+         * @throws InvalidSettingsException
+         *             In case settingsValue does not correspond to any of the existing
+         *             modes.
+         */
+        public static ConnectionMode fromSettingsValue(final String settingsValue) throws InvalidSettingsException {
+            for (ConnectionMode m : values()) {
+                if (m.getSettingsValue().equals(settingsValue)) {
+                    return m;
+                }
+            }
+
+            throw new InvalidSettingsException("Unknown connection mode: " + settingsValue);
+        }
+
+    }
+
+    /**
+     * @param workingDirectory
+     *            the working directory to set
+     */
+    public SmbFSConnectionConfig(final String workingDirectory) {
+        super(workingDirectory);
+    }
 
     /**
      * @return the connection mode
@@ -252,21 +318,6 @@ public class SmbFSConnectionConfig {
     }
 
     /**
-     * @return the working directory
-     */
-    public String getWorkingDirectory() {
-        return m_workingDir;
-    }
-
-    /**
-     * @param workingDir
-     *            the working directory to set
-     */
-    public void setWorkingDirectory(final String workingDir) {
-        m_workingDir = workingDir;
-    }
-
-    /**
      * @return the timeout to use for read/write operations.
      */
     public Duration getTimeout() {
@@ -299,7 +350,7 @@ public class SmbFSConnectionConfig {
 
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, //
                 String.format("%s:%s:%s", //
-                        SmbFSConnection.FS_TYPE, //
+                        SmbFSDescriptorProvider.FS_TYPE, //
                         hostOrDomain, //
                         shareOrNamespace));
     }

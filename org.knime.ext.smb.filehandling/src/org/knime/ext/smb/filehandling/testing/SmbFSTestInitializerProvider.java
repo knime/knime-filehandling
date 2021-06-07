@@ -53,13 +53,17 @@ import java.util.Map;
 
 import org.knime.ext.smb.filehandling.fs.SmbFSConnection;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig;
-import org.knime.ext.smb.filehandling.node.SmbConnectorSettings.ConnectionMode;
+import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
+import org.knime.ext.smb.filehandling.fs.SmbFSDescriptorProvider;
+import org.knime.ext.smb.filehandling.fs.SmbFileSystem;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
+import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
+import org.knime.filehandling.core.testing.FSTestInitializerProvider;
 
 /**
- * FS test initializer provider for Samba
+ * {@link FSTestInitializerProvider} for the SMB file system.
  *
  * @author Alexander Bondaletov
  */
@@ -79,9 +83,9 @@ public class SmbFSTestInitializerProvider extends DefaultFSTestInitializerProvid
 
     private SmbFSConnectionConfig createFSConnectionConfig(final Map<String, String> configuration) {
         final String workDir = generateRandomizedWorkingDir(getParameter(configuration, "workingDirPrefix"),
-                SmbFSConnection.PATH_SEPARATOR);
+                SmbFileSystem.SEPARATOR);
 
-        final SmbFSConnectionConfig config = new SmbFSConnectionConfig();
+        final SmbFSConnectionConfig config = new SmbFSConnectionConfig(workDir);
         config.setConnectionMode(ConnectionMode.FILESERVER);
         config.setFileserverHost(getParameter(configuration, HOST));
         config.setFileserverPort(445);
@@ -89,14 +93,13 @@ public class SmbFSTestInitializerProvider extends DefaultFSTestInitializerProvid
         config.setAuthType(StandardAuthTypes.USER_PASSWORD);
         config.setUser(getParameter(configuration, USERNAME));
         config.setPassword(getParameter(configuration, PASSWORD));
-        config.setWorkingDirectory(workDir);
         return config;
     }
 
 
     @Override
-    public String getFSType() {
-        return SmbFSConnection.FS_TYPE;
+    public FSType getFSType() {
+        return SmbFSDescriptorProvider.FS_TYPE;
     }
 
     @Override

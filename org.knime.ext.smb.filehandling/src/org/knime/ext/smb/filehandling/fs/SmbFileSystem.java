@@ -50,19 +50,16 @@ package org.knime.ext.smb.filehandling.fs;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import org.knime.core.node.ExecutionContext;
+import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.NodeLogger;
-import org.knime.ext.smb.filehandling.node.SmbConnectorSettings.ConnectionMode;
+import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
 import com.hierynomus.smbj.SMBClient;
@@ -72,7 +69,7 @@ import com.hierynomus.smbj.auth.AuthenticationContext;
 import com.hierynomus.smbj.share.DiskShare;
 
 /**
- * Samba implementation of the {@link FileSystem} interface.
+ * SMB implementation of the {@link FileSystem} interface.
  *
  * @author Alexander Bondaletov
  */
@@ -80,7 +77,13 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
 
     private static final NodeLogger LOG = NodeLogger.getLogger(SmbFileSystem.class);
 
+    /**
+     * Character to use as path separator
+     */
+    public static final String SEPARATOR = "\\";
+
     private final SMBClient m_client;
+
     private final DiskShare m_share;
 
     /**
@@ -91,15 +94,14 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
      * @param config
      *            The file system configuration
      * @param exec
-     *            An optional {@link ExecutionContext} to be able to cancel Kerberos
+     *            An optional {@link ExecutionMonitor} to be able to cancel Kerberos
      *            authentication. May be null.
      * @throws IOException
      */
     @SuppressWarnings("resource")
-    protected SmbFileSystem(final long cacheTTL, final SmbFSConnectionConfig config, final ExecutionContext exec)
+    protected SmbFileSystem(final long cacheTTL, final SmbFSConnectionConfig config, final ExecutionMonitor exec)
             throws IOException {
         super(new SmbFileSystemProvider(), //
-                createUri(), //
                 cacheTTL, //
                 config.getWorkingDirectory(), //
                 config.createFSLocationSpec());
@@ -161,14 +163,6 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
         }
     }
 
-    private static URI createUri() {
-        try {
-            return new URI(SmbFSConnection.FS_TYPE, UUID.randomUUID().toString(), null, null);
-        } catch (URISyntaxException ex) {
-            throw new IllegalArgumentException(ex);
-        }
-    }
-
     /**
      * @return The share client
      */
@@ -188,11 +182,11 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
 
     @Override
     public String getSeparator() {
-        return SmbFSConnection.PATH_SEPARATOR;
+        return SmbFileSystem.SEPARATOR;
     }
 
     @Override
     public Iterable<Path> getRootDirectories() {
-        return Collections.singletonList(getPath(SmbFSConnection.PATH_SEPARATOR));
+        return Collections.singletonList(getPath(SmbFileSystem.SEPARATOR));
     }
 }

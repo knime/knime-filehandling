@@ -80,7 +80,7 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnection;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig;
-import org.knime.ext.smb.filehandling.node.SmbConnectorSettings.ConnectionMode;
+import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.auth.AuthPanel;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
@@ -95,7 +95,7 @@ import org.knime.filehandling.core.util.GBCBuilder;
  *
  * @author Alexander Bondaletov
  */
-public class SmbConnectorNodeDialog extends NodeDialogPane {
+class SmbConnectorNodeDialog extends NodeDialogPane {
 
     private final SmbConnectorSettings m_settings;
 

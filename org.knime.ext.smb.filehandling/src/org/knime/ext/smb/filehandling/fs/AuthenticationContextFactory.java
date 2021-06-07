@@ -54,7 +54,6 @@ import java.security.AccessController;
 import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosPrincipal;
 
-import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.kerberos.api.KerberosDelegationProvider;
@@ -68,7 +67,7 @@ final class AuthenticationContextFactory {
     private AuthenticationContextFactory() {
     }
 
-    static AuthenticationContext create(final SmbFSConnectionConfig config, final ExecutionContext exec)
+    static AuthenticationContext create(final SmbFSConnectionConfig config, final ExecutionMonitor exec)
             throws IOException {
 
         if (config.getAuthType() == StandardAuthTypes.USER_PASSWORD) {
