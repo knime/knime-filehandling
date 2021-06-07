@@ -100,9 +100,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         m_resources.start();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected SeekableByteChannel newByteChannelInternal(final SshPath path, final Set<? extends OpenOption> options,
             final FileAttribute<?>... attrs) throws IOException {
@@ -110,9 +107,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
                 resource -> NativeSftpProviderUtils.newByteChannelInternal(resource, path, options, attrs));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void moveInternal(final SshPath source, final SshPath target, final CopyOption... options)
             throws IOException {
@@ -129,27 +123,18 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void copyInternal(final SshPath source, final SshPath target, final CopyOption... options)
             throws IOException {
         invokeWithClient(true, client -> NativeSftpProviderUtils.copyInternal(client, source, target, options));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected InputStream newInputStreamInternal(final SshPath path, final OpenOption... options) throws IOException {
         return invokeWithResource(false,
                 resource -> NativeSftpProviderUtils.newInputStreamInternalImpl(resource, path, options));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     protected OutputStream newOutputStreamInternal(final SshPath path, final OpenOption... options) throws IOException {
@@ -157,9 +142,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         return Channels.newOutputStream(newByteChannelInternal(path, opts));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Iterator<SshPath> createPathIterator(final SshPath dir, final Filter<? super Path> filter)
             throws IOException {
@@ -168,18 +150,12 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
                 resource -> NativeSftpProviderUtils.createPathIteratorImpl(resource, dir, filter));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void createDirectoryInternal(final SshPath dir, final FileAttribute<?>... attrs)
             throws IOException {
         invokeWithClient(true, client -> NativeSftpProviderUtils.createDirectoryInternal(client, dir, attrs));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     public boolean exists(final SshPath path) throws IOException {
@@ -197,9 +173,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected BaseFileAttributes fetchAttributesInternal(final SshPath path, final Class<?> type) throws IOException {
         return invokeWithClient(true, client -> fetchAttributesInternal(client, path, type));
@@ -226,9 +199,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         throw new UnsupportedOperationException("readAttributes(" + path + ")[" + type.getSimpleName() + "] N/A");
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void checkAccessInternal(final SshPath path, final AccessMode... modes) throws IOException {
         // not checked only existence of attributes
@@ -255,9 +225,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     public void setAttribute(final Path path, final String name, final Object value,
@@ -329,9 +296,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         return invokeWithResource(releaseResource, resource -> func.invoke(resource.getClient()));
     }
 
-    /**
-     * @param closeable closeable.
-     */
     void unregisterCloseable(final Closeable closeable) {
         final ConnectionResourceHolder holder = m_closeables.remove(closeable);
         if (holder != null) {
@@ -339,8 +303,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         }
     }
 
-    /**
-     */
     private void startCatchResource() {
         if (m_resourceRef.get() != null) {
             throw new IllegalStateException("Already waiting resource");
@@ -360,9 +322,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public SeekableByteChannel newByteChannel(final Path path, final Set<? extends OpenOption> options, final FileAttribute<?>... attrs)
             throws IOException {
@@ -376,9 +335,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         return channel;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public InputStream newInputStream(final Path path, final OpenOption... options) throws IOException {
         startCatchResource();
@@ -391,9 +347,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         return in;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public OutputStream newOutputStream(final Path path, final OpenOption... options) throws IOException {
         startCatchResource();
@@ -406,9 +359,6 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         return out;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("unchecked")
     @Override
     public <V extends FileAttributeView> V getFileAttributeView(final Path path, final Class<V> type,
@@ -419,15 +369,8 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
                 : null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected boolean isHiddenInternal(final SshPath path) throws IOException {
-        if (path.isRoot()) {
-            return false;
-        } else {
-            return path != null && path.getFileName().toString().startsWith(".");
-        }
+        return path != null && !path.isRoot() && path.getFileName().toString().startsWith(".");
     }
 }
