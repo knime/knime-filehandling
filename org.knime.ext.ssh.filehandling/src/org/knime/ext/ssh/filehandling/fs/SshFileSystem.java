@@ -51,8 +51,6 @@ package org.knime.ext.ssh.filehandling.fs;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -63,6 +61,8 @@ import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
+import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.FSTypeRegistry;
 
 /**
  * SFTP implementation of the {@link FileSystem}.
@@ -73,25 +73,23 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
     private static final long CACHE_TTL = 6000;
 
     /**
-     * SSH URI scheme.
+     * The file system type of the SSH file system.
      */
-    public static final String FS_TYPE = "ssh";
+    public static final FSType FS_TYPE = FSTypeRegistry.getOrCreateFSType("ssh", "SSH");
 
     /**
      * Character to use as path separator
      */
     public static final String PATH_SEPARATOR = "/";
 
-    private final SshConnectionConfiguration m_settings;
-
-    SshFileSystem(final SshConnectionConfiguration settings, final String workingDirectory) throws IOException {
-        super(createProvider(settings), createUri(settings), CACHE_TTL,
-                workingDirectory,
-                createFSLocationSpec(settings.getHost()));
-        m_settings = settings;
+    SshFileSystem(final SshFSConnectionConfig config) throws IOException {
+        super(createProvider(config), //
+                CACHE_TTL, //
+                config.getWorkingDirectory(), //
+                createFSLocationSpec(config));
     }
 
-    private static SshFileSystemProvider createProvider(final SshConnectionConfiguration settings) throws IOException {
+    private static SshFileSystemProvider createProvider(final SshFSConnectionConfig settings) throws IOException {
         return new SshFileSystemProvider(settings);
     }
 
@@ -101,28 +99,14 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
     }
 
     /**
-     * @param cfg
-     *            connection configuration.
-     * @return URI from configuration.
-     * @throws URISyntaxException
+     * @param config
+     *            connection configuration
+     * @return the {@link FSLocationSpec} for a SSH file system.
      */
-    private static URI createUri(final SshConnectionConfiguration cfg) throws IOException {
+    public static DefaultFSLocationSpec createFSLocationSpec(final SshFSConnectionConfig config) {
+        String resolvedHost = config.getHost().toLowerCase(Locale.ENGLISH);
         try {
-            return new URI(FS_TYPE, null, cfg.getHost(), cfg.getPort(), null, null, null);
-        } catch (final URISyntaxException e) {
-            throw new IOException("Failed to create URI", e);
-        }
-    }
-
-    /**
-     * @param host
-     *            host name from configuration.
-     * @return the {@link FSLocationSpec} for a Sharepoint file system.
-     */
-    public static DefaultFSLocationSpec createFSLocationSpec(final String host) {
-        String resolvedHost = host.toLowerCase(Locale.ENGLISH);
-        try {
-            resolvedHost = InetAddress.getByName(host).getCanonicalHostName();
+            resolvedHost = InetAddress.getByName(config.getHost()).getCanonicalHostName();
         } catch (UnknownHostException ex) { // NOSONAR ignore if thrown
         }
 

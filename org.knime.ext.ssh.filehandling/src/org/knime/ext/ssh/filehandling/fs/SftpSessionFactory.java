@@ -106,13 +106,13 @@ public class SftpSessionFactory {
 
     private CloseableExecutorService m_executorService;
 
-    private final SshConnectionConfiguration m_settings;
+    private final SshFSConnectionConfig m_settings;
 
 
     /**
      * @param settings
      */
-    public SftpSessionFactory(final SshConnectionConfiguration settings) {
+    public SftpSessionFactory(final SshFSConnectionConfig settings) {
         super();
         m_settings = settings;
     }

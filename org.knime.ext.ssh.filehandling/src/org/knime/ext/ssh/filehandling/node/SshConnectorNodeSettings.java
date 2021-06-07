@@ -63,10 +63,15 @@ import org.knime.core.node.defaultnodesettings.SettingsModelNumber;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
+import org.knime.ext.ssh.filehandling.fs.SshFSConnectionConfig;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
+import org.knime.ext.ssh.filehandling.node.auth.KeyFileAuthProviderSettings;
 import org.knime.ext.ssh.filehandling.node.auth.SshAuth;
 import org.knime.filehandling.core.connections.FSLocation;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
+import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
+import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 import org.knime.filehandling.core.defaultnodesettings.EnumConfig;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.filtermode.SettingsModelFilterMode.FilterMode;
@@ -235,8 +240,7 @@ public class SshConnectorNodeSettings {
      * @throws InvalidSettingsException
      */
     public void configureInModel(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer,
-            final CredentialsProvider credentialsProvider)
-            throws InvalidSettingsException {
+            final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
 
         if (m_useKnownHostsFile.getBooleanValue()) {
             m_knownHostsFile.configureInModel(inSpecs, statusConsumer);
@@ -422,5 +426,38 @@ public class SshConnectorNodeSettings {
             // won't happen
         }
         return toReturn;
+    }
+
+    /**
+     * Convert settings to a {@link SshFSConnectionConfig} instance.
+     */
+    SshFSConnectionConfig toFSConnectionConfig(final CredentialsProvider credentials,
+            final ConnectionToNodeModelBridge bridge) throws InvalidSettingsException {
+
+        final SshFSConnectionConfig cfg = new SshFSConnectionConfig(getWorkingDirectory());
+        cfg.setHost(getHost());
+        cfg.setConnectionTimeout(getConnectionTimeout());
+        cfg.setPort(getPort());
+        cfg.setMaxSftpSessionLimit(getMaxSessionCount());
+
+        // auth
+        final AuthSettings auth = getAuthenticationSettings();
+        cfg.setUseKeyFile(auth.getAuthType() == SshAuth.KEY_FILE_AUTH_TYPE);
+        cfg.setUseKnownHosts(useKnownHostsFile());
+
+        if (auth.getAuthType() == StandardAuthTypes.USER_PASSWORD) {
+            final UserPasswordAuthProviderSettings userPwdSettings = auth
+                    .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
+            cfg.setUserName(userPwdSettings.getUser(credentials::get));
+            cfg.setPassword(userPwdSettings.getPassword(credentials::get));
+        } else if (auth.getAuthType() == SshAuth.KEY_FILE_AUTH_TYPE) {
+            final KeyFileAuthProviderSettings keyFileSettings = auth.getSettingsForAuthType(SshAuth.KEY_FILE_AUTH_TYPE);
+            cfg.setUserName(keyFileSettings.getKeyUserModel().getStringValue());
+            cfg.setKeyFilePassword(keyFileSettings.getKeyPassphraseModel().getStringValue());
+        }
+
+        cfg.setBridge(bridge);
+
+        return cfg;
     }
 }

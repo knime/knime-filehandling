@@ -59,10 +59,11 @@ import java.util.function.Consumer;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
+import org.knime.ext.ssh.filehandling.fs.SshFSConnectionConfig;
 import org.knime.ext.ssh.filehandling.fs.SshFSConnection;
-import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
 /**
@@ -75,13 +76,20 @@ public class SshTestInitializerProvider extends DefaultFSTestInitializerProvider
     @SuppressWarnings("resource")
     @Override
     public SshTestInitializer setup(final Map<String, String> cfg) throws IOException {
+        return new SshTestInitializer(new SshFSConnection(toFSConnectionConfig(cfg)));
+    }
 
-        validateConfiguration(cfg);
+    private static SshFSConnectionConfig toFSConnectionConfig(final Map<String, String> cfg) {
+        CheckUtils.checkArgumentNotNull(cfg.get("host"), "host must be specified.");
+        CheckUtils.checkArgumentNotNull(cfg.get("workingDirPrefix"), "workingDirPrefix must be specified.");
+        CheckUtils.checkArgumentNotNull(cfg.get("username"), "username must be specified.");
+        CheckUtils.checkArgumentNotNull(Optional.ofNullable(cfg.get("password")).orElse(cfg.get("keyFile")),
+                "Either password or keyFile must be specified.");
 
         final String workingDir = generateRandomizedWorkingDir(cfg.get("workingDirPrefix"),
                 SshFileSystem.PATH_SEPARATOR);
 
-        final SshConnectionConfiguration sshCfg = new SshConnectionConfiguration();
+        final SshFSConnectionConfig sshCfg = new SshFSConnectionConfig(workingDir);
         sshCfg.setHost(cfg.get("host"));
         sshCfg.setUserName(cfg.get("username"));
         if (cfg.get("password") != null) {
@@ -106,28 +114,16 @@ public class SshTestInitializerProvider extends DefaultFSTestInitializerProvider
         sshCfg.setPort(cfg.containsKey("port") ? Integer.parseInt(cfg.get("port")) : 22);
         sshCfg.setConnectionTimeout(Duration.ofSeconds(300)); // set a big time out for easier debugging
 
-        // create connection
-        final SshFSConnection connection = new SshFSConnection(sshCfg, workingDir);
-        return new SshTestInitializer(connection);
-    }
-
-    private static void validateConfiguration(final Map<String, String> configuration) {
-        CheckUtils.checkArgumentNotNull(configuration.get("host"), "host must be specified.");
-        CheckUtils.checkArgumentNotNull(configuration.get("workingDirPrefix"), "workingDirPrefix must be specified.");
-        CheckUtils.checkArgumentNotNull(configuration.get("username"), "username must be specified.");
-        CheckUtils.checkArgumentNotNull(
-                Optional.ofNullable(configuration.get("password")).orElse(configuration.get("keyFile")),
-                "Either password or keyFile must be specified.");
+        return sshCfg;
     }
 
     @Override
-    public String getFSType() {
+    public FSType getFSType() {
         return SshFileSystem.FS_TYPE;
     }
 
     @Override
     public FSLocationSpec createFSLocationSpec(final Map<String, String> configuration) {
-        validateConfiguration(configuration);
-        return SshFileSystem.createFSLocationSpec(configuration.get("host"));
+        return SshFileSystem.createFSLocationSpec(toFSConnectionConfig(configuration));
     }
 }

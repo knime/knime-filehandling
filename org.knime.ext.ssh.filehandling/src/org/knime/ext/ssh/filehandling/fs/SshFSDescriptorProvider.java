@@ -44,41 +44,34 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-28 (Vyacheslav Soldatov): created
+ *   2021-06-07 (Sascha Wolke, KNIME GmbH): created
  */
 package org.knime.ext.ssh.filehandling.fs;
 
-import java.io.IOException;
-
-import org.knime.core.node.util.FileSystemBrowser;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
+import org.knime.ext.ssh.filehandling.testing.SshTestInitializerProvider;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptor;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptorProvider;
+import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
+import org.knime.filehandling.core.connections.uriexport.base.PathURIExporterFactory;
 
 /**
- * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ * SSH file system descriptor.
  *
+ * @author Sascha Wolke, KNIME GmbH
  */
-public class SshFSConnection implements FSConnection {
-    private final SshFileSystem m_fileSystem;
+public class SshFSDescriptorProvider extends BaseFSDescriptorProvider {
 
     /**
-     * @param cfg
-     *            connection configuration.
-     * @param workingDirectory
-     *            working directory
-     * @throws IOException
+     * Default constructor.
      */
-    public SshFSConnection(final SshFSConnectionConfig cfg) throws IOException {
-        m_fileSystem = new SshFileSystem(cfg);
+    public SshFSDescriptorProvider() {
+        super(SshFileSystem.FS_TYPE, //
+                new BaseFSDescriptor.Builder() //
+                        .withSeparator(SshFileSystem.PATH_SEPARATOR) //
+                        .withConnectionFactory(SshFSConnection::new) //
+                        .withURIExporterFactory(URIExporterIDs.DEFAULT, PathURIExporterFactory.getInstance()) //
+                        .withTestInitializerProvider(new SshTestInitializerProvider()) //
+                        .build());
     }
 
-    @Override
-    public SshFileSystem getFileSystem() {
-        return m_fileSystem;
-    }
-
-    @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
-    }
 }

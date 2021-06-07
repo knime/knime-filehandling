@@ -51,13 +51,14 @@ package org.knime.ext.ssh.filehandling.fs;
 import java.time.Duration;
 
 import org.knime.ext.ssh.filehandling.node.SshConnectorNodeSettings;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
 
 /**
  * Settings required for create the SFTP connection.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshConnectionConfiguration {
+public class SshFSConnectionConfig extends BaseFSConnectionConfig {
     private ConnectionToNodeModelBridge m_bridge;
 
     private Duration m_connectionTimeout = Duration
@@ -75,9 +76,12 @@ public class SshConnectionConfiguration {
 
     /**
      * Default constructor.
+     *
+     * @param workingDirectory
+     *            working directory of this connection
      */
-    public SshConnectionConfiguration() {
-        super();
+    public SshFSConnectionConfig(final String workingDirectory) {
+        super(workingDirectory, true);
     }
 
     /**

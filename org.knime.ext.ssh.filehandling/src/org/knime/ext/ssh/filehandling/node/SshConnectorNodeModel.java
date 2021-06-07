@@ -69,15 +69,12 @@ import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.NodeContext;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
 import org.knime.ext.ssh.filehandling.fs.SshFSConnection;
-import org.knime.ext.ssh.filehandling.fs.SshConnectionConfiguration;
+import org.knime.ext.ssh.filehandling.fs.SshFSConnectionConfig;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.ext.ssh.filehandling.node.auth.KeyFileAuthProviderSettings;
 import org.knime.ext.ssh.filehandling.node.auth.SshAuth;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.connections.FSPath;
-import org.knime.filehandling.core.connections.base.auth.AuthSettings;
-import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
-import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.ReadPathAccessor;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.status.NodeModelStatusConsumer;
@@ -92,8 +89,6 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class SshConnectorNodeModel extends NodeModel {
-
-    private static final String FILE_SYSTEM_NAME = "SSH";
 
     private static final Consumer<StatusMessage> NOOP_STATUS_CONSUMER = s -> {
     };
@@ -126,15 +121,19 @@ public class SshConnectorNodeModel extends NodeModel {
         m_fsId = FSConnectionRegistry.getInstance().getKey();
         m_settings.configureInModel(inSpecs, m_statusConsumer, getCredentialsProvider());
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
-        return new PortObjectSpec[] { createSpec() };
+        final SshFSConnectionConfig config = createConnectionConfig(m_settings, getCredentialsProvider(),
+                m_statusConsumer);
+        return new PortObjectSpec[] { createSpec(config) };
     }
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        m_connection = createConnection(m_settings, getCredentialsProvider(), m_statusConsumer);
+        final SshFSConnectionConfig config = createConnectionConfig(m_settings, getCredentialsProvider(),
+                m_statusConsumer);
+        m_connection = new SshFSConnection(config);
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
         FSConnectionRegistry.getInstance().register(m_fsId, m_connection);
-        return new PortObject[] { new FileSystemPortObject(createSpec()) };
+        return new PortObject[] { new FileSystemPortObject(createSpec(config)) };
     }
 
     /**
@@ -155,37 +154,18 @@ public class SshConnectorNodeModel extends NodeModel {
     private static SshFSConnection createConnection(final SshConnectorNodeSettings settings,
             final CredentialsProvider credentials,
             final Consumer<StatusMessage> statusConsumer) throws InvalidSettingsException, IOException {
-
-        final SshConnectionConfiguration cfg = new SshConnectionConfiguration();
-        cfg.setHost(settings.getHost());
-        cfg.setConnectionTimeout(settings.getConnectionTimeout());
-        cfg.setPort(settings.getPort());
-        cfg.setMaxSftpSessionLimit(settings.getMaxSessionCount());
-
-        // auth
-        final AuthSettings auth = settings.getAuthenticationSettings();
-        cfg.setUseKeyFile(auth.getAuthType() == SshAuth.KEY_FILE_AUTH_TYPE);
-        cfg.setUseKnownHosts(settings.useKnownHostsFile());
-
-        if (auth.getAuthType() == StandardAuthTypes.USER_PASSWORD) {
-            final UserPasswordAuthProviderSettings userPwdSettings = auth
-                    .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
-            cfg.setUserName(userPwdSettings.getUser(credentials::get));
-            cfg.setPassword(userPwdSettings.getPassword(credentials::get));
-        } else if (auth.getAuthType() == SshAuth.KEY_FILE_AUTH_TYPE) {
-            final KeyFileAuthProviderSettings keyFileSettings = auth.getSettingsForAuthType(SshAuth.KEY_FILE_AUTH_TYPE);
-            cfg.setUserName(keyFileSettings.getKeyUserModel().getStringValue());
-            cfg.setKeyFilePassword(keyFileSettings.getKeyPassphraseModel().getStringValue());
-        }
-
-        cfg.setBridge(new DefaultBridge(settings, statusConsumer));
-
-        return new SshFSConnection(cfg, settings.getWorkingDirectory());
+        return new SshFSConnection(createConnectionConfig(settings, credentials, statusConsumer));
     }
 
-    private FileSystemPortObjectSpec createSpec() {
-        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
-                SshFileSystem.createFSLocationSpec(m_settings.getHost()));
+    private static SshFSConnectionConfig createConnectionConfig(final SshConnectorNodeSettings settings,
+            final CredentialsProvider credentials, final Consumer<StatusMessage> statusConsumer)
+            throws InvalidSettingsException {
+        return settings.toFSConnectionConfig(credentials, new DefaultBridge(settings, statusConsumer));
+    }
+
+    private FileSystemPortObjectSpec createSpec(final SshFSConnectionConfig config) {
+        return new FileSystemPortObjectSpec(SshFileSystem.FS_TYPE.getTypeId(), m_fsId,
+                SshFileSystem.createFSLocationSpec(config));
     }
 
     /**

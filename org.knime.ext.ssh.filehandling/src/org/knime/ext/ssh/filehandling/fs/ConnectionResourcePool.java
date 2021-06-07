@@ -94,7 +94,7 @@ public class ConnectionResourcePool implements SessionListener {
      * @param settings
      *            SSH connection settings.
      */
-    public ConnectionResourcePool(final SshConnectionConfiguration settings) {
+    public ConnectionResourcePool(final SshFSConnectionConfig settings) {
         super();
         m_maxResourcesLimit = settings.getMaxSftpSessionLimit();
         m_connectionTimeOut = settings.getConnectionTimeout();

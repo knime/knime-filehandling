@@ -75,7 +75,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.sshd.sftp.client.SftpClient;
-import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
@@ -96,7 +95,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      *            SSH connection configuration.
      * @throws IOException
      */
-    public SshFileSystemProvider(final SshConnectionConfiguration config) throws IOException {
+    public SshFileSystemProvider(final SshFSConnectionConfig config) throws IOException {
         m_resources = new ConnectionResourcePool(config);
         m_resources.start();
     }
@@ -245,7 +244,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         BasicFileAttributes attributes = readAttributes(path, BasicFileAttributes.class);
 
         if (attributes.isDirectory()) {
-            if (FSFiles.isNonEmptyDirectory(path)) {
+            if (isNonEmptyDirectory(path)) {
                 throw new DirectoryNotEmptyException(path.toString());
             }
             sftp.rmdir(path.toString());
