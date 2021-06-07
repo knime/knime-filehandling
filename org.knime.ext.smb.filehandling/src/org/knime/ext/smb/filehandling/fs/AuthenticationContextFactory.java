@@ -50,21 +50,14 @@ package org.knime.ext.smb.filehandling.fs;
 
 import java.io.IOException;
 import java.security.AccessController;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosPrincipal;
 
-import org.ietf.jgss.GSSCredential;
-import org.ietf.jgss.GSSManager;
-import org.ietf.jgss.GSSName;
-import org.ietf.jgss.Oid;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
-import org.knime.kerberos.api.KerberosCallback;
+import org.knime.kerberos.api.KerberosDelegationProvider;
 import org.knime.kerberos.api.KerberosProvider;
 
 import com.hierynomus.smbj.auth.AuthenticationContext;
@@ -134,45 +127,22 @@ final class AuthenticationContextFactory {
         KerberosProvider.ensureInitialized();
 
         try {
-            return KerberosProvider.doWithKerberosAuthBlocking(new SmbKerberosCallback(), exec);
+            return KerberosDelegationProvider
+                    .doWithConstrainedDelegationBlocking(cred -> {
+                        final Subject subject = Subject.getSubject(AccessController.getContext());
+                        final KerberosPrincipal krbPrincipal =  subject//
+                                .getPrincipals(KerberosPrincipal.class) //
+                                .iterator() //
+                                .next();
+
+                        return new GSSAuthenticationContext(krbPrincipal.getName(), krbPrincipal.getRealm(), subject,
+                                cred);
+                    }, exec);
+
         } catch (Exception ex) {
             // rethrow as IOE because in the file system constructor we are only allowed to
             // throw IOE
             throw new IOException(ex.getMessage(), ex);
-        }
-    }
-
-    private static class SmbKerberosCallback implements KerberosCallback<GSSAuthenticationContext> {
-
-        private static final String SPNEGO_OID = "1.3.6.1.5.5.2";
-        private static final String KERBEROS5_OID = "1.2.840.113554.1.2.2";
-
-        @Override
-        public GSSAuthenticationContext doAuthenticated() throws Exception {
-            Subject subject = Subject.getSubject(AccessController.getContext());
-
-            KerberosPrincipal krbPrincipal = subject.getPrincipals(KerberosPrincipal.class).iterator().next();
-
-            Oid spnego = new Oid(SPNEGO_OID);
-            Oid kerberos5 = new Oid(KERBEROS5_OID);
-
-            final GSSManager manager = GSSManager.getInstance();
-
-            final GSSName name = manager.createName(krbPrincipal.toString(), GSSName.NT_USER_NAME);
-            Set<Oid> mechs = new HashSet<>(Arrays.asList(manager.getMechsForName(name.getStringNameType())));
-            final Oid mech;
-            if (mechs.contains(kerberos5)) {
-                mech = kerberos5;
-            } else if (mechs.contains(spnego)) {
-                mech = spnego;
-            } else {
-                throw new IllegalArgumentException("No mechanism found");
-            }
-
-            GSSCredential creds = manager.createCredential(name, GSSCredential.DEFAULT_LIFETIME, mech,
-                    GSSCredential.INITIATE_ONLY);
-
-            return new GSSAuthenticationContext(krbPrincipal.getName(), krbPrincipal.getRealm(), subject, creds);
         }
     }
 }
