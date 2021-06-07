@@ -330,7 +330,7 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
      */
     @Override
     protected boolean isHiddenInternal(final FtpPath path) throws IOException {
-        return path != null && path.getFileName().toString().startsWith(".");
+        return path != null && !path.isRoot() && path.getFileName().toString().startsWith(".");
     }
 
     /**
