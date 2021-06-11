@@ -107,7 +107,7 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
         Builder builder = SmbConfig.builder() //
                 .withMultiProtocolNegotiate(true) //
                 .withDfsEnabled(true) //
-                .withTimeout(config.getTimeout().getSeconds(), TimeUnit.SECONDS);
+                .withTimeout(config.getTimeout().toSeconds(), TimeUnit.SECONDS);
 
         final AuthenticationContext authContext = AuthenticationContextFactory.create(config, exec);
         final boolean usingKerberos = config.getAuthType() == SmbFSConnectionConfig.KERBEROS_AUTH_TYPE;
