@@ -48,6 +48,7 @@
  */
 package org.knime.ext.smb.filehandling.fs;
 
+import org.knime.ext.smb.filehandling.testing.SmbFSTestInitializerProvider;
 import org.knime.filehandling.core.connections.meta.FSDescriptorProvider;
 import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.connections.meta.FSTypeRegistry;
@@ -76,6 +77,7 @@ public class SmbFSDescriptorProvider extends BaseFSDescriptorProvider {
                 .withConnectionFactory((final SmbFSConnectionConfig config) -> new SmbFSConnection(config)) // NOSONAR
                 .withSeparator(SmbFileSystem.SEPARATOR) //
                 .withURIExporterFactory(URIExporterIDs.DEFAULT, PathURIExporterFactory.getInstance()) //
+                .withTestInitializerProvider(new SmbFSTestInitializerProvider()) //
                 .build());
     }
 }
