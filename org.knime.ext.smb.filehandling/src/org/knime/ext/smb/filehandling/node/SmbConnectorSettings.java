@@ -49,6 +49,7 @@
 package org.knime.ext.smb.filehandling.node;
 
 import java.time.Duration;
+import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -71,7 +72,7 @@ import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProvide
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
- * Node settings for the {@link SmbConnectorNodeModel} node.
+ * Node settings for the SMB Connector node.
  *
  * @author Alexander Bondaletov
  */
@@ -397,12 +398,12 @@ class SmbConnectorSettings {
 
         config.setConnectionMode(m_connectionMode);
         if (m_connectionMode == ConnectionMode.DOMAIN) {
-            config.setDomainName(getDomainName());
-            config.setDomainNamespace(getDomainNamespace());
+            config.setDomainName(getDomainName().trim().toUpperCase(Locale.US));
+            config.setDomainNamespace(getDomainNamespace().trim());
         } else {
-            config.setFileserverHost(getFileserverHost());
+            config.setFileserverHost(getFileserverHost().trim().toUpperCase(Locale.US));
             config.setFileserverPort(getFileserverPort());
-            config.setFileserverShare(getFileserverShare());
+            config.setFileserverShare(getFileserverShare().trim());
         }
 
         config.setAuthType(getAuthSettings().getAuthType());

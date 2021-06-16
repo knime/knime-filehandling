@@ -59,6 +59,7 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
@@ -71,6 +72,7 @@ import java.util.Set;
 import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
+import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
 import com.hierynomus.msdtyp.AccessMask;
 import com.hierynomus.msfscc.fileinformation.FileAllInformation;
@@ -96,7 +98,6 @@ class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFileSyste
         return new SmbSeekableFileChannel(path, options);
     }
 
-    @SuppressWarnings("resource")
     @Override
     protected void copyInternal(final SmbPath source, final SmbPath target, final CopyOption... options) throws IOException {
         if (FSFiles.isDirectory(source)) {
@@ -104,28 +105,45 @@ class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFileSyste
                 createDirectory(target);
             }
         } else {
-            DiskShare client = source.getFileSystem().getClient();
-            File srcFile = null;
-            File dstFile = null;
-            try {
-                srcFile = client.openFile(source.getSmbjPath(), EnumSet.of(AccessMask.GENERIC_READ), null,
-                        EnumSet.of(SMB2ShareAccess.FILE_SHARE_READ), SMB2CreateDisposition.FILE_OPEN, null);
-                dstFile = client.openFile(target.getSmbjPath(), EnumSet.of(AccessMask.GENERIC_WRITE), null,
-                        EnumSet.of(SMB2ShareAccess.FILE_SHARE_WRITE), SMB2CreateDisposition.FILE_OVERWRITE_IF,
-                        EnumSet.noneOf(SMB2CreateOptions.class));
+            copyFile(source, target);
+        }
+    }
+
+    @SuppressWarnings("resource")
+    private static void copyFile(final SmbPath source, final SmbPath target) throws IOException {
+        DiskShare client = source.getFileSystem().getClient();
+        File srcFile = null;
+        File dstFile = null;
+        try {
+            srcFile = client.openFile(source.getSmbjPath(), EnumSet.of(AccessMask.GENERIC_READ), null,
+                    EnumSet.of(SMB2ShareAccess.FILE_SHARE_READ), SMB2CreateDisposition.FILE_OPEN, null);
+            dstFile = client.openFile(target.getSmbjPath(), EnumSet.of(AccessMask.GENERIC_WRITE), null,
+                    EnumSet.of(SMB2ShareAccess.FILE_SHARE_WRITE), SMB2CreateDisposition.FILE_OVERWRITE_IF,
+                    EnumSet.noneOf(SMB2CreateOptions.class));
+
+            if (srcFile.getDiskShare() == dstFile.getDiskShare()) {
                 srcFile.remoteCopyTo(dstFile);
-            } catch (BufferException ex) {
-                throw new IOException(ex);
-            } catch (SMBApiException ex) {
-                throw SmbUtils.toIOE(ex, source.toString(), target.toString());
-            } finally {
-                if (srcFile != null) {
-                    srcFile.close();
-                }
-                if (dstFile != null) {
-                    dstFile.close();
-                }
+            } else {
+                copyByDownloading(source, target);
             }
+
+        } catch (BufferException ex) {
+            throw ExceptionUtil.wrapAsIOException(ex);
+        } catch (SMBApiException ex) {
+            throw SmbUtils.toIOE(ex, source.toString(), target.toString());
+        } finally {
+            if (srcFile != null) {
+                srcFile.close();
+            }
+            if (dstFile != null) {
+                dstFile.close();
+            }
+        }
+    }
+
+    private static void copyByDownloading(final SmbPath source, final SmbPath target) throws IOException {
+        try (InputStream in = Files.newInputStream(source)) {
+            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

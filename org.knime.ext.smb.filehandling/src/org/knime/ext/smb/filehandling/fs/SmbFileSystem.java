@@ -54,6 +54,7 @@ import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -139,31 +140,34 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
     private static final Pattern IPV6_PATTERN = Pattern.compile("(?:[A-F0-9]{0,4}:){7}[A-F0-9]{0,4}");
 
     private static String canonicalizeIfNecessary(final String hostOrDomain, final boolean usingKerberos) {
+
+        final String uppercaseHostOrDomain = hostOrDomain.trim().toUpperCase(Locale.US);
+
         if (!usingKerberos) {
-            return hostOrDomain;
+            return uppercaseHostOrDomain;
         }
 
         try {
             // when mode=FILESERVER, this is meant to resolve host -> host.mydomain.com
             // when mode=DOMAIN, then smbj needs to connect to the domain controller which
             // can be obtained by resolving the domain to a canonical hostname.
-            final String canonicalized = InetAddress.getByName(hostOrDomain).getCanonicalHostName();
+            final String canonicalized = InetAddress.getByName(uppercaseHostOrDomain).getCanonicalHostName();
 
             // if the canonical hostname is an IP address we may be making things worse, so
             // fall back to user-provided value
-            if (canonicalized.equals(hostOrDomain) //
+            if (canonicalized.equals(uppercaseHostOrDomain) //
                     || IPV4_PATTERN.matcher(canonicalized).matches() //
                     || IPV6_PATTERN.matcher(canonicalized).matches()) {
-                return hostOrDomain;
+                return uppercaseHostOrDomain;
             } else {
                 LOG.debugWithFormat("Making SMB connection to canonicalized host/domain %s (instead of %s)",
-                        canonicalized, hostOrDomain);
+                        canonicalized, uppercaseHostOrDomain);
                 return canonicalized;
             }
 
         } catch (UnknownHostException | SecurityException e) { // NOSONAR if canonicalization not possible, then
                                                                // fallback to user-provided value
-            return hostOrDomain;
+            return uppercaseHostOrDomain;
         }
     }
 
