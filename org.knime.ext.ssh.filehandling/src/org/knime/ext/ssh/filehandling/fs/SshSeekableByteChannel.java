@@ -71,64 +71,44 @@ class SshSeekableByteChannel implements SeekableByteChannel {
         m_channel = ch;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean isOpen() {
         return m_channel.isOpen();
     }
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
     public void close() throws IOException {
         m_channel.close();
     }
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
     public int read(final ByteBuffer dst) throws IOException {
         return m_channel.read(dst);
     }
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
     public int write(final ByteBuffer src) throws IOException {
         return m_channel.write(src);
     }
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
     public long position() throws IOException {
         return m_channel.position();
     }
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
     public SeekableByteChannel position(final long newPosition) throws IOException {
         return new SshSeekableByteChannel(m_resource, m_channel.position(newPosition));
     }
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
     public long size() throws IOException {
         return m_channel.size();
     }
-    /**
-     * {@inheritDoc}
-     */
+
     @Override
     public SeekableByteChannel truncate(final long size) throws IOException {
         return new SshSeekableByteChannel(
             m_resource, m_channel.truncate(Math.min(m_channel.size(), size)));
-    }
-    public ConnectionResource getResource() {
-        return m_resource;
     }
 }

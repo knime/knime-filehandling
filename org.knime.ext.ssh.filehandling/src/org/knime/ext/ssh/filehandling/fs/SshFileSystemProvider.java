@@ -56,7 +56,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -73,10 +72,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.apache.sshd.sftp.client.SftpClient;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
+import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
 /**
  * File system provider for {@link SshFileSystem}.
@@ -110,23 +111,54 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
     @Override
     protected void moveInternal(final SshPath source, final SshPath target, final CopyOption... options)
             throws IOException {
-        invokeWithClient(true, client -> moveInternal(client, source, target, options));
+
+        final var optionSet = Arrays.stream(options).collect(Collectors.toSet());
+
+        final BasicFileAttributes sourceAttrs;
+        if (optionSet.contains(LinkOption.NOFOLLOW_LINKS)) {
+            sourceAttrs = readAttributes(source, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+        } else {
+            sourceAttrs = readAttributes(source, BasicFileAttributes.class);
+        }
+
+        if (sourceAttrs.isSymbolicLink()) {
+            throw new IOException("Moving of symbolic links not supported");
+        }
+
+        final BasicFileAttributes targetAttrs = readAttributesIfExists(target);
+
+        invokeWithClient(true,
+                client -> NativeSftpProviderUtils.moveInternal(client, source, target, targetAttrs, optionSet));
     }
 
-    private static Void moveInternal(
-            final SftpClient sftpClient,
-            final SshPath source,
-            final SshPath target, final CopyOption... options)
-            throws IOException {
-
-        NativeSftpProviderUtils.moveInternal(sftpClient, source, target, options);
-        return null;
+    private BasicFileAttributes readAttributesIfExists(final SshPath target) throws IOException {
+        try {
+            return readAttributes(target, BasicFileAttributes.class);
+        } catch (NoSuchFileException e) { // NOSONAR expected behavior
+            return null;
+        }
     }
 
     @Override
     protected void copyInternal(final SshPath source, final SshPath target, final CopyOption... options)
             throws IOException {
-        invokeWithClient(true, client -> NativeSftpProviderUtils.copyInternal(client, source, target, options));
+        // attributes of source file
+
+        final var optionSet = Arrays.stream(options).collect(Collectors.toSet());
+        final BasicFileAttributes sourceAttrs;
+
+        if (optionSet.contains(LinkOption.NOFOLLOW_LINKS)) {
+            sourceAttrs = readAttributes(source, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+        } else {
+            sourceAttrs = readAttributes(source, BasicFileAttributes.class);
+        }
+
+        if (sourceAttrs.isSymbolicLink()) {
+            throw new IOException("Copying of symbolic links not supported");
+        }
+
+        invokeWithClient(true,
+                client -> NativeSftpProviderUtils.copyInternal(client, source, target, sourceAttrs, optionSet));
     }
 
     @Override
@@ -175,28 +207,11 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
 
     @Override
     protected BaseFileAttributes fetchAttributesInternal(final SshPath path, final Class<?> type) throws IOException {
-        return invokeWithClient(true, client -> fetchAttributesInternal(client, path, type));
-    }
-
-    /**
-     * @param sftpClient
-     *            file system.
-     * @param path
-     *            path to file.
-     * @param type
-     *            attributes type.
-     * @return file attributes.
-     * @throws IOException
-     */
-    protected BaseFileAttributes fetchAttributesInternal(
-            final SftpClient sftpClient,
-            final SshPath path, final Class<?> type) throws IOException {
-
-        if (type.isAssignableFrom(PosixFileAttributes.class)) {
-            return NativeSftpProviderUtils.readRemoteAttributes(sftpClient, path);
+        if (!type.isAssignableFrom(PosixFileAttributes.class)) {
+            throw new UnsupportedOperationException("readAttributes(" + path + ")[" + type.getSimpleName() + "] N/A");
         }
 
-        throw new UnsupportedOperationException("readAttributes(" + path + ")[" + type.getSimpleName() + "] N/A");
+        return invokeWithClient(true, client -> NativeSftpProviderUtils.readRemoteAttributes(client, path));
     }
 
     @Override
@@ -207,23 +222,10 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
 
     @Override
     protected void deleteInternal(final SshPath path) throws IOException {
-        invokeWithClient(true, client -> deleteInternal(client, path));
+        final BasicFileAttributes attrs = readAttributes(path, BasicFileAttributes.class);
+        invokeWithClient(true, client -> NativeSftpProviderUtils.delete(client, path, attrs));
     }
 
-    Void deleteInternal(final SftpClient sftp, final SshPath path) throws IOException {
-        BasicFileAttributes attributes = readAttributes(path, BasicFileAttributes.class);
-
-        if (attributes.isDirectory()) {
-            if (isNonEmptyDirectory(path)) {
-                throw new DirectoryNotEmptyException(path.toString());
-            }
-            sftp.rmdir(path.toString());
-        } else {
-            sftp.remove(path.toString());
-        }
-
-        return null;
-    }
 
     @SuppressWarnings("resource")
     @Override
@@ -275,12 +277,9 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
                 m_resourceRef.get().setResource(resource);
             }
             return result;
-        } catch (final IOException e) {
-            m_resources.release(resource);
-            throw e;
         } catch (Exception e) { // NOSONAR prevent resource leakage caused by non-IOEs being thrown
             m_resources.release(resource);
-            throw new IOException(e.getMessage(), e);
+            throw ExceptionUtil.wrapAsIOException(e);
         }
     }
 

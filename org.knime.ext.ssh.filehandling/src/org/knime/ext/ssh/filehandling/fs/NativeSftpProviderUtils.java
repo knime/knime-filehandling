@@ -57,6 +57,7 @@ import java.nio.file.CopyOption;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
@@ -116,8 +117,7 @@ public final class NativeSftpProviderUtils {
 
         SftpRemotePathChannel nativeChannel;
         try {
-            nativeChannel = new SftpRemotePathChannel(path.toSftpString(), resource.getClient(), false,
-                    modes);
+            nativeChannel = new SftpRemotePathChannel(path.toSftpString(), resource.getClient(), false, modes);
         } catch (SftpException ex) {
             throw convertAndRethrow(ex, path);
         }
@@ -221,58 +221,78 @@ public final class NativeSftpProviderUtils {
         return null;
     }
 
-    static Void copyInternal(final SftpClient sftpClient, final SshPath source,
-            final SshPath target,
-            final CopyOption... options) throws IOException {
-        @SuppressWarnings("resource")
-        SshFileSystemProvider provider = source.getFileSystem().provider();
+    static Void delete(final SftpClient sftp, final SshPath path, final BasicFileAttributes attrs) throws IOException {
 
-        boolean replaceExisting = false;
-        boolean copyAttributes = false;
-        boolean noFollowLinks = false;
-        for (CopyOption opt : options) {
-            replaceExisting |= opt == StandardCopyOption.REPLACE_EXISTING;
-            copyAttributes |= opt == StandardCopyOption.COPY_ATTRIBUTES;
-            noFollowLinks |= opt == LinkOption.NOFOLLOW_LINKS;
-        }
-        LinkOption[] linkOptions = IoUtils.getLinkOptions(!noFollowLinks);
+        try {
+            if (attrs.isDirectory()) {
+                sftp.rmdir(path.toString());
+            } else {
+                sftp.remove(path.toString());
+            }
 
-        // attributes of source file
-        BasicFileAttributes attrs = provider.readAttributes(source, BasicFileAttributes.class, linkOptions);
-        if (attrs.isSymbolicLink()) {
-            throw new IOException("Copying of symbolic links not supported");
+            return null;
+        } catch (SftpException ex) {
+            throw convertAndRethrow(ex, path);
         }
+    }
 
-        if (replaceExisting) {
-            provider.deleteIfExists(target);
-        }
+    static Void copyInternal(final SftpClient sftpClient, //
+            final SshPath source, //
+            final SshPath target, //
+            final BasicFileAttributes sourceAttrs, //
+            final Set<CopyOption> optionSet) throws IOException {
 
         // create directory or copy file
-        if (attrs.isDirectory()) {
+        if (sourceAttrs.isDirectory()) {
             createDirectoryInternal(sftpClient, target);
         } else {
             CopyFileExtension copyFile = sftpClient.getExtension(CopyFileExtension.class);
             if (copyFile.isSupported()) {
-                copyFile.copyFile(source.toString(), target.toString(), false);
-            } else {
-                try (InputStream in = provider.newInputStream(source);
-                        OutputStream os = provider.newOutputStream(target)) {
-                    IoUtils.copy(in, os);
+                try {
+                    copyFile.copyFile(source.toString(), //
+                            target.toString(), //
+                            optionSet.contains(StandardCopyOption.REPLACE_EXISTING));
+                } catch (SftpException ex) {
+                    throw convertAndRethrow(ex, target);
                 }
+            } else {
+                copyUsingTempFile(sftpClient, source, target);
             }
         }
 
         // copy basic attributes to target
-        if (copyAttributes) {
-            setAttributes(sftpClient, attrs, target, linkOptions);
+        if (optionSet.contains(StandardCopyOption.COPY_ATTRIBUTES)) {
+            final LinkOption[] linkOptions = IoUtils.getLinkOptions(!optionSet.contains(LinkOption.NOFOLLOW_LINKS));
+            setAttributes(sftpClient, sourceAttrs, target, linkOptions);
         }
         return null;
     }
 
-    static Void setAttributes(
-            final SftpClient sftpClient,
-            final BasicFileAttributes attrs,
-            final SshPath target,
+    private static void copyUsingTempFile(final SftpClient sftpClient, final SshPath source, final SshPath target)
+            throws IOException {
+
+        final Path localTmpFile = Files.createTempFile("ssh", ".tmp");
+
+        try {
+            try (final InputStream in = sftpClient.read(source.toSftpString())) {
+                Files.copy(in, localTmpFile, StandardCopyOption.REPLACE_EXISTING);
+            } catch (SftpException ex) {
+                throw convertAndRethrow(ex, source);
+            }
+
+            try (final OutputStream out = sftpClient.write(target.toSftpString(), OpenMode.Write, OpenMode.Create,
+                    OpenMode.Truncate)) {
+
+                Files.copy(localTmpFile, out);
+            } catch (SftpException ex) {
+                throw convertAndRethrow(ex, target);
+            }
+        } finally {
+            Files.delete(localTmpFile);
+        }
+    }
+
+    static Void setAttributes(final SftpClient sftpClient, final BasicFileAttributes attrs, final SshPath target,
             @SuppressWarnings("unused") final LinkOption... linkOptions) throws IOException {
         SftpClient.Attributes attributes = new SftpClient.Attributes();
 
@@ -284,43 +304,31 @@ public final class NativeSftpProviderUtils {
         return null;
     }
 
-    static Void moveInternal(final SftpClient sftpClient, final SshPath source,
-            final SshPath target,
-            final CopyOption... options) throws IOException {
-        boolean replaceExisting = false;
-        boolean noFollowLinks = false;
-        for (CopyOption opt : options) {
-            replaceExisting |= opt == StandardCopyOption.REPLACE_EXISTING;
-            // atomic move can't be supported by given SFTP implementation
-            // because not supported CopyMode
-            // atomicMove |= opt == StandardCopyOption.ATOMIC_MOVE;
-            noFollowLinks |= opt == LinkOption.NOFOLLOW_LINKS;
-        }
-        LinkOption[] linkOptions = IoUtils.getLinkOptions(noFollowLinks);
-        @SuppressWarnings("resource")
-        SshFileSystemProvider provider = target.getFileSystem().provider();
-
-        // attributes of source file
-        BasicFileAttributes attrs = provider.readAttributes(source, BasicFileAttributes.class, linkOptions);
-        if (attrs.isSymbolicLink()) {
-            throw new IOException("Moving of source symbolic link (" + source + ") to " + target + " not supported");
-        }
-
-        // delete target if it exists and REPLACE_EXISTING is specified
-        if (replaceExisting) {
-            provider.deleteIfExists(target);
-        }
+    static Void moveInternal(final SftpClient client, final SshPath source, final SshPath target,
+            final BasicFileAttributes targetAttrs, final Set<CopyOption> optionSet) throws IOException {
 
         try {
-            sftpClient.rename(source.toSftpString(), target.toSftpString());
+            if (optionSet.contains(StandardCopyOption.REPLACE_EXISTING)) {
+                if (targetAttrs != null) {
+                    // The SFTP version supported by OpenSSH does not support rename with
+                    // the Overwrite option, hence we delete the target first
+                    delete(client, target, targetAttrs);
+                }
+
+                client.rename(source.toSftpString(), //
+                        target.toSftpString());
+            } else {
+                client.rename(source.toSftpString(), //
+                        target.toSftpString());
+            }
+
         } catch (SftpException ex) {
             throw convertAndRethrow(ex, target);
         }
         return null;
     }
 
-    static BaseFileAttributes readRemoteAttributes(final SftpClient client,
-            final SshPath path,
+    static BaseFileAttributes readRemoteAttributes(final SftpClient client, final SshPath path,
             final LinkOption... options) throws IOException {
         try {
             SftpClient.Attributes attrs;
