@@ -109,12 +109,25 @@ final class SmbUtils {
             result = new AccessDeniedException(file, other, ex.getMessage());
             break;
         default:
-            result = new IOException(ex.getMessage());
+            result = new IOException(getExceptionMessage(ex));
             break;
         }
 
         result.initCause(ex);
         return result;
+    }
+
+    private static String getExceptionMessage(final SMBApiException ex) {
+        switch (ex.getStatus()) {
+        case STATUS_BAD_NETWORK_NAME:
+            return "Unable to connect to share/namespace";
+        case STATUS_LOGON_FAILURE:
+            return "Authentication failed, probably the username and/or password is wrong.";
+        case STATUS_ACCOUNT_DISABLED:
+            return "Authentication failed, the account is disabled.";
+        default:
+            return ex.getMessage();
+        }
     }
 
     /**

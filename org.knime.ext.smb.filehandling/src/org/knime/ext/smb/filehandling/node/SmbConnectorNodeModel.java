@@ -50,6 +50,9 @@ package org.knime.ext.smb.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -64,6 +67,7 @@ import org.knime.core.node.port.PortType;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnection;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig;
+import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -75,6 +79,7 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  */
 class SmbConnectorNodeModel extends NodeModel {
     private static final String FILE_SYSTEM_NAME = "SMB";
+    private static final String UNABLE_TO_CONNECT = "Unable to connect: ";
 
     private String m_fsId;
     private SmbFSConnection m_fsConnection;
@@ -112,11 +117,29 @@ class SmbConnectorNodeModel extends NodeModel {
 
         final CredentialsProvider credentialsProvider = getCredentialsProvider();
         final SmbFSConnectionConfig config = m_settings.createFSConnectionConfig(credentialsProvider::get);
-        m_fsConnection = new SmbFSConnection(config, exec);
+        try {
+            m_fsConnection = new SmbFSConnection(config, exec);
+        } catch (IOException ex) {
+            amendErrorMessage(ex);
+        }
 
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
         return new PortObject[] { new FileSystemPortObject(createSpec()) };
+    }
+
+    private void amendErrorMessage(final IOException e) throws IOException {
+        if (e instanceof UnknownHostException) {
+            String host = m_settings.getConnectionMode() == ConnectionMode.DOMAIN ? "Domain" : "File server host";
+            String message = UNABLE_TO_CONNECT + host + " is unknown.";
+
+            throw new IOException(message, e);
+        } else if (e instanceof SocketTimeoutException) {
+            throw new IOException(UNABLE_TO_CONNECT + "Connection timeout.", e);
+        } else if (e instanceof ConnectException) {
+            throw new IOException(UNABLE_TO_CONNECT + e.getMessage(), e);
+        }
+        throw e;
     }
 
     @Override

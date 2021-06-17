@@ -62,6 +62,7 @@ import org.knime.core.node.NodeLogger;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
+import com.hierynomus.mssmb2.SMBApiException;
 import com.hierynomus.smbj.SMBClient;
 import com.hierynomus.smbj.SmbConfig;
 import com.hierynomus.smbj.SmbConfig.Builder;
@@ -116,17 +117,20 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
 
         m_client = new SMBClient(builder.build());
 
-        if (config.getConnectionMode() == ConnectionMode.DOMAIN) {
-            final String host = canonicalizeIfNecessary(config.getDomainName(), usingKerberos);
-            m_share = (DiskShare) m_client.connect(host) //
-                    .authenticate(authContext) //
-                    .connectShare(config.getDomainNamespace());
-        } else {
-            final String host = canonicalizeIfNecessary(config.getFileserverHost(), usingKerberos);
-            m_share = (DiskShare) m_client
-                    .connect(host, config.getFileserverPort()) //
-                    .authenticate(authContext) //
-                    .connectShare(config.getFileserverShare());
+        try {
+            if (config.getConnectionMode() == ConnectionMode.DOMAIN) {
+                final String host = canonicalizeIfNecessary(config.getDomainName(), usingKerberos);
+                m_share = (DiskShare) m_client.connect(host) //
+                        .authenticate(authContext) //
+                        .connectShare(config.getDomainNamespace());
+            } else {
+                final String host = canonicalizeIfNecessary(config.getFileserverHost(), usingKerberos);
+                m_share = (DiskShare) m_client.connect(host, config.getFileserverPort()) //
+                        .authenticate(authContext) //
+                        .connectShare(config.getFileserverShare());
+            }
+        } catch (SMBApiException ex) {
+            throw SmbUtils.toIOE(ex, SEPARATOR);
         }
     }
 
