@@ -69,6 +69,8 @@ public class SshFSDescriptorProvider extends BaseFSDescriptorProvider {
                 new BaseFSDescriptor.Builder() //
                         .withSeparator(SshFileSystem.PATH_SEPARATOR) //
                         .withConnectionFactory(SshFSConnection::new) //
+                        .withCanGetPosixAttributes(true) //
+                        .withCanSetPosixAttributes(true) //
                         .withURIExporterFactory(URIExporterIDs.DEFAULT, PathURIExporterFactory.getInstance()) //
                         .withTestInitializerProvider(new SshTestInitializerProvider()) //
                         .build());
