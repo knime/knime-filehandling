@@ -120,7 +120,7 @@ final class SmbUtils {
     private static String getExceptionMessage(final SMBApiException ex) {
         switch (ex.getStatus()) {
         case STATUS_BAD_NETWORK_NAME:
-            return "Unable to connect to share/namespace";
+            return "Unable to connect to share/namespace, probably the name of the share/namespace is wrong.";
         case STATUS_LOGON_FAILURE:
             return "Authentication failed, probably the username and/or password is wrong.";
         case STATUS_ACCOUNT_DISABLED:
