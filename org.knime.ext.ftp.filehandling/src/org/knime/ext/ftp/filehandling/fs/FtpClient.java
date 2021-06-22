@@ -59,6 +59,7 @@ import java.nio.file.NoSuchFileException;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPFileFilter;
 import org.apache.commons.net.ftp.FTPReply;
 
 /**
@@ -73,10 +74,14 @@ public class FtpClient {
      * access).
      */
     private static final int ERR_FILE_NOT_FOUND_OR_NOT_ACCESS = 550;
+
     /**
-     * Requested action not taken. File name not allowed.
+     * Server requires a certain level of security to exist on the connection before
+     * processing the command, or it is processing a command would result in
+     * decreased security.
      */
-    private static final int ERR_COULD_NOT_CREATE_FILE_OR_OTHER = 553;
+    private static final int ERR_REQUEST_DENIED_FOR_POLICY_REASONS = 534;
+
 
     private final FTPClient m_client;
     private final FtpClientFeatures m_features;
@@ -167,8 +172,16 @@ public class FtpClient {
      * @throws IOException
      */
     public FTPFile[] listFiles(final String dir) throws IOException {
+
+        final FTPFileFilter filter = f -> f != null && !".".equals(f.getName()) && !"..".equals(f.getName());
+
         return tryCatchAccessDenied(dir, () -> {
-            FTPFile[] files = m_client.listFiles(dir, f -> f != null && !".".equals(f.getName()) && !"..".equals(f.getName()));
+            final FTPFile[] files;
+            if (m_features.ismListDirSupported()) {
+                files = m_client.mlistDir(dir, filter);
+            } else {
+                files = m_client.listFiles(dir, filter);
+            }
             checkPositiveResponse();
             return files;
         });
@@ -345,6 +358,7 @@ public class FtpClient {
         return tryCatchAccessDenied(file, null, invokable);
     }
 
+
     /**
      * @param <T>
      *            result type.
@@ -363,8 +377,11 @@ public class FtpClient {
             return invokable.invoke();
         } catch (IOException ex) {
             int code = m_client.getReplyCode();
-            if (code == ERR_FILE_NOT_FOUND_OR_NOT_ACCESS || code == ERR_COULD_NOT_CREATE_FILE_OR_OTHER) {
+
+            if (code == ERR_REQUEST_DENIED_FOR_POLICY_REASONS) {
                 throw new AccessDeniedException(file, to, getReplyString());
+            } else if (code == ERR_FILE_NOT_FOUND_OR_NOT_ACCESS) {
+                throw new NoSuchFileException(file, to, getReplyString());
             }
 
             throw ex;
