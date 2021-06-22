@@ -130,7 +130,7 @@ public class FtpFileAttributes extends BaseFileAttributes {
     }
 
     private static FileTime toTime(final Calendar timestamp) {
-        return timestamp == null ? null : FileTime.fromMillis(timestamp.getTimeInMillis());
+        return timestamp == null ? FileTime.fromMillis(0) : FileTime.fromMillis(timestamp.getTimeInMillis());
     }
 
     /**

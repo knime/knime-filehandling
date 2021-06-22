@@ -63,6 +63,13 @@ public final class FtpClientFeatures {
      * MLST command is used for request the file attributes by command channel.
      */
     private boolean m_mListSupported;
+
+    /**
+     * MLSD command is used for request a directory listing returned by data
+     * channel.
+     */
+    private boolean m_mListDirSupported;
+
     /**
      * MDTM command is used for request the file last modified time.
      */
@@ -93,6 +100,8 @@ public final class FtpClientFeatures {
                 features.m_mListSupported = true;
             } else if (upperCaseFeature.contains("MDTM")) {
                 features.m_mDtmSupported = true;
+            } else if (upperCaseFeature.contains("MLSD")) {
+                features.m_mListDirSupported = true;
             } else {
                 // possible check other features
             }
@@ -108,9 +117,17 @@ public final class FtpClientFeatures {
     }
 
     /**
+     * @return true if MLSD command supported by server.
+     */
+    public boolean ismListDirSupported() {
+        return m_mListDirSupported;
+    }
+
+    /**
      * @return true if MDTM command supported by server
      */
     public boolean ismDtmSupported() {
         return m_mDtmSupported;
     }
+
 }
