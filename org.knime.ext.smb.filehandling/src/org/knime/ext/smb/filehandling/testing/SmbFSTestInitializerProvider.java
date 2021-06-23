@@ -72,6 +72,7 @@ public class SmbFSTestInitializerProvider extends DefaultFSTestInitializerProvid
     private static final String SHARE = "share";
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
+    private static final String PORT = "port";
 
     @SuppressWarnings("resource")
     @Override
@@ -88,14 +89,13 @@ public class SmbFSTestInitializerProvider extends DefaultFSTestInitializerProvid
         final SmbFSConnectionConfig config = new SmbFSConnectionConfig(workDir);
         config.setConnectionMode(ConnectionMode.FILESERVER);
         config.setFileserverHost(getParameter(configuration, HOST));
-        config.setFileserverPort(445);
+        config.setFileserverPort(configuration.containsKey(PORT) ? Integer.parseInt(configuration.get(PORT)) : 445);
         config.setFileserverShare(getParameter(configuration, SHARE));
         config.setAuthType(StandardAuthTypes.USER_PASSWORD);
         config.setUser(getParameter(configuration, USERNAME));
         config.setPassword(getParameter(configuration, PASSWORD));
         return config;
     }
-
 
     @Override
     public FSType getFSType() {
