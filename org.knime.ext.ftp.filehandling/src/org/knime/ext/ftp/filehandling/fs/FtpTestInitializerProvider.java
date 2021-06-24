@@ -77,7 +77,7 @@ public class FtpTestInitializerProvider extends DefaultFSTestInitializerProvider
                 FtpFileSystem.PATH_SEPARATOR);
 
         final FtpFSConnectionConfig ftpCfg = new FtpFSConnectionConfig();
-        ftpCfg.setMaxConnectionPoolSize(2);
+        ftpCfg.setMaxConnectionPoolSize(10);
         ftpCfg.setTestMode(true);
         ftpCfg.setHost(cfg.getOrDefault("host", "localhost"));
         ftpCfg.setPort(Integer.parseInt(cfg.getOrDefault("port", "21")));
