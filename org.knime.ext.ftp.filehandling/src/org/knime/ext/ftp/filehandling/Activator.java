@@ -58,31 +58,37 @@ import org.osgi.framework.ServiceReference;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class Activator implements BundleActivator {
-    private ServiceReference<IProxyService> m_proxyServiceRef;
-    private static IProxyService mProxyService;
 
-    /**
-     * {@inheritDoc}
-     */
+    private static BundleContext bundleContext = null;
+    private static ServiceReference<IProxyService> proxyServiceRef;
+    private static IProxyService proxyService;
+
     @Override
     public void start(final BundleContext context) throws Exception {
-        m_proxyServiceRef = context.getServiceReference(IProxyService.class);
-        mProxyService = context.getService(m_proxyServiceRef); // NOSONAR is ok to initialize on bundle start
+        synchronized (Activator.class) {
+            bundleContext = context;
+        }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void stop(final BundleContext context) throws Exception {
-        context.ungetService(m_proxyServiceRef);
-        m_proxyServiceRef = null;
+        synchronized (Activator.class) {
+            if (proxyServiceRef != null) {
+                context.ungetService(proxyServiceRef);
+                proxyServiceRef = null;
+            }
+        }
     }
 
     /**
      * @return Proxy service.
      */
-    public static IProxyService getProxyService() {
-        return mProxyService;
+    public static synchronized IProxyService getProxyService() {
+        if (proxyServiceRef == null) {
+            proxyServiceRef = bundleContext.getServiceReference(IProxyService.class);
+            proxyService = bundleContext.getService(proxyServiceRef);
+        }
+
+        return proxyService;
     }
 }
