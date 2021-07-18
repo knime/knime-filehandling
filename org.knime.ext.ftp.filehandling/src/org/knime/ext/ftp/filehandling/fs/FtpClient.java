@@ -180,7 +180,7 @@ public class FtpClient {
             if (m_features.ismListDirSupported()) {
                 files = m_client.mlistDir(dir, filter);
             } else {
-                files = m_client.listFiles(dir, filter);
+                files = m_client.listFiles(dir.replace(" ", "\\ "), filter);
             }
             checkPositiveResponse();
             return files;
