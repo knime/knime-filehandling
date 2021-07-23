@@ -82,6 +82,9 @@ public class FtpClient {
      */
     private static final int ERR_REQUEST_DENIED_FOR_POLICY_REASONS = 534;
 
+    private static final String[] DIR_ALREADY_EXISTS_MESSAGES = new String[] { "Directory already exists",
+            "Can't create directory: File exists" };
+
 
     private final FTPClient m_client;
     private final FtpClientFeatures m_features;
@@ -157,12 +160,37 @@ public class FtpClient {
      *            directory path to create.
      * @throws IOException
      */
-    public void mkdir(final String path) throws IOException {
-        tryCatchAccessDenied(path, () -> {
-            m_client.mkd(path);
-            checkPositiveResponse();
-            return null;
-        });
+    public void mkdir(final FtpPath path) throws IOException {
+        m_client.mkd(path.toString());
+        try {
+            checkPositiveResponse(path.toString());
+        } catch (IOException e) {
+            checkForDirAlreadyExistsError(path, e);
+        }
+    }
+
+    private void checkForDirAlreadyExistsError(final FtpPath path, final IOException e) throws IOException {
+        if (m_client.getReplyCode() == ERR_FILE_NOT_FOUND_OR_NOT_ACCESS) {
+            // 550 code could possibly indicate "Directory already exist" error
+
+            // First, check the error message
+            for (String message : DIR_ALREADY_EXISTS_MESSAGES) {
+                if (e.getMessage().contains(message)) {
+                    return;
+                }
+            }
+
+            // Message didn't match, check if the directory is actually exists
+            try {
+                getFileInfo(path);
+                return; // Directory exists
+            } catch (IOException ex) {// NOSONAR
+                // ignore this exception, will re-throw original one instead
+            }
+        }
+
+        // The exception is not "directory already exists", just re-throw it
+        throw e;
     }
 
     /**
@@ -175,16 +203,14 @@ public class FtpClient {
 
         final FTPFileFilter filter = f -> f != null && !".".equals(f.getName()) && !"..".equals(f.getName());
 
-        return tryCatchAccessDenied(dir, () -> {
-            final FTPFile[] files;
-            if (m_features.ismListDirSupported()) {
-                files = m_client.mlistDir(dir, filter);
-            } else {
-                files = m_client.listFiles(dir.replace(" ", "\\ "), filter);
-            }
-            checkPositiveResponse();
-            return files;
-        });
+        final FTPFile[] files;
+        if (m_features.ismListDirSupported()) {
+            files = m_client.mlistDir(dir, filter);
+        } else {
+            files = m_client.listFiles(dir, filter);
+        }
+        checkPositiveResponse(dir);
+        return files;
     }
 
     /**
@@ -193,11 +219,8 @@ public class FtpClient {
      * @throws IOException
      */
     public void deleteFile(final String path) throws IOException {
-        tryCatchAccessDenied(path, () -> {
-            m_client.deleteFile(path);
-            checkPositiveResponse();
-            return null;
-        });
+        m_client.deleteFile(path);
+        checkPositiveResponse(path);
     }
 
     /**
@@ -206,11 +229,8 @@ public class FtpClient {
      * @throws IOException
      */
     public void deleteDirectory(final String path) throws IOException {
-        tryCatchAccessDenied(path, () -> {
-            m_client.removeDirectory(path);
-            checkPositiveResponse();
-            return null;
-        });
+        m_client.removeDirectory(path);
+        checkPositiveResponse(path);
     }
 
     /**
@@ -221,10 +241,8 @@ public class FtpClient {
      * @throws IOException
      */
     public void createFile(final String path, final InputStream in) throws IOException {
-        tryCatchAccessDenied(path, () -> {
-            m_client.storeFile(path, in);
-            return null;
-        });
+        m_client.storeFile(path, in);
+        checkPositiveResponse(path);
     }
 
     /**
@@ -235,13 +253,11 @@ public class FtpClient {
      */
     @SuppressWarnings("resource")
     public OutputStream openForRewrite(final String file) throws IOException {
-        return tryCatchAccessDenied(file, () -> {
-            OutputStream stream = m_client.storeFileStream(file);
-            if (stream == null) {
-                throw new IOException(getReplyString());
-            }
-            return wrapToCompletePendingCommand(stream);
-        });
+        OutputStream stream = m_client.storeFileStream(file);
+        if (stream == null) {
+            throw makeIOEFromResponse(file);
+        }
+        return wrapToCompletePendingCommand(stream, file);
     }
 
     /**
@@ -252,35 +268,31 @@ public class FtpClient {
      */
     @SuppressWarnings("resource")
     public OutputStream openForAppend(final String file) throws IOException {
-        return tryCatchAccessDenied(file, () -> {
-            OutputStream stream = m_client.appendFileStream(file);
-            if (stream == null) {
-                throw new IOException(getReplyString());
-            }
-            return wrapToCompletePendingCommand(stream);
-        });
+        OutputStream stream = m_client.appendFileStream(file);
+        if (stream == null) {
+            throw makeIOEFromResponse(file);
+        }
+        return wrapToCompletePendingCommand(stream, file);
     }
 
-    private OutputStream wrapToCompletePendingCommand(final OutputStream stream) {
+    private OutputStream wrapToCompletePendingCommand(final OutputStream stream, final String file) {
         return new FilterOutputStream(stream) {
             @Override
             public void close() throws IOException {
                 try {
                     super.close();
                 } finally {
-                    completePendingCommand();
+                    completePendingCommand(file);
                 }
             }
         };
     }
 
-    void completePendingCommand() throws IOException {
-        if (!m_client.completePendingCommand() && m_client.getReplyCode() != 426 && m_client.getReplyCode() != 150) {
+    void completePendingCommand(final String file) throws IOException {
+        if (!m_client.completePendingCommand() && m_client.getReplyCode() != 426) {
             // reply code 426 means that the TCP connection was established but then broken
             // by the client, which happens if an input stream is closed before end-of-file.
-            // The same case could also result in 150 status code, which is "ready for
-            // transfer".
-            throw new IOException(getReplyString());
+            throw makeIOEFromResponse(file);
         }
     }
 
@@ -292,10 +304,8 @@ public class FtpClient {
      * @throws IOException
      */
     public void getFileContent(final String path, final OutputStream out) throws IOException {
-        tryCatchAccessDenied(path, () -> {
-            m_client.retrieveFile(path, out);
-            return null;
-        });
+        m_client.retrieveFile(path, out);
+        checkPositiveResponse(path);
     }
 
     /**
@@ -308,7 +318,7 @@ public class FtpClient {
     public InputStream getFileContentAsStream(final String path) throws IOException {
         final InputStream stream = m_client.retrieveFileStream(path);
         if (stream == null) {
-            throw new IOException(getReplyString());
+            throw makeIOEFromResponse(path);
         }
 
         return new FilterInputStream(stream) {
@@ -320,15 +330,19 @@ public class FtpClient {
                 try {
                     super.close();
                 } finally {
-                    completePendingCommand();
+                    completePendingCommand(path);
                 }
             }
         };
     }
 
-    private void checkPositiveResponse() throws IOException {
+    private void checkPositiveResponse(final String file) throws IOException {
+        checkPositiveResponse(file, null);
+    }
+
+    private void checkPositiveResponse(final String file, final String other) throws IOException {
         if (!isPositiveResponse()) {
-            throw new IOException(getReplyString());
+            throw makeIOEFromResponse(file, other);
         }
     }
 
@@ -344,46 +358,25 @@ public class FtpClient {
      * @throws IOException
      */
     public void rename(final String from, final String to) throws IOException {
-        tryCatchAccessDenied(from, to, () -> {
-            if (!m_client.rename(from, to)) {
-                throw new IOException(getReplyString());
-            }
-            return null;
-        });
+        m_client.rename(from, to);
+        checkPositiveResponse(from, to);
     }
 
-    private <T> T tryCatchAccessDenied(final String file, final PossibleAccessDenied<T> invokable)
-            throws IOException {
-        return tryCatchAccessDenied(file, null, invokable);
+    private IOException makeIOEFromResponse(final String file) throws IOException {
+        return makeIOEFromResponse(file, null);
     }
 
+    private IOException makeIOEFromResponse(final String file, final String other) throws IOException {
+        int code = m_client.getReplyCode();
+        String message = getReplyString();
 
-    /**
-     * @param <T>
-     *            result type.
-     * @param file
-     *            source file name.
-     * @param to
-     *            target file name.
-     * @param invocable
-     *            invokable.
-     * @return invocation result.
-     * @throws IOException
-     */
-    private <T> T tryCatchAccessDenied(final String file, final String to, final PossibleAccessDenied<T> invokable)
-            throws IOException {
-        try {
-            return invokable.invoke();
-        } catch (IOException ex) {
-            int code = m_client.getReplyCode();
-
-            if (code == ERR_REQUEST_DENIED_FOR_POLICY_REASONS) {
-                throw new AccessDeniedException(file, to, getReplyString());
-            } else if (code == ERR_FILE_NOT_FOUND_OR_NOT_ACCESS) {
-                throw new NoSuchFileException(file, to, getReplyString());
-            }
-
-            throw ex;
+        switch (code) {
+        case ERR_REQUEST_DENIED_FOR_POLICY_REASONS:
+            return new AccessDeniedException(file, other, message);
+        case ERR_FILE_NOT_FOUND_OR_NOT_ACCESS:
+            return new NoSuchFileException(file, other, message);
+        default:
+            return new IOException(message);
         }
     }
 
@@ -394,7 +387,7 @@ public class FtpClient {
      */
     public void sendKeepAlive() throws IOException {
         if (!m_client.sendNoOp()) {
-            throw new IOException(getReplyString());
+            throw makeIOEFromResponse(null);
         }
     }
 
