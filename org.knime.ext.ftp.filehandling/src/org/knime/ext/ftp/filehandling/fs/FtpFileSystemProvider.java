@@ -248,7 +248,7 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
     protected void createDirectoryInternal(final FtpPath dir, final FileAttribute<?>... attrs)
             throws IOException {
         invokeWithResource(c -> {
-            c.mkdir(dir.toString());
+            c.mkdir(dir);
             return null;
         });
     }
