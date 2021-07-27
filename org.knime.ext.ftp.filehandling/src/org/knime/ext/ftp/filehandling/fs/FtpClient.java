@@ -50,7 +50,6 @@
 package org.knime.ext.ftp.filehandling.fs;
 
 import java.io.FilterInputStream;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -61,6 +60,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPFileFilter;
 import org.apache.commons.net.ftp.FTPReply;
+import org.knime.filehandling.core.connections.base.FilterOutputStream;
 
 /**
  * Facade class for {@link FTPClient}
@@ -263,9 +263,6 @@ public class FtpClient {
 
     private OutputStream wrapToCompletePendingCommand(final OutputStream stream) {
         return new FilterOutputStream(stream) {
-            /**
-             * {@inheritDoc}
-             */
             @Override
             public void close() throws IOException {
                 try {
