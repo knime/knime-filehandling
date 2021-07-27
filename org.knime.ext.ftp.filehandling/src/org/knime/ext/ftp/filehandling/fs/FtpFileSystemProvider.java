@@ -49,7 +49,6 @@
 package org.knime.ext.ftp.filehandling.fs;
 
 import java.io.FilterInputStream;
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -74,6 +73,7 @@ import java.util.Set;
 
 import org.apache.commons.net.ftp.FTPFile;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
+import org.knime.filehandling.core.connections.base.FilterOutputStream;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
@@ -95,18 +95,12 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
         m_clientPool.start();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected SeekableByteChannel newByteChannelInternal(final FtpPath path, final Set<? extends OpenOption> options,
             final FileAttribute<?>... attrs) throws IOException {
         return new FtpSeekableByteChannel(path, options);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     protected void moveInternal(final FtpPath source, final FtpPath target, final CopyOption... options)
@@ -136,9 +130,6 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
         cacheAttributes(target, new FtpFileAttributes(target, sourceMeta));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void copyInternal(final FtpPath source, final FtpPath target, final CopyOption... options)
             throws IOException {
@@ -177,9 +168,6 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     protected InputStream newInputStreamInternal(final FtpPath path, final OpenOption... options) throws IOException {
@@ -206,9 +194,6 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
         };
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     protected OutputStream newOutputStreamInternal(final FtpPath path, final OpenOption... options) throws IOException {
@@ -244,9 +229,6 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
         };
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Iterator<FtpPath> createPathIterator(final FtpPath dir, final Filter<? super Path> filter)
             throws IOException {
@@ -262,9 +244,6 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
         return new FtpPathIterator(dir, files, filter);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void createDirectoryInternal(final FtpPath dir, final FileAttribute<?>... attrs)
             throws IOException {
@@ -274,18 +253,12 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
         });
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected BaseFileAttributes fetchAttributesInternal(final FtpPath path, final Class<?> type) throws IOException {
         FTPFile meta = invokeWithResource(c -> c.getFileInfo(path));
         return new FtpFileAttributes(path, meta);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void checkAccessInternal(final FtpPath path, final AccessMode... modes) throws IOException {
         // nothing for now
@@ -315,9 +288,6 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
         });
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void setAttribute(final Path path, final String name, final Object value,
             final LinkOption... options)
@@ -325,9 +295,6 @@ public class FtpFileSystemProvider extends BaseFileSystemProvider<FtpPath, FtpFi
         // ignored now
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected boolean isHiddenInternal(final FtpPath path) throws IOException {
         return path != null && !path.isRoot() && path.getFileName().toString().startsWith(".");

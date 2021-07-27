@@ -48,10 +48,11 @@
  */
 package org.knime.ext.smb.filehandling.fs;
 
-import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.EnumSet;
+
+import org.knime.filehandling.core.connections.base.FilterOutputStream;
 
 import com.hierynomus.msdtyp.AccessMask;
 import com.hierynomus.mssmb2.SMB2CreateDisposition;
