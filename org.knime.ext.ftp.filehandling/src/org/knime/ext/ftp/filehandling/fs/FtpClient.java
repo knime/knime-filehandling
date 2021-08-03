@@ -60,6 +60,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPFileFilter;
 import org.apache.commons.net.ftp.FTPReply;
+import org.knime.core.node.NodeLogger;
 import org.knime.filehandling.core.connections.base.FilterOutputStream;
 
 /**
@@ -68,6 +69,7 @@ import org.knime.filehandling.core.connections.base.FilterOutputStream;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class FtpClient {
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(FTPClient.class);
 
     /**
      * Requested action not taken. File unavailable (e.g., file not found, no
@@ -289,10 +291,8 @@ public class FtpClient {
     }
 
     void completePendingCommand(final String file) throws IOException {
-        if (!m_client.completePendingCommand() && m_client.getReplyCode() != 426) {
-            // reply code 426 means that the TCP connection was established but then broken
-            // by the client, which happens if an input stream is closed before end-of-file.
-            throw makeIOEFromResponse(file);
+        if (!m_client.completePendingCommand()) {
+            LOGGER.warn(file + ":" + getReplyString());
         }
     }
 
