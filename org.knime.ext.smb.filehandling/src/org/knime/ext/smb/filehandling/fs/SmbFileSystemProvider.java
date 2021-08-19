@@ -217,7 +217,7 @@ class SmbFileSystemProvider extends BaseFileSystemProvider<SmbPath, SmbFileSyste
         FileTime createdAt = FileTime.fromMillis(fileInfo.getBasicInformation().getCreationTime().toEpochMillis());
         FileTime modifiedAt = FileTime.fromMillis(fileInfo.getBasicInformation().getChangeTime().toEpochMillis());
         FileTime accessedAt = FileTime.fromMillis(fileInfo.getBasicInformation().getLastAccessTime().toEpochMillis());
-        long size = fileInfo.getStandardInformation().getAllocationSize();
+        long size = fileInfo.getStandardInformation().getEndOfFile();
 
         return new BaseFileAttributes(!isDirectory, path, modifiedAt, accessedAt, createdAt, size, false, false, null);
     }
