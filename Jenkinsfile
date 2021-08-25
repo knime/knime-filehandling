@@ -13,6 +13,7 @@ properties([
 ])
 
 SSHD_IMAGE = "${dockerTools.ECR}/knime/sshd:alpine3.11"
+FTPD_IMAGE = "${dockerTools.ECR}/knime/ftp:alpine3.11"
 
 try {
     // build
@@ -40,7 +41,8 @@ try {
                     ]
                 ],
                 sidecarContainers: [
-                    [ image: SSHD_IMAGE, namePrefix: "SSHD", port: 22 ]
+                    [ image: SSHD_IMAGE, namePrefix: "SSHD", port: 22 ],
+                    [ image: FTPD_IMAGE, namePrefix: "FTPD", port: 21 ]
                 ]
             )
         },
