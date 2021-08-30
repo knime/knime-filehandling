@@ -110,7 +110,7 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
 
         Builder builder = SmbConfig.builder() //
                 .withMultiProtocolNegotiate(true) //
-                .withDfsEnabled(true) //
+                .withDfsEnabled(config.getConnectionMode() == ConnectionMode.DOMAIN) //
                 .withTimeout(config.getTimeout().toSeconds(), TimeUnit.SECONDS);
 
         final AuthenticationContext authContext = AuthenticationContextFactory.create(config, exec);
