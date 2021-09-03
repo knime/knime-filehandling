@@ -5,23 +5,117 @@
 	xsi:schemaLocation="http://knime.org/node/v4.1
 	http://knime.org/node/v4.1.xsd">
 	<name>Binary Objects to Files</name>
-	<shortDescription>
-		 Write the binary objects of a table as files.
-	</shortDescription>
+	<shortDescription>Writes all binary objects from a specific column to a directory.</shortDescription>
 	<fullDescription>
-		<intro>
-            <p><i>This node supports the 
-            </i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html#path"><i>path flow variable.</i></a>
-            <i> For further information about file handling in general see the 
-            </i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.</i></a><br/></p>
-            <p>
-			This node writes binary objects to files. It will append the paths of binary files to the 
-			input table as well as the corresponding write status (created, unmodified, overwritten).
-			</p>
-		</intro>
+        <intro>
+            This node takes all binary objects in a certain column of the input
+            table and writes them, each as a separate file, into a directory. It
+            will append the paths of the written files to the
+            input table as well as the corresponding write status (created,
+            unmodified, overwritten).
+        </intro>
+		<option name="Write to">
+			Select a file system in which you want to store the files. There
+			are three default file system options to choose from:
+			<br />
+			<ul>
+				<li>
+					<i>Local File System:</i>
+					Allows you to select a location in your local system.
+				</li>
+				<li>
+					<i>Mountpoint:</i>
+					Allows you to read from a mountpoint. When selected, a new drop-down
+					menu appears to choose the mountpoint. Unconnected mountpoints are
+					greyed out but can still be selected (note that browsing is disabled
+					in this case). Go to the KNIME Explorer and connect to the
+					mountpoint to enable browsing.
+					A mountpoint is displayed in red if it was previously selected but
+					is no longer available. You won't be able to save the dialog as long as you don't 
+					select a valid i.e. known mountpoint.
+				</li>
+				<li>
+					<i>Relative to:</i>
+					Allows you to choose whether to resolve the path
+					relative to the current mountpoint, current workflow or the current
+					workflow's data area. When selected a new drop-down menu appears to choose which of
+					the three options to use.
+				</li>
+			</ul>
+			It is possible to use other file systems with this node. Therefore,
+			you have to enable the file system connection input port of this node
+			by clicking the
+			<b>...</b>
+			in the bottom left corner of the node's icon and choose
+			<i>Add File System Connection port</i>
+			.
+			<br />
+			Afterwards, you can simply connect the desired connector node to this
+			node. The file system connection will then be shown in the drop-down
+			menu. It is greyed out if the file system is not connected in which
+			case you have to (re)execute the connector node first.
+			Note: The default file systems listed above can't be selected if a file
+			system is provided via the input port.
+		</option>
+		<option name="Folder">
+			Enter a path to a folder. The required syntax of a path
+			depends on the chosen file system, such as &quot;C:\path\to\folder&quot; (Local
+			File System on Windows) or &quot;/path/to/folder&quot; (Local File System on
+			Linux/MacOS and Mountpoint). For file systems connected via input port, required
+			path format. You can also choose a previously selected folder from the
+			drop-down list, or select a location from the &quot;Browse...&quot;
+			dialog. Note that browsing is disabled in some cases:
+			<ul>
+				<li>
+					<i>Mountpoint:</i>
+					Browsing is disabled if the selected mountpoint isn't connected.
+					Go to the KNIME Explorer and connect to the mountpoint to enable
+					browsing.
+				</li>
+				<li>
+					<i>File systems provided via input port:</i>
+					Browsing is disabled if the connector node hasn't been executed
+					since the workflow has been opened. (Re)execute the connector node
+					to enable browsing.
+				</li>
+			</ul>
+			<i>The location can be exposed as or automatically set via a
+                </i>
+			<a
+				href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html#path">
+				<i>path flow variable.</i>
+			</a>
+		</option>
+		<option name="Create missing folders">
+			Select if the folders of the selected output
+			location should be created if they do not already exist. If
+			this option is unchecked, the node will fail if a folder does not
+			exist.
+		</option>
+		<option name="If exists">
+			Specify the behavior of the node in case the output file already
+			exists.
+			<ul>
+				<li>
+					<i>Overwrite:</i>
+					Will replace any existing file.
+				</li>
+				<li>
+					<i>Ignore:</i>
+					Will ignore if a file already exists and continues the copying
+					process.
+				</li>
+				<li>
+					<i>Fail:</i>
+					Will issue an error during the node's execution (to prevent
+					unintentional overwrite).
+				</li>
+			</ul>
+		</option>
 		<option name="Binary object">
-			Options for selecting a column with binary data from input table. And whether the original binary column 
-			should be included in the output.
+            Options for selecting a binary object column from the input table
+            and whether the original binary object column
+            should be included in the output or not.
 			<ul>
 				<li>
 					<b>Column: </b>
@@ -29,99 +123,50 @@
 					<br />
 				</li>
 				<li>
-					<b>Remove column: </b>
-					If checked the column containing the binary objects is removed from the output table.
+					<b>Remove binary object column: </b>
+					If checked, the column containing the binary objects is
+					removed from the output table.
 				</li>
+                <li>
+                    <b>Compress binary files (gzip): </b>
+                    If checked, the output binary files will be compressed to gzip.
+                </li>
 			</ul>
 		</option>
-        <option name="File names">
-        	Select an option for the binary file names, by default files will be  generated using "File_?.dat" pattern. 
-        	There are two options to choose from. 
+		<option name="File names">
+            Select an option for the binary object file names, by default files
+            will be generated using the "File_?.dat" pattern.
+        	There are two options to choose from.
 			<ul>
 				<li>
 					<b>Generate: </b>
-					The names will be generated using the provided pattern. The pattern must contain a single "?" 
+					The file names will be generated using the provided pattern. The pattern must contain a single "?" 
 					symbol. This symbol will, during execution, be replaced by an incrementing counter to make the
-					filenames unique.
+					filenames unique. This node does not append any file extension.
 					<br />
 				</li>
 				<li>
 					<b>From column: </b>
-					Allows to select a column containing the filenames under which the corresponding binary object
-					has to be stored. 
+					Allows to select a column containing the file names under which the corresponding binary file
+					will be stored.
 				</li>
 			</ul>
         </option>
-		<option name="Write to">
-			Select a file system which stores the files you want to generate.
-			There are three default file system options to choose from:
-			<br />
-			<ul>
-				<li>
-					<i>Local File System:</i>
-					Allows you to select a file/folder from your
-					local system.
-				</li>
-				<li>
-					<i>Mountpoint:</i>
-					Allows you to read from a mountpoint.When selected, a new drop-down
-					menu appears to choose the mountpoint. Unconnected mountpoints are
-					greyed out but can still be selected (note that browsing is
-					disabled in this case). Go to the KNIME Explorer and connect to the
-					mountpoint to enable browsing. A mountpoint is displayed in red if
-					it was previously selected but is no longer available. You won't be
-					able to save the dialog as long as you don't select a valid i.e.
-					known mountpoint.
-				</li>
-				<li>
-					<i>Relative to:</i>
-					Allows you to choose whether to resolve the path
-					relative to the
-					current mountpoint, current workflow or the current
-					workflow's data
-					area.
-					When selected a new drop-down menu appears to choose which of
-					the three
-					options to use.
-				</li>
-			</ul>
-		</option>
-		<option name="Folder">
-			The directory where the files will be put.
-		</option>
-		<option name="Create missing folders">
-			Select if the folders of the selected output location should be created if they do not already exist.
-			If this option is unchecked, the node will fail if a folder does not exist.
-		</option>
-		<option name="If exists">
-			Specifies the behavior if one of the files already exists.
-			<br />
-			<b>Overwrite</b>
-			<br />
-			Overwrite the existing file.
-			<br />
-			<b>Ignore</b>
-			<br />
-			Will ignore if a file already exists and skip the writing process for this particular binary object / file.
-			<br />
-			<b>Fail</b>
-			<br />
-			Will issue an error during the node's execution (to prevent unintentional overwrite).
-		</option>
 	</fullDescription>
 
-    <ports>
-        <inPort name="Input table" index="0">
-            Table that contains the binary objects that will be written to files.
-        </inPort>
-        <dynInPort insert-before="0" name="File system connection"
+	<ports>
+		<inPort index="0" name="Input Table">Table that contains binary objects.
+		</inPort>
+		<dynInPort insert-before="0" name="File system connection"
 			group-identifier="File System Connection">
 			The file system connection.
 		</dynInPort>
-        <outPort name="Output table" index="0">
-            The input table containing two additional columns. The one containing the path to the just written binary 
-            files and the other encodes the corresponding write status (created, unmodified, overwritten). If <i>remove 
-            column</i> has been checked the selected <i>binary object column</i> is removed from the output.
-        </outPort>
-    </ports>
+		<outPort name="Output Table" index="0">
+            Input table with an additional path column that contains the paths
+            of the written files, as well as another String column
+            which holds the write status (created, unmodified, overwritten).
+            The original binary object column is removed from the output if the
+            option to remove is checked.
+		</outPort>
+	</ports>
 </knimeNode>

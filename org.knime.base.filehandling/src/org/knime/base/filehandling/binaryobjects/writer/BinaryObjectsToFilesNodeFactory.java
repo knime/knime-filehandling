@@ -48,79 +48,37 @@
  */
 package org.knime.base.filehandling.binaryobjects.writer;
 
-import java.util.Optional;
-
-import org.knime.core.node.BufferedDataTable;
-import org.knime.core.node.ConfigurableNodeFactory;
-import org.knime.core.node.NodeDialogPane;
+import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
-import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.context.ports.PortsConfiguration;
-import org.knime.filehandling.core.port.FileSystemPortObject;
+import org.knime.filehandling.core.node.table.writer.AbstractMultiTableWriterNodeFactory;
 
 /**
  * The {@link NodeFactory} to create the node model allowing to convert binary objects to files.
  *
  * @author Ayaz Ali Qureshi, KNIME GmbH, Berlin, Germany
+ * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
  */
-public final class BinaryObjectsToFilesNodeFactory extends ConfigurableNodeFactory<BinaryObjectsToFilesNodeModel> {
-
-    static final String CONNECTION_INPUT_PORT_GRP_NAME = "File System Connection";
-
-    static final String DATA_TABLE_INPUT_PORT_GRP_NAME = "Input Table";
-
-    static final String DATA_TABLE_OUTPUT_PORT_GRP_NAME = "Output Table";
+public final class BinaryObjectsToFilesNodeFactory
+    extends AbstractMultiTableWriterNodeFactory<BinaryObjectDataValue, BinaryObjectsToFilesNodeConfig, //
+            BinaryObjectsToFilesNodeModel, BinaryObjectsToFilesNodeDialog> {
 
     @Override
-    protected Optional<PortsConfigurationBuilder> createPortsConfigBuilder() {
-        final PortsConfigurationBuilder builder = new PortsConfigurationBuilder();
-        builder.addOptionalInputPortGroup(CONNECTION_INPUT_PORT_GRP_NAME, FileSystemPortObject.TYPE);
-        builder.addFixedInputPortGroup(DATA_TABLE_INPUT_PORT_GRP_NAME, BufferedDataTable.TYPE);
-        builder.addFixedOutputPortGroup(DATA_TABLE_OUTPUT_PORT_GRP_NAME, BufferedDataTable.TYPE);
-        return Optional.of(builder);
+    protected BinaryObjectsToFilesNodeConfig getNodeConfig(final PortsConfiguration portConfig,
+        final String portGroupName) {
+        return new BinaryObjectsToFilesNodeConfig(portConfig, portGroupName);
     }
 
     @Override
-    protected BinaryObjectsToFilesNodeModel createNodeModel(final NodeCreationConfiguration creationConfig) {
-        final PortsConfiguration portsConfiguration =
-            creationConfig.getPortConfig().orElseThrow(IllegalStateException::new);
-        return new BinaryObjectsToFilesNodeModel(creationConfig.getPortConfig().orElseThrow(IllegalStateException::new),
-            createSettings(portsConfiguration));
+    protected BinaryObjectsToFilesNodeModel getNodeModel(final PortsConfiguration portConfig,
+        final BinaryObjectsToFilesNodeConfig nodeConfig, final int dataTableInputIndex) {
+        return new BinaryObjectsToFilesNodeModel(portConfig, nodeConfig, dataTableInputIndex);
     }
 
     @Override
-    protected NodeDialogPane createNodeDialogPane(final NodeCreationConfiguration creationConfig) {
-        final PortsConfiguration portsConfiguration =
-            creationConfig.getPortConfig().orElseThrow(IllegalStateException::new);
-        return new BinaryObjectsToFilesNodeDialog(portsConfiguration, createSettings(portsConfiguration));
-    }
-
-    @Override
-    protected int getNrNodeViews() {
-        return 0;
-    }
-
-    @Override
-    public NodeView<BinaryObjectsToFilesNodeModel> createNodeView(final int viewIndex,
-        final BinaryObjectsToFilesNodeModel nodeModel) {
-        return null;
-    }
-
-    @Override
-    protected boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * Creates an BinaryObjectsToFilesNodeConfig object, which wraps the settings models for this node
-     *
-     * @param portsConfiguration The ports configuration
-     *
-     * @return An BinaryObjectsToFilesNodeConfig object
-     */
-    private static BinaryObjectsToFilesNodeConfig createSettings(final PortsConfiguration portsConfiguration) {
-        return new BinaryObjectsToFilesNodeConfig(portsConfiguration);
+    protected BinaryObjectsToFilesNodeDialog getDialog(final BinaryObjectsToFilesNodeConfig nodeConfig,
+        final int dataTableInputIndex) {
+        return new BinaryObjectsToFilesNodeDialog(nodeConfig, dataTableInputIndex);
     }
 
 }

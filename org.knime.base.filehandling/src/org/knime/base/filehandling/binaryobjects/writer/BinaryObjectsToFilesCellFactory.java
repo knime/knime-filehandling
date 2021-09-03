@@ -44,40 +44,47 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Oct 9, 2020 (ayazqureshi): created
+ *  2021-08-10: created (jl)
  */
 package org.knime.base.filehandling.binaryobjects.writer;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
+import org.apache.commons.io.IOUtils;
 import org.knime.core.data.DataColumnSpec;
-import org.knime.core.node.context.ports.PortsConfiguration;
+import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.writer.FileOverwritePolicy;
-import org.knime.filehandling.core.node.table.writer.AbstractMultiTableWriterNodeModel;
+import org.knime.filehandling.core.node.table.writer.AbstractMultiTableWriterCellFactory;
 
 /**
- * The node model allowing to convert binary objects to files.
+ * Cell factory of the binary objects to files writer table node.
  *
- * @author Ayaz Ali Qureshi, KNIME GmbH, Berlin, Germany
  * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
  */
-final class BinaryObjectsToFilesNodeModel
-    extends AbstractMultiTableWriterNodeModel<BinaryObjectsToFilesNodeConfig, BinaryObjectsToFilesCellFactory> {
+public class BinaryObjectsToFilesCellFactory extends AbstractMultiTableWriterCellFactory<BinaryObjectDataValue> {
 
     /**
      * Constructor.
      *
-     * @param portConfig storing the ports configurations
-     * @param nodeConfig storing the user settings
-     * @param inputTableIndex index of data-table-input-port group name
+     * @param outputColumnsSpecs the spec's of the created columns
+     * @param sourceColumnIndex index of source column
+     * @param overwritePolicy policy how to proceed when output file exists according to {@link FileOverwritePolicy}
      */
-    public BinaryObjectsToFilesNodeModel(final PortsConfiguration portConfig,
-        final BinaryObjectsToFilesNodeConfig nodeConfig, final int inputTableIndex) {
-        super(portConfig, nodeConfig, inputTableIndex);
+    BinaryObjectsToFilesCellFactory(final DataColumnSpec[] outputColumnsSpecs, final int sourceColumnIndex,
+        final FileOverwritePolicy overwritePolicy) {
+        super(outputColumnsSpecs, sourceColumnIndex, overwritePolicy);
     }
 
     @Override
-    protected BinaryObjectsToFilesCellFactory getFactory(final DataColumnSpec[] outputColumnSpecs,
-        final int sourceColumnIndex, final FileOverwritePolicy overwritePolicy) {
-        return new BinaryObjectsToFilesCellFactory(outputColumnSpecs, sourceColumnIndex, overwritePolicy);
+    protected void writeFile(final OutputStream outputStream, final BinaryObjectDataValue value) throws IOException {
+        try (final var in = value.openInputStream()) {
+            IOUtils.copy(in, outputStream);
+        }
     }
 
+    @Override
+    protected String getOutputFileExtension(final BinaryObjectDataValue value) {
+        return null;
+    }
 }
