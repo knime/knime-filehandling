@@ -84,4 +84,8 @@ final class BinaryObjectsToFilesNodeConfig
         return WRITER_TYPE_NAME;
     }
 
+    public String getFilenameColumnSettingsKey() {
+        return CFG_OUTPUT_FILENAME_COLUMN_NAME;
+    }
+
 }

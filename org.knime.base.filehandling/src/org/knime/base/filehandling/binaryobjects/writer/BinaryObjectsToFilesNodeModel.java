@@ -62,6 +62,8 @@ import org.knime.filehandling.core.node.table.writer.AbstractMultiTableWriterNod
 final class BinaryObjectsToFilesNodeModel
     extends AbstractMultiTableWriterNodeModel<BinaryObjectsToFilesNodeConfig, BinaryObjectsToFilesCellFactory> {
 
+    private static final String DATA_TABLE_OUTPUT_LOCATION_COLUMN_NAME = "Output location"; // lower case “L”
+
     /**
      * Constructor.
      *
@@ -71,7 +73,8 @@ final class BinaryObjectsToFilesNodeModel
      */
     public BinaryObjectsToFilesNodeModel(final PortsConfiguration portConfig,
         final BinaryObjectsToFilesNodeConfig nodeConfig, final int inputTableIndex) {
-        super(portConfig, nodeConfig, inputTableIndex);
+        super(portConfig, nodeConfig, inputTableIndex, DATA_TABLE_OUTPUT_LOCATION_COLUMN_NAME,
+            DEFAULT_DATA_TABLE_STATUS_COLUMN_NAME);
     }
 
     @Override

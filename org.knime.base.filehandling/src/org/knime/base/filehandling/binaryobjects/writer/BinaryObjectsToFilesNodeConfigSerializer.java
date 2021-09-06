@@ -49,6 +49,7 @@
 package org.knime.base.filehandling.binaryobjects.writer;
 
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
@@ -119,7 +120,17 @@ final class BinaryObjectsToFilesNodeConfigSerializer
 
         config.setShouldGenerateFilename(settings.getBoolean(CFG_GENERATE_FILE_NAMES));
         config.getFilenamePattern().loadSettingsFrom(settings); // same key
-        config.getFilenameColumn().loadSettingsFrom(settings); // same key
+        // the type of the settings model changed so we have to do these shenanigans
+        final var filenameColumn = config.getFilenameColumn();
+        try {
+            filenameColumn.loadSettingsFrom(settings);
+        } catch (InvalidSettingsException e) {
+            NodeLogger.getLogger(getClass()).debug("No SettingsModelColumnName setting found; trying to load and convert old SettingsModelString", e);
+            final var m = new SettingsModelString(config.getFilenameColumnSettingsKey(), "");
+            m.loadSettingsFrom(settings);
+            filenameColumn.setEnabled(m.isEnabled());
+            filenameColumn.setSelection(m.getStringValue(), filenameColumn.useRowID());
+        }
         if (config.isCompressionSupported()) {
             try {
                 config.getCompressFiles().loadSettingsFrom(settings);
@@ -166,7 +177,14 @@ final class BinaryObjectsToFilesNodeConfigSerializer
 
         settings.getBoolean(CFG_GENERATE_FILE_NAMES);
         config.getFilenamePattern().validateSettings(settings);
-        config.getFilenameColumn().validateSettings(settings);
+        // the type of the settings model changed so we have to do these shenanigans
+        try {
+            config.getFilenameColumn().validateSettings(settings);
+        } catch (InvalidSettingsException e) {
+            NodeLogger.getLogger(getClass()).debug("No SettingsModelColumnName setting found; trying to validate old SettingsModelString", e);
+            final var m = new SettingsModelString(config.getFilenameColumnSettingsKey(), "");
+            m.validateSettings(settings);
+        }
         if (config.isCompressionSupported()) {
             try {
                 config.getCompressFiles().validateSettings(settings);
