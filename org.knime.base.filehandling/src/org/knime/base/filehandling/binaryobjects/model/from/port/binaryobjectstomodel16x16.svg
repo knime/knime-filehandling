@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   version="1.1"
+   id="Ebene_1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 16 16"
+   style="enable-background:new 0 0 16 16;"
+   xml:space="preserve"
+   sodipodi:docname="binaryobjectstomodel16x16.svg"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs179"><inkscape:path-effect
+     effect="circle_with_radius"
+     id="path-effect1312"
+     is_visible="true"
+     lpeversion="1" /></defs><sodipodi:namedview
+   id="namedview177"
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1.0"
+   inkscape:pageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   showgrid="false"
+   showguides="false"
+   inkscape:object-paths="true"
+   inkscape:snap-page="true"
+   inkscape:zoom="32"
+   inkscape:cx="8.0625"
+   inkscape:cy="7.28125"
+   inkscape:window-width="1271"
+   inkscape:window-height="1040"
+   inkscape:window-x="810"
+   inkscape:window-y="17"
+   inkscape:window-maximized="0"
+   inkscape:current-layer="Ebene_1" />
+<style
+   type="text/css"
+   id="style152">
+	.st0{fill:#FFFFFF;}
+	.st1{fill:#CBCBCB;}
+</style>
+<g
+   id="g162">
+	<path
+   class="st0"
+   d="M0,15h4.6V3.7H2V1H0V15z"
+   id="path154" />
+	<polygon
+   points="5.6,3.2 2.5,0 0,0 0,1 2,1 2,3.7 4.6,3.7 4.6,15 0,15 0,16 5.6,16  "
+   id="polygon156" />
+	<path
+   d="M2.3,9.3h0.8V5.1H2.5C2.4,5.3,2.2,5.5,2,5.7C1.7,5.9,1.5,6.1,1.3,6.1v0.7c0.4-0.1,0.7-0.3,1-0.6V9.3z"
+   id="path158" />
+	<path
+   d="M2.3,14.2h0.8V10H2.5c-0.1,0.3-0.3,0.5-0.5,0.7C1.7,10.8,1.5,11,1.3,11v0.7c0.4-0.1,0.7-0.3,1-0.6V14.2z"
+   id="path160" />
+</g>
+<g
+   id="XMLID_7_">
+	<polygon
+   id="XMLID_9_"
+   points="10.8,8 8,6.4 8,7.6 6,7.6 6,8.4 8,8.4 8,9.6  " />
+</g>
+
+
+<g
+   id="g36"
+   transform="matrix(1.3185009,0,0,1.4751373,7.1282073,0.43316627)"><path
+     d="M 6.6544609,-0.29334381 -0.04896586,10.552803 H 13.357888 Z M 4.920816,4.0451149 l 5.31651,2.9284597 -5.31651,2.8199981 z"
+     id="path32"
+     style="stroke-width:1.11963" /></g><rect
+   style="fill:#ffffff;fill-rule:evenodd"
+   id="rect674"
+   width="10.346154"
+   height="19.461538"
+   x="15.961537"
+   y="-1.6923077" /><g
+   id="g1036" /><path
+   style="fill:#ffffff;stroke-width:0.0312529"
+   d="m 10.013096,16 c -0.5286647,2.66e-4 -0.9662916,-0.0042 -0.9725036,-0.0101 -0.014167,-0.01328 0.8997021,-1.78571 0.9210234,-1.786296 0.018313,-5.04e-4 1.0113022,1.738835 1.0121302,1.772862 3.07e-4,0.01267 -0.431985,0.02326 -0.960651,0.02351 z m 0.117975,-0.874173 C 9.914669,14.998929 9.7285033,14.895325 9.7173656,14.895595 c -0.011137,2.71e-4 -0.014788,0.225467 -0.0081,0.50044 0.00669,0.274971 0.019533,0.499768 0.028531,0.499548 0.042747,-0.001 0.8128924,-0.498914 0.8006924,-0.517626 -0.0077,-0.01177 -0.191013,-0.125232 -0.407413,-0.25213 z"
+   id="path1950" /></svg>
