@@ -101,6 +101,11 @@
          factory-class="org.knime.base.filehandling.binaryobjects.writer.BinaryObjectsToFilesNodeFactory"
          hidden="false">
    </node>
+   <node
+         deprecated="false"
+         factory-class="org.knime.base.filehandling.binaryobjects.model.to.port.ModelToBinaryObjectNodeFactory"
+         hidden="false">
+   </node>
 </extension>
    <extension point="org.knime.workbench.repository.categories">
       <category

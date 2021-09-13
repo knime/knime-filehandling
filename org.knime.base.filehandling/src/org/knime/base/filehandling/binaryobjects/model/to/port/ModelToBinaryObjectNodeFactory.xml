@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE knimeNode PUBLIC "-//UNIKN//DTD KNIME Node 2.0//EN" "http://www.knime.org/Node.dtd">
+<knimeNode icon="./modeltobinaryobjects16x16.png"
+	type="Manipulator">
+	<name>Model to Binary Object</name>
+
+	<shortDescription>
+		Converts a model to a binary object cell.
+	</shortDescription>
+
+	<fullDescription>
+		<intro>
+			Converts a model to a binary object cell.
+		</intro>
+
+
+		<option name="New column name">
+			Name of the new column.
+		</option>
+	</fullDescription>
+
+	<ports>
+		<inPort name="Input model" index="0">
+			Model that will be converted.
+		</inPort>
+		<outPort name="Output table" index="0">
+			Model turned into binary
+			objects.
+		</outPort>
+	</ports>
+</knimeNode>
