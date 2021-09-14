@@ -67,7 +67,6 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
-import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.util.Map;
 import java.util.Set;
@@ -229,8 +228,8 @@ final class HttpFileSystemProvider extends FSFileSystemProvider<HttpPath, HttpFi
         checkFileSystemOpen();
 
         checkPathProvider(path);
-        if (type == BasicFileAttributeView.class || type == PosixFileAttributeView.class) {
-            return (V) new BaseFileAttributeView(path, type);
+        if (type == BasicFileAttributeView.class) {
+            return (V) new BaseFileAttributeView(path, options);
         }
         return null;
     }

@@ -61,6 +61,8 @@ import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.AttributeView;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -360,12 +362,15 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
 
     @SuppressWarnings("unchecked")
     @Override
-    public <V extends FileAttributeView> V getFileAttributeView(final Path path, final Class<V> type,
+    protected <V extends FileAttributeView> V getFileAttributeViewInternal(final SshPath path, final Class<V> type,
             final LinkOption... options) {
-        V fileAttributeView = super.getFileAttributeView(path, type, options);
-        return fileAttributeView instanceof PosixFileAttributeView
-                ? (V) new SshFileAttributeView(path, (PosixFileAttributeView) fileAttributeView)
-                : null;
+
+        if (type == AttributeView.class || type == BasicFileAttributeView.class
+                || type == PosixFileAttributeView.class) {
+            return (V) new SshFileAttributeView(path, options);
+        } else {
+            return null;
+        }
     }
 
     @Override

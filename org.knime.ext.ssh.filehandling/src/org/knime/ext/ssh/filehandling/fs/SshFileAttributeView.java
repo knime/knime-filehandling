@@ -49,50 +49,41 @@
 package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.file.LinkOption;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Set;
 
 import org.apache.sshd.common.util.GenericUtils;
 import org.apache.sshd.sftp.client.SftpClient;
+import org.knime.filehandling.core.connections.base.attributes.BasePosixFileAttributeView;
 
 /**
- * Implementation of {@link PosixFileAttributeView}
+ * Implementation of {@link PosixFileAttributeView}.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshFileAttributeView implements PosixFileAttributeView {
-    private final PosixFileAttributeView m_view;
-    private final Path m_path;
+public class SshFileAttributeView extends BasePosixFileAttributeView<SshPath, SshFileSystem> {
 
     /**
      * @param path
      *            file path.
-     * @param view
+     * @param options
      *            file attributes view.
      */
-    public SshFileAttributeView(final Path path, final PosixFileAttributeView view) {
-        m_path = path;
-        m_view = view;
+    public SshFileAttributeView(final SshPath path, final LinkOption[] options) {
+        super(path, options);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @SuppressWarnings("resource")
     @Override
-    public PosixFileAttributes readAttributes() throws IOException {
-        return m_view.readAttributes();
-    }
+    protected void setTimesInternal(final FileTime lastModifiedTime, final FileTime lastAccessTime,
+            final FileTime createTime) throws IOException {
 
-    @Override
-    public void setTimes(final FileTime lastModifiedTime, final FileTime lastAccessTime, final FileTime createTime)
-            throws IOException {
-        SftpClient.Attributes attrs = new SftpClient.Attributes();
+        final var attrs = new SftpClient.Attributes();
 
         if (lastModifiedTime != null) {
             // last modified time and last access time should be
@@ -111,44 +102,27 @@ public class SshFileAttributeView implements PosixFileAttributeView {
         }
 
         if (!GenericUtils.isEmpty(attrs.getFlags())) {
-            provider().writeRemoteAttributes(m_path, attrs);
+            getFileSystem().provider().writeRemoteAttributes(getPath(), attrs);
         }
     }
 
     @Override
-    public void setPermissions(final Set<PosixFilePermission> perms) throws IOException {
+    protected void setPermissionsInternal(final Set<PosixFilePermission> perms) throws IOException {
         setAttribute("permissions", perms);
     }
 
     @Override
-    public void setGroup(final GroupPrincipal group) throws IOException {
+    protected void setGroupInternal(final GroupPrincipal group) throws IOException {
         setAttribute("group", group);
     }
 
     @Override
-    public UserPrincipal getOwner() throws IOException {
-        return readAttributes().owner();
-    }
-
-    @Override
-    public void setOwner(final UserPrincipal owner) throws IOException {
+    protected void setOwnerInternal(final UserPrincipal owner) throws IOException {
         setAttribute("owner", owner);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String name() {
-        return m_view.name();
-    }
-
-    private void setAttribute(final String attribute, final Object value) throws IOException {
-        provider().setAttribute(m_path, attribute, value);
-    }
-
     @SuppressWarnings("resource")
-    private SshFileSystemProvider provider() {
-        return (SshFileSystemProvider) m_path.getFileSystem().provider();
+    private void setAttribute(final String attribute, final Object value) throws IOException {
+        getFileSystem().provider().setAttribute(getPath(), attribute, value);
     }
 }
