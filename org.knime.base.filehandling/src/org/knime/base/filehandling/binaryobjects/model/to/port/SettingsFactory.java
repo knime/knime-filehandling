@@ -69,7 +69,7 @@ final class SettingsFactory {
      */
     static SettingsModelString createColumnNameSettings() {
 
-        return new SettingsModelString("columnname", "");
+        return new SettingsModelString("columnname", "model");
     }
 
 }

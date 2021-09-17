@@ -102,11 +102,13 @@
          hidden="false">
    </node>
    <node
+         category-path="/io/io-other/binaryobjects"
          deprecated="false"
          factory-class="org.knime.base.filehandling.binaryobjects.model.to.port.ModelToBinaryObjectNodeFactory"
          hidden="false">
    </node>
    <node
+         category-path="/io/io-other/binaryobjects"
          deprecated="false"
          factory-class="org.knime.base.filehandling.binaryobjects.model.from.port.BinaryObjectsToModelNodeFactory"
          hidden="false">

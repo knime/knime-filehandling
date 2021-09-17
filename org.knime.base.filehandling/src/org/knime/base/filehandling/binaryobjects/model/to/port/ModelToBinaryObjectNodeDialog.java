@@ -66,7 +66,7 @@ final class ModelToBinaryObjectNodeDialog extends DefaultNodeSettingsPane {
         var columnname = SettingsFactory.createColumnNameSettings();
 
         // Column selection
-        createNewGroup("New column...");
+        createNewGroup("New column");
 
         // Column name
         addDialogComponent(new DialogComponentString(columnname, "Name", true, 20));

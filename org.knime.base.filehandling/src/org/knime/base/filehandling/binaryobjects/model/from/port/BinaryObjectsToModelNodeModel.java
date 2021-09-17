@@ -144,9 +144,25 @@ final class BinaryObjectsToModelNodeModel extends NodeModel {
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+        var tableSpec = (DataTableSpec)inSpecs[0];
+        if (m_columnselection.getStringValue().isEmpty()) {
+            autoGuess(tableSpec);
+        }
         // createColumnRearranger will check the settings
-        checkSettings((DataTableSpec)inSpecs[0]);
+        checkSettings(tableSpec);
+
         return null; //NOSONAR
+    }
+
+    private void autoGuess(final DataTableSpec tableSpec) throws InvalidSettingsException {
+        var column = tableSpec.stream() //
+            .filter(c -> c.getType().isCompatible(BinaryObjectDataValue.class)) //
+            .findFirst() //
+            .orElseThrow(
+                () -> new InvalidSettingsException("The input table does not contain any binary object columns"));
+        setWarningMessage(String.format("The input column was automatically set to '%s'.", column.getName()));
+        m_columnselection.setStringValue(column.getName());
+
     }
 
     @Override
