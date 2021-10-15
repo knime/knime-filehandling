@@ -11,15 +11,6 @@
 
 	<fullDescription>
 		<intro>
-			<p>
-				<i>This legacy file handling node has been replaced by the
-				</i><a href="https://kni.me/n/UhVxxmmRQ6ZmuPt7"><i>List Files/Folders</i></a><i>
-				and will become deprecated in the foreseeable future. For further information about the 
-				new file handling framework see the
-				</i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.
-				</i></a><br/>
-			</p>
-		
 			This node creates a list with the URIs of the files that are
 			contained in the specified directory (the content of sub folders can
 			be listed as well). It is also shown if the corresponding URI
@@ -33,6 +24,14 @@
 			connection
 			information is given) or on a remote
 			server.
+            <p>
+                <i>This legacy file handling node has been replaced by the
+                </i><a href="https://kni.me/n/UhVxxmmRQ6ZmuPt7"><i>List Files/Folders</i></a><i>
+                and will become deprecated in the foreseeable future. For further information about the 
+                new file handling framework see the
+                </i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.
+                </i></a><br/>
+            </p>
 		</intro>
 
 

@@ -11,19 +11,19 @@
 
     <fullDescription>
         <intro>
-			<p>
-				<i>This legacy file handling node has been replaced by the
-				</i><a href="https://kni.me/n/X_rjR9_83E8gHArf"><i>Create Folder</i></a><i>
-				and will become deprecated in the foreseeable future. For further information about the 
-				new file handling framework see the
-				</i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.
-				</i></a><br/>
-			</p>
             This node creates a directory on
             the server specified by
             the connection information and outputs a variable that
             references to it. If no connection information is given the
             node creates the directory locally.
+            <p>
+                <i>This legacy file handling node has been replaced by the
+                </i><a href="https://kni.me/n/X_rjR9_83E8gHArf"><i>Create Folder</i></a><i>
+                and will become deprecated in the foreseeable future. For further information about the 
+                new file handling framework see the
+                </i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.
+                </i></a><br/>
+            </p>
         </intro>
 
 
