@@ -192,7 +192,7 @@ public class KnimeRemoteFile extends RemoteFile<Connection> {
     private <O> O makeRestCall(final IRemoteFileUtilServiceFunction<O> func) throws Exception {
         final WorkflowContext workflowContext = getWorkflowContext();
         if (workflowContext.getRemoteRepositoryAddress().isPresent()
-            && workflowContext.getServerAuthToken().isPresent()) {
+            && workflowContext.getServerAuthenticator().isPresent()) {
             BundleContext ctx = FrameworkUtil.getBundle(IRemoteFileUtilsService.class).getBundleContext();
             ServiceReference<IRemoteFileUtilsService> ref = ctx.getServiceReference(IRemoteFileUtilsService.class);
             if (ref != null) {
