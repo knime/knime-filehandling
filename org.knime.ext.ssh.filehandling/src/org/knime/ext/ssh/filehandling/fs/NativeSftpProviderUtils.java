@@ -79,6 +79,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.util.GenericUtils;
 import org.apache.sshd.common.util.ValidateUtils;
@@ -499,6 +500,11 @@ public final class NativeSftpProviderUtils {
         // supports v3)
         final FileTime creationTime = attrs.getCreateTime() != null ? attrs.getCreateTime() : attrs.getModifyTime();
 
+        final String owner = StringUtils.isBlank(attrs.getOwner()) ? Integer.toString(attrs.getUserId())
+                : attrs.getOwner();
+        final String group = StringUtils.isBlank(attrs.getGroup()) ? Integer.toString(attrs.getGroupId())
+                : attrs.getGroup();
+
         return new BaseFileAttributes(attrs.isRegularFile(), //
                 path, //
                 attrs.getModifyTime(), //
@@ -507,10 +513,8 @@ public final class NativeSftpProviderUtils {
                 attrs.getSize(), //
                 attrs.isSymbolicLink(), //
                 attrs.isOther(), //
-                GenericUtils.isEmpty(attrs.getOwner()) ? null
-                        : new SftpFileSystem.DefaultUserPrincipal(attrs.getOwner()), //
-                GenericUtils.isEmpty(attrs.getGroup()) ? null
-                        : new SftpFileSystem.DefaultGroupPrincipal(attrs.getGroup()), //
+                new SftpFileSystem.DefaultUserPrincipal(owner), //
+                new SftpFileSystem.DefaultGroupPrincipal(group), //
                 SftpFileSystemProvider.permissionsToAttributes(attrs.getPermissions()));
     }
 }
