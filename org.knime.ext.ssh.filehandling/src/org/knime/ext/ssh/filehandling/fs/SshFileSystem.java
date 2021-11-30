@@ -113,33 +113,21 @@ public class SshFileSystem extends BaseFileSystem<SshPath> {
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, SshFileSystem.FS_TYPE + ":" + resolvedHost);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void prepareClose() {
         provider().prepareClose();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public SshPath getPath(final String first, final String... more) {
         return new SshPath(this, first, more);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getSeparator() {
         return PATH_SEPARATOR;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Iterable<Path> getRootDirectories() {
         return Collections.singletonList(getPath(PATH_SEPARATOR));

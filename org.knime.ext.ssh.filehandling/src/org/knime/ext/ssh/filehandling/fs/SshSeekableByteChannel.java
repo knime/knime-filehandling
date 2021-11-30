@@ -58,16 +58,12 @@ import java.nio.channels.SeekableByteChannel;
  */
 class SshSeekableByteChannel implements SeekableByteChannel {
     private final SeekableByteChannel m_channel;
-    private final ConnectionResource m_resource;
 
     /**
-     * @param resource connection resource.
-     * @param ch channel.
+     * @param ch
+     *            channel.
      */
-    public SshSeekableByteChannel(final ConnectionResource resource,
-            final SeekableByteChannel ch) {
-        super();
-        m_resource = resource;
+    public SshSeekableByteChannel(final SeekableByteChannel ch) {
         m_channel = ch;
     }
 
@@ -98,7 +94,8 @@ class SshSeekableByteChannel implements SeekableByteChannel {
 
     @Override
     public SeekableByteChannel position(final long newPosition) throws IOException {
-        return new SshSeekableByteChannel(m_resource, m_channel.position(newPosition));
+        m_channel.position(newPosition);
+        return this;
     }
 
     @Override
@@ -108,7 +105,7 @@ class SshSeekableByteChannel implements SeekableByteChannel {
 
     @Override
     public SeekableByteChannel truncate(final long size) throws IOException {
-        return new SshSeekableByteChannel(
-            m_resource, m_channel.truncate(Math.min(m_channel.size(), size)));
+        m_channel.truncate(Math.min(m_channel.size(), size));
+        return this;
     }
 }

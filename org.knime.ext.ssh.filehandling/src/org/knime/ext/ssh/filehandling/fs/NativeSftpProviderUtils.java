@@ -102,11 +102,12 @@ import org.knime.filehandling.core.connections.base.attributes.BaseFileAttribute
  *
  * @author @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
+@SuppressWarnings("restriction")
 public final class NativeSftpProviderUtils {
     private NativeSftpProviderUtils() {
     }
 
-    @SuppressWarnings("resource")
+    @SuppressWarnings({ "resource" })
     static SeekableByteChannel newByteChannelInternal(final ConnectionResource resource, final SshPath path,
             final Set<? extends OpenOption> options, @SuppressWarnings("unused") final FileAttribute<?>... attrs)
             throws IOException {
@@ -116,13 +117,12 @@ public final class NativeSftpProviderUtils {
             modes = EnumSet.of(OpenMode.Read, OpenMode.Write);
         }
 
-        SftpRemotePathChannel nativeChannel;
         try {
-            nativeChannel = new SftpRemotePathChannel(path.toSftpString(), resource.getClient(), false, modes);
+            return new SshSeekableByteChannel(
+                    new SftpRemotePathChannel(path.toSftpString(), resource.getClient(), false, modes));
         } catch (SftpException ex) {
             throw convertAndRethrow(ex, path);
         }
-        return new SshSeekableByteChannel(resource, nativeChannel);
     }
 
     @SuppressWarnings("resource")

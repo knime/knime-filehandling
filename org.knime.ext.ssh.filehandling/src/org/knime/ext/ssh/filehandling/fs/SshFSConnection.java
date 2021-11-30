@@ -64,8 +64,6 @@ public class SshFSConnection implements FSConnection {
     /**
      * @param cfg
      *            connection configuration.
-     * @param workingDirectory
-     *            working directory
      * @throws IOException
      */
     public SshFSConnection(final SshFSConnectionConfig cfg) throws IOException {
