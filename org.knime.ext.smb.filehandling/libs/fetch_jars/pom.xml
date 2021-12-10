@@ -49,17 +49,30 @@
 				<version>3.1.1</version>
 				<executions>
 					<execution>
+					   <id>copy-jars</id>
 						<configuration>
 							<includeScope>runtime</includeScope>
 							<outputDirectory>../</outputDirectory>
 							<excludeGroupIds>org.slf4j,org.bouncycastle</excludeGroupIds>
-							<classifier>sources</classifier>
 						</configuration>
 						<phase>package</phase>
 						<goals>
 							<goal>copy-dependencies</goal>
 						</goals>
 					</execution>
+                    <execution>
+                        <id>copy-src-jars</id>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <outputDirectory>../</outputDirectory>
+                            <excludeGroupIds>org.slf4j,org.bouncycastle</excludeGroupIds>
+                            <classifier>sources</classifier>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                    </execution>
 				</executions>
 			</plugin>
 		</plugins>
