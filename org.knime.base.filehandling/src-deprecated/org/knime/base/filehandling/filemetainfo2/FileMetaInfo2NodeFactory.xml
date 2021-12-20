@@ -17,7 +17,7 @@
             <p>
                 <i>This legacy file handling node has been replaced by the
                 </i><a href="https://kni.me/n/dUVBjt2bvzd7_asN"><i>Files/Folders Meta Info</i></a><i>
-                and will become deprecated in the foreseeable future. For further information about the 
+                and will be deprecated in the foreseeable future. For further information about the 
                 new file handling framework see the
                 </i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.
                 </i></a><br/>
