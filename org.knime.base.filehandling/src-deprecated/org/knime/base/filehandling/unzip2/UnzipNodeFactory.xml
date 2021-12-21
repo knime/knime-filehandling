@@ -28,7 +28,7 @@
 				<li>.ar</li>
 			</ul>
             <p>
-                <i>This legacy file handling node has been replaced by the
+                <i>This legacy file handling node has been replaced by
                 </i><a href="https://kni.me/n/Idv4NOkow3wYGr_Z"><i>Decompress Files</i></a><i>
                 and will be deprecated in the foreseeable future. For further information about the 
                 new file handling framework see the
