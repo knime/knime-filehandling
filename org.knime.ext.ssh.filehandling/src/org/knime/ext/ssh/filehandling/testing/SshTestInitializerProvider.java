@@ -112,7 +112,7 @@ public class SshTestInitializerProvider extends DefaultFSTestInitializerProvider
             });
         }
         sshCfg.setPort(cfg.containsKey("port") ? Integer.parseInt(cfg.get("port")) : 22);
-        sshCfg.setConnectionTimeout(Duration.ofSeconds(300)); // set a big time out for easier debugging
+        sshCfg.setConnectionTimeout(Duration.ofSeconds(60));
 
         return sshCfg;
     }
