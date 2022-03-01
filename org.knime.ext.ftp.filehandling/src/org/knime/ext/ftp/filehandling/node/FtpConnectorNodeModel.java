@@ -51,6 +51,7 @@ package org.knime.ext.ftp.filehandling.node;
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -74,7 +75,7 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpConnectorNodeModel extends NodeModel {
+class FtpConnectorNodeModel extends NodeModel {
 
     private final FtpConnectorNodeSettings m_settings;
 
@@ -85,7 +86,7 @@ public class FtpConnectorNodeModel extends NodeModel {
     /**
      * Creates new instance.
      */
-    protected FtpConnectorNodeModel() {
+    FtpConnectorNodeModel() {
         super(new PortType[0], new PortType[] { FileSystemPortObject.TYPE });
         m_settings = new FtpConnectorNodeSettings();
     }
@@ -103,7 +104,14 @@ public class FtpConnectorNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         final FtpFSConnectionConfig config = m_settings.toFSConnectionConfig(getCredentialsProvider());
-        m_fsConnection = new FtpFSConnection(config);
+
+        try {
+            m_fsConnection = new FtpFSConnection(config);
+        } catch (Exception ex) {
+            final Throwable rootCause = ExceptionUtils.getRootCause(ex);
+            setWarningMessage(ExceptionUtils.getMessage(rootCause));
+            throw ex;
+        }
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
         return new PortObject[] { new FileSystemPortObject(createSpec(config)) };
     }

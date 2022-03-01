@@ -73,11 +73,19 @@ import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProvide
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
- * Settings for {@link FtpConnectorNodeModel}.
+ * Settings for the FTP Connector node.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpConnectorNodeSettings {
+class FtpConnectorNodeSettings {
+
+    private static final boolean DEFAULT_REUSE_SSL_SESSION = true;
+
+    private static final boolean DEFAULT_USE_IMPLICIT_FTPS = false;
+
+    private static final boolean DEFAULT_VERIFY_HOSTNAME = true;
+
+    private static final boolean DEFAULT_USE_PROXY = false;
 
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
 
@@ -101,6 +109,12 @@ public class FtpConnectorNodeSettings {
 
     private static final String KEY_TIME_ZONE_OFFSET = "timeZoneOffset";
 
+    private static final String KEY_VERIFY_HOSTNAME = "verifyHostname";
+
+    private static final String KEY_USE_IMPLICIT_FTPS = "useImplicitFTPS";
+
+    private static final String KEY_REUSE_SSL_SESSION = "reuseSSLSession";
+
     private final SettingsModelString m_host;
     private final SettingsModelIntegerBounded m_port;
     private final AuthSettings m_authSettings;
@@ -112,10 +126,11 @@ public class FtpConnectorNodeSettings {
     private final SettingsModelIntegerBounded m_timeZoneOffset;
     private final SettingsModelBoolean m_useProxy;
     private final SettingsModelBoolean m_useFTPS;
+    private final SettingsModelBoolean m_verifyHostname;
+    private final SettingsModelBoolean m_useImplicitFTPS;
+    private final SettingsModelBoolean m_reuseSSLSession;
 
-    /**
-     */
-    public FtpConnectorNodeSettings() {
+    FtpConnectorNodeSettings() {
         m_host = new SettingsModelString(KEY_HOST, "localhost");
         m_port = new SettingsModelIntegerBounded(KEY_PORT, 21, 1, 65535);
         m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT, DEFAULT_TIMEOUT,
@@ -128,7 +143,7 @@ public class FtpConnectorNodeSettings {
                 FtpFSConnectionConfig.DEFAULT_MAX_CONNECTIONS, 1, Integer.MAX_VALUE);
         m_timeZoneOffset = new SettingsModelIntegerBounded(KEY_TIME_ZONE_OFFSET, 0, (int) -TimeUnit.HOURS.toMinutes(24),
                 (int) TimeUnit.HOURS.toMinutes(24));
-        m_useProxy = new SettingsModelBoolean(KEY_USE_PROXY, false);
+        m_useProxy = new SettingsModelBoolean(KEY_USE_PROXY, DEFAULT_USE_PROXY);
         m_useFTPS = new SettingsModelBoolean(KEY_USE_FTPS, false);
         m_authSettings = new AuthSettings.Builder() //
                 .add(new UserPasswordAuthProviderSettings(StandardAuthTypes.USER_PASSWORD, true)) //
@@ -136,6 +151,19 @@ public class FtpConnectorNodeSettings {
                 .defaultType(StandardAuthTypes.USER_PASSWORD) //
                 .build();
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, FtpFileSystem.PATH_SEPARATOR);
+        m_verifyHostname = new SettingsModelBoolean(KEY_VERIFY_HOSTNAME, DEFAULT_VERIFY_HOSTNAME);
+        m_useImplicitFTPS = new SettingsModelBoolean(KEY_USE_IMPLICIT_FTPS, DEFAULT_USE_IMPLICIT_FTPS);
+        m_reuseSSLSession = new SettingsModelBoolean(KEY_REUSE_SSL_SESSION, DEFAULT_REUSE_SSL_SESSION);
+
+        m_useFTPS.addChangeListener(e -> updateEnabledness());
+        updateEnabledness();
+    }
+
+    private void updateEnabledness() {
+        m_useProxy.setEnabled(!m_useFTPS.getBooleanValue());
+        m_verifyHostname.setEnabled(m_useFTPS.getBooleanValue());
+        m_useImplicitFTPS.setEnabled(m_useFTPS.getBooleanValue());
+        m_reuseSSLSession.setEnabled(m_useFTPS.getBooleanValue());
     }
 
     private void save(final NodeSettingsWO settings) {
@@ -149,6 +177,9 @@ public class FtpConnectorNodeSettings {
         m_useProxy.saveSettingsTo(settings);
         m_useFTPS.saveSettingsTo(settings);
         m_timeZoneOffset.saveSettingsTo(settings);
+        m_verifyHostname.saveSettingsTo(settings);
+        m_useImplicitFTPS.saveSettingsTo(settings);
+        m_reuseSSLSession.saveSettingsTo(settings);
     }
 
     /**
@@ -181,7 +212,6 @@ public class FtpConnectorNodeSettings {
         m_readTimeout.loadSettingsFrom(settings);
         m_minConnections.loadSettingsFrom(settings);
         m_maxConnections.loadSettingsFrom(settings);
-        m_useProxy.loadSettingsFrom(settings);
         m_useFTPS.loadSettingsFrom(settings);
         m_timeZoneOffset.loadSettingsFrom(settings);
     }
@@ -195,7 +225,8 @@ public class FtpConnectorNodeSettings {
      */
     public void loadSettingsForDialog(final NodeSettingsRO settings) throws InvalidSettingsException {
         load(settings);
-        // m_authSettings are loaded by AuthenticationDialog
+        // m_authSettings and settings whose enabledness depends on m_useFTPS are loaded
+        // by the dialog
     }
 
     /**
@@ -208,6 +239,18 @@ public class FtpConnectorNodeSettings {
     public void loadSettingsForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
         load(settings);
         m_authSettings.loadSettingsForModel(settings.getNodeSettings(AuthSettings.KEY_AUTH));
+
+        m_useProxy.loadSettingsFrom(settings);
+        if (containsAdvancedFTPSettings(settings)) {
+            m_verifyHostname.loadSettingsFrom(settings);
+            m_useImplicitFTPS.loadSettingsFrom(settings);
+            m_reuseSSLSession.loadSettingsFrom(settings);
+        } else {
+            m_verifyHostname.setBooleanValue(DEFAULT_VERIFY_HOSTNAME);
+            m_useImplicitFTPS.setBooleanValue(DEFAULT_USE_IMPLICIT_FTPS);
+            m_reuseSSLSession.setBooleanValue(DEFAULT_REUSE_SSL_SESSION);
+        }
+
     }
 
     void configureInModel(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer,
@@ -234,6 +277,12 @@ public class FtpConnectorNodeSettings {
         m_useProxy.validateSettings(settings);
         m_useFTPS.validateSettings(settings);
         m_timeZoneOffset.validateSettings(settings);
+
+        if (containsAdvancedFTPSettings(settings)) {
+            m_verifyHostname.validateSettings(settings);
+            m_useImplicitFTPS.validateSettings(settings);
+            m_reuseSSLSession.validateSettings(settings);
+        }
     }
 
     /**
@@ -374,7 +423,7 @@ public class FtpConnectorNodeSettings {
      * @return true if uses proxy
      */
     public boolean isUseProxy() {
-        return m_useProxy.getBooleanValue();
+        return !isUseFTPS() && m_useProxy.getBooleanValue();
     }
 
     /**
@@ -413,6 +462,48 @@ public class FtpConnectorNodeSettings {
     }
 
     /**
+     * @return true if hostname should be verified.
+     */
+    public boolean isVerifyHostname() {
+        return m_verifyHostname.getBooleanValue();
+    }
+
+    /**
+     * @return the verify hostname model.
+     */
+    public SettingsModelBoolean getVerifyHostnameModel() {
+        return m_verifyHostname;
+    }
+
+    /**
+     * @return true if use implicit FTPS.
+     */
+    public boolean isUseImplicitFTPS() {
+        return m_useImplicitFTPS.getBooleanValue();
+    }
+
+    /**
+     * @return the useImplicitFTPS model.
+     */
+    public SettingsModelBoolean getUseImplicitFTPSModel() {
+        return m_useImplicitFTPS;
+    }
+
+    /**
+     * @return true if SSL session should be reused.
+     */
+    public boolean isReuseSSLSession() {
+        return m_reuseSSLSession.getBooleanValue();
+    }
+
+    /**
+     * @return the reuseSSLSession model.
+     */
+    public SettingsModelBoolean getReuseSSLSessionModel() {
+        return m_reuseSSLSession;
+    }
+
+    /**
      * @return a (deep) clone of this node settings object.
      */
     public FtpConnectorNodeSettings createClone() {
@@ -438,7 +529,7 @@ public class FtpConnectorNodeSettings {
      */
     public FtpFSConnectionConfig toFSConnectionConfig(final CredentialsProvider credentialsProvider)
             throws InvalidSettingsException {
-        final FtpFSConnectionConfig conf = new FtpFSConnectionConfig();
+        final var conf = new FtpFSConnectionConfig();
         conf.setHost(getHost());
         conf.setPort(getPort());
         conf.setMaxConnectionPoolSize(getMaxConnections());
@@ -449,9 +540,12 @@ public class FtpConnectorNodeSettings {
         conf.setServerTimeZoneOffset(getTimeZoneOffset());
         conf.setUseFTPS(isUseFTPS());
         conf.setWorkingDirectory(getWorkingDirectory());
+        conf.setVerifyHostname(isVerifyHostname());
+        conf.setUseImplicitFTPS(isUseImplicitFTPS());
+        conf.setReuseSSLSession(isReuseSSLSession());
 
         // authentication
-        final AuthSettings auth = getAuthenticationSettings();
+        final var auth = getAuthenticationSettings();
         if (auth.getAuthType() == StandardAuthTypes.USER_PASSWORD) {
             final UserPasswordAuthProviderSettings userPassSettings = auth
                     .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
@@ -464,7 +558,7 @@ public class FtpConnectorNodeSettings {
 
         // Proxy
         if (isUseProxy()) {
-            final ProtectedHostConfiguration proxy = new ProtectedHostConfiguration();
+            final var proxy = new ProtectedHostConfiguration();
             IProxyData proxyData = Activator.getProxyService().getProxyData(IProxyData.HTTP_PROXY_TYPE);
             if (proxyData == null) {
                 throw new InvalidSettingsException("Eclipse HTTP proxy is not configured");
@@ -479,6 +573,10 @@ public class FtpConnectorNodeSettings {
         }
 
         return conf;
+    }
+
+    static boolean containsAdvancedFTPSettings(final NodeSettingsRO settings) {
+        return settings.containsKey(KEY_VERIFY_HOSTNAME);
     }
 
 }

@@ -63,7 +63,6 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeListener;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
@@ -74,7 +73,6 @@ import org.knime.core.node.defaultnodesettings.DialogComponent;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
-import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.auth.AuthPanel;
@@ -89,22 +87,28 @@ import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpConnectorNodeDialog extends NodeDialogPane {
+class FtpConnectorNodeDialog extends NodeDialogPane {
     private static final String WORKING_DIR_HISTORY_ID = "ftp.workingDir";
 
     private final FtpConnectorNodeSettings m_settings;
 
     private AuthPanel m_authPanel;
 
+    private DialogComponentBoolean m_verifyHostnameComponent;
+
+    private DialogComponentBoolean m_useProxyComponent;
+
+    private DialogComponentBoolean m_useImplicitFTPSComponent;
+
+    private DialogComponentBoolean m_reuseSslSessionComponent;
+
     private final WorkingDirectoryChooser m_workingDirChooser = new WorkingDirectoryChooser(WORKING_DIR_HISTORY_ID,
             this::createFSConnection);
-
-    private final ChangeListener m_enablenessUpdater = e -> updateEnabledness();
 
     /**
      * Creates new instance.
      */
-    public FtpConnectorNodeDialog() {
+    FtpConnectorNodeDialog() {
         m_settings = new FtpConnectorNodeSettings();
 
         initFields();
@@ -114,17 +118,22 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
     }
 
     private void initFields() {
-        final AuthSettings authSettings = m_settings.getAuthenticationSettings();
+        final var authSettings = m_settings.getAuthenticationSettings();
         m_authPanel = new AuthPanel(authSettings, //
                 Arrays.asList( //
                         new UserPasswordAuthProviderPanel(authSettings.getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD), this), //
                         new EmptyAuthProviderPanel(authSettings.getSettingsForAuthType(StandardAuthTypes.ANONYMOUS))));
+
+        m_useProxyComponent = new DialogComponentBoolean(m_settings.getUseProxyModel(), "");
+        m_verifyHostnameComponent = new DialogComponentBoolean(m_settings.getVerifyHostnameModel(), "");
+        m_useImplicitFTPSComponent = new DialogComponentBoolean(m_settings.getUseImplicitFTPSModel(), "");
+        m_reuseSslSessionComponent = new DialogComponentBoolean(m_settings.getReuseSSLSessionModel(), "");
     }
 
     private JComponent createSettingsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
+        final var panel = new JPanel(new GridBagLayout());
 
-        final GridBagConstraints gbc = new GridBagConstraints();
+        final var gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
@@ -147,8 +156,8 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
     }
 
     private Component createFileSystemSettingsPanel() {
-        final JPanel panel = new JPanel();
-        final BoxLayout parentLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+        final var panel = new JPanel();
+        final var parentLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(parentLayout);
         panel.setBorder(createTitledBorder("File System settings"));
 
@@ -157,10 +166,10 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
     }
 
     private Component createAuthenticationSettingsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
+        final var panel = new JPanel(new GridBagLayout());
         panel.setBorder(createTitledBorder("Authentication settings"));
 
-        final GridBagConstraints gbc = new GridBagConstraints();
+        final var gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
@@ -173,10 +182,10 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
     }
 
     private Component createConnectionSettingsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
+        final var panel = new JPanel(new GridBagLayout());
         panel.setBorder(createTitledBorder("Connection settings"));
 
-        final GridBagConstraints gbc = new GridBagConstraints();
+        final var gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 0, 5);
@@ -247,9 +256,9 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
     }
 
     private JComponent createAdvancedPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
+        final var panel = new JPanel(new GridBagLayout());
 
-        final GridBagConstraints gbc = new GridBagConstraints();
+        final var gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
@@ -263,13 +272,16 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
         panel.add(createOtherSettingsPanel(), gbc);
 
         gbc.gridy++;
+        panel.add(createFTPSSettingsPanel(), gbc);
+
+        gbc.gridy++;
         addVerticalFiller(panel, gbc.gridy, 1);
 
         return panel;
     }
 
     private Component createOtherSettingsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
+        final var panel = new JPanel(new GridBagLayout());
 
         panel.setBorder(createTitledBorder("Other settings"));
 
@@ -280,8 +292,21 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
         return panel;
     }
 
+    private Component createFTPSSettingsPanel() {
+        final var panel = new JPanel(new GridBagLayout());
+
+        panel.setBorder(createTitledBorder("FTPS settings"));
+        addGbcRow(panel, 0, "Verify hostname:", m_verifyHostnameComponent);
+        addGbcRow(panel, 1, "Use implicit FTPS:",
+                "<html><i>Note: Please also adjust port (for example to port 990)</i></html>",
+                m_useImplicitFTPSComponent);
+        addGbcRow(panel, 2, "Reuse SSL session:",
+                m_reuseSslSessionComponent);
+        return panel;
+    }
+
     private Component createAdvancedConnectionSettingsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
+        final var panel = new JPanel(new GridBagLayout());
 
         panel.setBorder(createTitledBorder("Connection settings"));
 
@@ -295,13 +320,13 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
                 new DialogComponentNumber(m_settings.getMinConnectionsModel(), "", 1));
         addGbcRow(panel, 3, "Maximum FTP connections:", //
                 new DialogComponentNumber(m_settings.getMaxConnectionsModel(), "", 1));
-        addGbcRow(panel, 4, "Use HTTP Proxy:", new DialogComponentBoolean(m_settings.getUseProxyModel(), ""));
+        addGbcRow(panel, 4, "Use HTTP Proxy:", m_useProxyComponent);
 
         return panel;
     }
 
     private static void addVerticalFiller(final JPanel panel, final int row, final int columnCount) {
-        final GridBagConstraints gbc = new GridBagConstraints();
+        final var gbc = new GridBagConstraints();
         gbc.gridy = row;
         gbc.gridx = 0;
         gbc.gridwidth = columnCount;
@@ -310,8 +335,9 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
         panel.add(Box.createVerticalGlue(), gbc);
     }
 
-    private static void addGbcRow(final JPanel panel, final int row, final String label, final DialogComponent comp) {
-        final GridBagConstraints gbc = new GridBagConstraints();
+    private static void addGbcRow(final JPanel panel, final int row, final String label, final String optionalNote,
+            final DialogComponent comp) {
+        final var gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.insets = new Insets(0, 5, 0, 5);
@@ -325,7 +351,15 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
         gbc.gridx++;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        panel.add(Box.createHorizontalGlue(), gbc);
+        if (optionalNote != null) {
+            panel.add(new JLabel(optionalNote), gbc);
+        } else {
+            panel.add(Box.createHorizontalGlue(), gbc);
+        }
+    }
+
+    private static void addGbcRow(final JPanel panel, final int row, final String label, final DialogComponent comp) {
+        addGbcRow(panel, row, label, null, comp);
     }
 
     @Override
@@ -344,37 +378,22 @@ public class FtpConnectorNodeDialog extends NodeDialogPane {
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO input, final PortObjectSpec[] specs)
             throws NotConfigurableException {
-        m_settings.getUseFTPSModel().removeChangeListener(m_enablenessUpdater);
 
         try {
             m_authPanel.loadSettingsFrom(input.getNodeSettings(AuthSettings.KEY_AUTH), specs);
+            m_useProxyComponent.loadSettingsFrom(input, specs);
+
+            if (FtpConnectorNodeSettings.containsAdvancedFTPSettings(input)) {
+                m_verifyHostnameComponent.loadSettingsFrom(input, specs);
+                m_useImplicitFTPSComponent.loadSettingsFrom(input, specs);
+                m_reuseSslSessionComponent.loadSettingsFrom(input, specs);
+            }
+
             m_settings.loadSettingsForDialog(input);
         } catch (final InvalidSettingsException e) { // NOSONAR can be ignored
         }
 
-        m_settings.getUseFTPSModel().addChangeListener(m_enablenessUpdater);
-
         m_workingDirChooser.setSelectedWorkingDirectory(m_settings.getWorkingDirectory());
-        updateEnabledness();
-    }
-
-    private void updateEnabledness() {
-        boolean isFtpsUsed = m_settings.getUseFTPSModel().getBooleanValue();
-
-        SettingsModelBoolean proxyModel = m_settings.getUseProxyModel();
-        if (isFtpsUsed) {
-            if (!proxyModel.isEnabled()) {
-                // this is the fix
-                // if proxy model is already disabled the model will
-                // not notify its change listeners therefore will
-                // not update enableness state of check box
-                // therefore the state is temporary set to enabled before switch
-                // it back to disabled
-                proxyModel.setEnabled(true);
-            }
-            proxyModel.setBooleanValue(false);
-        }
-        proxyModel.setEnabled(!isFtpsUsed);
     }
 
     @Override
