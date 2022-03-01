@@ -68,6 +68,18 @@ public class Activator implements BundleActivator {
         synchronized (Activator.class) {
             bundleContext = context;
         }
+        setSystemTLSProperty();
+    }
+
+    private static void setSystemTLSProperty() {
+        try {
+            // according to https://issues.apache.org/jira/browse/NET-408 discussion
+            // for JDK 8u161 or higher in order to support FTPS session reuse
+            // following property must be disabled
+            System.setProperty("jdk.tls.useExtendedMasterSecret", String.valueOf(false));
+
+        } catch (SecurityException ex) { // NOSONAR can be ignored
+        }
     }
 
     @Override

@@ -316,17 +316,16 @@ public class FtpClient {
      */
     @SuppressWarnings("resource")
     public InputStream getFileContentAsStream(final String path) throws IOException {
+
         final InputStream stream = m_client.retrieveFileStream(path);
         if (stream == null) {
             throw makeIOEFromResponse(path);
         }
 
         return new FilterInputStream(stream) {
-            /**
-             * {@inheritDoc}
-             */
             @Override
             public void close() throws IOException {
+                m_client.abort();
                 try {
                     super.close();
                 } finally {
@@ -386,9 +385,13 @@ public class FtpClient {
      * @throws IOException
      */
     public void sendKeepAlive() throws IOException {
-        if (!m_client.sendNoOp()) {
+        if (!m_client.sendNoOp() && !gotUnknownCommand()) {
             throw makeIOEFromResponse(null);
         }
+    }
+
+    private boolean gotUnknownCommand() {
+        return m_client.getReplyCode() == 500;
     }
 
     private String getReplyString() {

@@ -63,6 +63,7 @@ import org.apache.commons.net.ftp.FTPConnectionClosedException;
 import org.apache.commons.net.ftp.FTPHTTPClient;
 import org.apache.commons.net.ftp.FTPReply;
 import org.apache.commons.net.ftp.FTPSClient;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 
 /**
  * Factory of FTP clients.
@@ -70,6 +71,7 @@ import org.apache.commons.net.ftp.FTPSClient;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 public class FtpClientFactory {
+
     private final FtpFSConnectionConfig m_configuration;
     private FtpClientFeatures m_features;
 
@@ -81,7 +83,7 @@ public class FtpClientFactory {
      */
     public FtpClientFactory(final FtpFSConnectionConfig cfg) {
         m_configuration = cfg;
-        m_reuseSslSessions = true;
+        m_reuseSslSessions = cfg.isReuseSSLSession();
     }
 
     /**
@@ -203,11 +205,18 @@ public class FtpClientFactory {
     private FTPSClient createFtpsClient() {
         final FTPSClient ftpsClient;
         if (m_reuseSslSessions) {
-            ftpsClient = new FtpsClientWithSslSessionReuse(() -> m_reuseSslSessions = false);
+            ftpsClient = new FtpsClientWithSslSessionReuse(() -> m_reuseSslSessions = false,
+                    m_configuration.isUseImplicitFTPS());
         } else {
-            ftpsClient = new FTPSClient("TLS", false);
+            ftpsClient = new FTPSClient("TLS", m_configuration.isUseImplicitFTPS());
         }
 
+        if (m_configuration.isVerifyHostname()) {
+            // By default, FTPSClient does not check the hostname against the server
+            // certificate. This sets the Apache HttpClient hostname verifier which
+            // seems like a solid choice.
+            ftpsClient.setHostnameVerifier(new DefaultHostnameVerifier());
+        }
         ftpsClient.setUseClientMode(true);
         ftpsClient.setDefaultPort(m_configuration.getPort());
         return ftpsClient;

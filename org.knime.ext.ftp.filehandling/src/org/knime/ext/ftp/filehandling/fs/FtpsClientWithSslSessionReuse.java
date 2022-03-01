@@ -60,7 +60,6 @@ import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.SSLSocket;
 
 import org.apache.commons.net.ftp.FTPSClient;
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.util.CheckUtils;
 
@@ -104,16 +103,27 @@ class FtpsClientWithSslSessionReuse extends FTPSClient {
         super("TLS", false);
         CheckUtils.checkArgumentNotNull(failureListener, "SslSessionReuseFailureListener must not be null");
         m_sessionReuseFailureListener = failureListener;
+    }
 
-        // By default, FTPSClient does not check the hostname against the server
-        // certificate. This sets the Apache HttpClient hostname verifier which
-        // seems like a solid choice.
-        setHostnameVerifier(new DefaultHostnameVerifier());
+    /**
+     * Constructor.
+     *
+     * @param failureListener
+     *            Listener that gets notified when SSL session reuse has failed.
+     * @param useImplicitFTPS
+     *            whether implicit FTPS should be used.
+     */
+    public FtpsClientWithSslSessionReuse(final SslSessionReuseFailureListener failureListener,
+            final boolean useImplicitFTPS) {
+        super("TLS", useImplicitFTPS);
+        CheckUtils.checkArgumentNotNull(failureListener, "SslSessionReuseFailureListener must not be null");
+        m_sessionReuseFailureListener = failureListener;
     }
 
     /**
      * copied and adapted from https://eng.wealthfront.com/2016/06/10/
-     * connecting-to-an-ftps-server-with-ssl-session-reuse-in-java-7-and-8/
+     * connecting-to-an-ftps-server-with-ssl-session-reuse-in-java-7-and-8/,
+     * https://github.com/iterate-ch/cyberduck/blob/master/ftp/src/main/java/ch/cyberduck/core/ftp/FTPClient.java
      */
     @Override
     protected void _prepareDataSocket_(final Socket socket) throws IOException {
@@ -131,7 +141,6 @@ class FtpsClientWithSslSessionReuse extends FTPSClient {
                 super._prepareDataSocket_(socket);
                 return;
             }
-
             final SSLSessionContext sslSessionContext = sslSession.getSessionContext();
 
             // get session cache
@@ -145,7 +154,12 @@ class FtpsClientWithSslSessionReuse extends FTPSClient {
 
             // calling of getHost method returns the host like it is used
             // by SSL session context
-            final Method getHost = socket.getClass().getDeclaredMethod("getHost");
+            Method getHost;
+            try {
+                getHost = socket.getClass().getMethod("getPeerHost");
+            } catch (NoSuchMethodException e) {
+                getHost = socket.getClass().getDeclaredMethod("getHost");
+            }
             getHost.setAccessible(true);
 
             final Object host = getHost.invoke(socket);

@@ -102,6 +102,9 @@ public class FtpFSConnectionConfig extends ProtectedHostConfiguration implements
     private boolean m_testMode;
     private String m_workingDirectory = "/";
     private boolean m_useFTPS;
+    private boolean m_verifyHostname;
+    private boolean m_useImplicitFTPS;
+    private boolean m_reuseSSLSession;
 
     /**
      * Default constructor.
@@ -262,6 +265,51 @@ public class FtpFSConnectionConfig extends ProtectedHostConfiguration implements
      */
     public void setWorkingDirectory(final String dir) {
         m_workingDirectory = dir;
+    }
+
+    /**
+     * @return true if hostname should be verified
+     */
+    public boolean isVerifyHostname() {
+        return m_verifyHostname;
+    }
+
+    /**
+     * @param verifyHostname
+     *            the verifyHostname to set
+     */
+    public void setVerifyHostname(final boolean verifyHostname) {
+        m_verifyHostname = verifyHostname;
+    }
+
+    /**
+     * @return true if implicit FTPS should be used
+     */
+    public boolean isUseImplicitFTPS() {
+        return m_useImplicitFTPS;
+    }
+
+    /**
+     * @param useImplicitFTPS
+     *            the useImplicitFTPS to set
+     */
+    public void setUseImplicitFTPS(final boolean useImplicitFTPS) {
+        m_useImplicitFTPS = useImplicitFTPS;
+    }
+
+    /**
+     * @return true if SSL session should be reused
+     */
+    public boolean isReuseSSLSession() {
+        return m_reuseSSLSession;
+    }
+
+    /**
+     * @param reuseSSLSession
+     *            the reuseSSLSession to set
+     */
+    public void setReuseSSLSession(final boolean reuseSSLSession) {
+        m_reuseSSLSession = reuseSSLSession;
     }
 
     /**

@@ -78,6 +78,20 @@
 		    <option name="Time zone offset from GMT">
 		        Server time zone offset from Greenwich Mean Time (minutes). 
 		    </option>
+            <option name="Verify hostname">
+                If checked, the hostname will be verified against the certificate. 
+                Otherwise, the node trusts the server's SSL certificate even if it was generated for a different hostname.
+                This option is available only with 'Use FTPS'.
+            </option>
+            <option name="Use implicit FTPS">
+                If checked, the node uses implicit FTPS, otherwise it uses explicit FTPS.
+                Implicit FTPS commonly runs on port 990. This option is available only with 'Use FTPS'.
+            </option>
+            <option name="Reuse SSL session">
+                If checked the SSL/TLS session of the control connection is reused for the data connections. 
+                Most FTPS servers require SSL session reuse as a security measure in order to prevent attackers from hijacking a data connections.
+                This option is available only with 'Use FTPS'.
+            </option>
 		</tab>
     </fullDescription>
 
