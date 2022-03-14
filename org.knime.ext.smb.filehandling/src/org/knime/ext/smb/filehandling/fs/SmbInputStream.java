@@ -84,7 +84,8 @@ class SmbInputStream extends FilterInputStream {
         DiskShare client = path.getFileSystem().getClient();
         try {
             m_file = client.openFile(path.getSmbjPath(), EnumSet.of(AccessMask.GENERIC_READ), null,
-                    EnumSet.of(SMB2ShareAccess.FILE_SHARE_READ), SMB2CreateDisposition.FILE_OPEN, null);
+                    EnumSet.of(SMB2ShareAccess.FILE_SHARE_WRITE, SMB2ShareAccess.FILE_SHARE_READ),
+                    SMB2CreateDisposition.FILE_OPEN, null);
             in = m_file.getInputStream();
         } catch (SMBApiException ex) {
             throw SmbUtils.toIOE(ex, path.toString());
