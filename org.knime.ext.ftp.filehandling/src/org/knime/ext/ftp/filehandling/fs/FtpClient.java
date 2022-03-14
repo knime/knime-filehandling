@@ -325,7 +325,6 @@ public class FtpClient {
         return new FilterInputStream(stream) {
             @Override
             public void close() throws IOException {
-                m_client.abort();
                 try {
                     super.close();
                 } finally {
