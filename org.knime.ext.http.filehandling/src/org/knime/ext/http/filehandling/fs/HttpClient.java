@@ -62,6 +62,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -72,6 +74,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
@@ -103,6 +107,23 @@ import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 final class HttpClient {
 
     private static final int MAX_RETRANSITS = 4;
+
+    private static final TrustManager[] TRUST_ALL_CERTS = new TrustManager[] { new X509TrustManager() {
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+
+        @Override
+        public void checkClientTrusted(final X509Certificate[] certs, final String authType) { // NOSONAR
+            // do nothing and trust to all certificates
+        }
+
+        @Override
+        public void checkServerTrusted(final X509Certificate[] certs, final String authType) { // NOSONAR
+            // do nothing and trust to all certificates
+        }
+    } };
 
     private final HttpFSConnectionConfig m_config;
 
@@ -297,7 +318,7 @@ final class HttpClient {
             try {
                 clientBuilder.getConfiguration();
                 final SSLContext context = SSLContext.getInstance("TLS");
-                context.init(null, null, null);
+                context.init(null, TRUST_ALL_CERTS, new SecureRandom());
                 clientBuilder.sslContext(context);
             } catch (final NoSuchAlgorithmException | KeyManagementException e) {
                 throw ExceptionUtil.wrapAsIOException(e);
