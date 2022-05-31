@@ -49,6 +49,8 @@
 package org.knime.archive.zip.filehandling.testing;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 
 import org.knime.archive.zip.filehandling.fs.ArchiveZipFileSystem;
 import org.knime.archive.zip.filehandling.fs.ArchiveZipPath;
@@ -63,7 +65,6 @@ import org.knime.filehandling.core.testing.FSTestInitializer;
  */
 class ArchiveZipFSTestInitializer extends DefaultFSTestInitializer<ArchiveZipPath, ArchiveZipFileSystem> {
 
-
     /**
      * @param fsConnection
      *            FS connection.
@@ -73,23 +74,31 @@ class ArchiveZipFSTestInitializer extends DefaultFSTestInitializer<ArchiveZipPat
     }
 
     @Override
-    public ArchiveZipPath createFileWithContent(final String content, final String... pathComponents) throws IOException {
+    public ArchiveZipPath createFileWithContent(final String content, final String... pathComponents)
+            throws IOException {
         ArchiveZipPath path = makePath(pathComponents);
-
-        // FIXME: write content string to path, without using the NIO file API, but with
-        // the backend API
+        // It is not possible to create files inside the zip file.
+        // The archive must already contains pre-defined folders and files used in test
+        // methods.
+        if (!Files.exists(path)) {
+            throw new NoSuchFileException(path.toString());
+        }
         return path;
     }
 
     @Override
-    protected void beforeTestCaseInternal() throws IOException {
-        // FIXME: for each run of tests we need a scratch directory, which in most cases
-        // needs to be created first
-        ensureDirectoryExists(getTestCaseScratchDir());
+    public ArchiveZipPath makePath(final String... pathComponents) {
+        return getFileSystem().getPath(getFileSystem().getSeparator(), pathComponents);
     }
 
-    private void ensureDirectoryExists(final ArchiveZipPath dir) {
-        // FIXME
+    @Override
+    public ArchiveZipPath getTestCaseScratchDir() {
+        return (ArchiveZipPath) getFileSystem().getRootDirectories().iterator().next();
+    }
+
+    @Override
+    protected void beforeTestCaseInternal() throws IOException {
+        //
     }
 
     @Override

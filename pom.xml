@@ -32,6 +32,7 @@
 				<module>org.knime.ext.smb.filehandling</module>
 				<module>org.knime.features.base.filehandling</module>
 				<module>org.knime.update.filehandling</module>
+				<module>org.knime.archive.zip.filehandling/libs/fetch_jars</module>
 				<module>org.knime.archive.zip.filehandling</module>
 			</modules>
 			<activation>

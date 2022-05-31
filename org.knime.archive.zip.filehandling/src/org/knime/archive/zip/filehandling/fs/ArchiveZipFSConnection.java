@@ -72,8 +72,7 @@ public class ArchiveZipFSConnection implements FSConnection {
      * @throws IOException
      *
      */
-    public ArchiveZipFSConnection(final ArchiveZipFSConnectionConfig config)
-            throws IOException {
+    public ArchiveZipFSConnection(final ArchiveZipFSConnectionConfig config) throws IOException {
         m_filesystem = new ArchiveZipFileSystem(config);
     }
 

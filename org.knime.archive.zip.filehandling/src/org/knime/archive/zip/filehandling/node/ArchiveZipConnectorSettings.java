@@ -51,13 +51,13 @@ package org.knime.archive.zip.filehandling.node;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnectionConfig;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.ICredentials;
-import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnectionConfig;
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
@@ -71,11 +71,11 @@ class ArchiveZipConnectorSettings {
      * Creates new instance
      */
     public ArchiveZipConnectorSettings() {
-        
+        // TODO
     }
 
     private void save(final NodeSettingsWO settings) {
-        
+        // TODO
     }
 
     /**
@@ -101,7 +101,7 @@ class ArchiveZipConnectorSettings {
     }
 
     private void load(final NodeSettingsRO settings) throws InvalidSettingsException {
-       
+        // TODO
     }
 
     /**
@@ -140,7 +140,7 @@ class ArchiveZipConnectorSettings {
      * @throws InvalidSettingsException
      */
     public void validate(final NodeSettingsRO settings) throws InvalidSettingsException {
-        
+        // TODO
     }
 
     /**
@@ -149,11 +149,11 @@ class ArchiveZipConnectorSettings {
      * @throws InvalidSettingsException
      */
     void validate() throws InvalidSettingsException {
-        
+        // TODO
     }
 
     ArchiveZipFSConnectionConfig createFSConnectionConfig(final Function<String, ICredentials> credentialsProvider) {
-        final var config = new ArchiveZipFSConnectionConfig();
+        final var config = new ArchiveZipFSConnectionConfig(null);
         return config;
     }
 }

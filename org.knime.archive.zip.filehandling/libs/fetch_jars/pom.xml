@@ -1,0 +1,54 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.knime.archive.zip</groupId>
+    <artifactId>archivezip-fetch-jars</artifactId>
+    <version>2.4.6</version>
+    <packaging>pom</packaging>
+
+    <name>Jar fetcher for Zip Archive Connector</name>
+    <description>Running the maven goal &quot;package&quot; on this maven project will fetch all jars required for Zip Archive Connector and put them into the libs/ directory.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.21</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-jars</id>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <outputDirectory>../</outputDirectory>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>copy-src-jars</id>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <outputDirectory>../</outputDirectory>
+                            <classifier>sources</classifier>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

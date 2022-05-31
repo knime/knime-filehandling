@@ -52,15 +52,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
@@ -71,123 +74,79 @@ import org.knime.filehandling.core.connections.base.attributes.BaseFileAttribute
  */
 class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath, ArchiveZipFileSystem> {
 
-    @Override
-    protected SeekableByteChannel newByteChannelInternal(final ArchiveZipPath path, final Set<? extends OpenOption> options,
-            final FileAttribute<?>... attrs) throws IOException {
-
-        // FIXME: create byte channel here. In many cases you can subclass
-        // TempFileSeekableByteChannel.
-        // See ArchiveZipSeekableFileChannel
-        return null;
+    public ArchiveZipFileSystemProvider(final ArchiveZipFSConnectionConfig config) throws IOException {
     }
 
     @Override
-    protected void copyInternal(final ArchiveZipPath source, final ArchiveZipPath target, final CopyOption... options) throws IOException {
-        try {
-            // FIXME: copy file or create empty target directory here.
-            // FIXME: Don't implement recursive copying of a directory here, this is done by
-            // calling code.
-            // FIXME: Copy options: Only handle StandardCopyOption.REPLACE_EXISTING here
-            // (ATOMIC and COPY_ATTRIBUTES are usually not applicable)
+    protected SeekableByteChannel newByteChannelInternal(final ArchiveZipPath path,
+            final Set<? extends OpenOption> options, final FileAttribute<?>... attrs) throws IOException {
+        return new ArchiveZipSeekableFileChannel(path, options);
+    }
 
-        } catch (Exception ex) { // FIXME handle custom exceptions
-            // FIXME: throw appropriate IOE subtype here:
-            // source does not exist => NoSuchFileException
-            // source cannot be copied or target cannot be created due to permissions =>
-            // AccessDeniedException (attach original exception as cause)
-            // otherwise => create generic IOE and attach original exception as cause
-            throw new IOException();
-        }
+    @Override
+    protected void copyInternal(final ArchiveZipPath source, final ArchiveZipPath target, final CopyOption... options)
+            throws IOException {
+        throw new AccessDeniedException("Copying files is not supported");
     }
 
     @Override
     protected void moveInternal(final ArchiveZipPath source, final ArchiveZipPath target, final CopyOption... options)
             throws IOException {
-        try {
-            // FIXME: move file or create empty target directory here.
-            // FIXME: Don't implement recursive moving of a directory here, this is done by
-            // calling code.
-            // FIXME: Copy options: Only handle StandardCopyOption.REPLACE_EXISTING here
-            // (ATOMIC and COPY_ATTRIBUTES are usually not applicable)
-
-        } catch (Exception ex) { // FIXME handle custom exceptions
-            // FIXME: throw appropriate IOE subtype here:
-            // source does not exist => NoSuchFileException
-            // source cannot be copied or deleted, or target cannot be created due to
-            // permissions =>
-            // AccessDeniedException (attach original exception as cause)
-            // otherwise => create generic IOE and attach original exception as cause
-            throw new IOException();
-        }
+        throw new AccessDeniedException("Moving files is not supported");
     }
 
     @Override
-    protected InputStream newInputStreamInternal(final ArchiveZipPath path, final OpenOption... options) throws IOException {
-        try {
-            // FIXME: open new input stream here.
-            return null;
-        } catch (Exception ex) { // FIXME handle custom exceptions
-            // FIXME: throw appropriate IOE subtype here:
-            // file does not exist => NoSuchFileException
-            // file cannot be read due to permissions => AccessDeniedException (attach
-            // original exception as cause)
-            // otherwise => create generic IOE and attach original exception as cause
-            throw new IOException();
+    protected InputStream newInputStreamInternal(final ArchiveZipPath path, final OpenOption... options)
+            throws IOException {
+        final ZipArchiveEntry entry = getFileSystemInternal().getEntry(path);
+        if (!getFileSystemInternal().getZipFile().canReadEntryData(entry)) {
+            throw new AccessDeniedException(path.toString());
         }
+        return getFileSystemInternal().getZipFile().getInputStream(entry);
     }
 
     @Override
-    protected OutputStream newOutputStreamInternal(final ArchiveZipPath path, final OpenOption... options) throws IOException {
-        try {
-            // FIXME: open new output stream here.
-            // FIXME: Handle OpenOption properly (see StandardOpenOption: WRITE, APPEND,
-            // CREATE, TRUNCATE_EXISTING)
-            return null;
-        } catch (Exception ex) { // FIXME handle custom exceptions
-            // FIXME: throw appropriate IOE subtype here:
-            // parent does not exist => NoSuchFileException
-            // file cannot be written due to permissions => AccessDeniedException (attach
-            // original exception as cause)
-            // otherwise => create generic IOE and attach original exception as cause
-            throw new IOException();
-        }
+    protected OutputStream newOutputStreamInternal(final ArchiveZipPath path, final OpenOption... options)
+            throws IOException {
+        throw new AccessDeniedException("Writing into the zip file is not supported");
     }
 
     @Override
-    protected Iterator<ArchiveZipPath> createPathIterator(final ArchiveZipPath dir, final Filter<? super Path> filter) throws IOException {
+    protected Iterator<ArchiveZipPath> createPathIterator(final ArchiveZipPath dir, final Filter<? super Path> filter)
+            throws IOException {
         return new ArchiveZipPathIterator(dir, filter);
     }
 
     @Override
-    protected void createDirectoryInternal(final ArchiveZipPath dir, final FileAttribute<?>... attrs) throws IOException {
-        try {
-            // FIXME: create directory
-        } catch (Exception ex) { // FIXME handle custom exceptions
-            // FIXME: throw appropriate IOE subtype here:
-            // parent does not exist => NoSuchFileException
-            // dir cannot be created due to permissions => AccessDeniedException (attach
-            // original exception as cause)
-            // otherwise => create generic IOE and attach original exception as cause
-            throw new IOException();
-        }
+    protected void createDirectoryInternal(final ArchiveZipPath dir, final FileAttribute<?>... attrs)
+            throws IOException {
+        throw new AccessDeniedException("Creating directories is not supported");
     }
 
     @Override
-    protected BaseFileAttributes fetchAttributesInternal(final ArchiveZipPath path, final Class<?> type) throws IOException {
-        try {
-            // FIXME: fetch file attributes and convert them into BaseFileAttributes
-            // If lastModifiedTime/lastAccessTime/creationTime cannot be determined, set
-            // them to FileTime.fromMillis(0)
-            return null;
-        } catch (Exception ex) { // FIXME handle custom exceptions
-            // FIXME: throw appropriate IOE subtype here:
-            // path does not exist => NoSuchFileException
-            // path attributes cannot be created due to permissions => AccessDeniedException
-            // (attach
-            // original exception as cause)
-            // otherwise => create generic IOE and attach original exception as cause
-            throw new IOException();
+    protected BaseFileAttributes fetchAttributesInternal(final ArchiveZipPath path, final Class<?> type)
+            throws IOException {
+        if (path.isRoot()) {
+            return new BaseFileAttributes(false, path, FileTime.fromMillis(0), FileTime.fromMillis(0),
+                    FileTime.fromMillis(0), getFileSystemInternal().getZipFile().getLength(), false, false, null);
+        } else {
+            final ZipArchiveEntry entry = getFileSystemInternal().getEntry(path);
+            if (!getFileSystemInternal().getZipFile().canReadEntryData(entry)) {
+                throw new AccessDeniedException(path.toString());
+            }
+            FileTime lastModifiedTime = safeTime(entry.getLastModifiedTime(), FileTime.fromMillis(0));
+            FileTime lastAccessTime = safeTime(entry.getLastAccessTime(), lastModifiedTime);
+            FileTime creationTime = safeTime(entry.getCreationTime(), lastModifiedTime);
+            return new BaseFileAttributes(!entry.isDirectory(), path, lastModifiedTime, lastAccessTime, creationTime,
+                    entry.getSize(), false, false, null);
         }
+    }
+
+    private FileTime safeTime(FileTime time, FileTime defaultTime) {
+        if (time != null) {
+            return time;
+        }
+        return defaultTime != null ? defaultTime : FileTime.fromMillis(0);
     }
 
     @Override
@@ -198,16 +157,6 @@ class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath
 
     @Override
     protected void deleteInternal(final ArchiveZipPath path) throws IOException {
-        try {
-            // FIXME: delete file or empty directory. Don't implement recursive deletion
-            // here, as only empty directories should be deletable with this method.
-        } catch (Exception ex) { // FIXME handle custom exceptions
-            // FIXME: throw appropriate IOE subtype here:
-            // path does not exist => NoSuchFileException
-            // cannot be deleted due to permissions => AccessDeniedException (attach
-            // original exception as cause)
-            // otherwise => create generic IOE and attach original exception as cause
-            throw new IOException();
-        }
+        throw new AccessDeniedException("Deleting files is not supported");
     }
 }

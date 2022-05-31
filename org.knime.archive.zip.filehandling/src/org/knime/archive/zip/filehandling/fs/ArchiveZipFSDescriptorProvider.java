@@ -78,12 +78,7 @@ public class ArchiveZipFSDescriptorProvider extends BaseFSDescriptorProvider {
                 .withSeparator(ArchiveZipFileSystem.SEPARATOR) //
                 .withURIExporterFactory(URIExporterIDs.DEFAULT, PathURIExporterFactory.getInstance()) //
                 .withTestInitializerProvider(new ArchiveZipFSTestInitializerProvider()) //
-                .withCanCreateDirectories(false)
-                .withCanDeleteDirectories(false)
-                .withCanCheckAccessReadOnFiles(true)
-                .withCanCheckAccessReadOnDirectories(true)
-                .withCanWriteFiles(false)
-                .withCanDeleteFiles(false)
-                .build());
+                .withCanCreateDirectories(false).withCanDeleteDirectories(false).withCanCheckAccessReadOnFiles(true)
+                .withCanCheckAccessReadOnDirectories(true).withCanWriteFiles(false).withCanDeleteFiles(false).build());
     }
 }

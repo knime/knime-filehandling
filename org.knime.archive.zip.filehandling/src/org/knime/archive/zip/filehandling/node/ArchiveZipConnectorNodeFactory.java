@@ -70,7 +70,8 @@ public class ArchiveZipConnectorNodeFactory extends NodeFactory<ArchiveZipConnec
     }
 
     @Override
-    public NodeView<ArchiveZipConnectorNodeModel> createNodeView(final int viewIndex, final ArchiveZipConnectorNodeModel nodeModel) {
+    public NodeView<ArchiveZipConnectorNodeModel> createNodeView(final int viewIndex,
+            final ArchiveZipConnectorNodeModel nodeModel) {
         return null;
     }
 

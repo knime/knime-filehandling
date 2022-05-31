@@ -86,7 +86,7 @@ class ArchiveZipConnectorNodeDialog extends NodeDialogPane {
             throws NotConfigurableException {
 
         try {
-        	m_settings.loadSettingsForDialog(settings);
+            m_settings.loadSettingsForDialog(settings);
         } catch (InvalidSettingsException ex) { // NOSONAR
             // ignore
         }
@@ -95,11 +95,11 @@ class ArchiveZipConnectorNodeDialog extends NodeDialogPane {
     }
 
     private void settingsLoaded() {
-        
+        // TODO
     }
 
     @Override
     public void onClose() {
-        
+        // TODO
     }
 }

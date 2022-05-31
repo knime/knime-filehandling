@@ -60,8 +60,26 @@ import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
  */
 public class ArchiveZipFSConnectionConfig extends BaseFSConnectionConfig {
 
-    public ArchiveZipFSConnectionConfig() {
-        super(null);
+    private String m_zipFilePath;
+
+    public ArchiveZipFSConnectionConfig(String workingDir) {
+        super(workingDir);
+    }
+
+    /**
+     * @param zip
+     *            archive file path.
+     */
+    public String getZipFilePath() {
+        return m_zipFilePath;
+    }
+
+    /**
+     * @param zip
+     *            archive file path.
+     */
+    public void setZipFilePath(String path) {
+        this.m_zipFilePath = path;
     }
 
     /**
@@ -72,6 +90,6 @@ public class ArchiveZipFSConnectionConfig extends BaseFSConnectionConfig {
      *         configuration.
      */
     public DefaultFSLocationSpec createFSLocationSpec() {
-    	return new DefaultFSLocationSpec(FSCategory.CONNECTED, ArchiveZipFSDescriptorProvider.FS_TYPE.getTypeId());
+        return new DefaultFSLocationSpec(FSCategory.CONNECTED, ArchiveZipFSDescriptorProvider.FS_TYPE.getTypeId());
     }
 }

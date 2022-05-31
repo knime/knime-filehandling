@@ -78,4 +78,9 @@ public class ArchiveZipPath extends UnixStylePath {
     public ArchiveZipFileSystem getFileSystem() {
         return (ArchiveZipFileSystem) super.getFileSystem();
     }
+
+    @Override
+    public ArchiveZipPath getParent() {
+        return (ArchiveZipPath) super.getParent();
+    }
 }

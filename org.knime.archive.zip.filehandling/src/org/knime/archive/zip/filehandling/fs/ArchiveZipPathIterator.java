@@ -51,9 +51,13 @@ package org.knime.archive.zip.filehandling.fs;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.knime.filehandling.core.connections.base.BasePathIterator;
+import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
 /**
  * Iterator to iterate through {@link ArchiveZipPath}.
@@ -61,6 +65,8 @@ import org.knime.filehandling.core.connections.base.BasePathIterator;
  * @author Dragan Keselj, KNIME GmbH
  */
 class ArchiveZipPathIterator extends BasePathIterator<ArchiveZipPath> {
+
+    private static final Set<String> RESERVED_NAMES = new HashSet<>(Arrays.asList(".", ".."));
 
     /**
      * @param path
@@ -71,25 +77,19 @@ class ArchiveZipPathIterator extends BasePathIterator<ArchiveZipPath> {
      */
     ArchiveZipPathIterator(final ArchiveZipPath path, final Filter<? super Path> filter) throws IOException {
         super(path, filter);
-
+        Iterator<ArchiveZipPath> iterator = null;
         try {
-            // FIXME: list directory contents and supply it with iterator
-            Iterator<ArchiveZipPath> iterator = null;
-
-            // FIXME: if fetching file attributes for a path is expensive (e.g. requires
-            // HTTP request) make sure to create and cache BaseFileAttributes for the files
-            // being listed here by calling
-            // path.getFileSystem().addToAttributeCache(listedPath, new
-            // BaseFileAttributes(....));
-
-            setFirstPage(iterator); // NOSONAR standard pattern
-        } catch (Exception ex) { // FIXME handle custom exceptions
-            // FIXME: throw proper IOE subtype here:
-            // path is not a directory => NotDirectoryException
-            // directory does not exist => NoSuchFileException
-            // directory cannot be listed due to permissions => AccessDeniedException
-            // otherwise => create generic IOE and attach original exception as cause
-            throw new IOException();
+            Set<ArchiveZipPath> children = path.getFileSystem().getChildrenEntries(path);
+            if (children != null) {
+                iterator = children.stream().filter(p -> isRegularPath(p)).iterator();
+            }
+        } catch (Exception ex) {
+            throw ExceptionUtil.wrapAsIOException(ex);
         }
+        setFirstPage(iterator); // NOSONAR standard pattern
+    }
+
+    private static boolean isRegularPath(final ArchiveZipPath path) {
+        return !path.stringStream().anyMatch(s -> RESERVED_NAMES.contains(s));
     }
 }

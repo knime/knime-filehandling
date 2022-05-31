@@ -51,6 +51,8 @@ package org.knime.archive.zip.filehandling.node;
 import java.io.File;
 import java.io.IOException;
 
+import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnection;
+import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnectionConfig;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -62,8 +64,6 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnection;
-import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnectionConfig;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -112,6 +112,13 @@ class ArchiveZipConnectorNodeModel extends NodeModel {
 
         final CredentialsProvider credentialsProvider = getCredentialsProvider();
         final ArchiveZipFSConnectionConfig config = m_settings.createFSConnectionConfig(credentialsProvider::get);
+
+        /********************************************
+         * For testing only!
+         */
+        config.setZipFilePath("F:/Knime/7zip-relative.zip");
+        /********************************************/
+
         try {
             m_fsConnection = new ArchiveZipFSConnection(config);
         } catch (IOException ex) {

@@ -49,6 +49,8 @@
 package org.knime.archive.zip.filehandling.fs;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Set;
@@ -71,27 +73,19 @@ class ArchiveZipSeekableFileChannel extends TempFileSeekableByteChannel<ArchiveZ
      *            Open options.
      * @throws IOException
      */
-    ArchiveZipSeekableFileChannel(final ArchiveZipPath file, final Set<? extends OpenOption> options) throws IOException {
+    ArchiveZipSeekableFileChannel(final ArchiveZipPath file, final Set<? extends OpenOption> options)
+            throws IOException {
         super(file, options);
     }
 
     @Override
     public void copyFromRemote(final ArchiveZipPath remoteFile, final Path tempFile) throws IOException {
-        try {
-            // FIXME copy remote file to local tempFile
-        } catch (Exception ex) { // FIXME handle custom exceptions
-            // FIXME: create proper IOE and attach original exception as cause
-            throw new IOException();
-        }
+        final InputStream in = Files.newInputStream(remoteFile);
+        Files.copy(in, tempFile);
     }
 
     @Override
     public void copyToRemote(final ArchiveZipPath remoteFile, final Path tempFile) throws IOException {
-        try {
-            // FIXME copy local tempFile to remote file
-        } catch (Exception ex) { // FIXME handle custom exceptions
-            // FIXME: create proper IOE and attach original exception as cause
-            throw new IOException();
-        }
+
     }
 }
