@@ -9,11 +9,11 @@
 	</parent>
 
 	<groupId>org.knime</groupId>
-    <artifactId>knime-filehandling</artifactId>
-    <version>${revision}${changelist}</version>
+	<artifactId>knime-filehandling</artifactId>
+	<version>${revision}${changelist}</version>
 	<packaging>pom</packaging>
 
-    <properties>
+	<properties>
 		<revision>4.6.0</revision>
 		<changelist>-SNAPSHOT</changelist>
 		<feature-branch-extension.branchListProperty>git.branch</feature-branch-extension.branchListProperty>
@@ -24,15 +24,15 @@
 		<profile>
 			<id>build</id>
 			<modules>
+				<module>org.knime.archive.zip.filehandling/libs/fetch_jars</module>
+				<module>org.knime.ext.smb.filehandling/libs/fetch_jars</module>
 				<module>org.knime.base.filehandling</module>
 				<module>org.knime.ext.ftp.filehandling</module>
 				<module>org.knime.ext.http.filehandling</module>
 				<module>org.knime.ext.ssh.filehandling</module>
-				<module>org.knime.ext.smb.filehandling/libs/fetch_jars</module>
 				<module>org.knime.ext.smb.filehandling</module>
 				<module>org.knime.features.base.filehandling</module>
 				<module>org.knime.update.filehandling</module>
-				<module>org.knime.archive.zip.filehandling/libs/fetch_jars</module>
 				<module>org.knime.archive.zip.filehandling</module>
 			</modules>
 			<activation>
@@ -40,11 +40,11 @@
 			</activation>
 		</profile>
 		<profile>
-    			<id>test</id>
+				<id>test</id>
 			<modules>
+				<module>org.knime.ext.ftp.filehandling.tests/lib/fetch_jars</module>
 				<module>org.knime.base.filehandling</module>
 				<module>org.knime.base.filehandling.tests</module>
-				<module>org.knime.ext.ftp.filehandling.tests/lib/fetch_jars</module>
 				<module>org.knime.ext.ssh.filehandling</module>
 				<module>org.knime.ext.ssh.filehandling.tests</module>
 				<module>org.knime.ext.ftp.filehandling</module>
