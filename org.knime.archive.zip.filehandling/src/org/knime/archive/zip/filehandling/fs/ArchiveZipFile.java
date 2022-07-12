@@ -42,8 +42,8 @@ class ArchiveZipFile extends ZipFile {
      */
     private final List<ZipArchiveEntry> m_topEntries = new ArrayList<>();
 
-    ArchiveZipFile(final SeekableByteChannel channel) throws IOException {
-        super(channel);
+    ArchiveZipFile(final SeekableByteChannel channel, final String encoding) throws IOException {
+        super(channel, encoding);
         m_length = channel.size();
         createTopEntries();
     }
@@ -51,7 +51,7 @@ class ArchiveZipFile extends ZipFile {
     private void createTopEntries() {
         final var entries = StreamSupport.stream(Spliterators
                 .spliteratorUnknownSize(super.getEntriesInPhysicalOrder().asIterator(), Spliterator.ORDERED), false);
-        final List<String> topEntryPath = entries
+        final List<String> topEntryPath = entries //NOSONAR
                 .map(e -> UnixStylePathUtil.getPathSplits(ArchiveZipFileSystem.SEPARATOR, e.getName())) //
                 .min((p1, p2) -> Integer.compare(p1.size(), p2.size())) //
                 .get();
@@ -68,22 +68,22 @@ class ArchiveZipFile extends ZipFile {
         }
     }
 
-    private Enumeration<ZipArchiveEntry> withTopEntries(Enumeration<ZipArchiveEntry> entries) {
+    private Enumeration<ZipArchiveEntry> withTopEntries(final Enumeration<ZipArchiveEntry> entries) {
         return new Enumeration<ZipArchiveEntry>() {
-            private final Iterator<ZipArchiveEntry> i1 = m_topEntries.iterator();
-            private final Iterator<ZipArchiveEntry> i2 = entries.asIterator();
+            private final Iterator<ZipArchiveEntry> m_i1 = m_topEntries.iterator();
+            private final Iterator<ZipArchiveEntry> m_i2 = entries.asIterator();
 
             @Override
             public boolean hasMoreElements() {
-                return i1.hasNext() || i2.hasNext();
+                return m_i1.hasNext() || m_i2.hasNext();
             }
 
             @Override
             public ZipArchiveEntry nextElement() {
-                if (i1.hasNext()) {
-                    return i1.next();
-                } else if (i2.hasNext()) {
-                    return i2.next();
+                if (m_i1.hasNext()) {
+                    return m_i1.next();
+                } else if (m_i2.hasNext()) {
+                    return m_i2.next();
                 }
                 throw new NoSuchElementException();
             }
@@ -117,7 +117,7 @@ class ArchiveZipFile extends ZipFile {
 
     @Override
     public boolean canReadEntryData(final ZipArchiveEntry ze) {
-        if (m_topEntries.contains(ze)) {
+        if (m_topEntries.contains(ze)) { //NOSONAR
             return true;
         }
         return super.canReadEntryData(ze);

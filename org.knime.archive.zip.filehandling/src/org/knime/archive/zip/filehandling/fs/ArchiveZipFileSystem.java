@@ -50,6 +50,7 @@ package org.knime.archive.zip.filehandling.fs;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -64,16 +65,18 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipException;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteChannel;
 import org.apache.commons.compress.utils.FileNameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.knime.filehandling.core.connections.FSFiles;
+import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
@@ -83,6 +86,7 @@ import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
  * @author Dragan Keselj, KNIME GmbH
  */
 public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
+    private static final Pattern EXTENSION_PATTERN = Pattern.compile("([z][0-9]+)|(zip)$", Pattern.CASE_INSENSITIVE); //NOSONAR
 
     /**
      * Character to use as path separator
@@ -111,27 +115,23 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
      *
      * @param config
      *            The file system configuration
-     * 
+     *
      * @throws IOException
      */
+    @SuppressWarnings("resource")
     protected ArchiveZipFileSystem(final ArchiveZipFSConnectionConfig config) throws IOException {
-        super(new ArchiveZipFileSystemProvider(config), //
+        super(new ArchiveZipFileSystemProvider(), //
                 0, //
-                ArchiveZipFileSystem.SEPARATOR, //
+                config.getWorkingDirectory(), //
                 config.createFSLocationSpec());
-
-        final String zipFilePath = config.getZipFilePath();
-        SeekableByteChannel byteChannel = null;
+        List<SeekableByteChannel> byteChannels = null;
         ArchiveZipFile zipFile = null;
-        if (StringUtils.isBlank(zipFilePath)) {
-            throw new IllegalArgumentException("Zip file path is empty!");
-        }
         try {
-            final Path filePath = Path.of(zipFilePath);
-            final var byteChannels = getOrderedZipSegmentByteChannels(filePath);
-            byteChannel = byteChannels.size() == 1 ? byteChannels.get(0)
+            final FSPath filePath = config.getZipFilePath();
+            byteChannels = getOrderedZipSegmentByteChannels(filePath);
+            final var byteChannel = byteChannels.size() == 1 ? byteChannels.get(0)
                     : new ZipSplitReadOnlySeekableByteChannel(byteChannels);
-            zipFile = new ArchiveZipFile(byteChannel);
+            zipFile = new ArchiveZipFile(byteChannel, config.getEncoding());
 
             final Map<String, ArchiveZipPath> entryNamesMap = new HashMap<>();
             final Map<ArchiveZipPath, String> pathsMap = new HashMap<>();
@@ -157,15 +157,17 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
             m_pathsMap = Collections.unmodifiableMap(pathsMap);
             m_childrenMap = Collections.unmodifiableMap(childrenMap);
             m_zipFile = zipFile;
-        } catch (Exception ex) {
-            closeQuietly(byteChannel);
+        } catch (Exception ex) { //NOSONAR
+            if (byteChannels != null) {
+                byteChannels.stream().forEach(ArchiveZipFileSystem::closeQuietly);
+            }
             ZipFile.closeQuietly(zipFile);
             throw ExceptionUtil.wrapAsIOException(ex);
         }
     }
 
-    private void addChildPath(Map<ArchiveZipPath, Set<ArchiveZipPath>> childrenMap, ArchiveZipPath parentPath,
-            ArchiveZipPath childPath) {
+    private void addChildPath(final Map<ArchiveZipPath, Set<ArchiveZipPath>> childrenMap, ArchiveZipPath parentPath,
+            final ArchiveZipPath childPath) {
         if (parentPath == null) {
             parentPath = (ArchiveZipPath) getRootDirectories().iterator().next();
         }
@@ -186,51 +188,54 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
      * Tries to find all segments for a given split zip file archive and creates a
      * {@link SeekableByteChannel} object for each. The returned list must be in a
      * specific order (z01, z02, ..., zip).
-     * 
+     *
      * @param filePath
      *            The path points to a zip archive segment. Segment's extensions
      *            must be either .zip or any of .z01, z02...
      * @return Ordered {@code List<SeekableByteChannel>}
      * @throws IOException
      */
-    private List<SeekableByteChannel> getOrderedZipSegmentByteChannels(Path filePath) throws IOException {
-        final List<Path> files = Files.list(filePath.getParent()).collect(Collectors.toList());
-        final Pattern extensionPattern = Pattern.compile("([z][0-9]+)|(zip)$", Pattern.CASE_INSENSITIVE);
-        final List<Path> zipSegments = new ArrayList<>();
-        for (final Path file : files) {
-            if (!FSFiles.isDirectory(filePath) && getFileBaseName(file).equalsIgnoreCase(getFileBaseName(filePath))
-                    && extensionPattern.matcher(getFileExtension(file)).matches()) {
-                zipSegments.add(file);
-            }
-        }
-        zipSegments.sort(new ZipSegmentComparator());
-
+    @SuppressWarnings("resource")
+    private List<SeekableByteChannel> getOrderedZipSegmentByteChannels(final Path filePath) throws IOException {
+        final SortedSet<Path> zipSegments = getZipSegmentsInSameDirectory(filePath);
         final var seekableByteChannels = new ArrayList<SeekableByteChannel>();
         try {
             for (final Path zipSegment : zipSegments) {
                 seekableByteChannels.add(Files.newByteChannel(zipSegment));
             }
-        } catch (Exception ex) {
-            seekableByteChannels.stream().forEach(this::closeQuietly);
+        } catch (Exception ex) { //NOSONAR
+            seekableByteChannels.stream().forEach(ArchiveZipFileSystem::closeQuietly);
             throw ExceptionUtil.wrapAsIOException(ex);
         }
         return seekableByteChannels;
     }
 
-    private void closeQuietly(final Closeable closeable) {
+    private SortedSet<Path> getZipSegmentsInSameDirectory(final Path filePath) throws IOException {
+        final Path parent = filePath.toAbsolutePath().normalize().getParent();
+        try (Stream<Path> files = Files.list(parent)) {
+            return files.filter(f -> getFileBaseName(f).equalsIgnoreCase(getFileBaseName(filePath)) //
+                    && EXTENSION_PATTERN.matcher(getFileExtension(f)).matches()
+                    && Files.isRegularFile(f))
+                    .collect(Collectors.toCollection(() -> new TreeSet<>(new ZipSegmentComparator())));
+        } catch(UnsupportedOperationException e) { //NOSONAR
+            return new TreeSet<>(Collections.singleton(filePath));
+        }
+    }
+
+    private static void closeQuietly(final Closeable closeable) {
         if (closeable == null) {
             return;
         }
         try {
             closeable.close();
-        } catch (Throwable e) {
-            // ignore
+        } catch (IOException e) { //NOSONAR
+            // quietly ignored
         }
     }
 
     /**
      * Finds the zip entry by a given path inside the zip file.
-     * 
+     *
      * @param path
      *            (of file or directory) inside the zip file.
      * @return {@link ZipArchiveEntry} corresponds to the given path.
@@ -251,7 +256,7 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
 
     /**
      * Finds the path inside the zip file from a given zip entry.
-     * 
+     *
      * @param entry
      * @return the path (of file or directory) inside the zip file of a given zip
      *         entry.
@@ -267,7 +272,7 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
 
     /**
      * Finds children inside a directory at a given path inside the zip file.
-     * 
+     *
      * @param directoryPath
      *            path of a directory inside the zip file.
      * @return {@code Set<ArchiveZipPath>} object represents files and folders
@@ -281,29 +286,31 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
 
     /**
      * Creates the appropriate path for a given zip entry.
-     * 
+     *
      * @param zipFile
      * @param entry
      * @return the path (of file or directory) inside the zip file of a given zip
      *         entry.
      */
-    ArchiveZipPath createPath(final ArchiveZipFile zipFile, final ZipArchiveEntry entry) {
+    private ArchiveZipPath createPath(final ArchiveZipFile zipFile, final ZipArchiveEntry entry) {
         if (!zipFile.hasTopEntries()) {
             return getPath(getSeparator(), entry.getName());
         } else {
             final ZipArchiveEntry fullTopPathEntry = zipFile.getTopEntries().get(zipFile.getTopEntries().size() - 1);
             final ArchiveZipPath fullTopPath = getPath(getSeparator(), fullTopPathEntry.getName());
             final ArchiveZipPath entryPath = getPath(getSeparator(), entry.getName());
-            final ArchiveZipPath relativePath = getPath(getSeparator(), fullTopPath.relativize(entryPath).toString());
+            final ArchiveZipPath relativePath = getPath(getSeparator(), fullTopPath.relativize(entryPath).toString()); //NOSONAR
             return relativePath;
         }
     }
 
-    private String getFileBaseName(Path path) {
+    @SuppressWarnings("static-method")
+    private String getFileBaseName(final Path path) {
         return FileNameUtils.getBaseName(path.getFileName().toString());
     }
 
-    private String getFileExtension(Path path) {
+    @SuppressWarnings("static-method")
+    private String getFileExtension(final Path path) {
         return FileNameUtils.getExtension(path.getFileName().toString());
     }
 
@@ -322,6 +329,19 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
         return new ArchiveZipPath(this, first, more);
     }
 
+    /**
+     * Tests whether the given path exists in the file system.
+     *
+     * @param path
+     * @return whether the path exists or not.
+     * @throws IOException
+     *             if IO error occurs that prevents determining whether the path
+     *             exists or not.
+     */
+    public boolean exists(final ArchiveZipPath path) throws IOException {
+        return provider().exists(path);
+    }
+
     @Override
     public String getSeparator() {
         return ArchiveZipFileSystem.SEPARATOR;
@@ -332,7 +352,8 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
         return Collections.singletonList(getPath(ArchiveZipFileSystem.SEPARATOR));
     }
 
-    private static class ZipSegmentComparator implements Comparator<Path> {
+    private static class ZipSegmentComparator implements Comparator<Path>, Serializable {
+        private static final long serialVersionUID = 1L;
 
         @Override
         public int compare(final Path path1, final Path path2) {
@@ -340,14 +361,6 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
             final String extension2 = FileNameUtils.getExtension(path2.getFileName().toString()).toLowerCase();
 
             if (extension1.equals("zip")) {
-                return 1;
-            }
-
-            if (!extension1.startsWith("z")) {
-                return -1;
-            }
-
-            if (!extension2.startsWith("z")) {
                 return 1;
             }
 

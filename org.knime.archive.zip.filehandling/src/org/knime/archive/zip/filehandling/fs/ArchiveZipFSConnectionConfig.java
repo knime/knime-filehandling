@@ -48,9 +48,13 @@
  */
 package org.knime.archive.zip.filehandling.fs;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
 
 /**
@@ -58,28 +62,63 @@ import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
  *
  * @author Dragan Keselj, KNIME GmbH
  */
-public class ArchiveZipFSConnectionConfig extends BaseFSConnectionConfig {
+public class ArchiveZipFSConnectionConfig extends BaseFSConnectionConfig implements Closeable {
 
-    private String m_zipFilePath;
+    private FSPath m_zipFilePath;
 
-    public ArchiveZipFSConnectionConfig(String workingDir) {
+    private String m_encoding;
+
+    private Closeable m_closeable;
+
+    /**
+     * Constructor.
+     *
+     * @param workingDir
+     */
+    public ArchiveZipFSConnectionConfig(final String workingDir) {
         super(workingDir);
     }
 
     /**
-     * @param zip
-     *            archive file path.
+     * @return FSPath of the zip file.
      */
-    public String getZipFilePath() {
+    public FSPath getZipFilePath() {
         return m_zipFilePath;
     }
 
     /**
-     * @param zip
-     *            archive file path.
+     * @param zipFilePath
      */
-    public void setZipFilePath(String path) {
-        this.m_zipFilePath = path;
+    public void setZipFilePath(final FSPath zipFilePath) {
+        m_zipFilePath = zipFilePath;
+    }
+
+    /**
+     * Returns the encoding used on unpacking the zip archive.
+     *
+     * @return encoding
+     */
+    public String getEncoding() {
+        return m_encoding;
+    }
+
+    /**
+     * Sets encoding used on unpacking the zip file.
+     *
+     * @param encoding
+     */
+    public void setEncoding(final String encoding) {
+        m_encoding = encoding;
+    }
+
+    /**
+     * Sets {@code Closeable} resource needed in this cfg object
+     * and it has to be closed when this object is no longer in use.
+     *
+     * @param resource
+     */
+    public void setCloseable(final Closeable resource) {
+        this.m_closeable = resource;
     }
 
     /**
@@ -91,5 +130,12 @@ public class ArchiveZipFSConnectionConfig extends BaseFSConnectionConfig {
      */
     public DefaultFSLocationSpec createFSLocationSpec() {
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, ArchiveZipFSDescriptorProvider.FS_TYPE.getTypeId());
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (m_closeable != null) {
+            m_closeable.close();
+        }
     }
 }

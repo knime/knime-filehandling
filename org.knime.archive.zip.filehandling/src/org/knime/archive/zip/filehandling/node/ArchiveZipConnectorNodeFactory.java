@@ -48,20 +48,43 @@
  */
 package org.knime.archive.zip.filehandling.node;
 
+import java.util.Optional;
+
+import org.knime.core.node.ConfigurableNodeFactory;
 import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
+import org.knime.core.node.context.NodeCreationConfiguration;
+import org.knime.filehandling.core.port.FileSystemPortObject;
 
 /**
  * Node factory for the ArchiveZip Connector.
  *
  * @author Dragan Keselj, KNIME GmbH
  */
-public class ArchiveZipConnectorNodeFactory extends NodeFactory<ArchiveZipConnectorNodeModel> {
+public class ArchiveZipConnectorNodeFactory extends ConfigurableNodeFactory<ArchiveZipConnectorNodeModel> {
+    /**
+     * Connect group ID of dynamic port.
+     */
+    public static final String FS_CONNECT_GRP_ID = "Input File System";
 
     @Override
-    public ArchiveZipConnectorNodeModel createNodeModel() {
-        return new ArchiveZipConnectorNodeModel();
+    protected NodeDialogPane createNodeDialogPane(final NodeCreationConfiguration cfg) {
+        return new ArchiveZipConnectorNodeDialog(cfg);
+    }
+
+    @Override
+    protected ArchiveZipConnectorNodeModel createNodeModel(final NodeCreationConfiguration cfg) {
+        return new ArchiveZipConnectorNodeModel(cfg);
+    }
+
+    @Override
+    protected Optional<PortsConfigurationBuilder> createPortsConfigBuilder() {
+        final var builder = new PortsConfigurationBuilder();
+
+        builder.addOptionalInputPortGroup(FS_CONNECT_GRP_ID, FileSystemPortObject.TYPE);
+
+        builder.addFixedOutputPortGroup("ZIP Archive File System Connection", FileSystemPortObject.TYPE);
+        return Optional.of(builder);
     }
 
     @Override
@@ -80,9 +103,5 @@ public class ArchiveZipConnectorNodeFactory extends NodeFactory<ArchiveZipConnec
         return true;
     }
 
-    @Override
-    protected NodeDialogPane createNodeDialogPane() {
-        return new ArchiveZipConnectorNodeDialog();
-    }
-
 }
+

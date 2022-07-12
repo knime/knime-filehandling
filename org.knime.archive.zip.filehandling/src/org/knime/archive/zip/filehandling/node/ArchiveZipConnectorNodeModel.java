@@ -50,6 +50,7 @@ package org.knime.archive.zip.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.EnumSet;
 
 import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnection;
 import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnectionConfig;
@@ -60,11 +61,12 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.port.PortType;
-import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
+import org.knime.filehandling.core.defaultnodesettings.status.NodeModelStatusConsumer;
+import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage.MessageType;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
@@ -78,60 +80,44 @@ class ArchiveZipConnectorNodeModel extends NodeModel {
 
     private String m_fsId;
     private ArchiveZipFSConnection m_fsConnection;
-    private final ArchiveZipConnectorSettings m_settings;
+
+    private final ArchiveZipConnectorNodeSettings m_settings;
+    private final NodeModelStatusConsumer m_statusConsumer = new NodeModelStatusConsumer(
+            EnumSet.of(MessageType.ERROR, MessageType.WARNING));
 
     /**
      * Creates new instance.
+     * @param cfg
      */
-    protected ArchiveZipConnectorNodeModel() {
-        super(new PortType[] {}, new PortType[] { FileSystemPortObject.TYPE });
-        m_settings = new ArchiveZipConnectorSettings();
+    protected ArchiveZipConnectorNodeModel(final NodeCreationConfiguration cfg) {
+        super(cfg.getPortConfig().orElseThrow(IllegalStateException::new).getInputPorts(),
+                cfg.getPortConfig().orElseThrow(IllegalStateException::new).getOutputPorts());
+        m_settings = new ArchiveZipConnectorNodeSettings(cfg);
     }
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         m_settings.validate();
-        m_settings.configureInModel(inSpecs, m -> {
-        }, getCredentialsProvider());
-
+        m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-        return new PortObjectSpec[] { createSpec() };
+        m_settings.configureInModel(inSpecs, m_statusConsumer);
+        final var config = m_settings.createFSConnectionConfig(m_statusConsumer);
+        return new PortObjectSpec[] { createSpec(config) };
     }
 
-    private FileSystemPortObjectSpec createSpec() {
-
-        final CredentialsProvider credentialsProvider = getCredentialsProvider();
-
+    private FileSystemPortObjectSpec createSpec(final ArchiveZipFSConnectionConfig config) {
         return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, //
                 m_fsId, //
-                m_settings.createFSConnectionConfig(credentialsProvider::get).createFSLocationSpec());
+                config.createFSLocationSpec());
     }
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-
-        final CredentialsProvider credentialsProvider = getCredentialsProvider();
-        final ArchiveZipFSConnectionConfig config = m_settings.createFSConnectionConfig(credentialsProvider::get);
-
-        /********************************************
-         * For testing only!
-         */
-        config.setZipFilePath("F:/Knime/7zip-relative.zip");
-        /********************************************/
-
-        try {
-            m_fsConnection = new ArchiveZipFSConnection(config);
-        } catch (IOException ex) {
-            // FIXME: handle IOEs for particular cases such as:
-            // - unknown host
-            // - connection timeout
-            // - bad credentials/login
-            throw ex;
-        }
-
+        m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
+        final var config = m_settings.createFSConnectionConfig(m_statusConsumer); //NOSONAR
+        m_fsConnection = new ArchiveZipFSConnection(config);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
-
-        return new PortObject[] { new FileSystemPortObject(createSpec()) };
+        return new PortObject[] { new FileSystemPortObject(createSpec(config)) };
     }
 
     @Override

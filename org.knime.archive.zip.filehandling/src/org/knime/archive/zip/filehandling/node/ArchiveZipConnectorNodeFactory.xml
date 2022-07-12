@@ -1,76 +1,94 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <knimeNode icon="./file_system_connector.png" type="Source"
-	xmlns="http://knime.org/node/v4.1"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://knime.org/node/v4.1 http://knime.org/node/v4.1.xsd">
+    xmlns="http://knime.org/node/v4.1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://knime.org/node/v4.1 http://knime.org/node/v4.1.xsd">
 
-	<name>ZIP Archive Connector</name>
+    <name>ZIP Archive Connector</name>
 
-	<shortDescription>
-		Connects to a ZIP Archive Connector in order to read/write files in downstream
-		nodes.
-	</shortDescription>
+	
+    <shortDescription>
+        Connects to a ZIP Archive Connector in order to
+        read zip archive files in downstream
+        nodes.
+    </shortDescription>
 
-	<fullDescription>
-		<intro>
-			<p>
-				This node connects to ZIP Archive Connector. The resulting output
-				port allows downstream nodes to access
-				<i>files</i>
-				, e.g. to read or write, or to perform other file system operations
-				(browse/list files, copy, move, ...).
-			</p>
+    <fullDescription>
+        <intro>
+            <p>
+                This node connects to ZIP Archive Connector. The resulting output
+                port allows downstream nodes to read compressed files in a zip archive file.
+            </p>
 
-			<p>
-				<b>Path syntax:</b>
-				Paths for this connector are specified with a UNIX-like syntax such
-				as /myfolder/myfile. An absolute
-				path consists of:
-				<ol>
-					<li>A leading slash ("/").</li>
-					<li>Followed by the path to the file ("myfolder/myfile" in the
-						above example).</li>
-				</ol>
-			</p>
-		</intro>
-		<tab name="Settings">
-			<option name="Connect to">
-				Specifies whether to connect by ...
-			</option>
+            <p>
+                <b>Path syntax:</b>
+                Paths for this connector are specified with a UNIX-like syntax such
+                as /myfolder/myfile. An absolute
+                path consists of:
+                <ol>
+                    <li>A leading slash ("/").</li>
+                    <li>Followed by the path to the file ("myfolder/myfile" in the
+                        above example).</li>
+                </ol>
+            </p>
+        </intro>
+        <tab name="Settings">
+            <option name="Read from">
+                Select a file system which stores the data you want to read. There are
+                four default file system options to choose from:
+                <br />
+                <ul>
+                    <li><i>Local File System:</i> Allows you to select a file/folder from your
+                        local system.
+                    </li>
+                    <li><i>Mountpoint:</i> Allows you to read from a mountpoint.
+                        When selected, a new drop-down menu appears to choose the mountpoint.
+                        Unconnected mountpoints are greyed out but can still be selected (note that browsing is disabled in this case).
+                        Go to the KNIME Explorer and connect to the mountpoint to enable browsing.
+                        A mountpoint is displayed in red if it was previously selected but is no longer available.
+                        You won't be able to save the dialog as long as you don't select a valid i.e. known mountpoint.
+                    </li>
+                    <li><i>Relative to:</i> Allows you to choose whether to resolve the path
+                        relative to the current mountpoint, current workflow or the current workflow's data area.
+                    When selected a new drop-down menu appears to choose which of the three options to use.
+                    </li>
+                    <li><i>Custom/KNIME URL:</i> Allows to specify a URL (e.g. file://, http:// or knime:// protocol). 
+                        When selected, a spinner appears that allows you to specify the desired connection and read timeout in milliseconds.
+                        In case it takes longer to connect to the host / read the file, the node fails to execute.
+                        Browsing is disabled for this option.
+                    </li>
+                </ul>
+                To read from other file systems, click on
+                <b>...</b> in the bottom left corner of the node icon followed by
+                <i>Add File System Connection port</i>. Afterwards, connect the desired file system connector
+                node to the newly added input port. The file system connection will then be shown in the drop-down menu.
+                It is greyed out if the file system is not connected in which case you have to (re)execute the connector node first.
+                Note: The default file systems listed above can't be selected if a file system is provided via the input port.
+            </option>
+            <option name="Working directory">
+                Specify the
+                <i>working directory</i>
+                of the resulting file system connection, using the
+                <b>Path syntax</b>
+                explained above. The working
+                directory must be specified as an
+                absolute path. A working directory allows
+                downstream nodes to access
+                files/folders using
+                <i>relative</i>
+                paths, i.e. paths that do not have a leading backslash. The default
+                working directory is "\".
+            </option>
+        </tab>
+    </fullDescription>
 
-
-			<option name="Authentication">
-				Method of authentication to use:
-				<ul>
-					<li>
-						<b>...</b>
-						bla bla
-					</li>
-				</ul>
-			</option>
-			<option name="Working directory">
-				Specify the
-				<i>working directory</i>
-				of the resulting file system connection, using the
-				<b>Path syntax</b>
-				explained above. The working
-				directory must be specified as an absolute path. A working directory allows
-				downstream nodes to access files/folders using
-				<i>relative</i>
-				paths, i.e. paths that do not have a leading backslash. The default
-				working directory is "\".
-			</option>
-		</tab>
-		<tab name="Advanced">
-			<option name="Read/Write timeout">
-				The timeout for read/write operations (in seconds).
-			</option>
-		</tab>
-	</fullDescription>
-
-	<ports>
-		<outPort index="0" name="ZIP Archive File System Connection">
-			ZIP Archive File System Connection
-		</outPort>
-	</ports>
+    <ports>
+       <dynInPort insert-before="0" name="Input File System" group-identifier="Input File System"> 
+            File system that can be used to provide a zip archive file. 
+        </dynInPort>
+        <outPort index="0" name="ZIP Archive File System Connection">
+            ZIP Archive File System Connection
+        </outPort>
+    </ports>
 </knimeNode>

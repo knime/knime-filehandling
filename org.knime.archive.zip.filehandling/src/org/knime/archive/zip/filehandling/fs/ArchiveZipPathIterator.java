@@ -75,21 +75,22 @@ class ArchiveZipPathIterator extends BasePathIterator<ArchiveZipPath> {
      *            {@link Filter} instance.
      * @throws IOException
      */
+    @SuppressWarnings("resource")
     ArchiveZipPathIterator(final ArchiveZipPath path, final Filter<? super Path> filter) throws IOException {
         super(path, filter);
         Iterator<ArchiveZipPath> iterator = null;
         try {
             Set<ArchiveZipPath> children = path.getFileSystem().getChildrenEntries(path);
             if (children != null) {
-                iterator = children.stream().filter(p -> isRegularPath(p)).iterator();
+                iterator = children.stream().filter(ArchiveZipPathIterator::isRegularPath).iterator();
             }
-        } catch (Exception ex) {
+        } catch (Exception ex) { //NOSONAR
             throw ExceptionUtil.wrapAsIOException(ex);
         }
         setFirstPage(iterator); // NOSONAR standard pattern
     }
 
     private static boolean isRegularPath(final ArchiveZipPath path) {
-        return !path.stringStream().anyMatch(s -> RESERVED_NAMES.contains(s));
+        return path.stringStream().noneMatch(RESERVED_NAMES::contains);
     }
 }

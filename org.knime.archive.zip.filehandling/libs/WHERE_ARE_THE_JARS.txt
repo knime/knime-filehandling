@@ -1,4 +1,4 @@
-The jars for SMBJ need to be fetched from maven. This can be done
+The jars for Archive ZIP Connector need to be fetched from maven. This can be done
 with:
 
 cd fetch_jars

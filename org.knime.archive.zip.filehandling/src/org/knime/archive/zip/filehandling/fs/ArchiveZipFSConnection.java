@@ -48,6 +48,7 @@
  */
 package org.knime.archive.zip.filehandling.fs;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import org.knime.core.node.util.FileSystemBrowser;
@@ -64,6 +65,8 @@ public class ArchiveZipFSConnection implements FSConnection {
 
     private final ArchiveZipFileSystem m_filesystem;
 
+    private final ArchiveZipFSConnectionConfig m_config;
+
     /**
      * Constructor.
      *
@@ -73,6 +76,7 @@ public class ArchiveZipFSConnection implements FSConnection {
      *
      */
     public ArchiveZipFSConnection(final ArchiveZipFSConnectionConfig config) throws IOException {
+        m_config = config;
         m_filesystem = new ArchiveZipFileSystem(config);
     }
 
@@ -84,5 +88,22 @@ public class ArchiveZipFSConnection implements FSConnection {
     @Override
     public FileSystemBrowser getFileSystemBrowser() {
         return new NioFileSystemBrowser(this);
+    }
+
+    @Override
+    public void close() throws IOException {
+        closeQuietly(m_config);
+        FSConnection.super.close();
+    }
+
+    private static void closeQuietly(final Closeable closeable) {
+        if (closeable == null) {
+            return;
+        }
+        try {
+            closeable.close();
+        } catch (IOException e) { //NOSONAR
+            // ignore
+        }
     }
 }
