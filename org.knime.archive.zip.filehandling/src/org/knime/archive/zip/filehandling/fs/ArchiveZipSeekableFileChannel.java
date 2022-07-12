@@ -49,7 +49,6 @@
 package org.knime.archive.zip.filehandling.fs;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -80,12 +79,13 @@ class ArchiveZipSeekableFileChannel extends TempFileSeekableByteChannel<ArchiveZ
 
     @Override
     public void copyFromRemote(final ArchiveZipPath remoteFile, final Path tempFile) throws IOException {
-        final InputStream in = Files.newInputStream(remoteFile);
-        Files.copy(in, tempFile);
+        try (var in = Files.newInputStream(remoteFile)) {
+            Files.copy(in, tempFile);
+        }
     }
 
     @Override
     public void copyToRemote(final ArchiveZipPath remoteFile, final Path tempFile) throws IOException {
-
+        throw new UnsupportedOperationException("Writing into the zip file is not supported");
     }
 }

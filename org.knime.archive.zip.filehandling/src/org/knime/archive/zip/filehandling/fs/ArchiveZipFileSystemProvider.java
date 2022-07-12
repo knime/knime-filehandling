@@ -74,30 +74,32 @@ import org.knime.filehandling.core.connections.base.attributes.BaseFileAttribute
  */
 class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath, ArchiveZipFileSystem> {
 
-    public ArchiveZipFileSystemProvider(final ArchiveZipFSConnectionConfig config) throws IOException {
+    ArchiveZipFileSystemProvider() throws IOException {
+
     }
 
     @Override
     protected SeekableByteChannel newByteChannelInternal(final ArchiveZipPath path,
-            final Set<? extends OpenOption> options, final FileAttribute<?>... attrs) throws IOException {
+        final Set<? extends OpenOption> options, final FileAttribute<?>... attrs) throws IOException {
         return new ArchiveZipSeekableFileChannel(path, options);
     }
 
     @Override
     protected void copyInternal(final ArchiveZipPath source, final ArchiveZipPath target, final CopyOption... options)
-            throws IOException {
+        throws IOException {
         throw new AccessDeniedException("Copying files is not supported");
     }
 
     @Override
     protected void moveInternal(final ArchiveZipPath source, final ArchiveZipPath target, final CopyOption... options)
-            throws IOException {
+        throws IOException {
         throw new AccessDeniedException("Moving files is not supported");
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected InputStream newInputStreamInternal(final ArchiveZipPath path, final OpenOption... options)
-            throws IOException {
+        throws IOException {
         final ZipArchiveEntry entry = getFileSystemInternal().getEntry(path);
         if (!getFileSystemInternal().getZipFile().canReadEntryData(entry)) {
             throw new AccessDeniedException(path.toString());
@@ -107,28 +109,29 @@ class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath
 
     @Override
     protected OutputStream newOutputStreamInternal(final ArchiveZipPath path, final OpenOption... options)
-            throws IOException {
+        throws IOException {
         throw new AccessDeniedException("Writing into the zip file is not supported");
     }
 
     @Override
     protected Iterator<ArchiveZipPath> createPathIterator(final ArchiveZipPath dir, final Filter<? super Path> filter)
-            throws IOException {
+        throws IOException {
         return new ArchiveZipPathIterator(dir, filter);
     }
 
     @Override
     protected void createDirectoryInternal(final ArchiveZipPath dir, final FileAttribute<?>... attrs)
-            throws IOException {
+        throws IOException {
         throw new AccessDeniedException("Creating directories is not supported");
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected BaseFileAttributes fetchAttributesInternal(final ArchiveZipPath path, final Class<?> type)
-            throws IOException {
+        throws IOException {
         if (path.isRoot()) {
             return new BaseFileAttributes(false, path, FileTime.fromMillis(0), FileTime.fromMillis(0),
-                    FileTime.fromMillis(0), getFileSystemInternal().getZipFile().getLength(), false, false, null);
+                FileTime.fromMillis(0), getFileSystemInternal().getZipFile().getLength(), false, false, null);
         } else {
             final ZipArchiveEntry entry = getFileSystemInternal().getEntry(path);
             if (!getFileSystemInternal().getZipFile().canReadEntryData(entry)) {
@@ -138,11 +141,11 @@ class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath
             FileTime lastAccessTime = safeTime(entry.getLastAccessTime(), lastModifiedTime);
             FileTime creationTime = safeTime(entry.getCreationTime(), lastModifiedTime);
             return new BaseFileAttributes(!entry.isDirectory(), path, lastModifiedTime, lastAccessTime, creationTime,
-                    entry.getSize(), false, false, null);
+                entry.getSize(), false, false, null);
         }
     }
 
-    private FileTime safeTime(FileTime time, FileTime defaultTime) {
+    private static FileTime safeTime(final FileTime time, final FileTime defaultTime) {
         if (time != null) {
             return time;
         }
@@ -151,12 +154,17 @@ class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath
 
     @Override
     protected void checkAccessInternal(final ArchiveZipPath path, final AccessMode... modes) throws IOException {
-        // FIXME: check if you can perform the requested type of access on the file.
+        // FIXME: check if you can perform the requested type of access on the file.  //NOSONAR
         // In most cases however there is nothing useful you can do here.
     }
 
     @Override
     protected void deleteInternal(final ArchiveZipPath path) throws IOException {
         throw new AccessDeniedException("Deleting files is not supported");
+    }
+
+    @Override
+    protected boolean exists(final ArchiveZipPath path) throws IOException { //NOSONAR
+        return super.exists(path);
     }
 }

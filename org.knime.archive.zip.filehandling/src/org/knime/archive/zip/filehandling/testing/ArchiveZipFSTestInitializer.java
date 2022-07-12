@@ -103,11 +103,11 @@ class ArchiveZipFSTestInitializer extends DefaultFSTestInitializer<ArchiveZipPat
 
     @Override
     protected void afterTestCaseInternal() throws IOException {
-        // FIXME: cleanup, e.g. delete scratch dir (see getTestCaseScratchDir())
+        // FIXME: cleanup, e.g. delete scratch dir (see getTestCaseScratchDir())  //NOSONAR
     }
 
     @Override
     public void afterClass() throws IOException {
-        // FIXME: any final cleanup after the tests
+        // FIXME: any final cleanup after the tests  //NOSONAR
     }
 }

@@ -2,16 +2,11 @@
 <?eclipse version="3.0"?>
 <plugin>
 
-    <!-- <node
-   <extension
-         point="org.knime.workbench.repository.nodes">
-     
+   <extension point="org.knime.workbench.repository.nodes">
+        <node
             category-path="/io/connectors"
             factory-class="org.knime.archive.zip.filehandling.node.ArchiveZipConnectorNodeFactory"/>
-     
    </extension> -->
-   
-   
    
    <extension point="org.knime.filehandling.core.FSDescriptorProvider">
       <FSDescriptorProvider class="org.knime.archive.zip.filehandling.fs.ArchiveZipFSDescriptorProvider" />
