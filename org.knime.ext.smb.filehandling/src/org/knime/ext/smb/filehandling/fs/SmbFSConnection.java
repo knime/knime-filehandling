@@ -51,17 +51,16 @@ package org.knime.ext.smb.filehandling.fs;
 import java.io.IOException;
 
 import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
+import org.knime.filehandling.core.connections.base.BaseFSConnection;
 
 /**
  * SMB implementation of the {@link FSConnection} interface.
  *
  * @author Alexander Bondaletov
  */
-public class SmbFSConnection implements FSConnection {
+public class SmbFSConnection extends BaseFSConnection {
 
     private static final long CACHE_TTL = 6000;
 
@@ -75,8 +74,7 @@ public class SmbFSConnection implements FSConnection {
      * @throws IOException
      *
      */
-    public SmbFSConnection(final SmbFSConnectionConfig config)
-            throws IOException {
+    public SmbFSConnection(final SmbFSConnectionConfig config) throws IOException {
         this(config, null);
     }
 
@@ -98,10 +96,5 @@ public class SmbFSConnection implements FSConnection {
     @Override
     public FSFileSystem<?> getFileSystem() {
         return m_filesystem;
-    }
-
-    @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
     }
 }

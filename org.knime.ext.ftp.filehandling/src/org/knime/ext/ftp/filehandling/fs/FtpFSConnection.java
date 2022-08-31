@@ -50,17 +50,16 @@ package org.knime.ext.ftp.filehandling.fs;
 
 import java.io.IOException;
 
-import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
+import org.knime.filehandling.core.connections.base.BaseFSConnection;
 
 /**
- * FTP file system connection.
+ * {@link FSConnection} for the FTP file system.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
- *
  */
-public class FtpFSConnection implements FSConnection {
+public class FtpFSConnection extends BaseFSConnection {
+
     private final FtpFileSystem m_fileSystem;
 
     /**
@@ -77,25 +76,13 @@ public class FtpFSConnection implements FSConnection {
      * integration tests.
      *
      * @param fileSystem
-     * @throws IOException
      */
-    FtpFSConnection(final FtpFileSystem fileSystem) throws IOException {
+    FtpFSConnection(final FtpFileSystem fileSystem) {
         m_fileSystem = fileSystem;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public FtpFileSystem getFileSystem() {
         return m_fileSystem;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
     }
 }
