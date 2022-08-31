@@ -50,15 +50,15 @@ package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
 
-import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
+import org.knime.filehandling.core.connections.base.BaseFSConnection;
 
 /**
- * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ * {@link FSConnection} for the SSH file system.
  *
+ * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class SshFSConnection implements FSConnection {
+public class SshFSConnection extends BaseFSConnection {
     private final SshFileSystem m_fileSystem;
 
     /**
@@ -73,10 +73,5 @@ public class SshFSConnection implements FSConnection {
     @Override
     public SshFileSystem getFileSystem() {
         return m_fileSystem;
-    }
-
-    @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
     }
 }
