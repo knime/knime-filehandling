@@ -63,6 +63,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -77,10 +78,10 @@ import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnection;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
+import org.knime.ext.smb.filehandling.fs.SmbProtocolVersion;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.auth.AuthPanel;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
@@ -91,7 +92,7 @@ import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 import org.knime.filehandling.core.util.GBCBuilder;
 
 /**
- * {@link SmbConnectorNodeModel} node dialog.
+ * SMB connector node dialog.
  *
  * @author Alexander Bondaletov
  */
@@ -114,6 +115,8 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
 
     private final AuthPanel m_authPanel;
 
+    private final JComboBox<SmbProtocolVersion> m_protocolVersionCombo;
+
     private final WorkingDirectoryChooser m_workingDirChooser;
     private final ChangeListener m_workdirListener;
 
@@ -123,7 +126,7 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
     public SmbConnectorNodeDialog() {
         m_settings = new SmbConnectorSettings();
 
-        final ButtonGroup group = new ButtonGroup();
+        final var group = new ButtonGroup();
         m_radioFileserver = createConnectionModeButton(ConnectionMode.FILESERVER, group);
         m_radioDomain = createConnectionModeButton(ConnectionMode.DOMAIN, group);
 
@@ -142,7 +145,7 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         m_workdirListener = e -> m_settings.getWorkingDirectoryModel()
                 .setStringValue(m_workingDirChooser.getSelectedWorkingDirectory());
 
-        AuthSettings authSettings = m_settings.getAuthSettings();
+        final var authSettings = m_settings.getAuthSettings();
         m_authPanel = new AuthPanel(authSettings, //
                 Arrays.asList( //
                         new UserPasswordAuthProviderPanel(
@@ -154,8 +157,10 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
                         new EmptyAuthProviderPanel( //
                                 authSettings.getSettingsForAuthType(StandardAuthTypes.ANONYMOUS))));
 
+        m_protocolVersionCombo = createProtocolVersionCombo();
+
         addTab("Settings", createSettingsPanel());
-        addTab("Advanced", createTimeoutsPanel());
+        addTab("Advanced", createAdvancedPanel());
     }
 
     private FSConnection createFSConnection() throws IOException {
@@ -165,13 +170,13 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
             throw new IOException(e.getMessage(), e);
         }
 
-        final CredentialsProvider credentialsProvider = getCredentialsProvider();
+        final var credentialsProvider = getCredentialsProvider();
         final SmbFSConnectionConfig config = m_settings.createFSConnectionConfig(credentialsProvider::get);
         return new SmbFSConnection(config);
     }
 
     private JComponent createSettingsPanel() {
-        Box box = new Box(BoxLayout.Y_AXIS);
+        final var box = new Box(BoxLayout.Y_AXIS);
         box.add(createConnectionPanel());
         box.add(createAuthPanel());
         box.add(createFilesystemPanel());
@@ -179,10 +184,10 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
     }
 
     private JComponent createConnectionPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
+        final var panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Connection"));
 
-        final GBCBuilder gbc = new GBCBuilder();
+        final var gbc = new GBCBuilder();
 
         gbc.resetPos().insetLeft(5).anchorWest().fillNone();
         panel.add(new JLabel("Connect to: "), gbc.build());
@@ -205,9 +210,9 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
     }
 
     private Component createDomainSettingsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
+        final var panel = new JPanel(new GridBagLayout());
 
-        GBCBuilder gbc = new GBCBuilder();
+        final var gbc = new GBCBuilder();
 
         gbc.resetPos().anchorWest().fillNone();
         panel.add(m_domainName.getComponentPanel(), gbc.build());
@@ -225,9 +230,9 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
     }
 
     private Component createFileserverSettingsPanel() {
-        final JPanel panel = new JPanel(new GridBagLayout());
+        final var panel = new JPanel(new GridBagLayout());
 
-        GBCBuilder gbc = new GBCBuilder();
+        final var gbc = new GBCBuilder();
 
         gbc.resetPos().anchorWest().fillNone();
         panel.add(m_fileserverHost.getComponentPanel(), gbc.build());
@@ -248,7 +253,7 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
     }
 
     private JRadioButton createConnectionModeButton(final ConnectionMode mode, final ButtonGroup group) {
-        JRadioButton rb = new JRadioButton(mode.toString());
+        final var rb = new JRadioButton(mode.toString());
         rb.addActionListener(e -> {
             m_settings.setConnectionMode(mode);
             updateConnectionCards();
@@ -260,8 +265,14 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         return rb;
     }
 
+    private JComboBox<SmbProtocolVersion> createProtocolVersionCombo() {
+        JComboBox<SmbProtocolVersion> combo = new JComboBox<>(SmbProtocolVersion.values());
+        combo.addActionListener(e -> m_settings.setProtocolVersion((SmbProtocolVersion) combo.getSelectedItem()));
+        return combo;
+    }
+
     private void updateConnectionCards() {
-        ConnectionMode mode = m_settings.getConnectionMode();
+        final var mode = m_settings.getConnectionMode();
         ((CardLayout) m_connectionCardsPanel.getLayout()).show(m_connectionCardsPanel, mode.toString());
     }
 
@@ -271,51 +282,58 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
     }
 
     private JComponent createFilesystemPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        GridBagConstraints c = new GridBagConstraints();
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 1;
-        c.weighty = 0;
-        c.gridx = 0;
-        c.gridy = 0;
-        c.insets = new Insets(0, 10, 0, 0);
-        panel.add(m_workingDirChooser, c);
+        final var panel = new JPanel(new GridBagLayout());
+        final var gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 10, 0, 0);
+        panel.add(m_workingDirChooser, gbc);
 
-        c.fill = GridBagConstraints.BOTH;
-        c.weighty = 1;
-        c.gridy += 1;
-        panel.add(Box.createVerticalGlue(), c);
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 1;
+        gbc.gridy += 1;
+        panel.add(Box.createVerticalGlue(), gbc);
 
         panel.setBorder(BorderFactory.createTitledBorder("File system settings"));
         return panel;
     }
 
-    private JComponent createTimeoutsPanel() {
-        final DialogComponentNumber timeout = new DialogComponentNumber(m_settings.getTimeoutModel(), "", 1);
+    private JComponent createAdvancedPanel() {
+        final var timeout = new DialogComponentNumber(m_settings.getTimeoutModel(), "", 1, 12);
         timeout.getComponentPanel().setLayout(new FlowLayout(FlowLayout.LEFT));
 
-        final JPanel panel = new JPanel(new GridBagLayout());
-        final GridBagConstraints c = new GridBagConstraints();
-        c.anchor = GridBagConstraints.WEST;
-        c.fill = GridBagConstraints.NONE;
-        c.weightx = 0;
-        c.weighty = 0;
-        c.gridx = 0;
-        c.gridy = 0;
-        panel.add(new JLabel("Read/Write timeout (seconds): "), c);
+        final var panel = new JPanel(new GridBagLayout());
+        final var gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(new JLabel("Read/Write timeout (seconds): "), gbc);
 
-        c.weightx = 1;
-        c.gridx = 1;
-        c.gridy = 0;
-        panel.add(timeout.getComponentPanel(), c);
+        gbc.gridy += 1;
+        panel.add(new JLabel("SMB version(s): "), gbc);
 
-        c.fill = GridBagConstraints.BOTH;
-        c.gridx = 0;
-        c.gridy++;
-        c.gridwidth = 2;
-        c.weightx = 1;
-        c.weighty = 1;
-        panel.add(Box.createVerticalGlue(), c);
+        gbc.weightx = 1;
+        gbc.gridy = 0;
+        gbc.gridx += 1;
+        panel.add(timeout.getComponentPanel(), gbc);
+
+        gbc.gridy += 1;
+        gbc.insets = new Insets(0, 10, 0, 0);
+        panel.add(m_protocolVersionCombo, gbc);
+
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        panel.add(Box.createVerticalGlue(), gbc);
 
         panel.setBorder(BorderFactory.createTitledBorder("Connection settings"));
         return panel;
@@ -352,6 +370,7 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         m_workingDirChooser.addListener(m_workdirListener);
 
         m_connectionModes.get(m_settings.getConnectionMode()).setSelected(true);
+        m_protocolVersionCombo.setSelectedItem(m_settings.getProtocolVersion());
         updateConnectionCards();
     }
 
