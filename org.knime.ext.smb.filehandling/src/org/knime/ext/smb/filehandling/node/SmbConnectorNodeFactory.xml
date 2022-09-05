@@ -100,6 +100,11 @@
         	<option name="Read/Write timeout">
         		The timeout for read/write operations (in seconds).
         	</option>
+        	<option name="SMB version(s)">
+        		The option allows to enforce the usage of specific SMB protocol version(s).
+        		Selecting <b>Auto</b> option will make the node to choose the highest version supported by
+        		both this node and the SMB server.
+        	</option>
         </tab>
     </fullDescription>
     

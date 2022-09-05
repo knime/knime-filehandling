@@ -66,8 +66,6 @@ import org.knime.filehandling.core.connections.base.BaseFileSystem;
 import com.hierynomus.mssmb2.SMBApiException;
 import com.hierynomus.smbj.SMBClient;
 import com.hierynomus.smbj.SmbConfig;
-import com.hierynomus.smbj.SmbConfig.Builder;
-import com.hierynomus.smbj.auth.AuthenticationContext;
 import com.hierynomus.smbj.share.DiskShare;
 
 /**
@@ -108,13 +106,15 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
                 config.getWorkingDirectory(), //
                 config.createFSLocationSpec());
 
-        Builder builder = SmbConfig.builder() //
+        final var builder = SmbConfig.builder() //
                 .withMultiProtocolNegotiate(true) //
                 .withDfsEnabled(config.getConnectionMode() == ConnectionMode.DOMAIN) //
                 .withTimeout(config.getTimeout().toSeconds(), TimeUnit.SECONDS);
 
-        final AuthenticationContext authContext = AuthenticationContextFactory.create(config, exec);
-        final boolean usingKerberos = config.getAuthType() == SmbFSConnectionConfig.KERBEROS_AUTH_TYPE;
+        config.getProtocolVersion().getDialect().ifPresent(builder::withDialects);
+
+        final var authContext = AuthenticationContextFactory.create(config, exec);
+        final var usingKerberos = config.getAuthType() == SmbFSConnectionConfig.KERBEROS_AUTH_TYPE;
 
         m_client = new SMBClient(builder.build());
 

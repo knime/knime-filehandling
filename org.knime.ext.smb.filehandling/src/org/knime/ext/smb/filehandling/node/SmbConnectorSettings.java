@@ -65,6 +65,7 @@ import org.knime.core.node.workflow.ICredentials;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
 import org.knime.ext.smb.filehandling.fs.SmbFileSystem;
+import org.knime.ext.smb.filehandling.fs.SmbProtocolVersion;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderSettings;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
@@ -86,6 +87,7 @@ class SmbConnectorSettings {
     private static final String KEY_DOMAIN_NAMESPACE = "domain.namespace";
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_TIMEOUT = "timeout";
+    private static final String KEY_SMB_VERSION = "smbVersion";
 
     private static final int DEFAULT_PORT = 445;
     private static final int DEFAULT_TIMEOUT = 30;
@@ -99,6 +101,7 @@ class SmbConnectorSettings {
     private final AuthSettings m_authSettings;
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelIntegerBounded m_timeout;
+    private SmbProtocolVersion m_protocolVersion;
 
     /**
      * Creates new instance
@@ -123,6 +126,7 @@ class SmbConnectorSettings {
 
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, SmbFileSystem.SEPARATOR);
         m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
+        m_protocolVersion = SmbProtocolVersion.V_2_X;
     }
 
     /**
@@ -250,6 +254,21 @@ class SmbConnectorSettings {
         return Duration.ofSeconds(m_timeout.getIntValue());
     }
 
+    /**
+     * @return the protocolVersion
+     */
+    public SmbProtocolVersion getProtocolVersion() {
+        return m_protocolVersion;
+    }
+
+    /**
+     * @param protocolVersion
+     *            the protocolVersion to set
+     */
+    public void setProtocolVersion(final SmbProtocolVersion protocolVersion) {
+        m_protocolVersion = protocolVersion;
+    }
+
     private void save(final NodeSettingsWO settings) {
         settings.addString(KEY_CONNECTION_MODE, m_connectionMode.getSettingsValue());
         m_fileserverHost.saveSettingsTo(settings);
@@ -259,6 +278,7 @@ class SmbConnectorSettings {
         m_domainNamespace.saveSettingsTo(settings);
         m_workingDirectory.saveSettingsTo(settings);
         m_timeout.saveSettingsTo(settings);
+        settings.addString(KEY_SMB_VERSION, m_protocolVersion.getKey());
     }
 
     /**
@@ -294,6 +314,12 @@ class SmbConnectorSettings {
         m_domainNamespace.loadSettingsFrom(settings);
         m_workingDirectory.loadSettingsFrom(settings);
         m_timeout.loadSettingsFrom(settings);
+
+        if (settings.containsKey(KEY_SMB_VERSION)) {
+            m_protocolVersion = SmbProtocolVersion.fromKey(settings.getString(KEY_SMB_VERSION));
+        } else {
+            m_protocolVersion = SmbProtocolVersion.V_2_X;
+        }
     }
 
     /**
@@ -344,6 +370,10 @@ class SmbConnectorSettings {
         m_authSettings.validateSettings(settings.getNodeSettings(AuthSettings.KEY_AUTH));
         m_workingDirectory.validateSettings(settings);
         m_timeout.validateSettings(settings);
+
+        if (settings.containsKey(KEY_SMB_VERSION)) {
+            SmbProtocolVersion.fromKey(settings.getString(KEY_SMB_VERSION));
+        }
     }
 
     /**
@@ -415,6 +445,7 @@ class SmbConnectorSettings {
         }
 
         config.setTimeout(getTimeout());
+        config.setProtocolVersion(m_protocolVersion);
 
         return config;
     }

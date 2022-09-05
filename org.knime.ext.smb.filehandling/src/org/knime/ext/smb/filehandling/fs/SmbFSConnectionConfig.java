@@ -86,6 +86,8 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
 
     private Duration m_timeout = Duration.ofSeconds(30);
 
+    private SmbProtocolVersion m_protocolVersion = SmbProtocolVersion.V_2_X;
+
     /**
      * The {@link AuthType} for Kerberos authentication mode.
      */
@@ -330,6 +332,21 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
      */
     public void setTimeout(final Duration timeout) {
         m_timeout = timeout;
+    }
+
+    /**
+     * @return desired SMB protocol version
+     */
+    public SmbProtocolVersion getProtocolVersion() {
+        return m_protocolVersion;
+    }
+
+    /**
+     * @param protocolVersion
+     *            desired SMB protocol version to set
+     */
+    public void setProtocolVersion(final SmbProtocolVersion protocolVersion) {
+        m_protocolVersion = protocolVersion;
     }
 
     /**
