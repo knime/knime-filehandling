@@ -66,10 +66,6 @@ public enum SmbProtocolVersion {
      */
     AUTO("auto", "Auto"),
     /**
-     * The highest 2.x version supported by both client and server.
-     */
-    V_2_X("2.x", "2.x (2.1, 2.0.2)", SMB2Dialect.SMB_2_1, SMB2Dialect.SMB_2_0_2),
-    /**
      * Version 2.0.2
      */
     V_2_0_2("2.0.2", "2.0.2", SMB2Dialect.SMB_2_0_2),
@@ -77,6 +73,10 @@ public enum SmbProtocolVersion {
      * Version 2.1
      */
     V_2_1("2.1", "2.1", SMB2Dialect.SMB_2_1),
+    /**
+     * The highest 2.x version supported by both client and server.
+     */
+    V_2_X("2.x", "2.x (2.1, 2.0.2)", SMB2Dialect.SMB_2_1, SMB2Dialect.SMB_2_0_2),
     /**
      * Version 3.0
      */
