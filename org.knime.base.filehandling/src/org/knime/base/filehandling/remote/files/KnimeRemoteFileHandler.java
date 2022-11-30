@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.core.util.FileUtil;
 import org.knime.core.util.pathresolve.ResolverUtil;
 
 
@@ -85,8 +86,7 @@ public class KnimeRemoteFileHandler implements RemoteFileHandler<Connection> {
         File localFile = ResolverUtil.resolveURItoLocalFile(uri);
         if(localFile!=null) {
             return new FileRemoteFile(localFile.toURI());
-        } else if (("knime.workflow".equals(uri.getHost()) && uri.getPath().startsWith("/../"))
-            || "knime.mountpoint".equals(uri.getHost())) {
+        } else if (FileUtil.isRelativeKnimeURL(uri.toURL())) {
             return new KnimeRemoteFile(uri);
         } else {
             throw new IOException("Unsupported host: " + uri.getHost() + ".");
