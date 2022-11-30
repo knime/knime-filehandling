@@ -89,7 +89,8 @@ public class KnimeRemoteFileHandler implements RemoteFileHandler<Connection> {
         } else if (FileUtil.isRelativeKnimeURL(uri.toURL())) {
             return new KnimeRemoteFile(uri);
         } else {
-            throw new IOException("Unsupported host: " + uri.getHost() + ".");
+            throw new IOException("knime.workflow".equals(uri.getHost()) ? "URL accesses workflow contents: " + uri
+                : "Unsupported host: '" + uri.getHost() + "'.");
         }
     }
 }
