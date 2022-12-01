@@ -109,6 +109,7 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
         final var builder = SmbConfig.builder() //
                 .withMultiProtocolNegotiate(true) //
                 .withDfsEnabled(config.getConnectionMode() == ConnectionMode.DOMAIN) //
+                .withSoTimeout(config.getTimeout().toSeconds(), TimeUnit.SECONDS)//
                 .withTimeout(config.getTimeout().toSeconds(), TimeUnit.SECONDS);
 
         config.getProtocolVersion().getDialect().ifPresent(builder::withDialects);
