@@ -84,8 +84,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.knime.core.node.NodeLogger;
-import org.knime.ext.ftp.filehandling.fs.FtpFSConnectionConfig;
-import org.knime.ext.ftp.filehandling.fs.ProtectedHostConfiguration;
 import org.knime.filehandling.core.connections.FSFiles;
 
 /**
@@ -112,8 +110,8 @@ public class EmbeddedFtpServerContainer {
      */
     public EmbeddedFtpServerContainer(final FtpFSConnectionConfig ftpCfg) throws IOException, FtpException {
         // FTP server
-        ftpCfg.setHost("localhost");
-        ftpCfg.setPort(getFreePort());
+        ftpCfg.getServer().setHost("localhost");
+        ftpCfg.getServer().setPort(getFreePort());
 
         m_configuration = ftpCfg;
 
@@ -205,20 +203,22 @@ public class EmbeddedFtpServerContainer {
         // start FTP server
         final FtpServerFactory serverFactory = new FtpServerFactory();
 
-        final ConnectionConfig connectionConfig = new DefaultConnectionConfig(m_configuration.getUser().equals("anonymous"),
+        final ConnectionConfig connectionConfig = new DefaultConnectionConfig(
+                m_configuration.getServer().getUser().equals("anonymous"),
                 Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, 0);
         serverFactory.setConnectionConfig(connectionConfig);
 
         // add user manager
         final InMemoryUserManager userManager = new InMemoryUserManager();
         // add default user which will used for client connections
-        final User user = createUser(m_testsHome, m_configuration.getUser(), m_configuration.getPassword());
+        final User user = createUser(m_testsHome, m_configuration.getServer().getUser(),
+                m_configuration.getServer().getPassword());
         userManager.save(user);
         serverFactory.setUserManager(userManager);
 
         // create listener on specified port
         final ListenerFactory factory = new ListenerFactory();
-        factory.setPort(m_configuration.getPort());
+        factory.setPort(m_configuration.getServer().getPort());
 
         // if working director specified, should create it
         final File workDir = (File) serverFactory.getFileSystem().createFileSystemView(user)
@@ -344,7 +344,7 @@ public class EmbeddedFtpServerContainer {
      */
     public String convertToRealPath(final String file) throws IOException {
         try {
-            final User user = m_serverFactory.getUserManager().getUserByName(m_configuration.getUser());
+            final User user = m_serverFactory.getUserManager().getUserByName(m_configuration.getServer().getUser());
             final File physicalFile = (File) m_serverFactory.getFileSystem().createFileSystemView(user).getFile(file)
                     .getPhysicalFile();
             return physicalFile.getAbsolutePath();

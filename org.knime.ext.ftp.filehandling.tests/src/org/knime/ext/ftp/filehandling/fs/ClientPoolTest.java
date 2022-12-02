@@ -59,6 +59,7 @@ import java.util.Set;
 
 import org.junit.After;
 import org.junit.Test;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 
 /**
  * Unit tests for {@link ClientPool}
@@ -75,7 +76,8 @@ public class ClientPoolTest extends ClientPool {
      * Default constructor.
      */
     public ClientPoolTest() {
-        this(new FtpFSConnectionConfig(), new LinkedList<>(), new HashSet<>(), new MockFtpClientFactory());
+        this(new FtpFSConnectionConfig("/", BrowserRelativizationBehavior.ABSOLUTE), new LinkedList<>(),
+                new HashSet<>(), new MockFtpClientFactory());
     }
 
     private ClientPoolTest(final FtpFSConnectionConfig cfg, final LinkedList<FtpClientResource> freeResources,

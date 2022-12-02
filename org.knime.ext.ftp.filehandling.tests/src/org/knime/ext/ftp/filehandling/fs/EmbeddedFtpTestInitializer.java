@@ -57,10 +57,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import org.apache.ftpserver.ftplet.FtpException;
-import org.knime.ext.ftp.filehandling.fs.FtpFSConnectionConfig;
-import org.knime.ext.ftp.filehandling.fs.FtpFSConnection;
-import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
-import org.knime.ext.ftp.filehandling.fs.FtpPath;
 import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
 
@@ -122,8 +118,7 @@ public class EmbeddedFtpTestInitializer extends DefaultFSTestInitializer<FtpPath
                 }
             }
         };
-        return new FtpFSConnection(fs) {
-        };
+        return new FtpFSConnection(config, fs);
     }
 
     @Override

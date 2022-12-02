@@ -59,6 +59,7 @@ import org.knime.ext.smb.filehandling.fs.SmbFileSystem;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 import org.knime.filehandling.core.testing.FSTestInitializerProvider;
 
@@ -86,7 +87,7 @@ public class SmbFSTestInitializerProvider extends DefaultFSTestInitializerProvid
         final String workDir = generateRandomizedWorkingDir(getParameter(configuration, "workingDirPrefix"),
                 SmbFileSystem.SEPARATOR);
 
-        final SmbFSConnectionConfig config = new SmbFSConnectionConfig(workDir);
+        final SmbFSConnectionConfig config = new SmbFSConnectionConfig(workDir, BrowserRelativizationBehavior.ABSOLUTE);
         config.setConnectionMode(ConnectionMode.FILESERVER);
         config.setFileserverHost(getParameter(configuration, HOST));
         config.setFileserverPort(configuration.containsKey(PORT) ? Integer.parseInt(configuration.get(PORT)) : 445);

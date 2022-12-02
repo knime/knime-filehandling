@@ -84,6 +84,7 @@ import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderPanel;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
+import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryRelativizationPanel;
 import org.knime.filehandling.core.data.location.variable.FSLocationVariableType;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.DialogComponentReaderFileChooser;
 
@@ -225,6 +226,7 @@ public class SshConnectorNodeDialog extends NodeDialogPane {
     private FSConnection createFSConnection() throws IOException {
         try {
             final SshConnectorNodeSettings settings = m_settings.createClone();
+            settings.getBrowserPathRelativeModel().setBooleanValue(false);
             return SshConnectorNodeModel.createConnection(settings, getCredentialsProvider());
         } catch (IOException e) {
             throw e;
@@ -286,6 +288,12 @@ public class SshConnectorNodeDialog extends NodeDialogPane {
         gbc.insets = new Insets(0, 23, 0, 5);
         gbc.gridwidth = 3;
         panel.add(m_knownHostsChooser.getComponentPanel(), gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy += 1;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = 3;
+        panel.add(new WorkingDirectoryRelativizationPanel(m_settings.getBrowserPathRelativeModel()), gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;

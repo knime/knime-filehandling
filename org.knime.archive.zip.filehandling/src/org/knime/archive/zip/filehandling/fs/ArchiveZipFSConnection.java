@@ -75,6 +75,7 @@ public class ArchiveZipFSConnection extends BaseFSConnection {
      *
      */
     public ArchiveZipFSConnection(final ArchiveZipFSConnectionConfig config) throws IOException {
+        super(config);
         m_config = config;
         m_filesystem = new ArchiveZipFileSystem(config);
     }

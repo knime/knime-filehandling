@@ -125,7 +125,7 @@ public class FtpClientFactory {
 
         // connect
         try {
-            client.connect(m_configuration.getHost(), m_configuration.getPort());
+            client.connect(m_configuration.getServer().getHost(), m_configuration.getServer().getPort());
         } catch (SSLException e) {
             if (m_configuration.isUseFTPS()) {
                 throw new IOException("Failed to connect with FTPS", e);
@@ -150,7 +150,7 @@ public class FtpClientFactory {
         }
 
 
-        client.login(m_configuration.getUser(), m_configuration.getPassword());
+        client.login(m_configuration.getServer().getUser(), m_configuration.getServer().getPassword());
         if (!FTPReply.isPositiveCompletion(client.getReplyCode())) {
             throw new IOException("Authentication failed: " + client.getReplyString().trim());
         }
@@ -218,7 +218,7 @@ public class FtpClientFactory {
             ftpsClient.setHostnameVerifier(new DefaultHostnameVerifier());
         }
         ftpsClient.setUseClientMode(true);
-        ftpsClient.setDefaultPort(m_configuration.getPort());
+        ftpsClient.setDefaultPort(m_configuration.getServer().getPort());
         return ftpsClient;
     }
 

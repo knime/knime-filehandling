@@ -79,6 +79,7 @@ import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 import org.knime.filehandling.core.testing.FSTestInitializerProvider;
@@ -131,7 +132,7 @@ public class ArchiveZipFSTestInitializerProvider extends DefaultFSTestInitialize
         FSConnection fsConnection = null;
         try {
             String workingDir = getParameter(configuration, WORKING_DIRECTORY_PREFIX);
-            final var config = new ArchiveZipFSConnectionConfig(workingDir);
+            final var config = new ArchiveZipFSConnectionConfig(workingDir, BrowserRelativizationBehavior.ABSOLUTE);
             if (configuration.containsKey(ZIP_FILE_PATH)) {
                 final String zipFilePathTxt = getParameter(configuration, ZIP_FILE_PATH);
                 if (StringUtils.isBlank(zipFilePathTxt)) {

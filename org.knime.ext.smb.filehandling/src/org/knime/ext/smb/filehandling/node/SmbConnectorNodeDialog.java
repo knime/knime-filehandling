@@ -89,6 +89,7 @@ import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderPanel;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderPanel;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
+import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryRelativizationPanel;
 import org.knime.filehandling.core.util.GBCBuilder;
 
 /**
@@ -160,7 +161,7 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         m_protocolVersionCombo = createProtocolVersionCombo();
 
         addTab("Settings", createSettingsPanel());
-        addTab("Advanced", createAdvancedPanel());
+        addTab("Advanced", createAdvancedSettingsPanel());
     }
 
     private FSConnection createFSConnection() throws IOException {
@@ -171,7 +172,8 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         }
 
         final var credentialsProvider = getCredentialsProvider();
-        final SmbFSConnectionConfig config = m_settings.createFSConnectionConfig(credentialsProvider::get);
+        final SmbFSConnectionConfig config = m_settings
+                .createFSConnectionConfigForWorkdirChooser(credentialsProvider::get);
         return new SmbFSConnection(config);
     }
 
@@ -301,7 +303,7 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         return panel;
     }
 
-    private JComponent createAdvancedPanel() {
+    private JComponent createConnectionSettingsPanel() {
         final var timeout = new DialogComponentNumber(m_settings.getTimeoutModel(), "", 1, 12);
         timeout.getComponentPanel().setLayout(new FlowLayout(FlowLayout.LEFT));
 
@@ -313,6 +315,7 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         gbc.weighty = 0;
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.insets = new Insets(0, 5, 0, 0);
         panel.add(new JLabel("Read/Write timeout (seconds): "), gbc);
 
         gbc.gridy += 1;
@@ -324,18 +327,34 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         panel.add(timeout.getComponentPanel(), gbc);
 
         gbc.gridy += 1;
-        gbc.insets = new Insets(0, 10, 0, 0);
+        gbc.insets = new Insets(0, 15, 0, 0);
         panel.add(m_protocolVersionCombo, gbc);
+
+        panel.setBorder(BorderFactory.createTitledBorder("Connection settings"));
+        return panel;
+    }
+
+    private JComponent createAdvancedSettingsPanel() {
+        final var panel = new JPanel(new GridBagLayout());
+        final var gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(createConnectionSettingsPanel(), gbc);
+
+        gbc.gridy += 1;
+        panel.add(new WorkingDirectoryRelativizationPanel(m_settings.getBrowserPathRelativeModel()), gbc);
 
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridx = 0;
         gbc.gridy++;
-        gbc.gridwidth = 2;
         gbc.weightx = 1;
         gbc.weighty = 1;
         panel.add(Box.createVerticalGlue(), gbc);
 
-        panel.setBorder(BorderFactory.createTitledBorder("Connection settings"));
         return panel;
     }
 

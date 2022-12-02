@@ -161,9 +161,12 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
     /**
      * @param workingDirectory
      *            the working directory to set
+     * @param relativizationBehavior
+     *            The browser relativization behavior
      */
-    public SmbFSConnectionConfig(final String workingDirectory) {
-        super(workingDirectory);
+    public SmbFSConnectionConfig(final String workingDirectory,
+            final BrowserRelativizationBehavior relativizationBehavior) {
+        super(workingDirectory, relativizationBehavior);
     }
 
     /**

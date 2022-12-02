@@ -49,6 +49,9 @@
 package org.knime.archive.zip.filehandling.node;
 
 import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.io.Closeable;
 import java.io.IOException;
 
@@ -71,6 +74,7 @@ import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
+import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryRelativizationPanel;
 import org.knime.filehandling.core.data.location.variable.FSLocationVariableType;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.DialogComponentReaderFileChooser;
@@ -111,12 +115,12 @@ class ArchiveZipConnectorNodeDialog extends NodeDialogPane {
 
         m_workingDirChooser = new WorkingDirectoryChooser(WORKING_DIR_HISTORY_ID, this::createFSConnection);
         m_workdirListener = e -> m_settings.getWorkingDirectoryModel()
-                .setStringValue(m_workingDirChooser.getSelectedWorkingDirectory());
-
-        addTab("Settings", createSettingsPanel());
+            .setStringValue(m_workingDirChooser.getSelectedWorkingDirectory());
 
         m_encodingPanel = new CharsetNamePanel();
-        addTab("Encoding", m_encodingPanel);
+
+        addTab("Settings", createSettingsPanel());
+        addTab("Advanced", createAdvancedTab());
     }
 
     private JComponent createSettingsPanel() {
@@ -147,6 +151,24 @@ class ArchiveZipConnectorNodeDialog extends NodeDialogPane {
         panel.setBorder(createTitledBorder("Working directory"));
 
         panel.add(m_workingDirChooser);
+        return panel;
+    }
+
+    private JComponent createAdvancedTab() {
+        var panel = new JPanel(new GridBagLayout());
+        var c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 1;
+        c.anchor = GridBagConstraints.WEST;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(m_encodingPanel, c);
+
+        c.gridy +=1;
+        panel.add(
+            new WorkingDirectoryRelativizationPanel(m_settings.getBrowserPathRelativeModel(), new Insets(0, 5, 0, 0)),
+            c);
+
         return panel;
     }
 
@@ -195,7 +217,8 @@ class ArchiveZipConnectorNodeDialog extends NodeDialogPane {
     private FSConnection createFSConnection() throws IOException {
         ArchiveZipFSConnectionConfig config = null;
         try {
-            config = m_settings.createFSConnectionConfig(s -> {});
+            config = m_settings.createFSConnectionConfigForWorkdirChooser(s -> {
+            });
             return new ArchiveZipFSConnection(config);
         } catch (Exception e) { //NOSONAR
             closeQuietly(config);

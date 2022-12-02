@@ -59,11 +59,12 @@ import java.util.function.Consumer;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
-import org.knime.ext.ssh.filehandling.fs.SshFSConnectionConfig;
 import org.knime.ext.ssh.filehandling.fs.SshFSConnection;
+import org.knime.ext.ssh.filehandling.fs.SshFSConnectionConfig;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
 /**
@@ -89,7 +90,8 @@ public class SshTestInitializerProvider extends DefaultFSTestInitializerProvider
         final String workingDir = generateRandomizedWorkingDir(cfg.get("workingDirPrefix"),
                 SshFileSystem.PATH_SEPARATOR);
 
-        final SshFSConnectionConfig sshCfg = new SshFSConnectionConfig(workingDir);
+        final SshFSConnectionConfig sshCfg = new SshFSConnectionConfig(workingDir,
+                BrowserRelativizationBehavior.ABSOLUTE);
         sshCfg.setHost(cfg.get("host"));
         sshCfg.setUserName(cfg.get("username"));
         if (cfg.get("password") != null) {

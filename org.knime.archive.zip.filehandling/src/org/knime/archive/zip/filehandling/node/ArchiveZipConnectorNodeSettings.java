@@ -61,10 +61,12 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.context.NodeCreationConfiguration;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.filehandling.core.connections.FSLocation;
 import org.knime.filehandling.core.connections.FSPath;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 import org.knime.filehandling.core.defaultnodesettings.EnumConfig;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.filtermode.SettingsModelFilterMode.FilterMode;
@@ -80,8 +82,9 @@ class ArchiveZipConnectorNodeSettings {
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_FILE = "file";
     private static final String KEY_ENCODING = "encoding";
+    private static final String KEY_BROWSER_PATH_RELATIVE = "browserPathRelativize";
 
-    private static final String[] FILE_EXTENSIONS = { ".zip" };
+    private static final String[] FILE_EXTENSIONS = {".zip"};
     private static final String DEFAULT_ENCODING = Charset.defaultCharset().name();
 
     private NodeCreationConfiguration m_nodeCreationConfig;
@@ -90,6 +93,8 @@ class ArchiveZipConnectorNodeSettings {
     private final SettingsModelReaderFileChooser m_file;
 
     private final SettingsModelString m_encoding = new SettingsModelString(KEY_ENCODING, DEFAULT_ENCODING);
+
+    private final SettingsModelBoolean m_browserPathRelative;
 
     /**
      * @param cfg
@@ -103,12 +108,14 @@ class ArchiveZipConnectorNodeSettings {
                 cfg.getPortConfig().orElseThrow(() -> new IllegalStateException("port creation config is absent")), //
                 ArchiveZipConnectorNodeFactory.FS_CONNECT_GRP_ID, EnumConfig.create(FilterMode.FILE), FILE_EXTENSIONS);
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, ArchiveZipFileSystem.SEPARATOR);
+        m_browserPathRelative = new SettingsModelBoolean(KEY_BROWSER_PATH_RELATIVE, false);
     }
 
     private void save(final NodeSettingsWO settings) {
         m_file.saveSettingsTo(settings);
         m_workingDirectory.saveSettingsTo(settings);
         m_encoding.saveSettingsTo(settings);
+        m_browserPathRelative.saveSettingsTo(settings);
     }
 
     /**
@@ -136,6 +143,12 @@ class ArchiveZipConnectorNodeSettings {
         m_workingDirectory.loadSettingsFrom(settings);
         if (settings.containsKey(KEY_ENCODING)) {
             m_encoding.loadSettingsFrom(settings);
+        }
+
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.loadSettingsFrom(settings);
+        } else {
+            m_browserPathRelative.setBooleanValue(false);
         }
     }
 
@@ -191,6 +204,9 @@ class ArchiveZipConnectorNodeSettings {
         m_workingDirectory.validateSettings(settings);
         if (settings.containsKey(KEY_ENCODING)) {
             m_encoding.validateSettings(settings);
+        }
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.validateSettings(settings);
         }
 
         final var temp = new ArchiveZipConnectorNodeSettings(m_nodeCreationConfig);
@@ -252,6 +268,7 @@ class ArchiveZipConnectorNodeSettings {
 
     /**
      * Sets encoding used in unpacking the zip archive.
+     *
      * @param encoding
      */
     public void setEncoding(final String encoding) {
@@ -268,6 +285,24 @@ class ArchiveZipConnectorNodeSettings {
     }
 
     /**
+     * @return the browserPathRelative model
+     */
+    public SettingsModelBoolean getBrowserPathRelativeModel() {
+        return m_browserPathRelative;
+    }
+
+    /**
+     * @return the browser relativization behavior
+     */
+    public BrowserRelativizationBehavior getBrowserRelativizationBehavior() {
+        if (m_browserPathRelative.getBooleanValue()) {
+            return BrowserRelativizationBehavior.RELATIVE;
+        } else {
+            return BrowserRelativizationBehavior.ABSOLUTE;
+        }
+    }
+
+    /**
      * Convert settings to a {@link ArchiveZipFSConnectionConfig} instance.
      *
      * @param m_statusConsumer
@@ -276,10 +311,20 @@ class ArchiveZipConnectorNodeSettings {
      * @throws InvalidSettingsException
      * @throws IOException
      */
-    @SuppressWarnings("resource")
     ArchiveZipFSConnectionConfig createFSConnectionConfig(final Consumer<StatusMessage> statusConsumer)
-            throws InvalidSettingsException {
-        final var cfg = new ArchiveZipFSConnectionConfig(getWorkingDirectory());
+        throws InvalidSettingsException {
+        return createFSConnectionConfig(statusConsumer, getBrowserRelativizationBehavior());
+    }
+
+    ArchiveZipFSConnectionConfig createFSConnectionConfigForWorkdirChooser(final Consumer<StatusMessage> statusConsumer)
+        throws InvalidSettingsException {
+        return createFSConnectionConfig(statusConsumer, BrowserRelativizationBehavior.ABSOLUTE);
+    }
+
+    @SuppressWarnings("resource")
+    private ArchiveZipFSConnectionConfig createFSConnectionConfig(final Consumer<StatusMessage> statusConsumer,
+        final BrowserRelativizationBehavior relativizationBehavior) throws InvalidSettingsException {
+        final var cfg = new ArchiveZipFSConnectionConfig(getWorkingDirectory(), relativizationBehavior);
         final var pathAccessor = m_file.createReadPathAccessor();
         try {
             cfg.setCloseable(pathAccessor);

@@ -50,14 +50,14 @@ package org.knime.ext.ftp.filehandling.fs;
 
 import java.time.Duration;
 
-import org.knime.filehandling.core.connections.meta.FSConnectionConfig;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
 
 /**
  * Connection configuration.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-public class FtpFSConnectionConfig extends ProtectedHostConfiguration implements FSConnectionConfig {
+public class FtpFSConnectionConfig extends BaseFSConnectionConfig {
     /**
      * Anonymous user name.
      */
@@ -90,6 +90,7 @@ public class FtpFSConnectionConfig extends ProtectedHostConfiguration implements
      */
     private static final long DEFAULT_MAX_IDLE_TIME = 20000l;
 
+    private ProtectedHostConfiguration m_server;
     private ProtectedHostConfiguration m_proxy;
     private int m_maxConnectionPoolSize = DEFAULT_MAX_CONNECTIONS;
     private int m_minConnectionPoolSize = DEFAULT_MIN_CONNECTIONS;
@@ -100,7 +101,6 @@ public class FtpFSConnectionConfig extends ProtectedHostConfiguration implements
     private Duration m_readTimeout = DEFAULT_READ_TIMEOUT;
     private Duration m_serverTimeZoneOffset;
     private boolean m_testMode;
-    private String m_workingDirectory = "/";
     private boolean m_useFTPS;
     private boolean m_verifyHostname;
     private boolean m_useImplicitFTPS;
@@ -108,11 +108,25 @@ public class FtpFSConnectionConfig extends ProtectedHostConfiguration implements
 
     /**
      * Default constructor.
+     *
+     * @param workingDirectory
+     *            The working directory.
+     * @param relativizationBehavior
+     *            The browser relativization behavior
      */
-    public FtpFSConnectionConfig() {
-        super();
-        setPort(DEFAULT_FTP_PORT);
-        setUser(ANONYMOUS_USER);
+    public FtpFSConnectionConfig(final String workingDirectory,
+            final BrowserRelativizationBehavior relativizationBehavior) {
+        super(workingDirectory, relativizationBehavior);
+        m_server = new ProtectedHostConfiguration();
+        m_server.setPort(DEFAULT_FTP_PORT);
+        m_server.setUser(ANONYMOUS_USER);
+    }
+
+    /**
+     * @return the server
+     */
+    public ProtectedHostConfiguration getServer() {
+        return m_server;
     }
 
     /**
@@ -250,21 +264,6 @@ public class FtpFSConnectionConfig extends ProtectedHostConfiguration implements
      */
     public boolean isUseFTPS() {
         return m_useFTPS;
-    }
-
-    /**
-     * @return file system working directory.
-     */
-    public String getWorkingDirectory() {
-        return m_workingDirectory;
-    }
-
-    /**
-     * @param dir
-     *            file system working directory.
-     */
-    public void setWorkingDirectory(final String dir) {
-        m_workingDirectory = dir;
     }
 
     /**

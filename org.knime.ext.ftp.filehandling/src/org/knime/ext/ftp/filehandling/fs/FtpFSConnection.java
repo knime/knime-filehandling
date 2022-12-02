@@ -68,6 +68,7 @@ public class FtpFSConnection extends BaseFSConnection {
      * @throws IOException
      */
     public FtpFSConnection(final FtpFSConnectionConfig config) throws IOException {
+        super(config);
         m_fileSystem = new FtpFileSystem(config);
     }
 
@@ -77,7 +78,8 @@ public class FtpFSConnection extends BaseFSConnection {
      *
      * @param fileSystem
      */
-    FtpFSConnection(final FtpFileSystem fileSystem) {
+    FtpFSConnection(final FtpFSConnectionConfig config, final FtpFileSystem fileSystem) {
+        super(config);
         m_fileSystem = fileSystem;
     }
 

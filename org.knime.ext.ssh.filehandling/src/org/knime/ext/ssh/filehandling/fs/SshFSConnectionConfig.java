@@ -79,9 +79,12 @@ public class SshFSConnectionConfig extends BaseFSConnectionConfig {
      *
      * @param workingDirectory
      *            working directory of this connection
+     * @param relativizationBehavior
+     *            The browser relativization behavior
      */
-    public SshFSConnectionConfig(final String workingDirectory) {
-        super(workingDirectory, true);
+    public SshFSConnectionConfig(final String workingDirectory,
+            final BrowserRelativizationBehavior relativizationBehavior) {
+        super(workingDirectory, true, relativizationBehavior);
     }
 
     /**

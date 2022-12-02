@@ -108,9 +108,9 @@ public class FtpFileSystem extends BaseFileSystem<FtpPath> {
      * @return the {@link FSLocationSpec} for a FTP file system.
      */
     public static DefaultFSLocationSpec createFSLocationSpec(final FtpFSConnectionConfig config) {
-        String resolvedHost = config.getHost().toLowerCase(Locale.ENGLISH);
+        String resolvedHost = config.getServer().getHost().toLowerCase(Locale.ENGLISH);
         try {
-            resolvedHost = InetAddress.getByName(config.getHost()).getCanonicalHostName();
+            resolvedHost = InetAddress.getByName(config.getServer().getHost()).getCanonicalHostName();
         } catch (UnknownHostException ex) { // NOSONAR is possible if host can't be resolved
         }
 

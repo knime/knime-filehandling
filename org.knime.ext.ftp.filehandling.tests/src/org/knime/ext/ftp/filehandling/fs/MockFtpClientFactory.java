@@ -48,6 +48,8 @@
  */
 package org.knime.ext.ftp.filehandling.fs;
 
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
+
 /**
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
@@ -57,7 +59,7 @@ public class MockFtpClientFactory extends FtpClientFactory {
      * Default constructor.
      */
     public MockFtpClientFactory() {
-        super(new FtpFSConnectionConfig());
+        super(new FtpFSConnectionConfig("/", BrowserRelativizationBehavior.ABSOLUTE));
     }
 
     /**

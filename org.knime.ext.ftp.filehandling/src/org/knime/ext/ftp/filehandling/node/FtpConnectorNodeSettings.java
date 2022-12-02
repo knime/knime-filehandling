@@ -70,6 +70,7 @@ import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderSettings;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
@@ -115,6 +116,8 @@ class FtpConnectorNodeSettings {
 
     private static final String KEY_REUSE_SSL_SESSION = "reuseSSLSession";
 
+    private static final String KEY_BROWSER_PATH_RELATIVE = "browserPathRelativize";
+
     private final SettingsModelString m_host;
     private final SettingsModelIntegerBounded m_port;
     private final AuthSettings m_authSettings;
@@ -129,6 +132,7 @@ class FtpConnectorNodeSettings {
     private final SettingsModelBoolean m_verifyHostname;
     private final SettingsModelBoolean m_useImplicitFTPS;
     private final SettingsModelBoolean m_reuseSSLSession;
+    private final SettingsModelBoolean m_browserPathRelative;
 
     FtpConnectorNodeSettings() {
         m_host = new SettingsModelString(KEY_HOST, "localhost");
@@ -154,6 +158,7 @@ class FtpConnectorNodeSettings {
         m_verifyHostname = new SettingsModelBoolean(KEY_VERIFY_HOSTNAME, DEFAULT_VERIFY_HOSTNAME);
         m_useImplicitFTPS = new SettingsModelBoolean(KEY_USE_IMPLICIT_FTPS, DEFAULT_USE_IMPLICIT_FTPS);
         m_reuseSSLSession = new SettingsModelBoolean(KEY_REUSE_SSL_SESSION, DEFAULT_REUSE_SSL_SESSION);
+        m_browserPathRelative = new SettingsModelBoolean(KEY_BROWSER_PATH_RELATIVE, false);
 
         m_useFTPS.addChangeListener(e -> updateEnabledness());
         updateEnabledness();
@@ -180,6 +185,7 @@ class FtpConnectorNodeSettings {
         m_verifyHostname.saveSettingsTo(settings);
         m_useImplicitFTPS.saveSettingsTo(settings);
         m_reuseSSLSession.saveSettingsTo(settings);
+        m_browserPathRelative.saveSettingsTo(settings);
     }
 
     /**
@@ -214,6 +220,12 @@ class FtpConnectorNodeSettings {
         m_maxConnections.loadSettingsFrom(settings);
         m_useFTPS.loadSettingsFrom(settings);
         m_timeZoneOffset.loadSettingsFrom(settings);
+
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.loadSettingsFrom(settings);
+        } else {
+            m_browserPathRelative.setBooleanValue(false);
+        }
     }
 
     /**
@@ -282,6 +294,10 @@ class FtpConnectorNodeSettings {
             m_verifyHostname.validateSettings(settings);
             m_useImplicitFTPS.validateSettings(settings);
             m_reuseSSLSession.validateSettings(settings);
+        }
+
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.validateSettings(settings);
         }
     }
 
@@ -504,6 +520,24 @@ class FtpConnectorNodeSettings {
     }
 
     /**
+     * @return the browserPathRelative model
+     */
+    public SettingsModelBoolean getBrowserPathRelativeModel() {
+        return m_browserPathRelative;
+    }
+
+    /**
+     * @return the browser relativization behavior
+     */
+    public BrowserRelativizationBehavior getBrowserRelativizationBehavior() {
+        if (m_browserPathRelative.getBooleanValue()) {
+            return BrowserRelativizationBehavior.RELATIVE;
+        } else {
+            return BrowserRelativizationBehavior.ABSOLUTE;
+        }
+    }
+
+    /**
      * @return a (deep) clone of this node settings object.
      */
     public FtpConnectorNodeSettings createClone() {
@@ -529,9 +563,9 @@ class FtpConnectorNodeSettings {
      */
     public FtpFSConnectionConfig toFSConnectionConfig(final CredentialsProvider credentialsProvider)
             throws InvalidSettingsException {
-        final var conf = new FtpFSConnectionConfig();
-        conf.setHost(getHost());
-        conf.setPort(getPort());
+        final var conf = new FtpFSConnectionConfig(getWorkingDirectory(), getBrowserRelativizationBehavior());
+        conf.getServer().setHost(getHost());
+        conf.getServer().setPort(getPort());
         conf.setMaxConnectionPoolSize(getMaxConnections());
         conf.setMinConnectionPoolSize(getMinConnections());
         conf.setCoreConnectionPoolSize((getMinConnections() + getMaxConnections()) / 2);
@@ -539,7 +573,6 @@ class FtpConnectorNodeSettings {
         conf.setReadTimeout(getReadTimeout());
         conf.setServerTimeZoneOffset(getTimeZoneOffset());
         conf.setUseFTPS(isUseFTPS());
-        conf.setWorkingDirectory(getWorkingDirectory());
         conf.setVerifyHostname(isVerifyHostname());
         conf.setUseImplicitFTPS(isUseImplicitFTPS());
         conf.setReuseSSLSession(isReuseSSLSession());
@@ -549,11 +582,11 @@ class FtpConnectorNodeSettings {
         if (auth.getAuthType() == StandardAuthTypes.USER_PASSWORD) {
             final UserPasswordAuthProviderSettings userPassSettings = auth
                     .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
-            conf.setUser(userPassSettings.getUser(credentialsProvider::get));
-            conf.setPassword(userPassSettings.getPassword(credentialsProvider::get));
+            conf.getServer().setUser(userPassSettings.getUser(credentialsProvider::get));
+            conf.getServer().setPassword(userPassSettings.getPassword(credentialsProvider::get));
         } else {
-            conf.setUser("anonymous");
-            conf.setPassword("");
+            conf.getServer().setUser("anonymous");
+            conf.getServer().setPassword("");
         }
 
         // Proxy

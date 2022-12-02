@@ -57,6 +57,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
@@ -70,6 +71,7 @@ import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderSettings;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
@@ -88,6 +90,7 @@ class SmbConnectorSettings {
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_TIMEOUT = "timeout";
     private static final String KEY_SMB_VERSION = "smbVersion";
+    private static final String KEY_BROWSER_PATH_RELATIVE = "browserPathRelativize";
 
     private static final int DEFAULT_PORT = 445;
     private static final int DEFAULT_TIMEOUT = 30;
@@ -102,6 +105,7 @@ class SmbConnectorSettings {
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelIntegerBounded m_timeout;
     private SmbProtocolVersion m_protocolVersion;
+    private final SettingsModelBoolean m_browserPathRelative;
 
     /**
      * Creates new instance
@@ -127,6 +131,7 @@ class SmbConnectorSettings {
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, SmbFileSystem.SEPARATOR);
         m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
         m_protocolVersion = SmbProtocolVersion.V_2_X;
+        m_browserPathRelative = new SettingsModelBoolean(KEY_BROWSER_PATH_RELATIVE, false);
     }
 
     /**
@@ -269,6 +274,24 @@ class SmbConnectorSettings {
         m_protocolVersion = protocolVersion;
     }
 
+    /**
+     * @return the browserPathRelative model
+     */
+    public SettingsModelBoolean getBrowserPathRelativeModel() {
+        return m_browserPathRelative;
+    }
+
+    /**
+     * @return the browser relativization behavior
+     */
+    public BrowserRelativizationBehavior getBrowserRelativizationBehavior() {
+        if (m_browserPathRelative.getBooleanValue()) {
+            return BrowserRelativizationBehavior.RELATIVE;
+        } else {
+            return BrowserRelativizationBehavior.ABSOLUTE;
+        }
+    }
+
     private void save(final NodeSettingsWO settings) {
         settings.addString(KEY_CONNECTION_MODE, m_connectionMode.getSettingsValue());
         m_fileserverHost.saveSettingsTo(settings);
@@ -279,6 +302,7 @@ class SmbConnectorSettings {
         m_workingDirectory.saveSettingsTo(settings);
         m_timeout.saveSettingsTo(settings);
         settings.addString(KEY_SMB_VERSION, m_protocolVersion.getKey());
+        m_browserPathRelative.saveSettingsTo(settings);
     }
 
     /**
@@ -319,6 +343,12 @@ class SmbConnectorSettings {
             m_protocolVersion = SmbProtocolVersion.fromKey(settings.getString(KEY_SMB_VERSION));
         } else {
             m_protocolVersion = SmbProtocolVersion.V_2_X;
+        }
+
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.loadSettingsFrom(settings);
+        } else {
+            m_browserPathRelative.setBooleanValue(false);
         }
     }
 
@@ -374,6 +404,10 @@ class SmbConnectorSettings {
         if (settings.containsKey(KEY_SMB_VERSION)) {
             SmbProtocolVersion.fromKey(settings.getString(KEY_SMB_VERSION));
         }
+
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.validateSettings(settings);
+        }
     }
 
     /**
@@ -424,7 +458,17 @@ class SmbConnectorSettings {
     }
 
     SmbFSConnectionConfig createFSConnectionConfig(final Function<String, ICredentials> credentialsProvider) {
-        final SmbFSConnectionConfig config = new SmbFSConnectionConfig(getWorkingDirectory());
+        return createFSConnectionConfig(credentialsProvider, getBrowserRelativizationBehavior());
+    }
+
+    SmbFSConnectionConfig createFSConnectionConfigForWorkdirChooser(
+            final Function<String, ICredentials> credentialsProvider) {
+        return createFSConnectionConfig(credentialsProvider, BrowserRelativizationBehavior.ABSOLUTE);
+    }
+
+    private SmbFSConnectionConfig createFSConnectionConfig(final Function<String, ICredentials> credentialsProvider,
+            final BrowserRelativizationBehavior relativizationBehavior) {
+        final var config = new SmbFSConnectionConfig(getWorkingDirectory(), relativizationBehavior);
 
         config.setConnectionMode(m_connectionMode);
         if (m_connectionMode == ConnectionMode.DOMAIN) {

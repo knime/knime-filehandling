@@ -73,10 +73,12 @@ public class ArchiveZipFSConnectionConfig extends BaseFSConnectionConfig impleme
     /**
      * Constructor.
      *
-     * @param workingDir
+     * @param workingDir The working directory
+     * @param relativizationBehavior The browser relativization behavior
      */
-    public ArchiveZipFSConnectionConfig(final String workingDir) {
-        super(workingDir);
+    public ArchiveZipFSConnectionConfig(final String workingDir,
+        final BrowserRelativizationBehavior relativizationBehavior) {
+        super(workingDir, relativizationBehavior);
     }
 
     /**

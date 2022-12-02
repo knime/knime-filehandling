@@ -81,6 +81,7 @@ import org.knime.filehandling.core.connections.base.auth.EmptyAuthProviderPanel;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderPanel;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
+import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryRelativizationPanel;
 
 /**
  * FTP Connection node dialog.
@@ -246,6 +247,7 @@ class FtpConnectorNodeDialog extends NodeDialogPane {
     private FSConnection createFSConnection() throws IOException {
         try {
             final FtpConnectorNodeSettings settings = m_settings.createClone();
+            settings.getBrowserPathRelativeModel().setBooleanValue(false);
             return FtpConnectorNodeModel.createConnection(settings, getCredentialsProvider());
         } catch (IOException e) {
             throw e;
@@ -273,6 +275,9 @@ class FtpConnectorNodeDialog extends NodeDialogPane {
 
         gbc.gridy++;
         panel.add(createFTPSSettingsPanel(), gbc);
+
+        gbc.gridy++;
+        panel.add(new WorkingDirectoryRelativizationPanel(m_settings.getBrowserPathRelativeModel()), gbc);
 
         gbc.gridy++;
         addVerticalFiller(panel, gbc.gridy, 1);

@@ -67,6 +67,7 @@ public class SshFSConnection extends BaseFSConnection {
      * @throws IOException
      */
     public SshFSConnection(final SshFSConnectionConfig cfg) throws IOException {
+        super(cfg);
         m_fileSystem = new SshFileSystem(cfg);
     }
 

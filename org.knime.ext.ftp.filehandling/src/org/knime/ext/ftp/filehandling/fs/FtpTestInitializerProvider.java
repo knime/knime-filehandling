@@ -55,6 +55,7 @@ import java.util.Map;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
@@ -76,21 +77,21 @@ public class FtpTestInitializerProvider extends DefaultFSTestInitializerProvider
         final String workingDir = generateRandomizedWorkingDir(cfg.get("workingDirPrefix"),
                 FtpFileSystem.PATH_SEPARATOR);
 
-        final FtpFSConnectionConfig ftpCfg = new FtpFSConnectionConfig();
+        final FtpFSConnectionConfig ftpCfg = new FtpFSConnectionConfig(workingDir,
+                BrowserRelativizationBehavior.ABSOLUTE);
         ftpCfg.setMaxConnectionPoolSize(10);
         ftpCfg.setTestMode(true);
-        ftpCfg.setHost(cfg.getOrDefault("host", "localhost"));
-        ftpCfg.setPort(Integer.parseInt(cfg.getOrDefault("port", "21")));
-        ftpCfg.setUser(cfg.getOrDefault("username", "junit"));
-        ftpCfg.setPassword(cfg.getOrDefault("password", "password"));
-        ftpCfg.setWorkingDirectory(workingDir);
+        ftpCfg.getServer().setHost(cfg.getOrDefault("host", "localhost"));
+        ftpCfg.getServer().setPort(Integer.parseInt(cfg.getOrDefault("port", "21")));
+        ftpCfg.getServer().setUser(cfg.getOrDefault("username", "junit"));
+        ftpCfg.getServer().setPassword(cfg.getOrDefault("password", "password"));
         ftpCfg.setServerTimeZoneOffset(Duration.ofMinutes(Long.parseLong(cfg.getOrDefault("timeZoneOffset", "0"))));
         ftpCfg.setUseFTPS(Boolean.parseBoolean(cfg.getOrDefault("ftps", "false")));
 
         // proxy
         final String proxyHost = cfg.get("proxy.host");
         if (proxyHost != null) {
-            ProtectedHostConfiguration proxy = new FtpFSConnectionConfig();
+            ProtectedHostConfiguration proxy = new ProtectedHostConfiguration();
             ftpCfg.setProxy(proxy);
 
             proxy.setHost(proxyHost);

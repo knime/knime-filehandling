@@ -72,6 +72,7 @@ import org.knime.filehandling.core.connections.FSLocation;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 import org.knime.filehandling.core.defaultnodesettings.EnumConfig;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.filtermode.SettingsModelFilterMode.FilterMode;
@@ -108,6 +109,8 @@ public class SshConnectorNodeSettings {
 
     private static final String KEY_KNOWN_HOSTS_FILE = "knownHostsFile";
 
+    private static final String KEY_BROWSER_PATH_RELATIVE = "browserPathRelativize";
+
     private NodeCreationConfiguration m_nodeCreationConfig;
 
     private final SettingsModelString m_host;
@@ -119,6 +122,7 @@ public class SshConnectorNodeSettings {
     private final SettingsModelIntegerBounded m_maxSessionCount;
     private final SettingsModelBoolean m_useKnownHostsFile;
     private SettingsModelReaderFileChooser m_knownHostsFile;
+    private final SettingsModelBoolean m_browserPathRelative;
 
     /**
      * @param cfg
@@ -146,6 +150,8 @@ public class SshConnectorNodeSettings {
 
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, SshFileSystem.PATH_SEPARATOR);
 
+        m_browserPathRelative = new SettingsModelBoolean(KEY_BROWSER_PATH_RELATIVE, false);
+
         m_useKnownHostsFile.addChangeListener(e -> m_knownHostsFile.setEnabled(m_useKnownHostsFile.getBooleanValue()));
 
         m_knownHostsFile.setEnabled(false);
@@ -160,6 +166,7 @@ public class SshConnectorNodeSettings {
         m_connectionTimeout.saveSettingsTo(settings);
         m_maxSessionCount.saveSettingsTo(settings);
         m_useKnownHostsFile.saveSettingsTo(settings);
+        m_browserPathRelative.saveSettingsTo(settings);
     }
 
     /**
@@ -195,6 +202,12 @@ public class SshConnectorNodeSettings {
         m_connectionTimeout.loadSettingsFrom(settings);
         m_maxSessionCount.loadSettingsFrom(settings);
         m_useKnownHostsFile.loadSettingsFrom(settings);
+
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.loadSettingsFrom(settings);
+        } else {
+            m_browserPathRelative.setBooleanValue(false);
+        }
 
         m_knownHostsFile.setEnabled(m_useKnownHostsFile.getBooleanValue());
     }
@@ -264,6 +277,10 @@ public class SshConnectorNodeSettings {
         m_maxSessionCount.validateSettings(settings);
         m_useKnownHostsFile.validateSettings(settings);
         m_knownHostsFile.validateSettings(settings);
+
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.validateSettings(settings);
+        }
 
         final SshConnectorNodeSettings temp = new SshConnectorNodeSettings(m_nodeCreationConfig);
         temp.loadSettingsForModel(settings);
@@ -413,6 +430,24 @@ public class SshConnectorNodeSettings {
     }
 
     /**
+     * @return the browserPathRelative model
+     */
+    public SettingsModelBoolean getBrowserPathRelativeModel() {
+        return m_browserPathRelative;
+    }
+
+    /**
+     * @return the browser relativization behavior
+     */
+    public BrowserRelativizationBehavior getBrowserRelativizationBehavior() {
+        if (m_browserPathRelative.getBooleanValue()) {
+            return BrowserRelativizationBehavior.RELATIVE;
+        } else {
+            return BrowserRelativizationBehavior.ABSOLUTE;
+        }
+    }
+
+    /**
      * @return a (deep) clone of this node settings object.
      */
     public SshConnectorNodeSettings createClone() {
@@ -434,7 +469,8 @@ public class SshConnectorNodeSettings {
     SshFSConnectionConfig toFSConnectionConfig(final CredentialsProvider credentials,
             final ConnectionToNodeModelBridge bridge) throws InvalidSettingsException {
 
-        final SshFSConnectionConfig cfg = new SshFSConnectionConfig(getWorkingDirectory());
+        final SshFSConnectionConfig cfg = new SshFSConnectionConfig(getWorkingDirectory(),
+                getBrowserRelativizationBehavior());
         cfg.setHost(getHost());
         cfg.setConnectionTimeout(getConnectionTimeout());
         cfg.setPort(getPort());

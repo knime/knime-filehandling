@@ -90,6 +90,7 @@ public class SmbFSConnection extends BaseFSConnection {
      *
      */
     public SmbFSConnection(final SmbFSConnectionConfig config, final ExecutionContext exec) throws IOException {
+        super(config);
         m_filesystem = new SmbFileSystem(CACHE_TTL, config, exec);
     }
 
