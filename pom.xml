@@ -58,11 +58,16 @@
 			<id>p2-knime-core</id>
 			<layout>p2</layout>
 			<url>${knime.core.p2}</url>
-		</repository>
+		</repository>		
 		<repository>
 			<id>p2-knime-base</id>
 			<layout>p2</layout>
 			<url>${knime.base.p2}</url>
+		</repository>
+		<repository>
+			<id>p2-knime-core-ui</id>
+			<layout>p2</layout>
+			<url>${knime.core.ui.p2}</url>
 		</repository>
 		<repository>
 			<id>p2-knime-expressions</id>
