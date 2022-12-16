@@ -66,6 +66,8 @@ public class ArchiveZipFSConnectionConfig extends BaseFSConnectionConfig impleme
 
     private FSPath m_zipFilePath;
 
+    private boolean m_useDefaultEncoding;
+
     private String m_encoding;
 
     private Closeable m_closeable;
@@ -91,6 +93,20 @@ public class ArchiveZipFSConnectionConfig extends BaseFSConnectionConfig impleme
      */
     public void setZipFilePath(final FSPath zipFilePath) {
         m_zipFilePath = zipFilePath;
+    }
+
+    /**
+     * @return true, if the default encoding shall be used, false otherwise.
+     */
+    public boolean isUseDefaultEncoding() {
+        return m_useDefaultEncoding;
+    }
+
+    /**
+     * @param useDefaultEncoding whether the default encoding shall be used, or not.
+     */
+    public void setUseDefaultEncoding(final boolean useDefaultEncoding) {
+        m_useDefaultEncoding = useDefaultEncoding;
     }
 
     /**

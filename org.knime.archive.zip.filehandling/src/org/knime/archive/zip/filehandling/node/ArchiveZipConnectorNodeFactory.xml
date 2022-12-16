@@ -9,16 +9,16 @@
 
 	
     <shortDescription>
-        Connects to a ZIP Archive Connector in order to
-        read zip archive files in downstream
-        nodes.
+        This node creates a file system connection that allows to read the files/folders stored inside
+        a ZIP archive.
     </shortDescription>
 
     <fullDescription>
         <intro>
             <p>
-                This node connects to ZIP Archive Connector. The resulting output
-                port allows downstream nodes to read compressed files in a zip archive file.
+                This node creates a file system connection that allows to read the files/folders stored inside
+        		a ZIP archive. The resulting file system connection output port allows downstream nodes to
+        		read the compressed files from a zip archive file.
             </p>
 
             <p>
@@ -32,6 +32,12 @@
                         above example).</li>
                 </ol>
             </p>
+            <p>
+                <b>Note:</b> When the ZIP file changes, this node has to be reset and re-executed,
+                otherwise its behavior is undefined, which may result in errors and/or invalid data
+                being read. 
+            </p>
+
         </intro>
         <tab name="Settings">
             <option name="Read from">
@@ -81,6 +87,20 @@
                 working directory is "\".
             </option>
         </tab>
+        <tab name="Encoding">
+        	<option name="Use default encoding">
+        		If selected, uses a default encoding (currently UTF-8) to read the names of the compressed files in the archive.
+        		If you notice that the names of the files in zip archive contain '?' characters, then UTF-8 might be
+        		wrong. In this case, uncheck the box and pick the correct encoding, e.g. try
+        		<a href="https://en.wikipedia.org/wiki/Code_page_437">CP437</a> which is used in some ZIP files.
+        	</option>
+            <option name="Encoding">
+                Sets the character set/encoding to use when reading the names of the compressed files in the archive. By default,
+                <a href="https://en.wikipedia.org/wiki/Code_page_437">CP437</a> is chosen, which is used in some ZIP files. You can specify
+                any other encoding supported by Java. Choosing "OS default" uses the default encoding of the Java VM, which may depend on
+                the locale or the Java property &quot;file.encoding&quot;.
+            </option>
+        </tab>  
     </fullDescription>
 
     <ports>

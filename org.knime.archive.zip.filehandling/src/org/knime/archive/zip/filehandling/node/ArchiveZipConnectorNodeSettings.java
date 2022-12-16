@@ -50,7 +50,6 @@ package org.knime.archive.zip.filehandling.node;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
@@ -61,6 +60,7 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.context.NodeCreationConfiguration;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.filehandling.core.connections.FSLocation;
@@ -71,7 +71,7 @@ import org.knime.filehandling.core.defaultnodesettings.filtermode.SettingsModelF
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
- * Settings for {@link ArchiveZipConnectorNodeModel}.
+ * Settings for the ZIP Archive Connector.
  *
  * @author Dragan Keselj, KNIME GmbH
  */
@@ -81,15 +81,18 @@ class ArchiveZipConnectorNodeSettings {
     private static final String KEY_FILE = "file";
     private static final String KEY_ENCODING = "encoding";
 
-    private static final String[] FILE_EXTENSIONS = { ".zip" };
-    private static final String DEFAULT_ENCODING = Charset.defaultCharset().name();
+    private static final String[] FILE_EXTENSIONS = { ".zip", ".jar" };
+    private static final String DEFAULT_ENCODING = "CP437";
+
+    private static final String CFG_USE_DEFAULT_ENCODING = "useDefaultEncoding";
 
     private NodeCreationConfiguration m_nodeCreationConfig;
 
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelReaderFileChooser m_file;
 
-    private final SettingsModelString m_encoding = new SettingsModelString(KEY_ENCODING, DEFAULT_ENCODING);
+    private final SettingsModelBoolean m_useDefaultEncodingModel;
+    private final SettingsModelString m_encoding;
 
     /**
      * @param cfg
@@ -103,11 +106,15 @@ class ArchiveZipConnectorNodeSettings {
                 cfg.getPortConfig().orElseThrow(() -> new IllegalStateException("port creation config is absent")), //
                 ArchiveZipConnectorNodeFactory.FS_CONNECT_GRP_ID, EnumConfig.create(FilterMode.FILE), FILE_EXTENSIONS);
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, ArchiveZipFileSystem.SEPARATOR);
+
+        m_useDefaultEncodingModel = new SettingsModelBoolean(CFG_USE_DEFAULT_ENCODING, true);
+        m_encoding = new SettingsModelString(KEY_ENCODING, DEFAULT_ENCODING);
     }
 
     private void save(final NodeSettingsWO settings) {
         m_file.saveSettingsTo(settings);
         m_workingDirectory.saveSettingsTo(settings);
+        m_useDefaultEncodingModel.saveSettingsTo(settings);
         m_encoding.saveSettingsTo(settings);
     }
 
@@ -136,6 +143,12 @@ class ArchiveZipConnectorNodeSettings {
         m_workingDirectory.loadSettingsFrom(settings);
         if (settings.containsKey(KEY_ENCODING)) {
             m_encoding.loadSettingsFrom(settings);
+            //for backward-compatibility
+            m_useDefaultEncodingModel.setBooleanValue(false);
+        }
+        //added to AP 4.7.0
+        if (settings.containsKey(CFG_USE_DEFAULT_ENCODING)) {
+            m_useDefaultEncodingModel.loadSettingsFrom(settings);
         }
     }
 
@@ -189,6 +202,9 @@ class ArchiveZipConnectorNodeSettings {
     public void validate(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_file.validateSettings(settings);
         m_workingDirectory.validateSettings(settings);
+        if (settings.containsKey(CFG_USE_DEFAULT_ENCODING)) {
+            m_useDefaultEncodingModel.validateSettings(settings);
+        }
         if (settings.containsKey(KEY_ENCODING)) {
             m_encoding.validateSettings(settings);
         }
@@ -242,6 +258,16 @@ class ArchiveZipConnectorNodeSettings {
     }
 
     /**
+     * Returns whether or not to use a default encoding (which is
+     * currently UTF-8).
+     *
+     * @return the use default encoding model
+     */
+    SettingsModelBoolean getUseDefaultEncodingModel() {
+        return m_useDefaultEncodingModel;
+    }
+
+    /**
      * Returns encoding used in unpacking the zip archive.
      *
      * @return encoding
@@ -285,6 +311,7 @@ class ArchiveZipConnectorNodeSettings {
             cfg.setCloseable(pathAccessor);
             final FSPath zipFilePath = pathAccessor.getRootPath(statusConsumer);
             cfg.setZipFilePath(zipFilePath);
+            cfg.setUseDefaultEncoding(getUseDefaultEncodingModel().getBooleanValue());
             cfg.setEncoding(getEncoding());
         } catch (Exception e) { //NOSONAR
             closeQuietly(pathAccessor);
