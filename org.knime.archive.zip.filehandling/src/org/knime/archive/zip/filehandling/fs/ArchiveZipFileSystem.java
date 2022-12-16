@@ -131,7 +131,9 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
             byteChannels = getOrderedZipSegmentByteChannels(filePath);
             final var byteChannel = byteChannels.size() == 1 ? byteChannels.get(0)
                     : new ZipSplitReadOnlySeekableByteChannel(byteChannels);
-            zipFile = new ArchiveZipFile(byteChannel, config.getEncoding());
+
+            zipFile = config.isUseDefaultEncoding()
+                    ? new ArchiveZipFile(byteChannel) : new ArchiveZipFile(byteChannel, config.getEncoding());
 
             final Map<String, ArchiveZipPath> entryNamesMap = new HashMap<>();
             final Map<ArchiveZipPath, String> pathsMap = new HashMap<>();
@@ -211,6 +213,11 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
     }
 
     private SortedSet<Path> getZipSegmentsInSameDirectory(final Path filePath) throws IOException {
+        if (filePath.getFileName().toString().endsWith(".jar")) {
+            // split jar archives are not supported
+            return new TreeSet<>(Collections.singleton(filePath));
+        }
+
         final Path parent = filePath.toAbsolutePath().normalize().getParent();
         try (Stream<Path> files = Files.list(parent)) {
             return files.filter(f -> getFileBaseName(f).equalsIgnoreCase(getFileBaseName(filePath)) //

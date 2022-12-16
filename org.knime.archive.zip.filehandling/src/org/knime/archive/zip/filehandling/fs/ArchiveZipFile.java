@@ -42,6 +42,12 @@ class ArchiveZipFile extends ZipFile {
      */
     private final List<ZipArchiveEntry> m_topEntries = new ArrayList<>();
 
+    ArchiveZipFile(final SeekableByteChannel channel) throws IOException {
+        super(channel);
+        m_length = channel.size();
+        createTopEntries();
+    }
+
     ArchiveZipFile(final SeekableByteChannel channel, final String encoding) throws IOException {
         super(channel, encoding);
         m_length = channel.size();

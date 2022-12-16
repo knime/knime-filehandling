@@ -49,15 +49,16 @@
 package org.knime.archive.zip.filehandling.node;
 
 import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.io.Closeable;
 import java.io.IOException;
 
-import javax.swing.BoxLayout;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 
 import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnection;
@@ -68,6 +69,7 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.context.NodeCreationConfiguration;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
@@ -75,6 +77,7 @@ import org.knime.filehandling.core.data.location.variable.FSLocationVariableType
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.DialogComponentReaderFileChooser;
 import org.knime.filehandling.core.encoding.CharsetNamePanel;
+import org.knime.filehandling.core.util.GBCBuilder;
 
 /**
  * Node dialog for the ArchiveZip Connector.
@@ -94,6 +97,7 @@ class ArchiveZipConnectorNodeDialog extends NodeDialogPane {
     private final WorkingDirectoryChooser m_workingDirChooser;
     private final ChangeListener m_workdirListener;
 
+    private final DialogComponentBoolean m_useDefaultEncoding;
     private final CharsetNamePanel m_encodingPanel;
 
     /**
@@ -115,43 +119,72 @@ class ArchiveZipConnectorNodeDialog extends NodeDialogPane {
 
         addTab("Settings", createSettingsPanel());
 
+        m_useDefaultEncoding = new DialogComponentBoolean(m_settings.getUseDefaultEncodingModel(),
+                "Use default encoding");
         m_encodingPanel = new CharsetNamePanel();
-        addTab("Encoding", m_encodingPanel);
+        addTab("Encoding", getEncodingPanel());
+
+        m_settings.getUseDefaultEncodingModel().addChangeListener(e -> updateEnabledness());
     }
 
     private JComponent createSettingsPanel() {
-        final var panel = new JPanel();
-        final var parentLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(parentLayout);
+        final var panel = new JPanel(new GridBagLayout());
+        final GBCBuilder gbc = new GBCBuilder().resetX().resetY().fillHorizontal().setWeightX(1);
 
-        panel.add(createInputLocationPanel());
-        panel.add(createWorkingDirectoryPanel());
+        panel.add(createInputLocationPanel(), gbc.build());
+        gbc.incY().insets(10, 0, 0, 0);
+        panel.add(createWorkingDirectoryPanel(), gbc.build());
+        gbc.incY().setWeightY(1);
+        panel.add(new JPanel(), gbc.build());
 
         return panel;
     }
 
     private Component createInputLocationPanel() {
-        final var panel = new JPanel();
-        final var parentLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(parentLayout);
-        panel.setBorder(createTitledBorder("Input location"));
-
-        panel.add(m_fileChooser.getComponentPanel());
+        final var panel = new JPanel(new GridBagLayout());
+        final var gbc = new GBCBuilder().resetX().resetY();
+        panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Input location"));
+        panel.add(m_fileChooser.getComponentPanel(), gbc.fillHorizontal().setWeightX(1).build());
         return panel;
     }
 
     private Component createWorkingDirectoryPanel() {
-        final var panel = new JPanel();
-        final var parentLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-        panel.setLayout(parentLayout);
-        panel.setBorder(createTitledBorder("Working directory"));
-
-        panel.add(m_workingDirChooser);
+        final var panel = new JPanel(new GridBagLayout());
+        GBCBuilder gbc = new GBCBuilder().resetX().resetY();
+        panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Working directory"));
+        panel.add(m_workingDirChooser, gbc.fillHorizontal().setWeightX(1).build());
         return panel;
+    }
+
+    private JPanel getEncodingPanel() {
+        var panel = new JPanel(new GridBagLayout());
+        final var gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        panel.add(m_useDefaultEncoding.getComponentPanel(), gbc);
+
+        gbc.weightx = 1;
+        gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(Box.createHorizontalGlue(), gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(10, 0, 0, 0);
+        panel.add(m_encodingPanel, gbc);
+
+        return panel;
+    }
+
+    private void updateEnabledness() {
+        m_encodingPanel.setEnabled(!m_settings.getUseDefaultEncodingModel().getBooleanValue());
     }
 
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
+        m_useDefaultEncoding.saveSettingsTo(settings);
         m_settings.setEncoding(m_encodingPanel.getSelectedCharsetName().orElse(null));
         validateBeforeSaving();
 
@@ -170,6 +203,7 @@ class ArchiveZipConnectorNodeDialog extends NodeDialogPane {
             throws NotConfigurableException {
         m_settings.loadForDialog(settings);
         m_fileChooser.loadSettingsFrom(settings, specs);
+        m_useDefaultEncoding.loadSettingsFrom(settings, specs);
         m_encodingPanel.loadSettings(m_settings.getEncoding());
         settingsLoaded();
     }
@@ -212,14 +246,5 @@ class ArchiveZipConnectorNodeDialog extends NodeDialogPane {
         } catch (IOException e) { //NOSONAR
             // quietly ignored
         }
-    }
-
-    /**
-     * @param title
-     *            border title.
-     * @return titled border.
-     */
-    private static Border createTitledBorder(final String title) {
-        return new TitledBorder(new EtchedBorder(EtchedBorder.RAISED), title);
     }
 }
