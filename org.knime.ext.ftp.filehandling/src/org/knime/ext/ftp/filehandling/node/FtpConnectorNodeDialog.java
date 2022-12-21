@@ -121,7 +121,9 @@ class FtpConnectorNodeDialog extends NodeDialogPane {
         final var authSettings = m_settings.getAuthenticationSettings();
         m_authPanel = new AuthPanel(authSettings, //
                 Arrays.asList( //
-                        new UserPasswordAuthProviderPanel(authSettings.getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD), this), //
+                        new UserPasswordAuthProviderPanel( //
+                                authSettings.getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD), //
+                                this::getCredentialsProvider), //
                         new EmptyAuthProviderPanel(authSettings.getSettingsForAuthType(StandardAuthTypes.ANONYMOUS))));
 
         m_useProxyComponent = new DialogComponentBoolean(m_settings.getUseProxyModel(), "");
