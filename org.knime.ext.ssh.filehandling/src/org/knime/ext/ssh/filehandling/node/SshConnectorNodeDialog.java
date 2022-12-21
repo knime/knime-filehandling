@@ -127,8 +127,8 @@ public class SshConnectorNodeDialog extends NodeDialogPane {
 
         final AuthSettings authSettings = m_settings.getAuthenticationSettings();
         final List<AuthProviderPanel<?>> authProviderPanels = Arrays.<AuthProviderPanel<?>>asList( //
-                new UserPasswordAuthProviderPanel(authSettings.getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD),
-                        this), //
+                new UserPasswordAuthProviderPanel(authSettings.getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD), //
+                        this::getCredentialsProvider), //
                 new KeyFileAuthProviderPanel(authSettings.getSettingsForAuthType(SshAuth.KEY_FILE_AUTH_TYPE), this));
         m_authPanel = new AuthPanel(m_settings.getAuthenticationSettings(), authProviderPanels);
 

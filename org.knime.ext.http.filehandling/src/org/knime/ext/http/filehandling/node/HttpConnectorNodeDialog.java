@@ -104,7 +104,7 @@ class HttpConnectorNodeDialog extends NodeDialogPane {
         m_authPanel = new AuthPanel(authSettings, //
                 Arrays.asList( //
                         new UserPasswordAuthProviderPanel(
-                                authSettings.getSettingsForAuthType(HttpAuth.BASIC), this), //
+                                authSettings.getSettingsForAuthType(HttpAuth.BASIC), this::getCredentialsProvider), //
                         new EmptyAuthProviderPanel(authSettings.getSettingsForAuthType(HttpAuth.NONE))));
     }
 

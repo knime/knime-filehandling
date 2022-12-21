@@ -148,8 +148,9 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         final var authSettings = m_settings.getAuthSettings();
         m_authPanel = new AuthPanel(authSettings, //
                 Arrays.asList( //
-                        new UserPasswordAuthProviderPanel(
-                                authSettings.getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD), this), //
+                        new UserPasswordAuthProviderPanel( //
+                                authSettings.getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD), //
+                                this::getCredentialsProvider), //
                         new EmptyAuthProviderPanel( //
                                 authSettings.getSettingsForAuthType(SmbFSConnectionConfig.KERBEROS_AUTH_TYPE)), //
                         new EmptyAuthProviderPanel( //
