@@ -52,11 +52,13 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -65,7 +67,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -76,8 +77,11 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteChannel;
 import org.apache.commons.compress.utils.FileNameUtils;
+import org.knime.core.node.NodeLogger;
+import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
+import org.knime.filehandling.core.connections.meta.FSDescriptorRegistry;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
 /**
@@ -87,6 +91,8 @@ import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
  */
 public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
     private static final Pattern EXTENSION_PATTERN = Pattern.compile("([z][0-9]+)|(zip)$", Pattern.CASE_INSENSITIVE); //NOSONAR
+
+    private final static NodeLogger LOGGER = NodeLogger.getLogger(ArchiveZipFileSystem.class);
 
     /**
      * Character to use as path separator
@@ -198,8 +204,11 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
      * @throws IOException
      */
     @SuppressWarnings("resource")
-    private List<SeekableByteChannel> getOrderedZipSegmentByteChannels(final Path filePath) throws IOException {
-        final SortedSet<Path> zipSegments = getZipSegmentsInSameDirectory(filePath);
+    private List<SeekableByteChannel> getOrderedZipSegmentByteChannels(final FSPath filePath) throws IOException {
+
+        final var zipSegments = canListDirectories(filePath.getFileSystem().getFSLocationSpec())
+                ? getZipSegmentsInSameDirectory(filePath) : Collections.singleton(filePath);
+
         final var seekableByteChannels = new ArrayList<SeekableByteChannel>();
         try {
             for (final Path zipSegment : zipSegments) {
@@ -212,7 +221,16 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
         return seekableByteChannels;
     }
 
-    private SortedSet<Path> getZipSegmentsInSameDirectory(final Path filePath) throws IOException {
+    private static boolean canListDirectories(final FSLocationSpec spec) {
+        final var fsType = spec.getFSType();
+        final var fsDescriptor = FSDescriptorRegistry.getFSDescriptor(fsType)
+                .orElseThrow(() -> new IllegalStateException(String.format("FSType %s is not registered", fsType)));
+
+        return fsDescriptor.getCapabilities().canListDirectories();
+    }
+
+    private Collection<Path> getZipSegmentsInSameDirectory(final Path filePath) throws IOException {
+
         if (filePath.getFileName().toString().endsWith(".jar")) {
             // split jar archives are not supported
             return new TreeSet<>(Collections.singleton(filePath));
@@ -224,8 +242,9 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
                     && EXTENSION_PATTERN.matcher(getFileExtension(f)).matches()
                     && Files.isRegularFile(f))
                     .collect(Collectors.toCollection(() -> new TreeSet<>(new ZipSegmentComparator())));
-        } catch(UnsupportedOperationException e) { //NOSONAR
-            return new TreeSet<>(Collections.singleton(filePath));
+        } catch (AccessDeniedException | UnsupportedOperationException e) {
+            LOGGER.debug("Could not list files in '" + parent + "': " + ExceptionUtil.getDeepestErrorMessage(e, false));
+            return Collections.singleton(filePath);
         }
     }
 
