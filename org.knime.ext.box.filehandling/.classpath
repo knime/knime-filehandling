@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="lib" path="libs/bcpkix-jdk15on-1.60.jar" sourcepath="libs/bcpkix-jdk15on-1.60-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/bcprov-jdk15on-1.60.jar" sourcepath="libs/bcprov-jdk15on-1.60-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/box-java-sdk-2.32.0.jar" sourcepath="libs/box-java-sdk-2.32.0-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jose4j-0.5.5.jar" sourcepath="libs/jose4j-0.5.5-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/minimal-json-0.9.1.jar" sourcepath="libs/minimal-json-0.9.1-sources.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

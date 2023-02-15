@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: KNIME Extension for box.com
+Bundle-SymbolicName: org.knime.ext.box.filehandling;singleton:=true
+Bundle-Version: 5.0.0.qualifier
+Bundle-Vendor: 
+ KNIME AG, Zurich, Switzerland
+Require-Bundle: org.knime.workbench.repository;bundle-version="[5.0.0,6.0.0)",
+ org.knime.core;bundle-version="[5.0.0,6.0.0)",
+ org.knime.filehandling.core;bundle-version="[5.0.0,6.0.0)",
+ org.slf4j.api;bundle-version="[1.7.30,2.0.0)"
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: .,
+ libs/bcpkix-jdk15on-1.60.jar,
+ libs/bcprov-jdk15on-1.60.jar,
+ libs/box-java-sdk-2.32.0.jar,
+ libs/jose4j-0.5.5.jar,
+ libs/minimal-json-0.9.1.jar
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Automatic-Module-Name: org.knime.ext.box.filehandling
+

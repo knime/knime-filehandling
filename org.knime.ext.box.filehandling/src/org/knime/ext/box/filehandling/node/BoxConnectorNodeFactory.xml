@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<knimeNode icon="./file_system_connector.png"
+	type="Source"
+	xmlns="http://knime.org/node/v4.1"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://knime.org/node/v4.1 http://knime.org/node/v4.1.xsd">
+
+    <name>Box Connector</name>
+    
+    <shortDescription>
+        Connects to Box in order to read/write files in downstream nodes.
+    </shortDescription>
+    
+    <fullDescription>
+         <intro>
+            <p>This node connects to Box. The resulting output port allows downstream nodes to access
+            <i>files</i>, e.g. to read or write, or to perform other file system operations (browse/list files, copy, move, ...). 
+            </p>
+            
+            <p><b>Path syntax:</b> Paths for this connector are specified with a UNIX-like syntax such as /myfolder/myfile. An absolute
+            path consists of:
+                <ol>
+                    <li>A leading slash ("/").</li>
+                    <li>Followed by the path to the file ("myfolder/myfile" in the above example).</li>
+                </ol>
+            </p>
+        </intro>
+    </fullDescription>
+    
+    <ports>
+        <outPort index="0" name="Box File System Connection">
+             Box File System Connection
+        </outPort>
+    </ports>    
+</knimeNode>

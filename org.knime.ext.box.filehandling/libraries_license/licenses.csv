@@ -1,0 +1,6 @@
+library;library-url;licence;			     licence-url;copyright;										
+bcpkix-jdk15on-1.60.jar;https://www.bouncycastle.org/java.html;MIT License;https://www.bouncycastle.org/licence.html;The Legion of the Bouncy Castle Inc.;
+bcprov-jdk15on-1.60.jar;https://www.bouncycastle.org/java.html;MIT License;https://www.bouncycastle.org/licence.html;The Legion of the Bouncy Castle Inc.;
+box-java-sdk-2.32.0.jar;https://github.com/box/box-java-sdk;Apache 2.0 License;https://github.com/box/box-java-sdk/blob/main/LICENSE;Box, Inc. ;
+jose4j-0.5.5.jar;https://bitbucket.org/b_c/jose4j/wiki/Home;Apache 2.0 License;https://bitbucket.org/b_c/jose4j/src/master/LICENSE;Brian Campbell;
+minimal-json-0.9.1.jar;https://github.com/ralfstx/minimal-json;MIT License;https://github.com/ralfstx/minimal-json/blob/master/LICENSE;EclipseSource GmbH;
