@@ -78,4 +78,9 @@ public class BoxPath extends UnixStylePath {
     public BoxFileSystem getFileSystem() {
         return (BoxFileSystem) super.getFileSystem();
     }
+
+    @Override
+    public BoxPath getParent() {
+        return (BoxPath) super.getParent();
+    }
 }

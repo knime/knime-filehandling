@@ -60,6 +60,7 @@ import org.knime.filehandling.core.connections.base.BaseFSConnection;
  * @author Alexander Bondaletov, Redfield SE
  */
 public class BoxFSConnection extends BaseFSConnection {
+
     private static final long CACHE_TTL = 6000;
 
     private final BoxFileSystem m_filesystem;
@@ -78,5 +79,4 @@ public class BoxFSConnection extends BaseFSConnection {
     public FSFileSystem<?> getFileSystem() {
         return m_filesystem;
     }
-
 }

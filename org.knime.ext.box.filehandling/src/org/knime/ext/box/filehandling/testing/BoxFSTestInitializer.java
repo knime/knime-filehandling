@@ -48,13 +48,18 @@
  */
 package org.knime.ext.box.filehandling.testing;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.knime.ext.box.filehandling.fs.BoxFileSystem;
 import org.knime.ext.box.filehandling.fs.BoxPath;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
 import org.knime.filehandling.core.testing.FSTestInitializer;
+
+import com.box.sdk.BoxFolder;
+import com.box.sdk.BoxItem;
 
 /**
  * {@link FSTestInitializer} for the Box file system.
@@ -73,19 +78,53 @@ public class BoxFSTestInitializer extends DefaultFSTestInitializer<BoxPath, BoxF
 
     @Override
     protected void beforeTestCaseInternal() throws IOException {
-        // TODO Auto-generated method stub
-
+        ensureDirectoryExists(getTestCaseScratchDir());
     }
 
     @Override
     protected void afterTestCaseInternal() throws IOException {
-        // TODO Auto-generated method stub
+        var folder = ensureDirectoryExists(getTestCaseScratchDir());
+        folder.delete(true);
+    }
 
+    @Override
+    @SuppressWarnings("resource")
+    public void afterClass() throws IOException {
+        var folder = ensureDirectoryExists(getFileSystem().getWorkingDirectory());
+        folder.delete(true);
     }
 
     @Override
     public BoxPath createFileWithContent(final String content, final String... pathComponents) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        var path = makePath(pathComponents);
+        var parentFolder = ensureDirectoryExists(path.getParent());
+        var is = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+        parentFolder.uploadFile(is, path.getFileName().toString());
+        return path;
+    }
+
+    @SuppressWarnings("resource")
+    private static BoxFolder ensureDirectoryExists(final BoxPath dir) {
+        var api = dir.getFileSystem().getApi();
+        var folder = BoxFolder.getRootFolder(api);
+
+        for (String name : dir.stringStream().toArray(String[]::new)) {
+            BoxItem.Info childInfo = null;
+
+            for (BoxItem.Info child : folder) {
+                if (name.equals(child.getName())) {
+                    childInfo = child;
+                    break;
+                }
+            }
+
+            if (childInfo == null) {
+                childInfo = folder.createFolder(name);
+            }
+
+            folder = new BoxFolder(api, childInfo.getID());
+        }
+
+        return folder;
     }
 }

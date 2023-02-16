@@ -44,77 +44,78 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-02-14 (Alexander Bondaletov): created
+ *   2023-02-16 (Alexander Bondaletov): created
  */
 package org.knime.ext.box.filehandling.fs;
 
-import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Path;
-import java.util.Collections;
+import java.nio.file.attribute.FileTime;
+import java.util.Date;
 
-import org.knime.filehandling.core.connections.base.BaseFileSystem;
+import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
-import com.box.sdk.BoxAPIConnection;
-import com.box.sdk.BoxAPIException;
+import com.box.sdk.BoxFile;
 import com.box.sdk.BoxFolder;
+import com.box.sdk.BoxItem;
 
 /**
- * The Box {@link FileSystem}.
+ * {@link BaseFileAttributes} implementation for the Box file system
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class BoxFileSystem extends BaseFileSystem<BoxPath> {
+class BoxFileAttributes extends BaseFileAttributes {
+
+    private final String m_itemId;
 
     /**
-     * Character to use as path separator
+     * @param path
+     *            The path.
+     * @param info
+     *            The box item info.
      */
-    public static final String SEPARATOR = "/";
+    public BoxFileAttributes(final BoxPath path, final BoxItem.Info info) {
+        super(info instanceof BoxFile.Info, //
+                path, //
+                toFileTime(info.getModifiedAt()), //
+                toFileTime(info.getModifiedAt()), //
+                toFileTime(info.getCreatedAt()), //
+                info.getSize(), //
+                false, //
+                !(info instanceof BoxFile.Info || info instanceof BoxFolder.Info), //
+                null);
+        m_itemId = info.getID();
+    }
 
-    private final BoxAPIConnection m_api;
-
-    /**
-     * @param cacheTTL
-     *            The time to live for cached elements in milliseconds.
-     * @param config
-     *            The file system configuration
-     * @throws IOException
-     */
-    protected BoxFileSystem(final long cacheTTL, final BoxFSConnectionConfig config) throws IOException {
-        super(new BoxFileSystemProvider(), cacheTTL, config.getWorkingDirectory(), config.createFSLocationSpec());
-        m_api = new BoxAPIConnection(config.getDeveloperToken());
-
-        try {
-            BoxFolder.getRootFolder(m_api).iterator().hasNext(); // NOSONAR just checking if we get an exception
-        } catch (BoxAPIException e) {
-            throw BoxUtils.toIOE(e, SEPARATOR);
+    private static FileTime toFileTime(final Date date) {
+        if (date == null) {
+            return FileTime.fromMillis(0);
+        } else {
+            return FileTime.from(date.toInstant());
         }
     }
 
     /**
-     * @return the api
+     * Creates attributes for the root directory.
+     *
+     * @param root
+     *            The root path.
      */
-    public BoxAPIConnection getApi() {
-        return m_api;
+    public BoxFileAttributes(final BoxPath root) {
+        super(false, //
+                root, //
+                FileTime.fromMillis(0), //
+                FileTime.fromMillis(0), //
+                FileTime.fromMillis(0), //
+                0, //
+                false, //
+                false, //
+                null);
+        m_itemId = null;
     }
 
-    @Override
-    protected void prepareClose() throws IOException {
-        // nothing to do
-    }
-
-    @Override
-    public BoxPath getPath(final String first, final String... more) {
-        return new BoxPath(this, first, more);
-    }
-
-    @Override
-    public String getSeparator() {
-        return SEPARATOR;
-    }
-
-    @Override
-    public Iterable<Path> getRootDirectories() {
-        return Collections.singletonList(getPath(SEPARATOR));
+    /**
+     * @return the itemId
+     */
+    public String getItemId() {
+        return m_itemId;
     }
 }

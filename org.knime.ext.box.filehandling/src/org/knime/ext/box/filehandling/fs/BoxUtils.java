@@ -59,7 +59,7 @@ import com.box.sdk.BoxAPIException;
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public final class BoxUtils {
+final class BoxUtils {
 
     private BoxUtils() {
     }

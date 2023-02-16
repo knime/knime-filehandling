@@ -44,77 +44,64 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-02-14 (Alexander Bondaletov): created
+ *   2023-02-16 (Alexander Bondaletov): created
  */
 package org.knime.ext.box.filehandling.fs;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.stream.StreamSupport;
 
-import org.knime.filehandling.core.connections.base.BaseFileSystem;
+import org.knime.filehandling.core.connections.base.BasePathIterator;
 
-import com.box.sdk.BoxAPIConnection;
 import com.box.sdk.BoxAPIException;
-import com.box.sdk.BoxFolder;
+import com.box.sdk.BoxItem;
 
 /**
- * The Box {@link FileSystem}.
+ * Iterator to iterate through {@link BoxPath}.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class BoxFileSystem extends BaseFileSystem<BoxPath> {
+class BoxPathIterator extends BasePathIterator<BoxPath> {
 
     /**
-     * Character to use as path separator
-     */
-    public static final String SEPARATOR = "/";
-
-    private final BoxAPIConnection m_api;
-
-    /**
-     * @param cacheTTL
-     *            The time to live for cached elements in milliseconds.
-     * @param config
-     *            The file system configuration
+     * @param path
+     * @param filter
      * @throws IOException
      */
-    protected BoxFileSystem(final long cacheTTL, final BoxFSConnectionConfig config) throws IOException {
-        super(new BoxFileSystemProvider(), cacheTTL, config.getWorkingDirectory(), config.createFSLocationSpec());
-        m_api = new BoxAPIConnection(config.getDeveloperToken());
-
+    protected BoxPathIterator(final BoxPath path, final Filter<? super Path> filter) throws IOException {
+        super(path, filter);
+        @SuppressWarnings("resource")
+        var boxFolder = ((BoxFileSystemProvider) path.getFileSystem().provider()).getBoxFolder(path);
+        var iterator = StreamSupport
+                .stream(boxFolder.getChildren(BoxFileSystemProvider.REQUIRED_FIELDS).spliterator(), false) //
+                .map(this::toPath) //
+                .iterator();
         try {
-            BoxFolder.getRootFolder(m_api).iterator().hasNext(); // NOSONAR just checking if we get an exception
-        } catch (BoxAPIException e) {
-            throw BoxUtils.toIOE(e, SEPARATOR);
+            setFirstPage(iterator);// NOSONAR standard pattern
+        } catch (BoxAPIException ex) {
+            throw BoxUtils.toIOE(ex, path.toString());
         }
     }
 
-    /**
-     * @return the api
-     */
-    public BoxAPIConnection getApi() {
-        return m_api;
+    @SuppressWarnings("resource")
+    private BoxPath toPath(final BoxItem.Info info) {
+        final var path = (BoxPath) m_path.resolve(info.getName());
+
+        var attrs = new BoxFileAttributes(path, info);
+        path.getFileSystem().addToAttributeCache(path, attrs);
+
+        return path;
     }
 
     @Override
-    protected void prepareClose() throws IOException {
-        // nothing to do
-    }
-
-    @Override
-    public BoxPath getPath(final String first, final String... more) {
-        return new BoxPath(this, first, more);
-    }
-
-    @Override
-    public String getSeparator() {
-        return SEPARATOR;
-    }
-
-    @Override
-    public Iterable<Path> getRootDirectories() {
-        return Collections.singletonList(getPath(SEPARATOR));
+    public BoxPath next() {
+        try {
+            return super.next();
+        } catch (BoxAPIException ex) {
+            throw new DirectoryIteratorException(BoxUtils.toIOE(ex, m_path.toString()));
+        }
     }
 }

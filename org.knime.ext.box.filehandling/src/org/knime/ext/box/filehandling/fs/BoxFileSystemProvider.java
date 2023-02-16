@@ -55,8 +55,11 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.util.Iterator;
 import java.util.Set;
@@ -64,12 +67,17 @@ import java.util.Set;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
+import com.box.sdk.BoxAPIException;
+import com.box.sdk.BoxFolder;
+
 /**
  * File system provider for the {@link BoxFileSystem}.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class BoxFileSystemProvider extends BaseFileSystemProvider<BoxPath, BoxFileSystem> {
+class BoxFileSystemProvider extends BaseFileSystemProvider<BoxPath, BoxFileSystem> {
+
+    static final String[] REQUIRED_FIELDS = new String[] { "name", "modified_at", "created_at", "size" };
 
     @Override
     protected SeekableByteChannel newByteChannelInternal(final BoxPath path, final Set<? extends OpenOption> options,
@@ -97,21 +105,50 @@ public class BoxFileSystemProvider extends BaseFileSystemProvider<BoxPath, BoxFi
     }
 
     @Override
-    protected Iterator<BoxPath> createPathIterator(final BoxPath dir, final Filter<? super Path> filter) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+    protected Iterator<BoxPath> createPathIterator(final BoxPath dir, final Filter<? super Path> filter)
+            throws IOException {
+        return new BoxPathIterator(dir, filter);
     }
 
     @Override
     protected void createDirectoryInternal(final BoxPath dir, final FileAttribute<?>... attrs) throws IOException {
-        // TODO Auto-generated method stub
-
+        var boxFolder = getBoxFolder(dir.getParent());
+        try {
+            boxFolder.createFolder(dir.getFileName().toString());
+        } catch (BoxAPIException ex) {
+            throw BoxUtils.toIOE(ex, dir.toString());
+        }
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected BaseFileAttributes fetchAttributesInternal(final BoxPath path, final Class<?> type) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        if (path.isRoot()) {
+            return new BoxFileAttributes(path);
+        }
+
+        var parentPath = path.getParent();
+        var boxFolder = getBoxFolder(parentPath);
+
+        try {
+            for (final var info : boxFolder.getChildren(REQUIRED_FIELDS)) {
+                var itemPath = (BoxPath) parentPath.resolve(info.getName());
+                var attrs = new BoxFileAttributes(itemPath, info);
+
+                if (info.getName().equals(path.getFileName().toString())) {
+                    // BoxItemIterator uses pagination under the hood, so it is better to break
+                    // early in order to avoid making unnecessary requests
+                    return attrs;
+                }
+
+                // cache attributes for items that already fetched anyway
+                path.getFileSystem().addToAttributeCache(itemPath, attrs);
+            }
+        } catch (BoxAPIException ex) {
+            throw BoxUtils.toIOE(ex, path.toString());
+        }
+
+        throw new NoSuchFileException(path.toString());
     }
 
     @Override
@@ -123,5 +160,27 @@ public class BoxFileSystemProvider extends BaseFileSystemProvider<BoxPath, BoxFi
     @Override
     protected void deleteInternal(final BoxPath path) throws IOException {
         // TODO Auto-generated method stub
+    }
+
+    /**
+     * Returns a {@link BoxFolder} object corresponding to a given path. Throws an
+     * exception if the path does not represent an existing directory.
+     *
+     * @return The {@link BoxFolder} object.
+     * @throws IOException
+     */
+    @SuppressWarnings("resource")
+    BoxFolder getBoxFolder(final BoxPath path) throws IOException {
+        var api = getFileSystemInternal().getApi();
+        if (path.isRoot()) {
+            return BoxFolder.getRootFolder(api);
+        } else {
+            var attrs = (BoxFileAttributes) readAttributes(path, BasicFileAttributes.class);
+            if (attrs.isDirectory()) {
+                return new BoxFolder(api, attrs.getItemId());
+            } else {
+                throw new NotDirectoryException(toString());
+            }
+        }
     }
 }
