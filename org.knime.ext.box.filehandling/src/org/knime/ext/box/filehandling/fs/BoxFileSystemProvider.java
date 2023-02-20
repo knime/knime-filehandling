@@ -68,6 +68,7 @@ import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
 import com.box.sdk.BoxAPIException;
+import com.box.sdk.BoxFile;
 import com.box.sdk.BoxFolder;
 
 /**
@@ -82,8 +83,7 @@ class BoxFileSystemProvider extends BaseFileSystemProvider<BoxPath, BoxFileSyste
     @Override
     protected SeekableByteChannel newByteChannelInternal(final BoxPath path, final Set<? extends OpenOption> options,
             final FileAttribute<?>... attrs) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return new BoxSeekableFileChannel(path, options);
     }
 
     @Override
@@ -94,8 +94,7 @@ class BoxFileSystemProvider extends BaseFileSystemProvider<BoxPath, BoxFileSyste
 
     @Override
     protected InputStream newInputStreamInternal(final BoxPath path, final OpenOption... options) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return new BoxInputStream(path);
     }
 
     @Override
@@ -181,6 +180,25 @@ class BoxFileSystemProvider extends BaseFileSystemProvider<BoxPath, BoxFileSyste
             } else {
                 throw new NotDirectoryException(toString());
             }
+        }
+    }
+
+    /**
+     * Returns a {@link BoxFile} object corresponding to a given path. Throws an
+     * exception if the path does no represent an existing file.
+     *
+     * @return The {@link BoxFile} object.
+     * @throws IOException
+     */
+    @SuppressWarnings("resource")
+    BoxFile getBoxFile(final BoxPath path) throws IOException {
+        var api = getFileSystemInternal().getApi();
+        var attrs = (BoxFileAttributes) readAttributes(path, BasicFileAttributes.class);
+
+        if (attrs.isRegularFile()) {
+            return new BoxFile(api, attrs.getItemId());
+        } else {
+            throw new IOException(toString() + " is not a file");
         }
     }
 }
