@@ -92,7 +92,7 @@ import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
     private static final Pattern EXTENSION_PATTERN = Pattern.compile("([z][0-9]+)|(zip)$", Pattern.CASE_INSENSITIVE); //NOSONAR
 
-    private final static NodeLogger LOGGER = NodeLogger.getLogger(ArchiveZipFileSystem.class);
+    private static final  NodeLogger LOGGER = NodeLogger.getLogger(ArchiveZipFileSystem.class);
 
     /**
      * Character to use as path separator
@@ -129,7 +129,7 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
         super(new ArchiveZipFileSystemProvider(), //
                 0, //
                 config.getWorkingDirectory(), //
-                config.createFSLocationSpec());
+                ArchiveZipFSConnectionConfig.createFSLocationSpec());
         List<SeekableByteChannel> byteChannels = null;
         ArchiveZipFile zipFile = null;
         try {

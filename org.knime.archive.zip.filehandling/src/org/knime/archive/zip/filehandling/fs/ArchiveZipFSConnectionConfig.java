@@ -144,7 +144,7 @@ public class ArchiveZipFSConnectionConfig extends BaseFSConnectionConfig impleme
      * @return the {@link FSLocationSpec} for the current ArchiveZip file system
      *         configuration.
      */
-    public DefaultFSLocationSpec createFSLocationSpec() {
+    public static DefaultFSLocationSpec createFSLocationSpec() {
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, ArchiveZipFSDescriptorProvider.FS_TYPE.getTypeId());
     }
 
