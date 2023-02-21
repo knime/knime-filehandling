@@ -101,23 +101,23 @@ class ArchiveZipConnectorNodeModel extends NodeModel {
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
         m_fsId = FSConnectionRegistry.getInstance().getKey();
         m_settings.configureInModel(inSpecs, m_statusConsumer);
-        final var config = m_settings.createFSConnectionConfig(m_statusConsumer);
-        return new PortObjectSpec[] { createSpec(config) };
+        return new PortObjectSpec[] { createSpec() };
     }
 
-    private FileSystemPortObjectSpec createSpec(final ArchiveZipFSConnectionConfig config) {
+    private FileSystemPortObjectSpec createSpec() {
         return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, //
                 m_fsId, //
-                config.createFSLocationSpec());
+                ArchiveZipFSConnectionConfig.createFSLocationSpec());
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
         final var config = m_settings.createFSConnectionConfig(m_statusConsumer); //NOSONAR
         m_fsConnection = new ArchiveZipFSConnection(config);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
-        return new PortObject[] { new FileSystemPortObject(createSpec(config)) };
+        return new PortObject[] { new FileSystemPortObject(createSpec()) };
     }
 
     @Override

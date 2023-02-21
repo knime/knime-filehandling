@@ -304,7 +304,7 @@ class ArchiveZipConnectorNodeSettings {
      */
     @SuppressWarnings("resource")
     ArchiveZipFSConnectionConfig createFSConnectionConfig(final Consumer<StatusMessage> statusConsumer)
-            throws InvalidSettingsException {
+            throws IOException, InvalidSettingsException {
         final var cfg = new ArchiveZipFSConnectionConfig(getWorkingDirectory());
         final var pathAccessor = m_file.createReadPathAccessor();
         try {
@@ -313,9 +313,9 @@ class ArchiveZipConnectorNodeSettings {
             cfg.setZipFilePath(zipFilePath);
             cfg.setUseDefaultEncoding(getUseDefaultEncodingModel().getBooleanValue());
             cfg.setEncoding(getEncoding());
-        } catch (Exception e) { //NOSONAR
+        } catch (IOException e) { //NOSONAR
             closeQuietly(pathAccessor);
-            throw new InvalidSettingsException("Unable to get the zip file path: " + e.getMessage(), e);
+            throw e;
         }
         return cfg;
     }
