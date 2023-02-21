@@ -81,8 +81,11 @@ public class BoxFileSystem extends BaseFileSystem<BoxPath> {
      * @throws IOException
      */
     protected BoxFileSystem(final long cacheTTL, final BoxFSConnectionConfig config) throws IOException {
-        super(new BoxFileSystemProvider(), cacheTTL, config.getWorkingDirectory(), config.createFSLocationSpec());
+        super(new BoxFileSystemProvider(), cacheTTL, config.getWorkingDirectory(),
+                BoxFSConnectionConfig.createFSLocationSpec());
         m_api = new BoxAPIConnection(config.getDeveloperToken());
+        m_api.setConnectTimeout(Math.toIntExact(config.getConnectionTimeout().toMillis()));
+        m_api.setReadTimeout(Math.toIntExact(config.getReadTimeout().toMillis()));
 
         try {
             BoxFolder.getRootFolder(m_api).iterator().hasNext(); // NOSONAR just checking if we get an exception

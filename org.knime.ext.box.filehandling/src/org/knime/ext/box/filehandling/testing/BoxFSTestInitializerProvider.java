@@ -93,6 +93,6 @@ public class BoxFSTestInitializerProvider extends DefaultFSTestInitializerProvid
 
     @Override
     public FSLocationSpec createFSLocationSpec(final Map<String, String> configuration) {
-        return createFSConnectionConfig(configuration).createFSLocationSpec();
+        return BoxFSConnectionConfig.createFSLocationSpec();
     }
 }

@@ -50,6 +50,7 @@ package org.knime.ext.box.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.EnumSet;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -62,7 +63,10 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 import org.knime.ext.box.filehandling.fs.BoxFSConnection;
+import org.knime.ext.box.filehandling.fs.BoxFSConnectionConfig;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
+import org.knime.filehandling.core.defaultnodesettings.status.NodeModelStatusConsumer;
+import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage.MessageType;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
@@ -73,6 +77,9 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  */
 public class BoxConnectorNodeModel extends NodeModel {
     private static final String FILE_SYSTEM_NAME = "Box";
+
+    private final NodeModelStatusConsumer m_statusConsumer = new NodeModelStatusConsumer(
+            EnumSet.of(MessageType.ERROR, MessageType.WARNING));
 
     private String m_fsId;
     private BoxFSConnection m_fsConnection;
@@ -88,6 +95,9 @@ public class BoxConnectorNodeModel extends NodeModel {
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+        m_settings.configureInModel(inSpecs, m_statusConsumer, getCredentialsProvider());
+        m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
+        m_settings.validate();
         m_fsId = FSConnectionRegistry.getInstance().getKey();
         return new PortObjectSpec[] { createSpec() };
     }
@@ -95,12 +105,12 @@ public class BoxConnectorNodeModel extends NodeModel {
     private FileSystemPortObjectSpec createSpec() {
         return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, //
                 m_fsId, //
-                m_settings.createFSConnectionConfig().createFSLocationSpec());
+                BoxFSConnectionConfig.createFSLocationSpec());
     }
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        var config = m_settings.createFSConnectionConfig();
+        var config = m_settings.createFSConnectionConfig(getCredentialsProvider());
         m_fsConnection = new BoxFSConnection(config);
 
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
@@ -122,17 +132,17 @@ public class BoxConnectorNodeModel extends NodeModel {
 
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_settings.save(settings);
+        m_settings.saveForModel(settings);
     }
 
     @Override
     protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.validate(settings);
+        m_settings.validateSettings(settings);
     }
 
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.load(settings);
+        m_settings.loadForModel(settings);
     }
 
     @Override

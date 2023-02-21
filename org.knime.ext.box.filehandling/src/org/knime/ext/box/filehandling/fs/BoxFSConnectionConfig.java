@@ -51,14 +51,14 @@ package org.knime.ext.box.filehandling.fs;
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
-import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
+import org.knime.filehandling.core.connections.meta.base.TimeoutFSConnectionConfig;
 
 /**
  * Configuration for the {@link BoxFSConnection}.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class BoxFSConnectionConfig extends BaseFSConnectionConfig {
+public class BoxFSConnectionConfig extends TimeoutFSConnectionConfig {
 
     private String m_developerToken;
 
@@ -92,7 +92,7 @@ public class BoxFSConnectionConfig extends BaseFSConnectionConfig {
      * @return the {@link FSLocationSpec} for the current Box file system
      *         configuration.
      */
-    public DefaultFSLocationSpec createFSLocationSpec() {
+    public static DefaultFSLocationSpec createFSLocationSpec() {
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, BoxFSDescriptorProvider.FS_TYPE.getTypeId());
     }
 }

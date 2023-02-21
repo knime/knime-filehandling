@@ -96,7 +96,7 @@ final class BoxUtils {
         IOException result = null;
         switch (ex.getResponseCode()) {
         case HttpURLConnection.HTTP_UNAUTHORIZED:
-            result = new AccessDeniedException(file, other, ex.getMessage());
+            result = new AccessDeniedException(file, other, "Authentication failure. Please check your credentials.");
             break;
         default:
             result = new IOException(ex.getMessage());

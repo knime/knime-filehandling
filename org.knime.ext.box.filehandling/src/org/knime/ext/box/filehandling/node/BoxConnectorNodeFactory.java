@@ -76,12 +76,12 @@ public class BoxConnectorNodeFactory extends NodeFactory<BoxConnectorNodeModel> 
 
     @Override
     protected boolean hasDialog() {
-        return false;
+        return true;
     }
 
     @Override
     protected NodeDialogPane createNodeDialogPane() {
-        return null;
+        return new BoxConnectorNodeDialog();
     }
 
 }
