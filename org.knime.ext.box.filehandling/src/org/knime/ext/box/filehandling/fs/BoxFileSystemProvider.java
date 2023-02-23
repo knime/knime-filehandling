@@ -51,6 +51,7 @@ package org.knime.ext.box.filehandling.fs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -61,6 +62,8 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -97,10 +100,14 @@ class BoxFileSystemProvider extends BaseFileSystemProvider<BoxPath, BoxFileSyste
         return new BoxInputStream(path);
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected OutputStream newOutputStreamInternal(final BoxPath path, final OpenOption... options) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        // we have to use the channel because before uploading we have to know the file
+        // size. The channel implementation is based on TempFileSeekableByteChannel
+        // which buffers the file locally before writing.
+        final var opts = new HashSet<>(Arrays.asList(options));
+        return Channels.newOutputStream(newByteChannel(path, opts));
     }
 
     @Override

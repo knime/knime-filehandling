@@ -49,6 +49,8 @@
 package org.knime.ext.box.filehandling.fs;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -56,12 +58,18 @@ import java.util.Set;
 
 import org.knime.filehandling.core.connections.base.TempFileSeekableByteChannel;
 
+import com.box.sdk.BoxAPIException;
+
 /**
  * {@link TempFileSeekableByteChannel} implementation for the Box file system.
  *
  * @author Alexander Bondaletov, Redfield SE
  */
 public class BoxSeekableFileChannel extends TempFileSeekableByteChannel<BoxPath> {
+
+    // Maximum allowed file size for a simple upload is 50MB and minimum allowed
+    // file size for a multipart upload is 20MB
+    private static final long SIMPLE_UPLOAD_SIZE_THRESHOLD = 30L * 1024 * 1024; // 30MB
 
     /**
      * @param file
@@ -81,8 +89,49 @@ public class BoxSeekableFileChannel extends TempFileSeekableByteChannel<BoxPath>
 
     @Override
     public void copyToRemote(final BoxPath remoteFile, final Path tempFile) throws IOException {
-        // TODO Auto-generated method stub
-
+        var size = Files.size(tempFile);
+        try (var in = Files.newInputStream(tempFile)) {
+            if (Files.exists(remoteFile)) {
+                uploadNewVersion(remoteFile, in, size);
+            } else {
+                uploadNewFile(remoteFile, in, size);
+            }
+        } catch (BoxAPIException ex) {
+            throw BoxUtils.toIOE(ex, remoteFile.toString());
+        }
     }
 
+    @SuppressWarnings("resource")
+    private static void uploadNewVersion(final BoxPath remoteFile, final InputStream in, final long size)
+            throws IOException {
+        var boxFile = ((BoxFileSystemProvider) remoteFile.getFileSystem().provider()).getBoxFile(remoteFile);
+
+        if (size < SIMPLE_UPLOAD_SIZE_THRESHOLD) {
+            boxFile.uploadNewVersion(in);
+        } else {
+            try {
+                boxFile.uploadLargeFile(in, size);
+            } catch (InterruptedException ex) {// NOSONAR rethrown as InterruptedIOException
+                throw (IOException) new InterruptedIOException().initCause(ex);
+            }
+        }
+    }
+
+    @SuppressWarnings("resource")
+    private static void uploadNewFile(final BoxPath remoteFile, final InputStream in, final long size)
+            throws IOException {
+        var name = remoteFile.getFileName().toString();
+        var boxFolder = ((BoxFileSystemProvider) remoteFile.getFileSystem().provider())
+                .getBoxFolder(remoteFile.getParent());
+
+        if (size < SIMPLE_UPLOAD_SIZE_THRESHOLD) {
+            boxFolder.uploadFile(in, name);
+        } else {
+            try {
+                boxFolder.uploadLargeFile(in, name, size);
+            } catch (InterruptedException ex) {// NOSONAR rethrown as InterruptedIOException
+                throw (IOException) new InterruptedIOException().initCause(ex);
+            }
+        }
+    }
 }
