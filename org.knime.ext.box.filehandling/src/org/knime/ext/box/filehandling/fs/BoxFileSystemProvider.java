@@ -67,6 +67,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
@@ -91,8 +92,47 @@ class BoxFileSystemProvider extends BaseFileSystemProvider<BoxPath, BoxFileSyste
 
     @Override
     protected void copyInternal(final BoxPath source, final BoxPath target, final CopyOption... options) throws IOException {
-        // TODO Auto-generated method stub
+        if (readAttributes(source, BasicFileAttributes.class).isDirectory()) {
+            if (!existsCached(target)) {
+                createDirectory(target);
+            }
+        } else {
+            copyFile(source, target);
+        }
+    }
 
+    private void copyFile(final BoxPath source, final BoxPath target) throws IOException {
+        if (existsCached(target)) {
+            delete(target);
+        }
+
+        var sourceBoxFile = getBoxFile(source);
+        var targetParentBoxFolder = getBoxFolder(target.getParent());
+        var targetName = target.getFileName().toString();
+
+        try {
+            sourceBoxFile.copy(targetParentBoxFolder, targetName);
+        } catch (BoxAPIException ex) {
+            throw BoxUtils.toIOE(ex, source.toString(), target.toString());
+        }
+    }
+
+    @Override
+    protected void moveInternal(final BoxPath source, final BoxPath target, final CopyOption... options)
+            throws IOException {
+        if (existsCached(target)) {
+            delete(target);
+        }
+
+        var sourceBoxItem = FSFiles.isDirectory(source) ? getBoxFolder(source) : getBoxFile(source);
+        var targetParentBoxFolder = getBoxFolder(target.getParent());
+        var targetName = target.getFileName().toString();
+
+        try {
+            sourceBoxItem.move(targetParentBoxFolder, targetName);
+        } catch (BoxAPIException ex) {
+            throw BoxUtils.toIOE(ex, source.toString(), target.toString());
+        }
     }
 
     @Override
@@ -165,7 +205,31 @@ class BoxFileSystemProvider extends BaseFileSystemProvider<BoxPath, BoxFileSyste
 
     @Override
     protected void deleteInternal(final BoxPath path) throws IOException {
-        // TODO Auto-generated method stub
+        if (readAttributes(path, BasicFileAttributes.class).isDirectory()) {
+            deleteFolder(path);
+        } else {
+            deleteFile(path);
+        }
+    }
+
+    private void deleteFolder(final BoxPath path) throws IOException {
+        var boxFolder = getBoxFolder(path);
+
+        try {
+            boxFolder.delete(false);
+        } catch (BoxAPIException ex) {
+            throw BoxUtils.toIOE(ex, path.toString());
+        }
+    }
+
+    private void deleteFile(final BoxPath path) throws IOException {
+        var boxFile = getBoxFile(path);
+
+        try {
+            boxFile.delete();
+        } catch (BoxAPIException ex) {
+            throw BoxUtils.toIOE(ex, path.toString());
+        }
     }
 
     /**
