@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
 <plugin>
-   <extension
+   <!-- <extension
          point="org.knime.workbench.repository.nodes">
       <node
             category-path="/io/connectors"
@@ -10,4 +10,5 @@
    <extension point="org.knime.filehandling.core.FSDescriptorProvider">
       <FSDescriptorProvider class="org.knime.ext.box.filehandling.fs.BoxFSDescriptorProvider" />
    </extension>
+   -->
 </plugin>
