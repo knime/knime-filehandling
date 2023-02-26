@@ -98,6 +98,9 @@ final class BoxUtils {
         case HttpURLConnection.HTTP_UNAUTHORIZED:
             result = new AccessDeniedException(file, other, "Authentication failure. Please check your credentials.");
             break;
+        case HttpURLConnection.HTTP_FORBIDDEN:
+            result = new AccessDeniedException(file, other, ex.getMessage());
+            break;
         default:
             result = new IOException(ex.getMessage());
             break;

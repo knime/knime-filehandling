@@ -51,14 +51,20 @@ package org.knime.ext.box.filehandling.fs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Collections;
 import java.util.Set;
 
+import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.TempFileSeekableByteChannel;
 
 import com.box.sdk.BoxAPIException;
+import com.box.sdk.BoxFile;
+import com.box.sdk.BoxFolder;
 
 /**
  * {@link TempFileSeekableByteChannel} implementation for the Box file system.
@@ -71,6 +77,11 @@ public class BoxSeekableFileChannel extends TempFileSeekableByteChannel<BoxPath>
     // file size for a multipart upload is 20MB
     private static final long SIMPLE_UPLOAD_SIZE_THRESHOLD = 30L * 1024 * 1024; // 30MB
 
+    private static final Set<OpenOption> WRITE_OPTIONS = Set.of(StandardOpenOption.CREATE,
+            StandardOpenOption.CREATE_NEW, StandardOpenOption.APPEND, StandardOpenOption.WRITE);
+
+    private static final String PERMISSIONS_FIELD = "permissions";
+
     /**
      * @param file
      *            The file for the channel.
@@ -80,6 +91,37 @@ public class BoxSeekableFileChannel extends TempFileSeekableByteChannel<BoxPath>
      */
     protected BoxSeekableFileChannel(final BoxPath file, final Set<? extends OpenOption> options) throws IOException {
         super(file, options);
+
+        if (!Collections.disjoint(options, WRITE_OPTIONS)) {
+            checkWritePermissions(file);
+        }
+    }
+
+    private static void checkWritePermissions(final BoxPath file) throws IOException {
+        try {
+            var canUpload = FSFiles.exists(file) ? canUploadNewVersion(file) : canUploadToFolder(file.getParent());
+
+            if (!canUpload) {
+                throw new AccessDeniedException(file.toString(), null, "Insufficient permissions");
+            }
+        } catch (BoxAPIException ex) {
+            throw BoxUtils.toIOE(ex, file.toString());
+        }
+
+    }
+
+    @SuppressWarnings("resource")
+    private static boolean canUploadToFolder(final BoxPath dir) throws IOException {
+        var boxFolder = ((BoxFileSystemProvider) dir.getFileSystem().provider()).getBoxFolder(dir);
+        var info = boxFolder.getInfo(PERMISSIONS_FIELD);
+        return info.getPermissions().contains(BoxFolder.Permission.CAN_UPLOAD);
+    }
+
+    @SuppressWarnings("resource")
+    private static boolean canUploadNewVersion(final BoxPath file) throws IOException {
+        var boxFolder = ((BoxFileSystemProvider) file.getFileSystem().provider()).getBoxFile(file);
+        var info = boxFolder.getInfo(PERMISSIONS_FIELD);
+        return info.getPermissions().contains(BoxFile.Permission.CAN_UPLOAD);
     }
 
     @Override
