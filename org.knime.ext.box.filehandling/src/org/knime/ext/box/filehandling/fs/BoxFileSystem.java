@@ -54,10 +54,13 @@ import java.nio.file.Path;
 import java.util.Collections;
 
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
+import org.knime.okhttp3.OkHttpProxyAuthenticator;
 
 import com.box.sdk.BoxAPIConnection;
 import com.box.sdk.BoxAPIException;
 import com.box.sdk.BoxFolder;
+
+import okhttp3.OkHttpClient.Builder;
 
 /**
  * The Box {@link FileSystem}.
@@ -83,7 +86,13 @@ public class BoxFileSystem extends BaseFileSystem<BoxPath> {
     protected BoxFileSystem(final long cacheTTL, final BoxFSConnectionConfig config) throws IOException {
         super(new BoxFileSystemProvider(), cacheTTL, config.getWorkingDirectory(),
                 BoxFSConnectionConfig.createFSLocationSpec());
-        m_api = new BoxAPIConnection(config.getDeveloperToken());
+        m_api = new BoxAPIConnection(config.getDeveloperToken()) {
+            @Override
+            protected Builder modifyHttpClientBuilder(final Builder httpClientBuilder) {
+                httpClientBuilder.proxyAuthenticator(new OkHttpProxyAuthenticator());
+                return super.modifyHttpClientBuilder(httpClientBuilder);
+            }
+        };
         m_api.setConnectTimeout(Math.toIntExact(config.getConnectionTimeout().toMillis()));
         m_api.setReadTimeout(Math.toIntExact(config.getReadTimeout().toMillis()));
 

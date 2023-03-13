@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.knime.ext.box</groupId>
 	<artifactId>box-fetch-jars</artifactId>
-	<version>2.4.6</version>
+	<version>4.0.0</version>
 	<packaging>pom</packaging>
 
 	<name>Jar fetcher for box-java-sdk</name>
@@ -37,7 +37,7 @@
 		<dependency>
 			<groupId>com.box</groupId>
 			<artifactId>box-java-sdk</artifactId>
-			<version>2.32.0</version>
+			<version>4.0.0</version>
 		</dependency>
 	</dependencies>
 
@@ -53,7 +53,7 @@
 						<configuration>
 							<includeScope>runtime</includeScope>
 							<outputDirectory>../</outputDirectory>
-							<excludeGroupIds>org.slf4j</excludeGroupIds>
+							<excludeGroupIds>org.slf4j, com.squareup, org.jetbrains</excludeGroupIds>
 						</configuration>
 						<phase>package</phase>
 						<goals>
@@ -65,7 +65,7 @@
                         <configuration>
                             <includeScope>runtime</includeScope>
                             <outputDirectory>../</outputDirectory>
-                            <excludeGroupIds>org.slf4j</excludeGroupIds>
+                            <excludeGroupIds>org.slf4j, com.squareup, org.jetbrains</excludeGroupIds>
                             <classifier>sources</classifier>
                         </configuration>
                         <phase>package</phase>
