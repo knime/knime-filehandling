@@ -49,9 +49,10 @@
 
 package org.knime.ext.ssh.filehandling.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -62,11 +63,11 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSFileSystem;
 import org.knime.filehandling.core.connections.FSFileSystemProvider;
@@ -179,22 +180,26 @@ public class AdditionalProviderTests {
      *
      * @throws IOException
      */
-    @Test(expected = AccessDeniedException.class)
+    @Test
     public void test_throws_accessDeniedException() throws IOException {
         FSPath path = m_fileSystem.getPath("/root/1");
-        m_provider.createDirectory(path);
+        assertThrows(AccessDeniedException.class, () -> {
+            m_provider.createDirectory(path);
+        });
     }
 
     /**
      * Tests access denied exception while attempted to list of root user's home
      * folder
-     * 
+     *
      * @throws IOException
      */
-    @Test(expected = AccessDeniedException.class)
+    @Test
     public void test_list_root_folder() throws IOException {
         FSPath path = m_fileSystem.getPath("/root");
-        Files.list(path);
+        assertThrows(AccessDeniedException.class, () -> {
+            Files.list(path);
+        });
     }
 
     /**
@@ -202,7 +207,7 @@ public class AdditionalProviderTests {
      *
      * @throws IOException
      */
-    @After
+    @AfterEach
     public void afterTestCase() throws IOException {
         if (m_tmpDir != null) {
             FSFiles.deleteRecursively(m_tmpDir);
@@ -215,7 +220,7 @@ public class AdditionalProviderTests {
      * @throws IOException
      */
     @SuppressWarnings("unchecked")
-    @Before
+    @BeforeEach
     public void beforeTestCase() throws IOException {
         this.m_fileSystem = (FSFileSystem<FSPath>) m_connection.getFileSystem();
         this.m_provider = (FSFileSystemProvider<FSPath, FSFileSystem<FSPath>>) m_fileSystem.provider();
@@ -230,8 +235,8 @@ public class AdditionalProviderTests {
      *
      * @throws IOException
      */
-    @BeforeClass
-    public static void beforeClass() throws IOException {
+    @BeforeAll
+    public static void beforeAll() throws IOException {
         m_connection = FsTestUtils.createConnection();
     }
 
@@ -240,8 +245,8 @@ public class AdditionalProviderTests {
      *
      * @throws IOException
      */
-    @AfterClass
-    public static void afterClass() throws IOException {
+    @AfterAll
+    public static void afterAll() throws IOException {
         if (m_connection != null) {
             m_connection.close();
             m_connection = null;

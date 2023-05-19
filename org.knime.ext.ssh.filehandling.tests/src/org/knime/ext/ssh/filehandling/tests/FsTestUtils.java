@@ -49,15 +49,19 @@
 
 package org.knime.ext.ssh.filehandling.tests;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
 
+import org.eclipse.core.runtime.FileLocator;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
-import org.knime.ext.ssh.filehandling.fs.SshFSConnectionConfig;
 import org.knime.ext.ssh.filehandling.fs.SshFSConnection;
+import org.knime.ext.ssh.filehandling.fs.SshFSConnectionConfig;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * Utilities for SSH file system tests.
@@ -65,6 +69,9 @@ import org.knime.ext.ssh.filehandling.fs.SshFSConnection;
  *
  */
 public class FsTestUtils {
+
+    private static final String RESOURCES_FOLDER = "resources";
+
     /**
      * Default constructor.
      */
@@ -114,5 +121,30 @@ public class FsTestUtils {
         });
 
         return new SshFSConnection(cfg);
+    }
+
+    /**
+     * @param name
+     *            of a file to find
+     * @return file
+     * @throws IOException
+     *             if file not found
+     */
+    public static File findInPlugin(final String name) throws IOException {
+        final var thisBundle = FrameworkUtil.getBundle(FsTestUtils.class);
+
+        // this works when running tests in maven
+        var url = FileLocator.find(thisBundle, new org.eclipse.core.runtime.Path(name), null);
+        if (url != null) {
+            return new File(FileLocator.toFileURL(url).getPath());
+        }
+
+        // this works when running tests in Eclipse
+        url = FileLocator.find(thisBundle, new org.eclipse.core.runtime.Path(RESOURCES_FOLDER).append(name), null);
+        if (url != null) {
+            return new File(FileLocator.toFileURL(url).getPath());
+        }
+
+        throw new FileNotFoundException(thisBundle.getLocation() + name);
     }
 }
