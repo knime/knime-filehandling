@@ -76,16 +76,8 @@ import java.util.concurrent.TimeoutException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import org.apache.cxf.Bus;
-import org.apache.cxf.BusFactory;
 import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.message.Message;
@@ -93,9 +85,18 @@ import org.apache.cxf.transport.http.HTTPConduitFactory;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator.AuthenticationCloseable;
+import org.knime.cxf.CXFUtil;
 import org.knime.ext.http.filehandling.fs.HttpFSConnectionConfig.Auth;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
+
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 /**
  * Class that allows to make HTTP requests. Instances of this are heavy-weight
@@ -144,7 +145,7 @@ final class HttpClient {
         final Builder request = target.request();
 
         // make sure that the AsyncHTTPConduitFactory is *not* used
-        final Bus bus = BusFactory.getThreadDefaultBus();
+        final Bus bus = CXFUtil.getThreadDefaultBus(getClass());
         bus.setExtension(null, HTTPConduitFactory.class);
 
         if (m_config.getAuthType() == Auth.BASIC) {
