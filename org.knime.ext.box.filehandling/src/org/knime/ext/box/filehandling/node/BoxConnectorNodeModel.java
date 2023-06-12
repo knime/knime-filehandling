@@ -62,6 +62,9 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.credentials.base.CredentialPortObject;
+import org.knime.credentials.base.CredentialPortObjectSpec;
+import org.knime.credentials.base.oauth.api.AccessTokenCredential;
 import org.knime.ext.box.filehandling.fs.BoxFSConnection;
 import org.knime.ext.box.filehandling.fs.BoxFSConnectionConfig;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
@@ -89,15 +92,24 @@ public class BoxConnectorNodeModel extends NodeModel {
      * Creates new instance
      */
     protected BoxConnectorNodeModel() {
-        super(new PortType[] {}, new PortType[] { FileSystemPortObject.TYPE });
+        super(new PortType[] { CredentialPortObject.TYPE }, new PortType[] { FileSystemPortObject.TYPE });
         m_settings = new BoxConnectorSettings();
     }
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-        m_settings.configureInModel(inSpecs, m_statusConsumer, getCredentialsProvider());
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
         m_settings.validate();
+
+        if (inSpecs[0] != null) {
+            final var optType = ((CredentialPortObjectSpec) inSpecs[0]).getCredentialType();
+            if (optType.isPresent() && optType.get() != AccessTokenCredential.TYPE) {
+                throw new InvalidSettingsException(String.format("Provided credential (via input port) is of type '%s', but should be '%s'",//
+                        optType.get().getName(),//
+                        AccessTokenCredential.TYPE.getName()));
+            }
+        }
+
         m_fsId = FSConnectionRegistry.getInstance().getKey();
         return new PortObjectSpec[] { createSpec() };
     }
@@ -110,7 +122,12 @@ public class BoxConnectorNodeModel extends NodeModel {
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        var config = m_settings.createFSConnectionConfig(getCredentialsProvider());
+        var credential = ((CredentialPortObject) inObjects[0]).getCredential(AccessTokenCredential.class)
+                .orElseThrow(() -> new InvalidSettingsException(
+                        "Credential is not available. Please re-execute the authenticator node"));
+        var token = credential.getAccessToken();
+
+        var config = m_settings.createFSConnectionConfig(token);
         m_fsConnection = new BoxFSConnection(config);
 
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);

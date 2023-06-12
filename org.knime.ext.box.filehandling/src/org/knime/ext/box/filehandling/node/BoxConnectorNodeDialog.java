@@ -53,7 +53,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.IOException;
-import java.util.Arrays;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -65,18 +64,17 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 
+import org.knime.core.node.DataAwareNodeDialogPane;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
-import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.node.port.PortObject;
+import org.knime.credentials.base.CredentialPortObject;
+import org.knime.credentials.base.oauth.api.AccessTokenCredential;
 import org.knime.ext.box.filehandling.fs.BoxFSConnection;
 import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.base.auth.AuthPanel;
-import org.knime.filehandling.core.connections.base.auth.AuthSettings;
-import org.knime.filehandling.core.connections.base.auth.SingleSecretAuthProviderPanel;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 
 /**
@@ -84,13 +82,15 @@ import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class BoxConnectorNodeDialog extends NodeDialogPane {
+public class BoxConnectorNodeDialog extends DataAwareNodeDialogPane {
 
     private final BoxConnectorSettings m_settings;
-    private final AuthPanel m_authPanel;
 
     private final WorkingDirectoryChooser m_workingDirChooser;
+
     private final ChangeListener m_workdirListener;
+
+    private CredentialPortObject m_credentialPortObject;
 
     /**
      * Creates new instance.
@@ -101,13 +101,6 @@ public class BoxConnectorNodeDialog extends NodeDialogPane {
         m_workingDirChooser = new WorkingDirectoryChooser("box.workingDir", this::createFSConnection);
         m_workdirListener = e -> m_settings.getWorkingDirectoryModel()
                 .setStringValue(m_workingDirChooser.getSelectedWorkingDirectory());
-
-        var authSettings = m_settings.getAuthSettings();
-        m_authPanel = new AuthPanel(authSettings, //
-                Arrays.asList( //
-                        new SingleSecretAuthProviderPanel("Developer Token",
-                                authSettings.getSettingsForAuthType(BoxConnectorSettings.DEVELOPER_TOKEN_AUTH),
-                                this::getCredentialsProvider)));
 
         addTab("Settings", createSettingsPanel());
         addTab("Advanced", createAdvancedPanel());
@@ -120,21 +113,17 @@ public class BoxConnectorNodeDialog extends NodeDialogPane {
             throw new IOException(e.getMessage(), e);
         }
 
-        final var credentialsProvider = getCredentialsProvider();
-        final var config = m_settings.createFSConnectionConfig(credentialsProvider);
+        var accessToken = m_credentialPortObject.getCredential(AccessTokenCredential.class).orElseThrow(
+                () -> new IOException("Credential is not available. Please re-execute the authenticator node"));
+
+        final var config = m_settings.createFSConnectionConfig(accessToken.getAccessToken());
         return new BoxFSConnection(config);
     }
 
     private Component createSettingsPanel() {
         var box = new Box(BoxLayout.Y_AXIS);
-        box.add(createAuthPanel());
         box.add(createFilesystemPanel());
         return box;
-    }
-
-    private JComponent createAuthPanel() {
-        m_authPanel.setBorder(BorderFactory.createTitledBorder("Authentication"));
-        return m_authPanel;
     }
 
     private JComponent createFilesystemPanel() {
@@ -217,7 +206,6 @@ public class BoxConnectorNodeDialog extends NodeDialogPane {
     protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
         validateBeforeSaving();
         m_settings.saveForDialog(settings);
-        m_authPanel.saveSettingsTo(settings.addNodeSettings(AuthSettings.KEY_AUTH));
     }
 
     private void validateBeforeSaving() {
@@ -225,16 +213,16 @@ public class BoxConnectorNodeDialog extends NodeDialogPane {
     }
 
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObject[] input)
             throws NotConfigurableException {
 
         try {
-            m_authPanel.loadSettingsFrom(settings.getNodeSettings(AuthSettings.KEY_AUTH), specs);
             m_settings.loadSettingsForDialog(settings);
-        } catch (InvalidSettingsException | NotConfigurableException ex) { // NOSONAR
+        } catch (InvalidSettingsException ex) { // NOSONAR
             // ignore
         }
 
+        m_credentialPortObject = (CredentialPortObject) input[0];
         settingsLoaded();
     }
 

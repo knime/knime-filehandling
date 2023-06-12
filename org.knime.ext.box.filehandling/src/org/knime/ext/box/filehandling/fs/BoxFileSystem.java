@@ -86,7 +86,7 @@ public class BoxFileSystem extends BaseFileSystem<BoxPath> {
     protected BoxFileSystem(final long cacheTTL, final BoxFSConnectionConfig config) throws IOException {
         super(new BoxFileSystemProvider(), cacheTTL, config.getWorkingDirectory(),
                 BoxFSConnectionConfig.createFSLocationSpec());
-        m_api = new BoxAPIConnection(config.getDeveloperToken()) {
+        m_api = new BoxAPIConnection(config.getAccessToken()) {
             @Override
             protected Builder modifyHttpClientBuilder(final Builder httpClientBuilder) {
                 httpClientBuilder.proxyAuthenticator(new OkHttpProxyAuthenticator());

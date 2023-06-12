@@ -51,6 +51,9 @@
     </fullDescription>
     
     <ports>
+    	<inPort index="0" name="Box Credential">
+    		Box Credential
+    	</inPort>
         <outPort index="0" name="Box File System Connection">
              Box File System Connection
         </outPort>

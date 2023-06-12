@@ -49,21 +49,15 @@
 package org.knime.ext.box.filehandling.node;
 
 import java.time.Duration;
-import java.util.function.Consumer;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
-import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.ext.box.filehandling.fs.BoxFSConnectionConfig;
 import org.knime.ext.box.filehandling.fs.BoxFileSystem;
-import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.AuthType;
-import org.knime.filehandling.core.connections.base.auth.SingleSecretAuthProviderSettings;
-import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
 
 /**
  * Node settings for the Box Connector
@@ -82,7 +76,6 @@ public class BoxConnectorSettings {
     public static final AuthType DEVELOPER_TOKEN_AUTH = new AuthType("developerToken", "Developer Token",
             "Authenticate with the developer token");
 
-    private final AuthSettings m_authSettings;
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelIntegerBounded m_connectionTimeout;
     private final SettingsModelIntegerBounded m_readTimeout;
@@ -91,22 +84,10 @@ public class BoxConnectorSettings {
      * Creates new instance
      */
     public BoxConnectorSettings() {
-        m_authSettings = new AuthSettings.Builder() //
-                .add(new SingleSecretAuthProviderSettings(DEVELOPER_TOKEN_AUTH)) //
-                .defaultType(DEVELOPER_TOKEN_AUTH) //
-                .build();
-
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, BoxFileSystem.SEPARATOR);
         m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT, DEFAULT_TIMEOUT, 0,
                 Integer.MAX_VALUE);
         m_readTimeout = new SettingsModelIntegerBounded(KEY_READ_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
-    }
-
-    /**
-     * @return the authSettings
-     */
-    public AuthSettings getAuthSettings() {
-        return m_authSettings;
     }
 
     /**
@@ -166,7 +147,6 @@ public class BoxConnectorSettings {
      */
     public void saveForModel(final NodeSettingsWO settings) {
         save(settings);
-        m_authSettings.saveSettingsForModel(settings.addNodeSettings(AuthSettings.KEY_AUTH));
     }
 
     /**
@@ -178,7 +158,6 @@ public class BoxConnectorSettings {
      */
     public void saveForDialog(final NodeSettingsWO settings) {
         save(settings);
-        // m_authSettings are also saved by AuthenticationDialog
     }
 
     private void load(final NodeSettingsRO settings) throws InvalidSettingsException {
@@ -197,7 +176,6 @@ public class BoxConnectorSettings {
      */
     public void loadForModel(final NodeSettingsRO settings) throws InvalidSettingsException {
         load(settings);
-        m_authSettings.loadSettingsForModel(settings.getNodeSettings(AuthSettings.KEY_AUTH));
     }
 
     /**
@@ -210,12 +188,6 @@ public class BoxConnectorSettings {
      */
     public void loadSettingsForDialog(final NodeSettingsRO settings) throws InvalidSettingsException {
         load(settings);
-        // m_authSettings are loaded by AuthenticationDialog
-    }
-
-    void configureInModel(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer,
-            final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
-        m_authSettings.configureInModel(inSpecs, statusConsumer, credentialsProvider);
     }
 
     /**
@@ -227,7 +199,6 @@ public class BoxConnectorSettings {
      * @throws InvalidSettingsException
      */
     public void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_authSettings.validateSettings(settings.getNodeSettings(AuthSettings.KEY_AUTH));
         m_workingDirectory.validateSettings(settings);
         m_connectionTimeout.validateSettings(settings);
         m_readTimeout.validateSettings(settings);
@@ -239,23 +210,19 @@ public class BoxConnectorSettings {
      * @throws InvalidSettingsException
      */
     public void validate() throws InvalidSettingsException {
-        m_authSettings.validate();
-
         var workDir = m_workingDirectory.getStringValue();
         if (workDir.isEmpty() || !workDir.startsWith(BoxFileSystem.SEPARATOR)) {
             throw new InvalidSettingsException("Working directory must be set to an absolute path.");
         }
     }
 
-    BoxFSConnectionConfig createFSConnectionConfig(final CredentialsProvider credentialsProvider) {
+    BoxFSConnectionConfig createFSConnectionConfig(final String accessToken) {
         var config = new BoxFSConnectionConfig(getWorkingDirectory());
 
         config.setConnectionTimeout(getConnectionTimeout());
         config.setReadTimeout(getReadTimeout());
 
-        var tokenSettings = (SingleSecretAuthProviderSettings) getAuthSettings()
-                .getSettingsForAuthType(DEVELOPER_TOKEN_AUTH);
-        config.setDeveloperToken(tokenSettings.getSecret(credentialsProvider));
+        config.setAccessToken(accessToken);
 
         return config;
     }

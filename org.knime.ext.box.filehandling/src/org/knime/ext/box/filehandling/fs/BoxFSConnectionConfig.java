@@ -60,7 +60,7 @@ import org.knime.filehandling.core.connections.meta.base.TimeoutFSConnectionConf
  */
 public class BoxFSConnectionConfig extends TimeoutFSConnectionConfig {
 
-    private String m_developerToken;
+    private String m_accessToken;
 
     /**
      * @param workingDirectory
@@ -71,18 +71,18 @@ public class BoxFSConnectionConfig extends TimeoutFSConnectionConfig {
     }
 
     /**
-     * @return the developerToken
+     * @return the access token
      */
-    public String getDeveloperToken() {
-        return m_developerToken;
+    public String getAccessToken() {
+        return m_accessToken;
     }
 
     /**
-     * @param developerToken
-     *            the developerToken to set
+     * @param accessToken
+     *            the access token to set
      */
-    public void setDeveloperToken(final String developerToken) {
-        m_developerToken = developerToken;
+    public void setAccessToken(final String accessToken) {
+        m_accessToken = accessToken;
     }
 
     /**

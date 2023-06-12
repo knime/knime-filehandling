@@ -82,7 +82,7 @@ public class BoxFSTestInitializerProvider extends DefaultFSTestInitializerProvid
         final String workDir = generateRandomizedWorkingDir(getParameter(configuration, WORKING_DIR_PREFIX),
                 BoxFileSystem.SEPARATOR);
         var config = new BoxFSConnectionConfig(workDir);
-        config.setDeveloperToken(getParameter(configuration, DEVELOPER_TOKEN));
+        config.setAccessToken(getParameter(configuration, DEVELOPER_TOKEN));
         return config;
     }
 
