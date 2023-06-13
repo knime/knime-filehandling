@@ -64,9 +64,9 @@ import org.knime.core.webui.node.dialog.defaultdialog.rule.OneOfEnumCondition;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
-import org.knime.credentials.base.oauth.api.scribejava.InteractiveLogin;
 
 import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.model.Verb;
@@ -201,8 +201,8 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
      */
     static OAuth2AccessToken doLogin(final BoxAuthenticatorSettings settings) throws Exception {
         try (var service = settings.createService()) {
-            return new InteractiveLogin(service, URI.create(settings.m_redirectUrl))//
-                    .login("");
+            return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl))//
+                    .login(null);
         }
     }
 

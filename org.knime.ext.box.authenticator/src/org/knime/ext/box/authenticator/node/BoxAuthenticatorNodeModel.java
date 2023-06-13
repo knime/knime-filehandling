@@ -54,13 +54,11 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeModel;
 import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialCache;
-import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.credentials.base.CredentialType;
+import org.knime.credentials.base.node.AuthenticatorNodeModel;
 import org.knime.credentials.base.oauth.api.AccessTokenCredential;
+import org.knime.credentials.base.oauth.api.scribejava.ClientCredentialsFlow;
 import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
 import org.knime.ext.box.authenticator.node.BoxAuthenticatorSettings.AuthType;
 import org.knime.ext.box.authenticator.node.BoxAuthenticatorSettings.AuthenticateAs;
@@ -75,7 +73,7 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class BoxAuthenticatorNodeModel extends WebUINodeModel<BoxAuthenticatorSettings> {
+public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthenticatorSettings> {
 
     /**
      * @param configuration
@@ -86,17 +84,9 @@ public class BoxAuthenticatorNodeModel extends WebUINodeModel<BoxAuthenticatorSe
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs, final BoxAuthenticatorSettings modelSettings)
+    protected void validate(final PortObjectSpec[] inSpecs, final BoxAuthenticatorSettings settings)
             throws InvalidSettingsException {
-        validate(modelSettings);
-        return new PortObjectSpec[] { createSpec(null) };
-    }
 
-    private static CredentialPortObjectSpec createSpec(final CredentialType type) {
-        return new CredentialPortObjectSpec(type);
-    }
-
-    private static void validate(final BoxAuthenticatorSettings settings) throws InvalidSettingsException {
         if (StringUtils.isEmpty(settings.m_clientId)) {
             throw new InvalidSettingsException("Client ID is required");
         }
@@ -118,14 +108,15 @@ public class BoxAuthenticatorNodeModel extends WebUINodeModel<BoxAuthenticatorSe
     }
 
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
-            final BoxAuthenticatorSettings modelSettings) throws Exception {
-        var credential = fetchCredential(modelSettings);
-        var uuid = CredentialCache.store(credential);
-        return new PortObject[] { new CredentialPortObject(createSpec(credential.getType()), uuid) };
+    protected final CredentialPortObjectSpec createSpecInConfigure(final PortObjectSpec[] inSpecs,
+            final BoxAuthenticatorSettings modelSettings) {
+        // Box issues string access token which are not JWTs
+        return new CredentialPortObjectSpec(AccessTokenCredential.TYPE);
     }
 
-    private static Credential fetchCredential(final BoxAuthenticatorSettings settings) throws Exception {
+    @Override
+    protected Credential createCredential(final PortObject[] inObjects, final ExecutionContext exec,
+            final BoxAuthenticatorSettings settings) throws Exception {
 
         var scribeJavaToken = fetchAccessToken(settings);
         return CredentialFactory.fromScribeToken(scribeJavaToken, settings::createService);
@@ -136,7 +127,7 @@ public class BoxAuthenticatorNodeModel extends WebUINodeModel<BoxAuthenticatorSe
         switch (settings.m_authType) {
         case CLIENT_CREDENTIALS:
             try (var service = settings.createService()) {
-                return service.getAccessTokenClientCredentialsGrant();
+                return new ClientCredentialsFlow(service).login(null);
             }
         case OAUTH:
             return BoxAuthenticatorSettings.doLogin(settings);
