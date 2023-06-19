@@ -61,7 +61,6 @@ import org.knime.credentials.base.oauth.api.AccessTokenCredential;
 import org.knime.credentials.base.oauth.api.scribejava.ClientCredentialsFlow;
 import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
 import org.knime.ext.box.authenticator.node.BoxAuthenticatorSettings.AuthType;
-import org.knime.ext.box.authenticator.node.BoxAuthenticatorSettings.AuthenticateAs;
 
 import com.github.scribejava.core.model.OAuth2AccessToken;
 
@@ -96,13 +95,8 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
                 throw new InvalidSettingsException("Client secret is required");
             }
 
-            if (settings.m_authenticateAs == AuthenticateAs.SERVICE_ACCOUNT
-                    && StringUtils.isEmpty(settings.m_enterpriseId)) {
+            if (StringUtils.isEmpty(settings.m_enterpriseId)) {
                 throw new InvalidSettingsException("Enterprise ID is required");
-            }
-
-            if (settings.m_authenticateAs == AuthenticateAs.MANAGED_USER && StringUtils.isEmpty(settings.m_userId)) {
-                throw new InvalidSettingsException("User ID is required");
             }
         }
     }

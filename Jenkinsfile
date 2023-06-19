@@ -35,10 +35,22 @@ try {
                 workflowTests.runTests(
                     dependencies: [
                         repositories: [
-                            'knime-filehandling', 'knime-datageneration', 'knime-xml',
-                            'knime-js-core', 'knime-js-base', 'knime-server-client', 'knime-com-shared',
-                            'knime-productivity-oss', 'knime-reporting', 'knime-jfreechart', 'knime-distance',
-                            'knime-streaming', 'knime-kerberos', 'knime-ensembles', 'knime-gateway'
+                            'knime-gateway',
+                            'knime-credentials-base',
+                            'knime-filehandling',
+                            'knime-datageneration',
+                            'knime-xml',
+                            'knime-js-core',
+                            'knime-js-base',
+                            'knime-server-client',
+                            'knime-com-shared',
+                            'knime-productivity-oss',
+                            'knime-reporting',
+                            'knime-jfreechart',
+                            'knime-distance',
+                            'knime-streaming',
+                            'knime-kerberos',
+                            'knime-ensembles'
                         ]
                     ],
                     sidecarContainers: [

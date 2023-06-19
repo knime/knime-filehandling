@@ -55,14 +55,13 @@ import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.And;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Expression;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Not;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.OneOfEnumCondition;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
@@ -80,10 +79,10 @@ import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthent
  */
 @SuppressWarnings("restriction")
 public class BoxAuthenticatorSettings implements DefaultNodeSettings {
+
     private static final String PARAM_BOX_SUBJECT_TYPE = "box_subject_type";
     private static final String PARAM_BOX_SUBJECT_ID = "box_subject_id";
     private static final String ENTERPRISE_SUBJECT_TYPE = "enterprise";
-    private static final String USER_SUBJECT_TYPE = "user";
 
     private static final CustomApi20 BOX_API = new CustomApi20("https://api.box.com/oauth2/token", //
             "https://account.box.com/api/oauth2/authorize", //
@@ -101,34 +100,16 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     @Widget(title = "Type", description = "Authentication method to use.")
     @Layout(AuthenticationSection.class)
     @Signal(condition = AuthTypeIsClientCreds.class)
+    @ValueSwitchWidget
     AuthType m_authType = AuthType.OAUTH;
-
-    @Widget(title = "Authenticate as", description = """
-            Whether to authenticate as a <a href="https://developer.box.com/guides/getting-started/user-types/service-account/">
-            service account</a> or as a <a href="https://developer.box.com/guides/getting-started/user-types/managed-users/">managed user.</a>
-            """)
-    @Layout(AuthenticationSection.class)
-    @Signal(condition = AuthenticateAsServiceAccount.class)
-    @Effect(signals = AuthTypeIsClientCreds.class, type = EffectType.SHOW)
-    AuthenticateAs m_authenticateAs = AuthenticateAs.SERVICE_ACCOUNT;
 
     @Widget(title = "Enterprise ID", description = """
             The Box Enterprise ID when authenticating as a <a href="https://developer.box.com/guides/getting-started/user-types/service-account/">
             service account</a>.
             """)
     @Layout(AuthenticationSection.class)
-    @Effect(signals = { AuthTypeIsClientCreds.class,
-            AuthenticateAsServiceAccount.class }, type = EffectType.SHOW, operation = And.class)
+    @Effect(signals = { AuthTypeIsClientCreds.class }, type = EffectType.SHOW)
     String m_enterpriseId;
-
-    @Widget(title = "User ID", description = """
-            The Box User ID when authenticating as a <a href="https://developer.box.com/guides/getting-started/user-types/managed-users/">
-            managed user.</a>
-            """)
-    @Layout(AuthenticationSection.class)
-    @Effect(signals = { AuthTypeIsClientCreds.class,
-            AuthenticateAsServiceAccount.class }, type = EffectType.SHOW, operation = AndNot.class)
-    String m_userId;
 
     @Widget(title = "Redirect URL (should be http://localhost:XXXXX)", description = """
             The redirect URL to be used at the end of the interactive login. Should be chosen as http://localhost:XXXXX
@@ -146,34 +127,12 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     @Section(title = "Authentication method")
     @After(BoxAppSection.class)
     interface AuthenticationSection {
-
     }
 
     static class AuthTypeIsClientCreds extends OneOfEnumCondition<AuthType> {
         @Override
         public AuthType[] oneOf() {
             return new AuthType[] { AuthType.CLIENT_CREDENTIALS };
-        }
-
-    }
-
-    static class AuthenticateAsServiceAccount extends OneOfEnumCondition<AuthenticateAs> {
-
-        @Override
-        public AuthenticateAs[] oneOf() {
-            return new AuthenticateAs[] { AuthenticateAs.SERVICE_ACCOUNT };
-        }
-
-    }
-
-    /**
-     * first && !second operation
-     */
-    @SuppressWarnings({ "rawtypes" })
-    public static final class AndNot extends And {
-        @SuppressWarnings({ "unchecked", "javadoc" })
-        public AndNot(final Expression first, final Expression second) {
-            super(first, new Not(second));
         }
     }
 
@@ -183,10 +142,6 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
 
         @Label("Client credentials")
         CLIENT_CREDENTIALS;
-    }
-
-    enum AuthenticateAs {
-        SERVICE_ACCOUNT, MANAGED_USER;
     }
 
     /**
@@ -218,16 +173,8 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         }
 
         if (m_authType == AuthType.CLIENT_CREDENTIALS) {
-            String subjectType;
-            String subjectId;
-
-            if (m_authenticateAs == AuthenticateAs.SERVICE_ACCOUNT) {
-                subjectType = ENTERPRISE_SUBJECT_TYPE;
-                subjectId = m_enterpriseId;
-            } else {
-                subjectType = USER_SUBJECT_TYPE;
-                subjectId = m_userId;
-            }
+            var subjectType = ENTERPRISE_SUBJECT_TYPE;
+            var subjectId = m_enterpriseId;
 
             builder.additionalRequestBodyField(PARAM_BOX_SUBJECT_TYPE, subjectType);
             builder.additionalRequestBodyField(PARAM_BOX_SUBJECT_ID, subjectId);

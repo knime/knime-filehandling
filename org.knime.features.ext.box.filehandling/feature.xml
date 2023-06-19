@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="org.knime.features.ext.box.filehandling"
-      label="KNIME Box File System Connector"
+      label="KNIME Box File Handling Extension"
       version="5.0.0.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland"
       plugin="org.knime.base.filehandling">
 
    <description>
-      This feature contains nodes to connect to FTP, HTTPS and SSH
-file systems, as well as nodes to support URIs and binary
-objects.
+      This feature contains nodes to authenticate to and connect to Box
+      (https://www.box.com).
    </description>
 
    <copyright>
@@ -729,6 +728,10 @@ interoperation with KNIME.  The owner of a Node may freely choose the
 license terms applicable to such Node, including when such Node is
 propagated with or for interoperation with KNIME.
    </license>
+   
+   <requires>
+      <import feature="org.knime.features.credentials.base" version="0.0.0"/>
+   </requires>
 
    <plugin
          id="org.knime.ext.box.filehandling"

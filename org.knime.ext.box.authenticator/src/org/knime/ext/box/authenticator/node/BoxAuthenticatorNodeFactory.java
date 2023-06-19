@@ -75,17 +75,12 @@ public class BoxAuthenticatorNodeFactory extends WebUINodeFactory<BoxAuthenticat
                     <ul>
                     <li>Create a <a href="https://developer.box.com/guides/applications/custom-apps/">Custom App</a> in Box. While creating
                     the app choose the authentication method you want to use in KNIME (OAuth 2.0 or Client Credentials Grant).</li>
-                    <li>For Client Credentials Grant, configure the app as follows:
-                        <ul>
-                            <li>App Access Level = App + Enterprise Access <it>(to be able to access enterprise files/folders)</it></li>
-                            <li>Application Scopes = Write all files and folders stored in Box</li>
-                        </ul>
+                    <li>For Client Credentials Grant, configure the app as follows: Set <b>Access Level = App + Enterprise Access</b>
+                        (to be able to access files/folders of your Box enterprise), and <b>Application Scopes = Write all files and
+                        folders stored in Box.</b>
                     </li>
-                    <li>For OAuth 2.0, configure the app as follows:
-                        <ul>
-                            <li>OAuth 2.0 Redirect URI = <tt>http://localhost</tt></li>
-                            <li>Application Scopes = Write all files and folders stored in Box</li>
-                        </ul>
+                    <li>For OAuth 2.0, configure the app as follows: Set <b>OAuth 2.0 Redirect URI = http://localhost</b>, and
+                        <b>Application Scopes = Write all files and folders stored in Box.</b>
                     </li>
                     <li>Request approval of your app <a href="https://developer.box.com/guides/authorization/custom-app-approval/">
                         as described here.</a></li>
