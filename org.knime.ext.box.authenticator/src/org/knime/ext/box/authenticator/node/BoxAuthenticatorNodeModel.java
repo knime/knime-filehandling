@@ -86,15 +86,16 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
     protected void validate(final PortObjectSpec[] inSpecs, final BoxAuthenticatorSettings settings)
             throws InvalidSettingsException {
 
-        if (StringUtils.isEmpty(settings.m_clientId)) {
-            throw new InvalidSettingsException("Client ID is required");
+        if (StringUtils.isEmpty(settings.m_clientCredentialsFlowVariable)) {
+            throw new InvalidSettingsException("Flow variable with client ID and secret is missing");
+        }
+
+        if (!getCredentialsProvider().listNames().contains(settings.m_clientCredentialsFlowVariable)) {
+            throw new InvalidSettingsException(String.format("Cannot find chosen credentials flow variable '%s'",
+                    settings.m_clientCredentialsFlowVariable));
         }
 
         if (settings.m_authType == AuthType.CLIENT_CREDENTIALS) {
-            if (StringUtils.isEmpty(settings.m_clientSecret)) {
-                throw new InvalidSettingsException("Client secret is required");
-            }
-
             if (StringUtils.isEmpty(settings.m_enterpriseId)) {
                 throw new InvalidSettingsException("Enterprise ID is required");
             }
@@ -113,18 +114,19 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
             final BoxAuthenticatorSettings settings) throws Exception {
 
         var scribeJavaToken = fetchAccessToken(settings);
-        return CredentialFactory.fromScribeToken(scribeJavaToken, settings::createService);
+        return CredentialFactory.fromScribeToken(scribeJavaToken,
+                () -> settings.createService(getCredentialsProvider()));
     }
 
-    private static OAuth2AccessToken fetchAccessToken(final BoxAuthenticatorSettings settings) throws Exception {
+    private OAuth2AccessToken fetchAccessToken(final BoxAuthenticatorSettings settings) throws Exception {
 
         switch (settings.m_authType) {
         case CLIENT_CREDENTIALS:
-            try (var service = settings.createService()) {
+            try (var service = settings.createService(getCredentialsProvider())) {
                 return new ClientCredentialsFlow(service).login(null);
             }
         case OAUTH:
-            return BoxAuthenticatorSettings.doLogin(settings);
+            return BoxAuthenticatorSettings.doLogin(getCredentialsProvider(), settings);
         default:
             throw new IllegalArgumentException("Usupported auth type: " + settings.m_authType);
         }

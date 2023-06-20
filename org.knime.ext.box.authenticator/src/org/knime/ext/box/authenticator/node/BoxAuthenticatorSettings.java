@@ -51,6 +51,8 @@ package org.knime.ext.box.authenticator.node;
 import java.net.URI;
 
 import org.apache.commons.lang3.StringUtils;
+import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.node.workflow.VariableType.CredentialsType;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
@@ -60,6 +62,8 @@ import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Not;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.OneOfEnumCondition;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
@@ -89,13 +93,20 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
             Verb.POST, //
             RequestBodyAuthenticationScheme.instance());
 
-    @Widget(title = "Client ID", description = "The client ID of your Custom App in Box.")
-    @Layout(BoxAppSection.class)
-    String m_clientId;
+    /**
+     * A {@link ChoicesProvider} yielding choices for credential flow variables.
+     */
+    static final class CredentialFlowVarChoicesProvider implements ChoicesProvider {
+        @Override
+        public String[] choices(final SettingsCreationContext context) {
+            return context.getAvailableInputFlowVariables(CredentialsType.INSTANCE).keySet().toArray(String[]::new);
+        }
+    }
 
-    @Widget(title = "Client Secret", description = "The client secret of your Custom App in Box.")
+    @Widget(title = "Client ID and Secret", description = "")
+    @ChoicesWidget(choices = CredentialFlowVarChoicesProvider.class, showNoneColumn = false)
     @Layout(BoxAppSection.class)
-    String m_clientSecret;
+    String m_clientCredentialsFlowVariable = "";
 
     @Widget(title = "Type", description = "Authentication method to use.")
     @Layout(AuthenticationSection.class)
@@ -154,8 +165,9 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
      * @throws Exception
      *             if the login failed for some reason.
      */
-    static OAuth2AccessToken doLogin(final BoxAuthenticatorSettings settings) throws Exception {
-        try (var service = settings.createService()) {
+    static OAuth2AccessToken doLogin(final CredentialsProvider credsProvider, final BoxAuthenticatorSettings settings)
+            throws Exception {
+        try (var service = settings.createService(credsProvider)) {
             return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl))//
                     .login(null);
         }
@@ -166,10 +178,14 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
      *
      * @return The {@link OAuth20Service} instance.
      */
-    public OAuth20Service createService() {
-        var builder = new CustomOAuth2ServiceBuilder(m_clientId);
-        if (!StringUtils.isEmpty(m_clientSecret)) {
-            builder.apiSecret(m_clientSecret);
+    OAuth20Service createService(final CredentialsProvider credsProvider) {
+        var creds = credsProvider.get(m_clientCredentialsFlowVariable);
+        var clientId = creds.getLogin();
+        var clientSecret = creds.getPassword();
+
+        var builder = new CustomOAuth2ServiceBuilder(clientId);
+        if (!StringUtils.isEmpty(clientSecret)) {
+            builder.apiSecret(clientSecret);
         }
 
         if (m_authType == AuthType.CLIENT_CREDENTIALS) {
