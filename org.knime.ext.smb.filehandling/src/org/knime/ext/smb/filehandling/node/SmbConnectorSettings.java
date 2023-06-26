@@ -57,6 +57,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
@@ -88,6 +89,7 @@ class SmbConnectorSettings {
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_TIMEOUT = "timeout";
     private static final String KEY_SMB_VERSION = "smbVersion";
+    private static final String KEY_USE_ENCRYPTION = "useEncryption";
 
     private static final int DEFAULT_PORT = 445;
     private static final int DEFAULT_TIMEOUT = 30;
@@ -102,6 +104,7 @@ class SmbConnectorSettings {
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelIntegerBounded m_timeout;
     private SmbProtocolVersion m_protocolVersion;
+    private final SettingsModelBoolean m_useEncryption;
 
     /**
      * Creates new instance
@@ -127,6 +130,7 @@ class SmbConnectorSettings {
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, SmbFileSystem.SEPARATOR);
         m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
         m_protocolVersion = SmbProtocolVersion.V_2_X;
+        m_useEncryption = new SettingsModelBoolean(KEY_USE_ENCRYPTION, false);
     }
 
     /**
@@ -269,6 +273,20 @@ class SmbConnectorSettings {
         m_protocolVersion = protocolVersion;
     }
 
+    /**
+     * @return the encryptData
+     */
+    public boolean getUseEncryption() {
+        return m_useEncryption.getBooleanValue();
+    }
+
+    /**
+     * @return the encrypt data model
+     */
+    public SettingsModelBoolean getUseEncryptionModel() {
+        return m_useEncryption;
+    }
+
     private void save(final NodeSettingsWO settings) {
         settings.addString(KEY_CONNECTION_MODE, m_connectionMode.getSettingsValue());
         m_fileserverHost.saveSettingsTo(settings);
@@ -279,6 +297,7 @@ class SmbConnectorSettings {
         m_workingDirectory.saveSettingsTo(settings);
         m_timeout.saveSettingsTo(settings);
         settings.addString(KEY_SMB_VERSION, m_protocolVersion.getKey());
+        m_useEncryption.saveSettingsTo(settings);
     }
 
     /**
@@ -319,6 +338,11 @@ class SmbConnectorSettings {
             m_protocolVersion = SmbProtocolVersion.fromKey(settings.getString(KEY_SMB_VERSION));
         } else {
             m_protocolVersion = SmbProtocolVersion.V_2_X;
+        }
+        if (settings.containsKey(KEY_USE_ENCRYPTION)) {
+            m_useEncryption.loadSettingsFrom(settings);
+        } else {
+            m_useEncryption.setBooleanValue(false);
         }
     }
 
@@ -373,6 +397,9 @@ class SmbConnectorSettings {
 
         if (settings.containsKey(KEY_SMB_VERSION)) {
             SmbProtocolVersion.fromKey(settings.getString(KEY_SMB_VERSION));
+        }
+        if (settings.containsKey(KEY_USE_ENCRYPTION)) {
+            m_useEncryption.validateSettings(settings);
         }
     }
 
@@ -446,6 +473,7 @@ class SmbConnectorSettings {
 
         config.setTimeout(getTimeout());
         config.setProtocolVersion(m_protocolVersion);
+        config.setUseEncryption(getUseEncryption());
 
         return config;
     }
