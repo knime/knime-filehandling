@@ -105,6 +105,12 @@
         		Selecting <b>Auto</b> option will make the node to choose the highest version supported by
         		both this node and the SMB server.
         	</option>
+        	<option name="Use encryption">
+        	   If enabled the node will use 
+        	   <a href="https://learn.microsoft.com/en-us/windows-server/storage/file-server/smb-security#smb-encryption">SMB Encryption</a> 
+        	   that provides SMB data end-to-end encryption if also supported by the SMB server. 
+        	   This option requires SMB versions 3.x.
+        	</option>
         </tab>
     </fullDescription>
     

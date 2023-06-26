@@ -100,6 +100,8 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
     public static final AuthType GUEST_AUTH_TYPE = new AuthType("guest", "Guest",
             "Authenticate as the Guest user (without password)");
 
+    private boolean m_useEncryption = false;
+
     /**
      *
      * Enum representing different connection modes.
@@ -347,6 +349,21 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
      */
     public void setProtocolVersion(final SmbProtocolVersion protocolVersion) {
         m_protocolVersion = protocolVersion;
+    }
+
+    /**
+     * @param useEncryption
+     *            <code>true</code> if the data should be encrypted
+     */
+    public void setUseEncryption(final boolean useEncryption) {
+        m_useEncryption = useEncryption;
+    }
+
+    /**
+     * @return <code>true</code> if data encryption should be enabled
+     */
+    public boolean getUseEncryption() {
+        return m_useEncryption;
     }
 
     /**

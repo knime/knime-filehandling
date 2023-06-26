@@ -75,6 +75,7 @@ import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.port.PortObjectSpec;
@@ -113,6 +114,8 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
     private final DialogComponentString m_domainName;
     private final DialogComponentString m_domainNamespace;
 
+    private final DialogComponentBoolean m_useEncryption;
+
     private final AuthPanel m_authPanel;
 
     private final JComboBox<SmbProtocolVersion> m_protocolVersionCombo;
@@ -140,6 +143,9 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
                 30);
         m_domainNamespace = new DialogComponentString(m_settings.getDomainNamespaceModel(), "Share/Namespace:", false,
                 30);
+
+        m_useEncryption = new DialogComponentBoolean(m_settings.getUseEncryptionModel(),
+                "Use encryption (requires SMB3.x");
 
         m_workingDirChooser = new WorkingDirectoryChooser("smb.workingDir", this::createFSConnection);
         m_workdirListener = e -> m_settings.getWorkingDirectoryModel()
@@ -310,6 +316,7 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         final var gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.NONE;
+        gbc.insets = new Insets(0, 10, 0, 0);
         gbc.weightx = 0;
         gbc.weighty = 0;
         gbc.gridx = 0;
@@ -319,7 +326,13 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         gbc.gridy += 1;
         panel.add(new JLabel("SMB version(s): "), gbc);
 
+        gbc.gridy += 1;
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        panel.add(m_useEncryption.getComponentPanel(), gbc);
+
         gbc.weightx = 1;
+        gbc.gridwidth = 1;
         gbc.gridy = 0;
         gbc.gridx += 1;
         panel.add(timeout.getComponentPanel(), gbc);
@@ -327,6 +340,12 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
         gbc.gridy += 1;
         gbc.insets = new Insets(0, 10, 0, 0);
         panel.add(m_protocolVersionCombo, gbc);
+
+        gbc.gridy++;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(Box.createVerticalGlue(), gbc);
 
         gbc.fill = GridBagConstraints.BOTH;
         gbc.gridx = 0;
