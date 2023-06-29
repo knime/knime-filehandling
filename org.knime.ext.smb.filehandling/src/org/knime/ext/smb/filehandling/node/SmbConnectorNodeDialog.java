@@ -145,7 +145,7 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
                 30);
 
         m_useEncryption = new DialogComponentBoolean(m_settings.getUseEncryptionModel(),
-                "Use encryption (requires SMB3.x");
+                "Use encryption (requires SMB3.x)");
 
         m_workingDirChooser = new WorkingDirectoryChooser("smb.workingDir", this::createFSConnection);
         m_workdirListener = e -> m_settings.getWorkingDirectoryModel()
