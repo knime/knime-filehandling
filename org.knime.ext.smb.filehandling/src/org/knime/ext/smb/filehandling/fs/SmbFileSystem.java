@@ -109,13 +109,8 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
         final var builder = SmbConfig.builder() //
                 .withMultiProtocolNegotiate(true) //
                 .withDfsEnabled(config.getConnectionMode() == ConnectionMode.DOMAIN) //
-                .withTimeout(config.getTimeout().toSeconds(), TimeUnit.SECONDS);
-
-        if (config.getUseEncryption()) {
-            // explicitly enable encryption is selected BUT do not disable it since 3.1.1 is
-            // automatically taking care of it as long as we DO NOT explicitly disable it
-            builder.withEncryptData(true);
-        }
+                .withTimeout(config.getTimeout().toSeconds(), TimeUnit.SECONDS) //
+                .withEncryptData(config.getUseEncryption());
 
         config.getProtocolVersion().getDialect().ifPresent(builder::withDialects);
 
