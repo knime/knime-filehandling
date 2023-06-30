@@ -88,9 +88,9 @@ public class BoxAuthenticatorNodeFactory extends WebUINodeFactory<BoxAuthenticat
                     </ul>
                     </p>
                     <p>
-                    <b>Note:</b> If <i>OAuth 2<i/> is selected, the node can currently only be executed in KNIME Analytics Platform,
+                    <b>Note:</b> If <i>OAuth 2</i> is selected, the node can currently only be executed in KNIME Analytics Platform,
                     i.e. execution on KNIME (Business) Hub, KNIME Server, or via Remote Workflow Editor will fail. Authentication
-                    via <i>Client Credentials<i/> should work in all cases.
+                    via <i>Client Credentials</i> should work in all cases.
                     </p>
             """;
 
