@@ -48,13 +48,13 @@
  */
 package org.knime.ext.box.authenticator.node;
 
-import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.credentials.base.Credential;
+import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.credentials.base.node.AuthenticatorNodeModel;
 import org.knime.credentials.base.oauth.api.AccessTokenCredential;
@@ -74,6 +74,10 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 @SuppressWarnings("restriction")
 public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthenticatorSettings> {
 
+    private static final String LOGIN_FIRST_ERROR = "Please use the configuration dialog to log in first.";
+
+    private OAuth2AccessTokenHolder m_tokenHolder;
+
     /**
      * @param configuration
      *            The node configuration.
@@ -83,21 +87,24 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
     }
 
     @Override
-    protected void validate(final PortObjectSpec[] inSpecs, final BoxAuthenticatorSettings settings)
+    protected void validateOnConfigure(final PortObjectSpec[] inSpecs, final BoxAuthenticatorSettings settings)
             throws InvalidSettingsException {
 
-        if (StringUtils.isEmpty(settings.m_clientCredentialsFlowVariable)) {
-            throw new InvalidSettingsException("Flow variable with client ID and secret is missing");
-        }
+        settings.validate(getCredentialsProvider());
 
-        if (!getCredentialsProvider().listNames().contains(settings.m_clientCredentialsFlowVariable)) {
-            throw new InvalidSettingsException(String.format("Cannot find chosen credentials flow variable '%s'",
-                    settings.m_clientCredentialsFlowVariable));
-        }
-
-        if (settings.m_authType == AuthType.CLIENT_CREDENTIALS) {
-            if (StringUtils.isEmpty(settings.m_enterpriseId)) {
-                throw new InvalidSettingsException("Enterprise ID is required");
+        if (settings.m_authType == AuthType.OAUTH) {
+            // in this case we must have already fetched the token in the node dialog
+            if (settings.m_tokenCacheKey == null) {
+                throw new InvalidSettingsException(LOGIN_FIRST_ERROR);
+            } else {
+                m_tokenHolder = CredentialCache.<OAuth2AccessTokenHolder>get(settings.m_tokenCacheKey)//
+                        .orElseThrow(() -> new InvalidSettingsException(LOGIN_FIRST_ERROR));
+            }
+        } else {
+            // we have an access token from a previous interactive login -> remove it
+            if (m_tokenHolder != null) {
+                CredentialCache.delete(m_tokenHolder.m_cacheKey);
+                m_tokenHolder = null;
             }
         }
     }
@@ -126,9 +133,20 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
                 return new ClientCredentialsFlow(service).login(null);
             }
         case OAUTH:
-            return BoxAuthenticatorSettings.doLogin(getCredentialsProvider(), settings);
+            // in this case we already fetched the token in the node dialog
+            return m_tokenHolder.m_token;
         default:
             throw new IllegalArgumentException("Usupported auth type: " + settings.m_authType);
+        }
+    }
+
+    @Override
+    protected void onDisposeInternal() {
+        // dispose of the scribejava token that was retrieved interactively in the node
+        // dialog
+        if (m_tokenHolder != null) {
+            CredentialCache.delete(m_tokenHolder.m_cacheKey);
+            m_tokenHolder = null;
         }
     }
 }

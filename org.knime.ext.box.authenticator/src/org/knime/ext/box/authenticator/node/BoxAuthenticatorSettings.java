@@ -49,24 +49,33 @@
 package org.knime.ext.box.authenticator.node;
 
 import java.net.URI;
+import java.util.UUID;
+import java.util.concurrent.Future;
 
 import org.apache.commons.lang3.StringUtils;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.KNIMEConstants;
+import org.knime.core.node.NodeLogger;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.node.workflow.VariableType.CredentialsType;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.core.webui.node.dialog.defaultdialog.dataservice.DialogDataServiceHandlerResult;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.NodeSettingsPersistorWithConfigKey;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Not;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.OneOfEnumCondition;
 import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.button.CancelableActionHandler;
+import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
@@ -84,6 +93,8 @@ import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthent
 @SuppressWarnings("restriction")
 public class BoxAuthenticatorSettings implements DefaultNodeSettings {
 
+    private static final NodeLogger LOG = NodeLogger.getLogger(BoxAuthenticatorSettings.class);
+
     private static final String PARAM_BOX_SUBJECT_TYPE = "box_subject_type";
     private static final String PARAM_BOX_SUBJECT_ID = "box_subject_id";
     private static final String ENTERPRISE_SUBJECT_TYPE = "enterprise";
@@ -93,44 +104,6 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
             Verb.POST, //
             RequestBodyAuthenticationScheme.instance());
 
-    /**
-     * A {@link ChoicesProvider} yielding choices for credential flow variables.
-     */
-    static final class CredentialFlowVarChoicesProvider implements ChoicesProvider {
-        @Override
-        public String[] choices(final SettingsCreationContext context) {
-            return context.getAvailableInputFlowVariables(CredentialsType.INSTANCE).keySet().toArray(String[]::new);
-        }
-    }
-
-    @Widget(title = "Client ID and Secret", description = "")
-    @ChoicesWidget(choices = CredentialFlowVarChoicesProvider.class, showNoneColumn = false)
-    @Layout(BoxAppSection.class)
-    String m_clientCredentialsFlowVariable = "";
-
-    @Widget(title = "Type", description = "Authentication method to use.")
-    @Layout(AuthenticationSection.class)
-    @Signal(condition = AuthTypeIsClientCreds.class)
-    @ValueSwitchWidget
-    AuthType m_authType = AuthType.OAUTH;
-
-    @Widget(title = "Enterprise ID", description = """
-            The Box Enterprise ID when authenticating as a <a href="https://developer.box.com/guides/getting-started/user-types/service-account/">
-            service account</a>.
-            """)
-    @Layout(AuthenticationSection.class)
-    @Effect(signals = { AuthTypeIsClientCreds.class }, type = EffectType.SHOW)
-    String m_enterpriseId;
-
-    @Widget(title = "Redirect URL (should be http://localhost:XXXXX)", description = """
-            The redirect URL to be used at the end of the interactive login. Should be chosen as http://localhost:XXXXX
-            where XXXXX is a random number in the 10000 - 65000 range to avoid conflicts. The redirect URL is part of the
-            App configuration in Box.
-            """)
-    @Layout(AuthenticationSection.class)
-    @Effect(signals = { AuthTypeIsClientCreds.class }, type = EffectType.SHOW, operation = Not.class)
-    String m_redirectUrl = "http://localhost:33749/";
-
     @Section(title = "Box App")
     interface BoxAppSection {
     }
@@ -138,12 +111,11 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     @Section(title = "Authentication method")
     @After(BoxAppSection.class)
     interface AuthenticationSection {
-    }
+        interface TypeSwitcher {
+        }
 
-    static class AuthTypeIsClientCreds extends OneOfEnumCondition<AuthType> {
-        @Override
-        public AuthType[] oneOf() {
-            return new AuthType[] { AuthType.CLIENT_CREDENTIALS };
+        @After(TypeSwitcher.class)
+        interface Body {
         }
     }
 
@@ -155,21 +127,104 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         CLIENT_CREDENTIALS;
     }
 
-    /**
-     * Performs interactive login. The method will be called by the login button in
-     * the dialog.
-     *
-     * @param settings
-     *            The node settings.
-     * @return the {@link OAuth2AccessToken} if the login was successful.
-     * @throws Exception
-     *             if the login failed for some reason.
-     */
-    static OAuth2AccessToken doLogin(final CredentialsProvider credsProvider, final BoxAuthenticatorSettings settings)
-            throws Exception {
-        try (var service = settings.createService(credsProvider)) {
-            return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl))//
-                    .login(null);
+    static class AuthTypeIsClientCreds extends OneOfEnumCondition<AuthType> {
+        @Override
+        public AuthType[] oneOf() {
+            return new AuthType[] { AuthType.CLIENT_CREDENTIALS };
+        }
+    }
+
+    @Layout(BoxAppSection.class)
+    BoxAppSettings m_boxApp = new BoxAppSettings();
+
+    @Widget(title = "Type", description = "Authentication method to use.")
+    @Layout(AuthenticationSection.TypeSwitcher.class)
+    @Signal(condition = AuthTypeIsClientCreds.class)
+    @ValueSwitchWidget
+    AuthType m_authType = AuthType.OAUTH;
+
+    @Widget(title = "Enterprise ID", description = """
+            The Box Enterprise ID when authenticating as a <a href="https://developer.box.com/guides/getting-started/user-types/service-account/">
+            service account</a>.
+            """)
+    @Layout(AuthenticationSection.Body.class)
+    @Effect(signals = AuthTypeIsClientCreds.class, type = EffectType.SHOW)
+    String m_enterpriseId;
+
+    @Widget(title = "Redirect URL (should be http://localhost:XXXXX)", description = """
+            The redirect URL to be used at the end of the interactive login. Should be chosen as http://localhost:XXXXX
+            where XXXXX is a random number in the 10000 - 65000 range to avoid conflicts. The redirect URL is part of the
+            App configuration in Box.
+            """)
+    @Layout(AuthenticationSection.Body.class)
+    @Effect(signals = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
+    String m_redirectUrl = "http://localhost:33749/";
+
+    @ButtonWidget(invokeButtonText = "Login", //
+            cancelButtonText = "Cancel login", //
+            succeededButtonText = "Login again", //
+            actionHandler = LoginActionHandler.class, //
+            isMultipleUse = true, //
+            showTitleAndDescription = false)
+    @Widget(title = "Login", //
+            description = "Clicking on login opens a new browser window/tab which "
+                    + "allows to interactively log into Box.")
+    @Persist(optional = true, hidden = true, customPersistor = TokenCacheKeyPersistor.class)
+    @Layout(AuthenticationSection.Body.class)
+    @Effect(signals = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
+    UUID m_tokenCacheKey;
+
+
+    static class LoginActionHandler extends CancelableActionHandler<UUID, BoxAuthenticatorSettings> {
+
+        @Override
+        protected Future<DialogDataServiceHandlerResult<UUID>> invoke(
+                final BoxAuthenticatorSettings settings, final SettingsCreationContext context) {
+
+            return KNIMEConstants.GLOBAL_THREAD_POOL.enqueue(() -> doDialogLogin(settings, context));
+        }
+
+        private static DialogDataServiceHandlerResult<UUID> doDialogLogin(
+                final BoxAuthenticatorSettings settings, final SettingsCreationContext context) {
+
+            try {
+                settings.validate(context.getCredentialsProvider().orElseThrow());
+            } catch (InvalidSettingsException e) { // NOSONAR
+                return DialogDataServiceHandlerResult.fail(e.getMessage());
+            }
+
+            try {
+                var tokenHolder = new OAuth2AccessTokenHolder();
+                tokenHolder.m_token = fetchAccessToken(context.getCredentialsProvider().orElseThrow(), settings);
+                tokenHolder.m_cacheKey = CredentialCache.store(tokenHolder);
+                return DialogDataServiceHandlerResult.succeed(tokenHolder.m_cacheKey);
+            } catch (Exception e) {
+                LOG.debug("Interactive login failed: " + e.getMessage(), e);
+                return DialogDataServiceHandlerResult.fail(e.getMessage());
+            }
+        }
+
+        private static OAuth2AccessToken fetchAccessToken(final CredentialsProvider credsProvider,
+                final BoxAuthenticatorSettings settings) throws Exception {
+
+            try (var service = settings.createService(credsProvider)) {
+                return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl))//
+                        .login(null);
+            }
+        }
+    }
+
+    void validate(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
+        m_boxApp.validateOnExecute(credentialsProvider);
+
+        if (m_authType == AuthType.CLIENT_CREDENTIALS) {
+            if (StringUtils.isEmpty(m_enterpriseId)) {
+                throw new InvalidSettingsException("Enterprise ID is required");
+            }
+        } else {
+            if (StringUtils.isEmpty(m_redirectUrl)) {
+                throw new InvalidSettingsException("Redirect URL is required");
+            }
         }
     }
 
@@ -179,14 +234,9 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
      * @return The {@link OAuth20Service} instance.
      */
     OAuth20Service createService(final CredentialsProvider credsProvider) {
-        var creds = credsProvider.get(m_clientCredentialsFlowVariable);
-        var clientId = creds.getLogin();
-        var clientSecret = creds.getPassword();
 
-        var builder = new CustomOAuth2ServiceBuilder(clientId);
-        if (!StringUtils.isEmpty(clientSecret)) {
-            builder.apiSecret(clientSecret);
-        }
+        var builder = new CustomOAuth2ServiceBuilder(m_boxApp.login(credsProvider))//
+                .apiSecret(m_boxApp.secret(credsProvider));
 
         if (m_authType == AuthType.CLIENT_CREDENTIALS) {
             var subjectType = ENTERPRISE_SUBJECT_TYPE;
@@ -199,5 +249,30 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         }
 
         return builder.build(BOX_API);
+    }
+
+    private static class TokenCacheKeyPersistor extends NodeSettingsPersistorWithConfigKey<UUID> {
+
+        @Override
+        public UUID load(final NodeSettingsRO settings) throws InvalidSettingsException {
+            if (settings.containsKey(getConfigKey())) {
+                var uuidStr = settings.getString(getConfigKey());
+                if (!StringUtils.isBlank(uuidStr)) {
+                    final var uuid = UUID.fromString(uuidStr);
+                    if (CredentialCache.get(uuid).isPresent()) {
+                        return uuid;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        public void save(final UUID uuid, final NodeSettingsWO settings) {
+            if (uuid != null) {
+                settings.addString(getConfigKey(), uuid.toString());
+            }
+        }
     }
 }

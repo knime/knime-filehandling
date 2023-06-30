@@ -87,6 +87,11 @@ public class BoxAuthenticatorNodeFactory extends WebUINodeFactory<BoxAuthenticat
                     <li>As soon as a Box admin has approved your app it can be used in KNIME.</li>
                     </ul>
                     </p>
+                    <p>
+                    <b>Note:</b> If <i>OAuth 2<i/> is selected, the node can currently only be executed in KNIME Analytics Platform,
+                    i.e. execution on KNIME (Business) Hub, KNIME Server, or via Remote Workflow Editor will fail. Authentication
+                    via <i>Client Credentials<i/> should work in all cases.
+                    </p>
             """;
 
     private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder()//
