@@ -64,6 +64,7 @@ import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
 import com.hierynomus.mssmb2.SMBApiException;
+import com.hierynomus.protocol.commons.socket.ProxySocketFactory;
 import com.hierynomus.smbj.SMBClient;
 import com.hierynomus.smbj.SmbConfig;
 import com.hierynomus.smbj.share.DiskShare;
@@ -108,6 +109,7 @@ public class SmbFileSystem extends BaseFileSystem<SmbPath> {
 
         final var builder = SmbConfig.builder() //
                 .withMultiProtocolNegotiate(true) //
+                .withSocketFactory(new ProxySocketFactory(30000))//
                 .withDfsEnabled(config.getConnectionMode() == ConnectionMode.DOMAIN) //
                 .withTimeout(config.getTimeout().toSeconds(), TimeUnit.SECONDS) //
                 .withEncryptData(config.getUseEncryption());
