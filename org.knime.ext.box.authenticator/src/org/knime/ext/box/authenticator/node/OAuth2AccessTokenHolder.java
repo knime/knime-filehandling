@@ -48,10 +48,12 @@
  */
 package org.knime.ext.box.authenticator.node;
 
+import java.util.Collections;
 import java.util.UUID;
 
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialCache;
+import org.knime.credentials.base.CredentialPortViewData;
 import org.knime.credentials.base.CredentialType;
 
 import com.github.scribejava.core.model.OAuth2AccessToken;
@@ -76,7 +78,7 @@ final class OAuth2AccessTokenHolder implements Credential {
     }
 
     @Override
-    public String[][] describe() {
-        return new String[][] {};
+    public CredentialPortViewData describe() {
+        return new CredentialPortViewData(Collections.emptyList());
     }
 }
