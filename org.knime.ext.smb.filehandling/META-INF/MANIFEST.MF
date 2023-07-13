@@ -16,7 +16,7 @@ Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  libs/asn-one-0.6.0.jar,
  libs/mbassador-1.3.0.jar,
- libs/smbj-0.12.0.jar
+ libs/smbj-0.12.1.jar
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Automatic-Module-Name: org.knime.ext.smb.filehandling
 
