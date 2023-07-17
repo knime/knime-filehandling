@@ -60,7 +60,7 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.dataservice.DialogDataServiceHandlerResult;
+import org.knime.core.webui.node.dialog.defaultdialog.dataservice.Result;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
@@ -160,11 +160,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     @Effect(signals = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
     String m_redirectUrl = "http://localhost:33749/";
 
-    @ButtonWidget(invokeButtonText = "Login", //
-            cancelButtonText = "Cancel login", //
-            succeededButtonText = "Login again", //
-            actionHandler = LoginActionHandler.class, //
-            isMultipleUse = true, //
+    @ButtonWidget(actionHandler = LoginActionHandler.class, //
             showTitleAndDescription = false)
     @Widget(title = "Login", //
             description = "Clicking on login opens a new browser window/tab which "
@@ -174,33 +170,32 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     @Effect(signals = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
     UUID m_tokenCacheKey;
 
-
     static class LoginActionHandler extends CancelableActionHandler<UUID, BoxAuthenticatorSettings> {
 
         @Override
-        protected Future<DialogDataServiceHandlerResult<UUID>> invoke(
-                final BoxAuthenticatorSettings settings, final SettingsCreationContext context) {
+        protected Future<Result<UUID>> invoke(final BoxAuthenticatorSettings settings,
+                final SettingsCreationContext context) {
 
             return KNIMEConstants.GLOBAL_THREAD_POOL.enqueue(() -> doDialogLogin(settings, context));
         }
 
-        private static DialogDataServiceHandlerResult<UUID> doDialogLogin(
-                final BoxAuthenticatorSettings settings, final SettingsCreationContext context) {
+        private static Result<UUID> doDialogLogin(final BoxAuthenticatorSettings settings,
+                final SettingsCreationContext context) {
 
             try {
                 settings.validate(context.getCredentialsProvider().orElseThrow());
             } catch (InvalidSettingsException e) { // NOSONAR
-                return DialogDataServiceHandlerResult.fail(e.getMessage());
+                return Result.fail(e.getMessage());
             }
 
             try {
                 var tokenHolder = new OAuth2AccessTokenHolder();
                 tokenHolder.m_token = fetchAccessToken(context.getCredentialsProvider().orElseThrow(), settings);
                 tokenHolder.m_cacheKey = CredentialCache.store(tokenHolder);
-                return DialogDataServiceHandlerResult.succeed(tokenHolder.m_cacheKey);
+                return Result.succeed(tokenHolder.m_cacheKey);
             } catch (Exception e) {
                 LOG.debug("Interactive login failed: " + e.getMessage(), e);
-                return DialogDataServiceHandlerResult.fail(e.getMessage());
+                return Result.fail(e.getMessage());
             }
         }
 
@@ -210,6 +205,20 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
             try (var service = settings.createService(credsProvider)) {
                 return new AuthCodeFlow(service, URI.create(settings.m_redirectUrl))//
                         .login(null);
+            }
+        }
+
+        @Override
+        protected String overrideText(final States state) {
+            switch (state) {
+            case READY:
+                return "Login";
+            case CANCEL:
+                return "Cancel login";
+            case DONE:
+                return "Login again";
+            default:
+                return null;
             }
         }
     }
