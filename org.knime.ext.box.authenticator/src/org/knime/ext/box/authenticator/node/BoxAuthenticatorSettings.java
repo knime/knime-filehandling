@@ -159,6 +159,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     String m_redirectUrl = "http://localhost:33749/";
 
     @ButtonWidget(actionHandler = LoginActionHandler.class, //
+            updateHandler = LoginUpdateHandler.class, //
             showTitleAndDescription = false)
     @Widget(title = "Login", //
             description = "Clicking on login opens a new browser window/tab which "
@@ -201,7 +202,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         }
 
         @Override
-        protected String overrideText(final States state) {
+        protected String getButtonText(final States state) {
             switch (state) {
             case READY:
                 return "Login";
@@ -213,6 +214,9 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
                 return null;
             }
         }
+    }
+
+    static class LoginUpdateHandler extends CancelableActionHandler.UpdateHandler<UUID, BoxAuthenticatorSettings> {
     }
 
     void validate(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
