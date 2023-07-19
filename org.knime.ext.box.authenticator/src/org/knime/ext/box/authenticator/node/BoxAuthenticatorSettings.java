@@ -58,7 +58,6 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.dataservice.RequestFailureException;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
@@ -73,6 +72,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.CancelableActionHandler;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
 import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
@@ -173,12 +173,12 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
 
         @Override
         protected UUID invoke(final BoxAuthenticatorSettings settings, final SettingsCreationContext context)
-                throws RequestFailureException {
+                throws WidgetHandlerException {
 
             try {
                 settings.validate(context.getCredentialsProvider().orElseThrow());
             } catch (InvalidSettingsException e) { // NOSONAR
-                throw new RequestFailureException(e.getMessage());
+                throw new WidgetHandlerException(e.getMessage());
             }
 
             try {
@@ -188,7 +188,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
                 return tokenHolder.m_cacheKey;
             } catch (Exception e) {
                 LOG.debug("Interactive login failed: " + e.getMessage(), e);
-                throw new RequestFailureException(e.getMessage());
+                throw new WidgetHandlerException(e.getMessage());
             }
         }
 
