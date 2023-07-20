@@ -1,0 +1,161 @@
+{
+  "data" : {
+    "model" : {
+      "boxApp" : { },
+      "authType" : "OAUTH",
+      "redirectUrl" : "http://localhost:33749/"
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "authType" : {
+            "oneOf" : [ {
+              "const" : "OAUTH",
+              "title" : "OAuth 2"
+            }, {
+              "const" : "CLIENT_CREDENTIALS",
+              "title" : "Client credentials"
+            } ],
+            "title" : "Type",
+            "description" : "Authentication method to use.",
+            "default" : "OAUTH"
+          },
+          "boxApp" : {
+            "type" : "object",
+            "properties" : {
+              "flowVariable" : {
+                "type" : "string",
+                "title" : "App ID and secret (flow variable)",
+                "description" : "Specifies a credentials flow variable with the app/client ID and secret of the custom Box app.\nThese fields can be found in the configuration settings of your custom Box app.\n"
+              }
+            },
+            "default" : { }
+          },
+          "enterpriseId" : {
+            "type" : "string",
+            "title" : "Enterprise ID",
+            "description" : "The Box Enterprise ID when authenticating as a <a href=\"https://developer.box.com/guides/getting-started/user-types/service-account/\">\nservice account</a>.\n"
+          },
+          "redirectUrl" : {
+            "type" : "string",
+            "title" : "Redirect URL (should be http://localhost:XXXXX)",
+            "description" : "The redirect URL to be used at the end of the interactive login. Should be chosen as http://localhost:XXXXX\nwhere XXXXX is a random number in the 10000 - 65000 range to avoid conflicts. The redirect URL is part of the\nApp configuration in Box.\n",
+            "default" : "http://localhost:33749/"
+          },
+          "tokenCacheKey" : {
+            "type" : "string",
+            "format" : "uuid",
+            "title" : "Login",
+            "description" : "Clicking on login opens a new browser window/tab which allows to interactively log into Box.",
+            "configKeys" : [ "tokenCacheKey_Internals" ]
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Box App",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/boxApp/properties/flowVariable",
+        "options" : {
+          "possibleValues" : [ ],
+          "format" : "dropDown",
+          "showNoneColumn" : false,
+          "showRowKeys" : false,
+          "showSearch" : true,
+          "showMode" : true
+        }
+      } ]
+    }, {
+      "label" : "Authentication method",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/authType",
+        "options" : {
+          "format" : "valueSwitch"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/enterpriseId",
+        "options" : { },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/authType",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "CLIENT_CREDENTIALS"
+              } ]
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/redirectUrl",
+        "options" : { },
+        "rule" : {
+          "effect" : "HIDE",
+          "condition" : {
+            "scope" : "#/properties/model/properties/authType",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "CLIENT_CREDENTIALS"
+              } ]
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/tokenCacheKey",
+        "options" : {
+          "actionHandler" : "org.knime.ext.box.authenticator.node.BoxAuthenticatorSettings$LoginActionHandler",
+          "format" : "button",
+          "states" : [ {
+            "id" : "READY",
+            "disabled" : false,
+            "primary" : true,
+            "nextState" : "CANCEL",
+            "text" : "Login"
+          }, {
+            "id" : "CANCEL",
+            "disabled" : false,
+            "primary" : false,
+            "text" : "Cancel login"
+          }, {
+            "id" : "DONE",
+            "disabled" : false,
+            "primary" : true,
+            "nextState" : "CANCEL",
+            "text" : "Login again"
+          } ],
+          "displayErrorMessage" : true,
+          "showTitleAndDescription" : false,
+          "dependencies" : [ "#/properties/model/properties/boxApp/properties/flowVariable", "#/properties/model/properties/authType", "#/properties/model/properties/enterpriseId", "#/properties/model/properties/redirectUrl" ],
+          "updateOptions" : {
+            "updateHandler" : "org.knime.ext.box.authenticator.node.BoxAuthenticatorSettings$LoginUpdateHandler",
+            "dependencies" : [ "#/properties/model/properties/boxApp/properties/flowVariable", "#/properties/model/properties/authType", "#/properties/model/properties/enterpriseId", "#/properties/model/properties/redirectUrl" ]
+          }
+        },
+        "rule" : {
+          "effect" : "HIDE",
+          "condition" : {
+            "scope" : "#/properties/model/properties/authType",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "CLIENT_CREDENTIALS"
+              } ]
+            }
+          }
+        }
+      } ]
+    } ]
+  }
+}
