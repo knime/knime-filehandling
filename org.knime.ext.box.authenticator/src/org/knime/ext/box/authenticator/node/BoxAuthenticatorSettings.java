@@ -172,7 +172,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     static class LoginActionHandler extends CancelableActionHandler<UUID, BoxAuthenticatorSettings> {
 
         @Override
-        protected UUID invoke(final BoxAuthenticatorSettings settings, final SettingsCreationContext context)
+        protected UUID invoke(final BoxAuthenticatorSettings settings, final DefaultNodeSettingsContext context)
                 throws WidgetHandlerException {
 
             try {
