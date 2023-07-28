@@ -1,6 +1,7 @@
 autoEnabled=true
+bindingSuggestionsDisabled=false
 eclipse.preferences.version=1
 idePrefixKey=
 projectKey=org.knime\:knime-filehandling
 serverId=sonar.knime.com
-sqPrefixKey=org.knime.ext.ssh.filehandling.tests
+sqPrefixKey=org.knime.archive.zip.filehandling/libs/fetch_jars

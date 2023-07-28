@@ -1,6 +1,7 @@
 autoEnabled=true
+bindingSuggestionsDisabled=false
 eclipse.preferences.version=1
-idePrefixKey=
+idePrefixKey=lib
 projectKey=org.knime\:knime-filehandling
 serverId=sonar.knime.com
-sqPrefixKey=org.knime.ext.ftp.filehandling.tests
+sqPrefixKey=org.knime.archive.zip.filehandling/libs
