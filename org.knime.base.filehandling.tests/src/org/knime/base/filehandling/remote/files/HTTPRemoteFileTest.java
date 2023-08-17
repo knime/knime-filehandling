@@ -56,6 +56,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
@@ -74,12 +75,12 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
     @Override
     public void setup() {
         m_connInfo = new ConnectionInformation();
-        m_connInfo.setHost("testing.knime.org");
+        m_connInfo.setHost("httpbin.testing.knime.com");
         m_connInfo.setProtocol("https");
         m_connInfo.setPort(443);
 
         m_type = "https";
-        m_host = "testing.knime.org";
+        m_host = "httpbin.testing.knime.com";
 
         m_connectionMonitor = new ConnectionMonitor<Connection>();
 
@@ -158,9 +159,8 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
     @Override
     public void testExits() throws Exception {
 
-        String path = createPath(null);
         RemoteFile<Connection> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, "/get", null), m_connInfo, m_connectionMonitor);
 
         boolean exists = remoteFile.exists();
         assertThat("Entry at position 1 does not exists", exists, is(true));
@@ -172,9 +172,8 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
     @Override
     public void testGetName() throws Exception {
 
-        String filePath = createPath(null);
         RemoteFile<Connection> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, filePath, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, "/folder/README.txt", null), m_connInfo, m_connectionMonitor);
 
         assertThat("Incorrect path of file", remoteFile.getName(), equalTo("README.txt"));
 
@@ -186,16 +185,17 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
     @Override
     public void testLastModified() throws Exception {
 
-        String path = createPath(null);
         RemoteFile<Connection> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, path, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(
+                new URI(m_type, m_host, "/response-headers", "Last-Modified=Wed, 21 Oct 2015 07:28:00 GMT", null),
+                m_connInfo, m_connectionMonitor);
 
         // if this test fails you should check the last modified entry on the test-server.
         // README.txt is expected to never getting modified.
-        long t1 = 1418124251;
-        long t2 = remoteFile.lastModified();
+        long expected = ZonedDateTime.parse("2015-10-21T07:28:00+00:00[GMT]").toEpochSecond();
+        long actual = remoteFile.lastModified();
 
-        assertThat("LastModified time is not equal", t2, equalTo(t1));
+        assertThat("LastModified time is not equal", actual, equalTo(expected));
     }
 
     /**
@@ -203,14 +203,14 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
      */
     @Override
     public void testGetSize() throws Exception {
-        String filePath = createPath(null);
+
+        long expectedSize = 37;
         RemoteFile<Connection> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, filePath, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, "/bytes/" + expectedSize, null), m_connInfo,
+                m_connectionMonitor);
 
-        long s1 = 53;
-        long s2 = remoteFile.getSize();
-
-        assertThat("Size is not equal", s2, equalTo(s1));
+        long actualSize = remoteFile.getSize();
+        assertThat("Size is not equal", actualSize, equalTo(expectedSize));
     }
 
     /**
@@ -218,7 +218,9 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
      */
     @Override
     public String createPath(final Path p) {
-        return "/filehandling-tests/README.txt";
+        // cannot really return anything useful here since all the tests use different
+        // httpbin endpoints
+        return "/";
     }
 
     /**
@@ -245,28 +247,27 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
     @Test
     public void testOpenInputStreamWithUserInfo() throws Exception {
 
-        m_connInfo.setPassword(KnimeEncryption.encrypt("testing".toCharArray()));
-        URI u = new URI(m_type, "knime", m_host, 443, "/filehandling-tests/password-protected/README.txt", null, null);
+        m_connInfo.setPassword(KnimeEncryption.encrypt("passwd".toCharArray()));
+        URI u = new URI(m_type, "user", m_host, 443, "/basic-auth/user/passwd", null, null);
         RemoteFile<Connection> remoteFile =
                 m_fileHandler.createRemoteFile(u, m_connInfo, m_connectionMonitor);
 
-        String str1 = "This location is used by the HTTP Filehandling test. It must be password protected in order to"
-            + " check whether retrieving with authentication works.\n";
+        String expected = "{\"authorized\":true,\"user\":\"user\"}";
         try (InputStream stream = remoteFile.openInputStream()) {
-            String str2 = IOUtils.toString(stream);
-            assertThat("Strings do not have same length", str2.length(), is(str1.length()));
-            assertThat("Strings are not equal", str2, equalTo(str1));
+            String str2 = IOUtils.toString(stream).replaceAll("\\s", "");
+            assertThat("Strings do not have same length", str2.length(), is(expected.length()));
+            assertThat("Strings are not equal", str2, equalTo(expected));
         }
 
         // test for if-statement which checks port < 0
-        u = new URI(m_type, "knime", m_host, -1, "/filehandling-tests/password-protected/README.txt", null, null);
+        u = new URI(m_type, "user", m_host, -1, "/basic-auth/user/passwd", null, null);
         remoteFile =
                 m_fileHandler.createRemoteFile(u, m_connInfo, m_connectionMonitor);
 
         try (InputStream stream = remoteFile.openInputStream()) {
-            String str2 = IOUtils.toString(stream);
-            assertThat("Strings do not have same length", str2.length(), is(str1.length()));
-            assertThat("Strings are not equal", str2, equalTo(str1));
+            String str2 = IOUtils.toString(stream).replaceAll("\\s", "");
+            assertThat("Strings do not have same length", str2.length(), is(expected.length()));
+            assertThat("Strings are not equal", str2, equalTo(expected));
         }
     }
 
@@ -276,15 +277,14 @@ public class HTTPRemoteFileTest extends RemoteFileTest<Connection> {
      */
     @Override
     public void testOpenInputStream() throws Exception {
-        String filePath = createPath(null);
         RemoteFile<Connection> remoteFile =
-            m_fileHandler.createRemoteFile(new URI(m_type, m_host, filePath, null), m_connInfo, m_connectionMonitor);
+            m_fileHandler.createRemoteFile(new URI(m_type, m_host, "/base64/encode/teststring", null), m_connInfo, m_connectionMonitor);
 
-        String str1 = "This location is used by the HTTP Filehandling test.\n";
+        String expected = "dGVzdHN0cmluZw=="; // this is "teststring" in base64
         try (InputStream stream = remoteFile.openInputStream()) {
             String str2 = IOUtils.toString(stream);
-            assertThat("Strings do not have same length", str2.length(), is(str1.length()));
-            assertThat("Strings are not equal", str2, equalTo(str1));
+            assertThat("Strings do not have same length", str2.length(), is(expected.length()));
+            assertThat("Strings are not equal", str2, equalTo(expected));
         }
     }
 }
