@@ -390,6 +390,10 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
                 return 1;
             }
 
+            if (extension2.equals("zip")) {
+                return -1;
+            }
+
             final Integer splitSegmentNumber1 = Integer.parseInt(extension1.substring(1));
             final Integer splitSegmentNumber2 = Integer.parseInt(extension2.substring(1));
 
