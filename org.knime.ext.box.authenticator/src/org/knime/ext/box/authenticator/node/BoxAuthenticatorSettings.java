@@ -74,6 +74,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.CancelableActionHandler;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
 import org.knime.credentials.base.CredentialCache;
+import org.knime.credentials.base.GenericTokenHolder;
 import org.knime.credentials.base.oauth.api.scribejava.AuthCodeFlow;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
@@ -182,10 +183,9 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
             }
 
             try {
-                var tokenHolder = new OAuth2AccessTokenHolder();
-                tokenHolder.m_token = fetchAccessToken(context.getCredentialsProvider().orElseThrow(), settings);
-                tokenHolder.m_cacheKey = CredentialCache.store(tokenHolder);
-                return tokenHolder.m_cacheKey;
+                var tokenHolder = GenericTokenHolder
+                        .store(fetchAccessToken(context.getCredentialsProvider().orElseThrow(), settings));
+                return tokenHolder.getCacheKey();
             } catch (Exception e) {
                 LOG.debug("Interactive login failed: " + e.getMessage(), e);
                 throw new WidgetHandlerException(e.getMessage());

@@ -56,6 +56,7 @@ import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.CredentialPortObjectSpec;
+import org.knime.credentials.base.GenericTokenHolder;
 import org.knime.credentials.base.node.AuthenticatorNodeModel;
 import org.knime.credentials.base.oauth.api.AccessTokenCredential;
 import org.knime.credentials.base.oauth.api.scribejava.ClientCredentialsFlow;
@@ -76,7 +77,7 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
 
     private static final String LOGIN_FIRST_ERROR = "Please use the configuration dialog to log in first.";
 
-    private OAuth2AccessTokenHolder m_tokenHolder;
+    private GenericTokenHolder<OAuth2AccessToken> m_tokenHolder;
 
     /**
      * @param configuration
@@ -97,13 +98,13 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
             if (settings.m_tokenCacheKey == null) {
                 throw new InvalidSettingsException(LOGIN_FIRST_ERROR);
             } else {
-                m_tokenHolder = CredentialCache.<OAuth2AccessTokenHolder>get(settings.m_tokenCacheKey)//
+                m_tokenHolder = CredentialCache.<GenericTokenHolder<OAuth2AccessToken>>get(settings.m_tokenCacheKey)//
                         .orElseThrow(() -> new InvalidSettingsException(LOGIN_FIRST_ERROR));
             }
         } else {
             // we have an access token from a previous interactive login -> remove it
             if (m_tokenHolder != null) {
-                CredentialCache.delete(m_tokenHolder.m_cacheKey);
+                CredentialCache.delete(m_tokenHolder.getCacheKey());
                 m_tokenHolder = null;
             }
         }
@@ -134,7 +135,7 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
             }
         case OAUTH:
             // in this case we already fetched the token in the node dialog
-            return m_tokenHolder.m_token;
+            return m_tokenHolder.getToken();
         default:
             throw new IllegalArgumentException("Usupported auth type: " + settings.m_authType);
         }
@@ -145,7 +146,7 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
         // dispose of the scribejava token that was retrieved interactively in the node
         // dialog
         if (m_tokenHolder != null) {
-            CredentialCache.delete(m_tokenHolder.m_cacheKey);
+            CredentialCache.delete(m_tokenHolder.getCacheKey());
             m_tokenHolder = null;
         }
     }
