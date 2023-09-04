@@ -114,7 +114,7 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
     protected final CredentialPortObjectSpec createSpecInConfigure(final PortObjectSpec[] inSpecs,
             final BoxAuthenticatorSettings modelSettings) {
         // Box issues string access token which are not JWTs
-        return new CredentialPortObjectSpec(AccessTokenCredential.TYPE);
+        return new CredentialPortObjectSpec(AccessTokenCredential.TYPE, null);
     }
 
     @Override
