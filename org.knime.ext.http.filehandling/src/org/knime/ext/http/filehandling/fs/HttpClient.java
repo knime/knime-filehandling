@@ -67,6 +67,7 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -77,15 +78,14 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.apache.cxf.Bus;
 import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.transport.http.HTTPConduitFactory;
+import org.apache.cxf.transport.http.HTTPConduit;
+import org.apache.cxf.transport.http.asyncclient.AsyncHTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator.AuthenticationCloseable;
-import org.knime.cxf.CXFUtil;
 import org.knime.ext.http.filehandling.fs.HttpFSConnectionConfig.Auth;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
@@ -141,27 +141,22 @@ final class HttpClient {
         // Support relative redirects too, see
         // https://tools.ietf.org/html/rfc7231#section-3.1.4.2
         target = target.property("http.redirect.relative.uri", true);
+        // make sure that the AsyncHTTPConduitFactory is *not* used
+        target = target.property(AsyncHTTPConduit.USE_ASYNC, Boolean.FALSE);
 
         final Builder request = target.request();
-
-        // make sure that the AsyncHTTPConduitFactory is *not* used
-        final Bus bus = CXFUtil.getThreadDefaultBus(getClass());
-        bus.setExtension(null, HTTPConduitFactory.class);
-
         if (m_config.getAuthType() == Auth.BASIC) {
             setBasicAuthentication(request);
         }
-
-        HTTPClientPolicy clientPolicy = WebClient.getConfig(request).getHttpConduit().getClient();
-
+        final HTTPConduit conduit = WebClient.getConfig(request).getHttpConduit();
+        final HTTPClientPolicy clientPolicy = Objects.requireNonNullElseGet(conduit.getClient(), HTTPClientPolicy::new);
         if (!clientPolicy.isSetAutoRedirect()) {
             clientPolicy.setAutoRedirect(m_config.isFollowRedirects());
         }
-
         if (!clientPolicy.isSetMaxRetransmits()) {
             clientPolicy.setMaxRetransmits(MAX_RETRANSITS);
         }
-
+        conduit.setClient(clientPolicy);
         return request;
     }
 
