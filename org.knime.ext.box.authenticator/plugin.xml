@@ -5,7 +5,12 @@
          point="org.knime.workbench.repository.nodes">
       <node
             category-path="/io/connectors"
-            factory-class="org.knime.ext.box.authenticator.node.BoxAuthenticatorNodeFactory">
+            factory-class="org.knime.ext.box.authenticator.node2.BoxAuthenticatorNodeFactory">
       </node>
+      <node
+         	deprecated="true"
+         	factory-class="org.knime.ext.box.authenticator.node.BoxAuthenticatorNodeFactory"
+         	hidden="false">
+   	  </node>
    </extension>
 </plugin>

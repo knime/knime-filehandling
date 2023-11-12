@@ -46,7 +46,7 @@
  * History
  *   2023-06-08 (Alexander Bondaletov, Redfield SE): created
  */
-package org.knime.ext.box.authenticator.node;
+package org.knime.ext.box.authenticator.node2;
 
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.core.webui.node.impl.WebUINodeFactory;
@@ -60,10 +60,14 @@ import org.knime.credentials.base.CredentialPortObject;
 @SuppressWarnings("restriction")
 public class BoxAuthenticatorNodeFactory extends WebUINodeFactory<BoxAuthenticatorNodeModel> {
     private static final String FULL_DESCRIPTION = """
-                    <p>This node authenticates against <a href="https://box.com/">Box</a>. The resulting credential can then
-                    be used with the Box Connector node. The following authentication methods are supported:
+                    <p>This node authenticates against <a href="https://box.com/">Box</a>. The resulting credential
+                    can then be used with the Box Connector node. The following authentication methods are supported:
                     <ul>
-                    <li><a href="https://developer.box.com/guides/authentication/oauth2/">User Authentication (OAuth 2.0)</a></li>
+
+                    <li><a href="https://developer.box.com/guides/authentication/oauth2/">User Authentication (OAuth
+                    2.0)</a>
+                    </li>
+
                     <li><a href="https://developer.box.com/guides/authentication/client-credentials/">
                         Server Authentication (Client Credentials Grant)</a></li>
                     </ul>
@@ -73,24 +77,35 @@ public class BoxAuthenticatorNodeFactory extends WebUINodeFactory<BoxAuthenticat
                     In order to use this node, a Custom App has to be created and approved in Box first. The steps are
                     as follows:
                     <ul>
-                    <li>Create a <a href="https://developer.box.com/guides/applications/custom-apps/">Custom App</a> in Box. While creating
-                    the app choose the authentication method you want to use in KNIME (OAuth 2.0 or Client Credentials Grant).</li>
-                    <li>For Client Credentials Grant, configure the app as follows: Set <b>Access Level = App + Enterprise Access</b>
-                        (to be able to access files/folders of your Box enterprise), and <b>Application Scopes = Write all files and
-                        folders stored in Box.</b>
+
+                    <li>Create a <a href="https://developer.box.com/guides/applications/custom-apps/">Custom App</a> in
+                    Box. While creating the app choose the authentication method you want to use in KNIME (OAuth 2.0 or
+                    Client Credentials Grant).
                     </li>
-                    <li>For OAuth 2.0, configure the app as follows: Set <b>OAuth 2.0 Redirect URI = http://localhost</b>, and
-                        <b>Application Scopes = Write all files and folders stored in Box.</b>
+
+                    <li>
+                    For Client Credentials Grant, configure the app as follows: Set <b>Access Level = App + Enterprise
+                    Access</b> (to be able to access files/folders of your Box enterprise), and <b>Application Scopes =
+                    Write all files and folders stored in Box.</b>
                     </li>
-                    <li>Request approval of your app <a href="https://developer.box.com/guides/authorization/custom-app-approval/">
-                        as described here.</a></li>
+
+                    <li>
+                    For OAuth 2.0, configure the app as follows: Set <b>OAuth 2.0 Redirect URI = http://localhost</b>,
+                    and <b>Application Scopes = Write all files and folders stored in Box.</b>
+                    </li>
+
+                    <li>Request approval of your app
+                    <a href="https://developer.box.com/guides/authorization/custom-app-approval/"> as described here.
+                    </a>
+                    </li>
+
                     <li>As soon as a Box admin has approved your app it can be used in KNIME.</li>
                     </ul>
                     </p>
                     <p>
-                    <b>Note:</b> If <i>OAuth 2</i> is selected, the node can currently only be executed in KNIME Analytics Platform,
-                    i.e. execution on KNIME (Business) Hub, KNIME Server, or via Remote Workflow Editor will fail. Authentication
-                    via <i>Client Credentials</i> should work in all cases.
+                    <b>Note:</b> If <i>OAuth 2</i> is selected, the node can currently only be executed in KNIME
+                    Analytics Platform, i.e. execution on KNIME (Business) Hub, KNIME Server, or via Remote Workflow
+                    Editor will fail. Authentication via <i>Client Credentials</i> should work in all cases.
                     </p>
             """;
 

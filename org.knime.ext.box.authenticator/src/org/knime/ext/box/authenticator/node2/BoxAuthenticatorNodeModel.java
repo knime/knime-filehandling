@@ -46,7 +46,9 @@
  * History
  *   2023-06-08 (Alexander Bondaletov, Redfield SE): created
  */
-package org.knime.ext.box.authenticator.node;
+package org.knime.ext.box.authenticator.node2;
+
+import java.util.Optional;
 
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.InvalidSettingsException;
@@ -54,16 +56,12 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.credentials.base.Credential;
-import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.credentials.base.GenericTokenHolder;
+import org.knime.credentials.base.CredentialRef;
 import org.knime.credentials.base.node.AuthenticatorNodeModel;
 import org.knime.credentials.base.oauth.api.AccessTokenCredential;
-import org.knime.credentials.base.oauth.api.scribejava.ClientCredentialsFlow;
-import org.knime.credentials.base.oauth.api.scribejava.CredentialFactory;
-import org.knime.ext.box.authenticator.node.BoxAuthenticatorSettings.AuthType;
-
-import com.github.scribejava.core.model.OAuth2AccessToken;
+import org.knime.credentials.base.oauth.api.JWTCredential;
+import org.knime.ext.box.authenticator.node2.BoxAuthenticatorSettings.AuthType;
 
 /**
  * Node model of the Box Authenticator node. Perform authentication using auth
@@ -77,7 +75,13 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
 
     private static final String LOGIN_FIRST_ERROR = "Please use the configuration dialog to log in first.";
 
-    private GenericTokenHolder<OAuth2AccessToken> m_tokenHolder;
+    /**
+     * This references a {@link JWTCredential} or {@link AccessTokenCredential} that
+     * was acquired interactively in the node dialog. It is disposed when the
+     * workflow is closed, or when the authentication scheme is switched to
+     * non-interactive. However, it is NOT disposed during reset().
+     */
+    private CredentialRef m_interactiveCredentialRef;
 
     /**
      * @param configuration
@@ -91,22 +95,18 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
     protected void validateOnConfigure(final PortObjectSpec[] inSpecs, final BoxAuthenticatorSettings settings)
             throws InvalidSettingsException {
 
-        settings.validate(getCredentialsProvider());
+        settings.validate();
 
         if (settings.m_authType == AuthType.OAUTH) {
-            // in this case we must have already fetched the token in the node dialog
-            if (settings.m_tokenCacheKey == null) {
+            m_interactiveCredentialRef = Optional.ofNullable(settings.m_loginCredentialRef)//
+                    .map(CredentialRef::new)//
+                    .orElseThrow(() -> new InvalidSettingsException(LOGIN_FIRST_ERROR));
+
+            if (!m_interactiveCredentialRef.isPresent()) {
                 throw new InvalidSettingsException(LOGIN_FIRST_ERROR);
-            } else {
-                m_tokenHolder = CredentialCache.<GenericTokenHolder<OAuth2AccessToken>>get(settings.m_tokenCacheKey)//
-                        .orElseThrow(() -> new InvalidSettingsException(LOGIN_FIRST_ERROR));
             }
         } else {
-            // we have an access token from a previous interactive login -> remove it
-            if (m_tokenHolder != null) {
-                CredentialCache.delete(m_tokenHolder.getCacheKey());
-                m_tokenHolder = null;
-            }
+            disposeInteractiveCredential();
         }
     }
 
@@ -121,33 +121,25 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
     protected Credential createCredential(final PortObject[] inObjects, final ExecutionContext exec,
             final BoxAuthenticatorSettings settings) throws Exception {
 
-        var scribeJavaToken = fetchAccessToken(settings);
-        return CredentialFactory.fromScribeToken(scribeJavaToken,
-                () -> settings.createService(getCredentialsProvider()));
+        return switch (settings.m_authType) {
+        case OAUTH -> //
+                m_interactiveCredentialRef.getCredential(Credential.class)//
+                        .orElseThrow(() -> new InvalidSettingsException(LOGIN_FIRST_ERROR));
+        case CLIENT_CREDENTIALS -> //
+                ScribeJavaHelper.fetchCredentialViaClientCredentialsFlow(settings);
+        default -> throw new IllegalArgumentException("Usupported auth type: " + settings.m_authType);
+        };
     }
 
-    private OAuth2AccessToken fetchAccessToken(final BoxAuthenticatorSettings settings) throws Exception {
-
-        switch (settings.m_authType) {
-        case CLIENT_CREDENTIALS:
-            try (var service = settings.createService(getCredentialsProvider())) {
-                return new ClientCredentialsFlow(service).login(null);
-            }
-        case OAUTH:
-            // in this case we already fetched the token in the node dialog
-            return m_tokenHolder.getToken();
-        default:
-            throw new IllegalArgumentException("Usupported auth type: " + settings.m_authType);
+    private void disposeInteractiveCredential() {
+        if (m_interactiveCredentialRef != null) {
+            m_interactiveCredentialRef.dispose();
+            m_interactiveCredentialRef = null;
         }
     }
 
     @Override
     protected void onDisposeInternal() {
-        // dispose of the scribejava token that was retrieved interactively in the node
-        // dialog
-        if (m_tokenHolder != null) {
-            CredentialCache.delete(m_tokenHolder.getCacheKey());
-            m_tokenHolder = null;
-        }
+        disposeInteractiveCredential();
     }
 }
