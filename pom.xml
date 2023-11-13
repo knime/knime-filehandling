@@ -64,12 +64,17 @@
 			<id>p2-knime-core</id>
 			<layout>p2</layout>
 			<url>${knime.core.p2}</url>
-		</repository>		
+		</repository>
 		<repository>
 			<id>p2-knime-base</id>
 			<layout>p2</layout>
 			<url>${knime.base.p2}</url>
 		</repository>
+        <repository>
+            <id>p2-knime-filehandling-core</id>
+            <layout>p2</layout>
+            <url>${knime.filehandling.core.p2}</url>
+        </repository>
 		<repository>
 			<id>p2-knime-credentials-base</id>
 			<layout>p2</layout>
