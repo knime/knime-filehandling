@@ -1,7 +1,7 @@
 autoEnabled=true
 bindingSuggestionsDisabled=false
 eclipse.preferences.version=1
-idePrefixKey=
-projectKey=org.knime\:knime-filehandling
-serverId=sonar.knime.com
+idePrefixKey=src-deprecated
+projectKey=KNIME_knime-filehandling
+serverId=SonarCloud
 sqPrefixKey=org.knime.ext.box.authenticator
