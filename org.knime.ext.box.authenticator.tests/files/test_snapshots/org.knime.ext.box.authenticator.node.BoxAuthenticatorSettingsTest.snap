@@ -38,12 +38,12 @@
           "enterpriseId" : {
             "type" : "string",
             "title" : "Enterprise ID",
-            "description" : "The Box Enterprise ID when authenticating as a <a href=\"https://developer.box.com/guides/getting-started/user-types/service-account/\">\nservice account</a>.\n"
+            "description" : "The Box Enterprise ID when authenticating as a\n<a href=\"https://developer.box.com/guides/getting-started/user-types/service-account/\">\nservice account</a>.\n"
           },
           "redirectUrl" : {
             "type" : "string",
             "title" : "Redirect URL (should be http://localhost:XXXXX)",
-            "description" : "The redirect URL to be used at the end of the interactive login. Should be chosen as http://localhost:XXXXX\nwhere XXXXX is a random number in the 10000 - 65000 range to avoid conflicts. The redirect URL is part of the\nApp configuration in Box.\n",
+            "description" : "The redirect URL to be used at the end of the interactive login. Should be chosen as http://localhost:XXXXX\nwhere XXXXX is a random number in the 10000 - 65000 range to avoid conflicts. The redirect URL is part of\nthe App configuration in Box.\n",
             "default" : "http://localhost:33749/"
           },
           "tokenCacheKey" : {
