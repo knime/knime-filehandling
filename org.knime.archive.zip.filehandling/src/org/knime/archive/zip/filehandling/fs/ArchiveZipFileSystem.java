@@ -58,18 +58,17 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipException;
 
@@ -77,10 +76,12 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteChannel;
 import org.apache.commons.compress.utils.FileNameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.NodeLogger;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
+import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
 import org.knime.filehandling.core.connections.meta.FSDescriptorRegistry;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
@@ -100,11 +101,6 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
     public static final String SEPARATOR = "/";
 
     private final ArchiveZipFile m_zipFile;
-
-    /**
-     * A map of zip file entry names with their paths.
-     */
-    private final Map<String, ArchiveZipPath> m_entryNamesMap;
 
     /**
      * A map of paths for every zip file entry name.
@@ -150,18 +146,10 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
                 if (entryNamesMap.containsKey(entry.getName())) {
                     throw new ZipException("Multiple zip entries with same name: " + entry.getName());
                 }
-                final ArchiveZipPath path = createPath(zipFile, entry);
-                if (pathsMap.containsKey(path)) {
-                    throw new ZipException(
-                            "Same path " + path + " for zip entries " + entry + ", " + pathsMap.get(path));
-                }
-                entryNamesMap.put(entry.getName(), path);
-                pathsMap.put(path, entry.getName());
-                if (!zipFile.getTopEntries().contains(entry)) {
-                    addChildPath(childrenMap, path.getParent(), path);
-                }
+                final var pathWithNames = retrievePathsWithNames(entry);
+                pathsMap.putAll(pathWithNames);
+                addChildPath(childrenMap, pathWithNames);
             }
-            m_entryNamesMap = Collections.unmodifiableMap(entryNamesMap);
             m_pathsMap = Collections.unmodifiableMap(pathsMap);
             m_childrenMap = Collections.unmodifiableMap(childrenMap);
             m_zipFile = zipFile;
@@ -174,17 +162,24 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
         }
     }
 
-    private void addChildPath(final Map<ArchiveZipPath, Set<ArchiveZipPath>> childrenMap, ArchiveZipPath parentPath,
-            final ArchiveZipPath childPath) {
-        if (parentPath == null) {
-            parentPath = (ArchiveZipPath) getRootDirectories().iterator().next();
-        }
-        if (childrenMap.containsKey(parentPath)) {
-            childrenMap.get(parentPath).add(childPath);
-        } else {
-            var children = new LinkedHashSet<ArchiveZipPath>();
-            children.add(childPath);
-            childrenMap.put(parentPath, children);
+    private void addChildPath(final Map<ArchiveZipPath, Set<ArchiveZipPath>> childrenMap,
+        final Map<ArchiveZipPath, String> pathWithNames) {
+
+        for(Entry<ArchiveZipPath,String> entry : pathWithNames.entrySet()) {
+            final var path = entry.getKey();
+
+            var parentPath = path.getParent();
+            if (parentPath == null) {
+                parentPath = (ArchiveZipPath) getRootDirectories().iterator().next();
+            }
+
+            if (childrenMap.containsKey(parentPath)) {
+                childrenMap.get(parentPath).add(path);
+            } else {
+                final var children = new LinkedHashSet<ArchiveZipPath>();
+                children.add(path);
+                childrenMap.put(parentPath, children);
+            }
         }
     }
 
@@ -205,14 +200,19 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
      */
     @SuppressWarnings("resource")
     private List<SeekableByteChannel> getOrderedZipSegmentByteChannels(final FSPath filePath) throws IOException {
+        var zipSegments = Collections.singletonList(filePath);
 
-        final var zipSegments = canListDirectories(filePath.getFileSystem().getFSLocationSpec())
-                ? getZipSegmentsInSameDirectory(filePath) : Collections.singleton(filePath);
+        if (canListDirectories(filePath.getFileSystem().getFSLocationSpec())) {
+            final var zipSegmentsInSameDirectory = getZipSegmentsInSameDirectory(filePath);
+            if (!zipSegmentsInSameDirectory.isEmpty()) {
+                zipSegments = zipSegmentsInSameDirectory;
+            }
+        }
 
         final var seekableByteChannels = new ArrayList<SeekableByteChannel>();
         try {
-            for (final Path zipSegment : zipSegments) {
-                seekableByteChannels.add(Files.newByteChannel(zipSegment));
+            for (final var zipSegmentPath : zipSegments) {
+                seekableByteChannels.add(Files.newByteChannel(zipSegmentPath));
             }
         } catch (Exception ex) { //NOSONAR
             seekableByteChannels.stream().forEach(ArchiveZipFileSystem::closeQuietly);
@@ -229,11 +229,10 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
         return fsDescriptor.getCapabilities().canListDirectories();
     }
 
-    private Collection<Path> getZipSegmentsInSameDirectory(final Path filePath) throws IOException {
-
-        if (filePath.getFileName().toString().endsWith(".jar")) {
-            // split jar archives are not supported
-            return new TreeSet<>(Collections.singleton(filePath));
+    private List<FSPath> getZipSegmentsInSameDirectory(final FSPath filePath) throws IOException {
+        // we only support segmented archives for .zip files
+        if (!"zip".equalsIgnoreCase(getFileExtension(filePath))) {
+            return Collections.emptyList();
         }
 
         final Path parent = filePath.toAbsolutePath().normalize().getParent();
@@ -241,10 +240,12 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
             return files.filter(f -> getFileBaseName(f).equalsIgnoreCase(getFileBaseName(filePath)) //
                     && EXTENSION_PATTERN.matcher(getFileExtension(f)).matches()
                     && Files.isRegularFile(f))
-                    .collect(Collectors.toCollection(() -> new TreeSet<>(new ZipSegmentComparator())));
+                    .sorted(new ZipSegmentComparator())
+                    .map(FSPath.class::cast)
+                    .toList();
         } catch (AccessDeniedException | UnsupportedOperationException e) {
             LOGGER.debug("Could not list files in '" + parent + "': " + ExceptionUtil.getDeepestErrorMessage(e, false));
-            return Collections.singleton(filePath);
+            return Collections.emptyList();
         }
     }
 
@@ -266,34 +267,30 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
      *            (of file or directory) inside the zip file.
      * @return {@link ZipArchiveEntry} corresponds to the given path.
      * @throws IOException
-     * @throws IOException
      *             if I/O error occurs while getting the zip entry.
      */
     ZipArchiveEntry getEntry(final ArchiveZipPath path) throws IOException {
         if (path.isRoot()) {
             return null;
         }
+        return m_zipFile.getEntry(getEntryName(path));
+    }
+
+    /**
+     * Finds the zip entry name by a given path.
+     *
+     * @param path
+     *            (of file or directory) inside the zip file.
+     * @return entry name corresponds to the given path.
+     * @throws IOException
+     *             if I/O error occurs while getting the zip entry.
+     */
+    String getEntryName(final ArchiveZipPath path) throws IOException {
         final String entryName = m_pathsMap.get(path);
         if (entryName == null) {
             throw new NoSuchFileException(path.toString());
         }
-        return m_zipFile.getEntry(entryName);
-    }
-
-    /**
-     * Finds the path inside the zip file from a given zip entry.
-     *
-     * @param entry
-     * @return the path (of file or directory) inside the zip file of a given zip
-     *         entry.
-     * @throws IOException
-     */
-    ArchiveZipPath getPath(final ZipArchiveEntry entry) {
-        final var path = m_entryNamesMap.get(entry.getName());
-        if (path == null) {
-            throw new IllegalArgumentException("No path found for entry " + entry);
-        }
-        return path;
+        return entryName;
     }
 
     /**
@@ -311,23 +308,27 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
     }
 
     /**
-     * Creates the appropriate path for a given zip entry.
+     * Retrieves path along with corresponding parent folders from an {@link ZipArchiveEntry} entry.
      *
      * @param zipFile
      * @param entry
      * @return the path (of file or directory) inside the zip file of a given zip
      *         entry.
      */
-    private ArchiveZipPath createPath(final ArchiveZipFile zipFile, final ZipArchiveEntry entry) {
-        if (!zipFile.hasTopEntries()) {
-            return getPath(getSeparator(), entry.getName());
-        } else {
-            final ZipArchiveEntry fullTopPathEntry = zipFile.getTopEntries().get(zipFile.getTopEntries().size() - 1);
-            final ArchiveZipPath fullTopPath = getPath(getSeparator(), fullTopPathEntry.getName());
-            final ArchiveZipPath entryPath = getPath(getSeparator(), entry.getName());
-            final ArchiveZipPath relativePath = getPath(getSeparator(), fullTopPath.relativize(entryPath).toString()); //NOSONAR
-            return relativePath;
+    private Map<ArchiveZipPath, String> retrievePathsWithNames(final ZipArchiveEntry entry) {
+        final var pathComponents = UnixStylePathUtil.getPathSplits(ArchiveZipFileSystem.SEPARATOR, entry.getName());
+        final var result = new LinkedHashMap<ArchiveZipPath, String>();
+
+        for (var i = 0; i < pathComponents.size() - 1; i++) {
+            final var subList = pathComponents.subList(0, i + 1);
+            final var subArr = subList.toArray(String[]::new);
+            final var folderName = StringUtils.join(subArr, ArchiveZipFileSystem.SEPARATOR)
+                    + ArchiveZipFileSystem.SEPARATOR;
+            result.put(getPath(getSeparator(), subArr), folderName);
         }
+        final var componentsArr = pathComponents.toArray(String[]::new);
+        result.put(getPath(getSeparator(), componentsArr), entry.getName());
+        return result;
     }
 
     @SuppressWarnings("static-method")
