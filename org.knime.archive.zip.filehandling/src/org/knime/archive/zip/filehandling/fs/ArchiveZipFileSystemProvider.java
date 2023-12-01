@@ -100,10 +100,7 @@ class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath
     @Override
     protected InputStream newInputStreamInternal(final ArchiveZipPath path, final OpenOption... options)
         throws IOException {
-        final ZipArchiveEntry entry = getFileSystemInternal().getEntry(path);
-        if (!getFileSystemInternal().getZipFile().canReadEntryData(entry)) {
-            throw new AccessDeniedException(path.toString());
-        }
+        final ZipArchiveEntry entry = getEntry(path);
         return getFileSystemInternal().getZipFile().getInputStream(entry);
     }
 
@@ -133,16 +130,27 @@ class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath
             return new BaseFileAttributes(false, path, FileTime.fromMillis(0), FileTime.fromMillis(0),
                 FileTime.fromMillis(0), getFileSystemInternal().getZipFile().getLength(), false, false, null);
         } else {
-            final ZipArchiveEntry entry = getFileSystemInternal().getEntry(path);
-            if (!getFileSystemInternal().getZipFile().canReadEntryData(entry)) {
-                throw new AccessDeniedException(path.toString());
-            }
+            final ZipArchiveEntry entry = getEntry(path);
             FileTime lastModifiedTime = safeTime(entry.getLastModifiedTime(), FileTime.fromMillis(0));
             FileTime lastAccessTime = safeTime(entry.getLastAccessTime(), lastModifiedTime);
             FileTime creationTime = safeTime(entry.getCreationTime(), lastModifiedTime);
             return new BaseFileAttributes(!entry.isDirectory(), path, lastModifiedTime, lastAccessTime, creationTime,
                 entry.getSize(), false, false, null);
         }
+    }
+
+    @SuppressWarnings("resource")
+    private ZipArchiveEntry getEntry(final ArchiveZipPath path) throws IOException {
+        var entry = getFileSystemInternal().getEntry(path);
+        if (entry != null && !getFileSystemInternal().getZipFile().canReadEntryData(entry)) {
+            throw new AccessDeniedException(path.toString());
+        }
+        if (entry == null) {
+            // entry can be null for .knwf archives
+            final var entryName = getFileSystemInternal().getEntryName(path);
+            entry = new ZipArchiveEntry(entryName);
+        }
+        return entry;
     }
 
     private static FileTime safeTime(final FileTime time, final FileTime defaultTime) {

@@ -12,6 +12,6 @@ Require-Bundle: org.knime.workbench.repository;bundle-version="[5.3.0,6.0.0)",
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  libs/commons-compress-1.21.jar
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Automatic-Module-Name: org.knime.archive.zip.filehandling
 
