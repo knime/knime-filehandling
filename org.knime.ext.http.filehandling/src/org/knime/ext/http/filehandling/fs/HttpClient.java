@@ -69,6 +69,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -85,7 +86,6 @@ import org.apache.cxf.transport.http.asyncclient.AsyncHTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator.AuthenticationCloseable;
-import org.knime.core.util.proxy.CXFThrottlingChecker;
 import org.knime.ext.http.filehandling.fs.HttpFSConnectionConfig.Auth;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
@@ -272,14 +272,9 @@ final class HttpClient {
         try (AuthenticationCloseable c = ThreadLocalHTTPAuthenticator.suppressAuthenticationPopups()) {
             final Future<Response> responseFuture = invocation.submit(Response.class);
             try {
-                return CXFThrottlingChecker.callThrottled(
-                        () -> responseFuture.get(m_config.getReadTimeout().getSeconds(), TimeUnit.SECONDS));
-            } catch (TimeoutException e) {
-                throw ExceptionUtil.wrapAsIOException(e);
-            } catch (InterruptedException e) { // NOSONAR rethrown as InterruptedIOException
-                responseFuture.cancel(true);
-                throw (IOException) new InterruptedIOException().initCause(e);
-            } catch (Exception e) { // NOSONAR we are rethrowing the cause
+                return responseFuture.get(m_config.getReadTimeout().getSeconds(), TimeUnit.SECONDS);
+            } catch (ExecutionException e) { // NOSONAR we are rethrowing the cause (the ExecutionException itself is
+                                             // uninteresting)
                 String errorMsg = null;
                 final Throwable t = ExceptionUtil.getDeepestError(e);
 
@@ -296,6 +291,11 @@ final class HttpClient {
                 } else {
                     throw new IOException(errorMsg, t);
                 }
+            } catch (TimeoutException e) {
+                throw ExceptionUtil.wrapAsIOException(e);
+            } catch (InterruptedException e) { // NOSONAR rethrown as InterruptedIOException
+                responseFuture.cancel(true);
+                throw (IOException) new InterruptedIOException().initCause(e);
             }
         }
     }
