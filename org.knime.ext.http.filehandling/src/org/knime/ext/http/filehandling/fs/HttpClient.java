@@ -281,7 +281,7 @@ final class HttpClient {
                 if (t instanceof ConnectException) {
                     errorMsg = "Unable to connect: Probably the host and/or port are incorrect.";
                 } else if (t instanceof UnknownHostException) {
-                    errorMsg = "Unable to connect: The host is unkown.";
+                    errorMsg = "Unable to connect: The host is unknown.";
                 } else if (t instanceof SocketTimeoutException) {
                     errorMsg = "Unable to connect: Connection timed out.";
                 }
