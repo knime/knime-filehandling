@@ -56,6 +56,7 @@ import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.util.FileUtil;
 import org.knime.core.util.KnimeEncryption;
+import org.knime.core.util.proxy.URLConnectionFactory;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
@@ -111,7 +112,8 @@ public class SSHConnection extends Connection {
             // if it's not using the knime protocol.
             if (keyfile.startsWith("knime://")) {
                 final URL url = FileUtil.toURL(keyfile);
-                final byte[] keyFileByteArray = IOUtils.toByteArray(url.openConnection().getInputStream());
+                final byte[] keyFileByteArray =
+                    IOUtils.toByteArray(URLConnectionFactory.getConnection(url).getInputStream());
                 if (password == null) {
                     jsch.addIdentity(null, keyFileByteArray, null, null);
                 } else {

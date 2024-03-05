@@ -69,6 +69,7 @@ import org.knime.base.filehandling.FilehandlingPlugin;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.util.KnimeEncryption;
+import org.knime.core.util.proxy.URLConnectionFactory;
 
 /**
  * Implementation of the HTTP and HTTPS remote file.
@@ -191,7 +192,7 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
     @Override
     public long lastModified() throws Exception {
     	// convert from milliseconds to seconds
-        return getURI().toURL().openConnection().getLastModified() / 1000;
+        return URLConnectionFactory.getConnection(getURI().toURL()).getLastModified() / 1000;
     }
 
     /**
