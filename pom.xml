@@ -25,7 +25,6 @@
 		<profile>
 			<id>build</id>
 			<modules>
-				<module>org.knime.archive.zip.filehandling/libs/fetch_jars</module>
 				<module>org.knime.ext.smb.filehandling/libs/fetch_jars</module>
 				<module>org.knime.ext.box.filehandling/libs/fetch_jars</module>
 				<module>org.knime.base.filehandling</module>
