@@ -37,6 +37,7 @@ try {
                         repositories: [
                             'knime-gateway',
                             'knime-credentials-base',
+                            'knime-cef',
                             'knime-filehandling',
                             'knime-datageneration',
                             'knime-xml',
