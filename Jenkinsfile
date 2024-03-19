@@ -36,6 +36,7 @@ try {
                     dependencies: [
                         repositories: [
                             'knime-gateway',
+                            'knime-cef',
                             'knime-credentials-base',
                             'knime-filehandling',
                             'knime-datageneration',

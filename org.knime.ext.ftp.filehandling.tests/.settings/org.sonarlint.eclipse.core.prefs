@@ -1,7 +1,3 @@
 autoEnabled=true
-bindingSuggestionsDisabled=false
+bindingSuggestionsDisabled=true
 eclipse.preferences.version=1
-idePrefixKey=lib
-projectKey=KNIME_knime-filehandling
-serverId=SonarCloud
-sqPrefixKey=org.knime.ext.ftp.filehandling.tests
