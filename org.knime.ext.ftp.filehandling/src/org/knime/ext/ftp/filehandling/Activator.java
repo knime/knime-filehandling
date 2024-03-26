@@ -95,9 +95,12 @@ public class Activator implements BundleActivator {
     /**
      * @return Proxy service.
      */
+    @SuppressWarnings("unchecked")
     public static synchronized IProxyService getProxyService() {
         if (proxyServiceRef == null) {
-            proxyServiceRef = bundleContext.getServiceReference(IProxyService.class);
+            // using proxy service class name as String to avoid initialization of the class
+            proxyServiceRef = (ServiceReference<IProxyService>) bundleContext
+                    .getServiceReference("org.eclipse.core.net.proxy.IProxyService");
             proxyService = bundleContext.getService(proxyServiceRef);
         }
 

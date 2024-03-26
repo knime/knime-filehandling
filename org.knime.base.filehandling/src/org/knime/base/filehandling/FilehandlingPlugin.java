@@ -78,8 +78,9 @@ public final class FilehandlingPlugin extends Plugin {
         super.start(context);
         plugin = this;
 
+        // using proxy service class name as String to avoid initialization of the class
         proxyTracker = new ServiceTracker<>(FrameworkUtil.getBundle(this.getClass()).getBundleContext(),
-            IProxyService.class.getName(), null);
+            "org.eclipse.core.net.proxy.IProxyService", null);
         proxyTracker.open();
     }
 
