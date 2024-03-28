@@ -93,10 +93,14 @@ public class Activator implements BundleActivator {
     }
 
     /**
+     * Calling this method will initialize the {@link IProxyService}.
+     *
      * @return Proxy service.
      */
     public static synchronized IProxyService getProxyService() {
         if (proxyServiceRef == null) {
+            // using the proxy service class object here initializes the service indirectly
+            // by loading the class, and subsequently, its plugin activator being called
             proxyServiceRef = bundleContext.getServiceReference(IProxyService.class);
             proxyService = bundleContext.getService(proxyServiceRef);
         }
