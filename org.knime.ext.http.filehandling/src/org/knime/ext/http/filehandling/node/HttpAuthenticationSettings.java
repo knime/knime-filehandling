@@ -55,6 +55,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelAuthentication;
 import org.knime.core.node.defaultnodesettings.SettingsModelAuthentication.AuthenticationType;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelPassword;
@@ -301,6 +302,7 @@ class HttpAuthenticationSettings {
         default:
             break;
         }
+        clearDeselectedAuthTypes();
     }
 
     /**
@@ -340,10 +342,15 @@ class HttpAuthenticationSettings {
                 throw new InvalidSettingsException(
                         "Please choose a credentials flow variable for Basic authentication.");
             }
-        } else if (StringUtils.isBlank(m_basicUser.getStringValue())
-                || StringUtils.isBlank(m_basicPassword.getStringValue())) {
-            throw new InvalidSettingsException(
-                    "Please provide a valid username and password for Basic authentication.");
+            m_basicUser.setStringValue("");
+            m_basicPassword.setStringValue("");
+        } else {
+            if (StringUtils.isBlank(m_basicUser.getStringValue())
+                    || StringUtils.isBlank(m_basicPassword.getStringValue())) {
+                throw new InvalidSettingsException(
+                        "Please provide a valid username and password for Basic authentication.");
+            }
+            m_basicCredentialsName.setStringValue("");
         }
     }
 
@@ -426,5 +433,31 @@ class HttpAuthenticationSettings {
     public void configureInModel(final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer)
             throws InvalidSettingsException {
         // nothing for now
+    }
+
+    /**
+     * Clears the data of the 'other' authentication types. Added as part of
+     * AP-21749 to only store authentication data when needed. To specifically clear
+     * the settings model, call {@link SettingsModelAuthentication#clear()}.
+     */
+    private void clearDeselectedAuthTypes() {
+        final AuthType selectedType = getAuthType();
+        for (AuthType otherType : AuthType.values()) {
+            if (otherType == selectedType) {
+                continue;
+            }
+            switch (otherType) {
+            case NONE:
+                    // nothing to clear
+                    break;
+            case BASIC:
+                    m_basicUser.setStringValue("");
+                    m_basicPassword.setStringValue("");
+                    m_basicCredentialsName.setStringValue("");
+                    break;
+            default:
+                    break;
+            }
+        }
     }
 }

@@ -257,7 +257,6 @@ class HttpAuthenticationDialog extends JPanel {
         return panel;
     }
 
-    @SuppressWarnings("deprecation")
     private void updateComponentsEnablement() {
         final AuthType authType = m_settings.getAuthType();
 
@@ -266,9 +265,9 @@ class HttpAuthenticationDialog extends JPanel {
 
         if (m_flowVariablesSupplier.get().isEmpty()) {
             m_settings.getBasicUseCredentialsModel().setBooleanValue(false);
-            m_basicUseCredentials.setEnabled(false);
+            m_basicUseCredentials.getModel().setEnabled(false);
         } else {
-            m_basicUseCredentials.setEnabled(authType == AuthType.BASIC);
+            m_basicUseCredentials.getModel().setEnabled(authType == AuthType.BASIC);
         }
     }
 
@@ -281,10 +280,10 @@ class HttpAuthenticationDialog extends JPanel {
         switch (m_settings.getAuthType()) {
         case BASIC:
             m_typeBasic.setSelected(true);
-                break;
-            case NONE:
+            break;
+        case NONE:
             m_typeNone.setSelected(true);
-                break;
+            break;
         }
 
         updateComponentsEnablement();

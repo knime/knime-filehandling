@@ -257,6 +257,13 @@ public class KeyFileAuthProviderSettings implements AuthProviderSettings {
      * @param settings
      */
     private void save(final NodeSettingsWO settings) {
+        if (!isEnabled()) {
+            // don't save and persist credentials if they are not selected
+            // see ticket AP-21749
+            clear();
+        } else if (!m_useKeyPassphrase.getBooleanValue()) {
+            m_keyPassphrase.setStringValue("");
+        }
         m_keyUser.saveSettingsTo(settings);
         m_useKeyPassphrase.saveSettingsTo(settings);
         m_keyPassphrase.saveSettingsTo(settings);
@@ -276,11 +283,17 @@ public class KeyFileAuthProviderSettings implements AuthProviderSettings {
     }
 
     @Override
+    public void clear() {
+        m_keyUser.setStringValue("");
+        m_keyPassphrase.setStringValue("");
+    }
+
+    @Override
     public AuthProviderSettings createClone() {
-        final NodeSettings tempSettings = new NodeSettings("ignored");
+        final var tempSettings = new NodeSettings("ignored");
         saveSettingsForModel(tempSettings);
 
-        final KeyFileAuthProviderSettings toReturn = new KeyFileAuthProviderSettings(m_nodeCreationConfig);
+        final var toReturn = new KeyFileAuthProviderSettings(m_nodeCreationConfig);
         try {
             toReturn.loadSettingsForModel(tempSettings);
         } catch (InvalidSettingsException ex) { // NOSONAR can never happen
