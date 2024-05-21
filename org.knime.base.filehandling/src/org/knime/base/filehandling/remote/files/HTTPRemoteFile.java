@@ -51,7 +51,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -63,13 +62,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.eclipse.core.net.proxy.IProxyData;
-import org.eclipse.core.net.proxy.IProxyService;
-import org.knime.base.filehandling.FilehandlingPlugin;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.util.KnimeEncryption;
 import org.knime.core.util.proxy.URLConnectionFactory;
+import org.knime.core.util.proxy.search.GlobalProxySearch;
 
 /**
  * Implementation of the HTTP and HTTPS remote file.
@@ -233,16 +230,7 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
         if (connInfo != null) {
             requestBuilder.setConnectTimeout(connInfo.getTimeout());
             requestBuilder.setSocketTimeout(connInfo.getTimeout());
-
-            IProxyService proxyService = FilehandlingPlugin.getProxyService();
-            IProxyData[] proxyDataForHost = proxyService.select(getURI());
-
-            if (proxyDataForHost != null && proxyDataForHost.length > 0) {
-                /* As far as I can tell ProxyManager#select either returns null, an empty array or an array of
-                 * length one. Therefore this not so nice if-array[0] solution works */
-                configureProxy(proxyDataForHost[0], requestBuilder, credentialsProvider);
-            }
-
+            configureProxyIfNecessary(getURI(), requestBuilder, credentialsProvider);
         }
 
         // Create request
@@ -280,13 +268,17 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
      * @param requestBuilder
      * @param credentialsProvider
      */
-    private static final void configureProxy(final IProxyData data, final Builder requestBuilder,
+    private static void configureProxyIfNecessary(final URI uri, final Builder requestBuilder,
         final CredentialsProvider credentialsProvider) {
-        HttpHost proxyHost = new HttpHost(data.getHost(), data.getPort());
-        requestBuilder.setProxy(proxyHost);
-        if (data.isRequiresAuthentication()) {
-            credentialsProvider.setCredentials(new AuthScope(data.getHost(), data.getPort()),
-                new UsernamePasswordCredentials(data.getUserId(), data.getPassword()));
+        final var proxyResult = GlobalProxySearch.getCurrentFor(uri);
+        if (proxyResult.isEmpty()) {
+            return;
+        }
+        final var data = proxyResult.get();
+        requestBuilder.setProxy(data.forApacheHttpClient().getFirst());
+        if (data.useAuthentication()) {
+            credentialsProvider.setCredentials(new AuthScope(data.host(), data.intPort()),
+                new UsernamePasswordCredentials(data.username(), data.password()));
         }
     }
 }

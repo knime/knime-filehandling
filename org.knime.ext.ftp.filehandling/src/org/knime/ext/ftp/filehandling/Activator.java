@@ -49,9 +49,9 @@
 package org.knime.ext.ftp.filehandling;
 
 import org.eclipse.core.net.proxy.IProxyService;
+import org.knime.core.util.proxy.search.GlobalProxySearch;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 /**
  *
@@ -59,15 +59,8 @@ import org.osgi.framework.ServiceReference;
  */
 public class Activator implements BundleActivator {
 
-    private static BundleContext bundleContext = null;
-    private static ServiceReference<IProxyService> proxyServiceRef;
-    private static IProxyService proxyService;
-
     @Override
     public void start(final BundleContext context) throws Exception {
-        synchronized (Activator.class) {
-            bundleContext = context;
-        }
         setSystemTLSProperty();
     }
 
@@ -84,27 +77,17 @@ public class Activator implements BundleActivator {
 
     @Override
     public void stop(final BundleContext context) throws Exception {
-        synchronized (Activator.class) {
-            if (proxyServiceRef != null) {
-                context.ungetService(proxyServiceRef);
-                proxyServiceRef = null;
-            }
-        }
+        // nothing to do
     }
 
     /**
-     * Calling this method will initialize the {@link IProxyService}.
+     * No-op, returns {@code null} and will be removed.
      *
-     * @return Proxy service.
+     * @return the Eclipse Proxy Service
+     * @deprecated use {@link GlobalProxySearch} instead
      */
+    @Deprecated(since = "5.3", forRemoval = true)
     public static synchronized IProxyService getProxyService() {
-        if (proxyServiceRef == null) {
-            // using the proxy service class object here initializes the service indirectly
-            // by loading the class, and subsequently, its plugin activator being called
-            proxyServiceRef = bundleContext.getServiceReference(IProxyService.class);
-            proxyService = bundleContext.getService(proxyServiceRef);
-        }
-
-        return proxyService;
+        return null;
     }
 }

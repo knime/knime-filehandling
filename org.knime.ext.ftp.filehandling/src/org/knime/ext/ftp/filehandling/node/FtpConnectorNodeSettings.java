@@ -52,7 +52,6 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.eclipse.core.net.proxy.IProxyData;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
@@ -62,7 +61,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.ext.ftp.filehandling.Activator;
+import org.knime.core.util.proxy.ProxyProtocol;
+import org.knime.core.util.proxy.search.GlobalProxySearch;
 import org.knime.ext.ftp.filehandling.fs.FtpFSConnectionConfig;
 import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
 import org.knime.ext.ftp.filehandling.fs.ProtectedHostConfiguration;
@@ -558,16 +558,14 @@ class FtpConnectorNodeSettings {
 
         // Proxy
         if (isUseProxy()) {
+            final var proxyResult = GlobalProxySearch.getCurrentFor(ProxyProtocol.HTTP, ProxyProtocol.HTTPS);
+            final var proxyData = proxyResult
+                    .orElseThrow(() -> new InvalidSettingsException("Eclipse HTTP proxy is not configured"));
             final var proxy = new ProtectedHostConfiguration();
-            IProxyData proxyData = Activator.getProxyService().getProxyData(IProxyData.HTTP_PROXY_TYPE);
-            if (proxyData == null) {
-                throw new InvalidSettingsException("Eclipse HTTP proxy is not configured");
-            }
-
-            proxy.setHost(proxyData.getHost());
-            proxy.setPort(proxyData.getPort());
-            proxy.setUser(proxyData.getUserId());
-            proxy.setPassword(proxyData.getPassword());
+            proxy.setHost(proxyData.host());
+            proxy.setPort(proxyData.intPort());
+            proxy.setUser(proxyData.username());
+            proxy.setPassword(proxyData.password());
 
             conf.setProxy(proxy);
         }
