@@ -4,6 +4,6 @@ Bundle-Name: Tests for SSH Connector
 Bundle-SymbolicName: org.knime.ext.ssh.filehandling.tests
 Bundle-Version: 5.4.0.qualifier
 Automatic-Module-Name: org.knime.ext.ssh.filehandling.tests
-Fragment-Host: org.knime.ext.ssh.filehandling;bundle-version="[5.3.0,6.0.0)"
+Fragment-Host: org.knime.ext.ssh.filehandling;bundle-version="[5.4.0,6.0.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Require-Bundle: junit-jupiter-api;bundle-version="[5.9.2,6.0.0)"
