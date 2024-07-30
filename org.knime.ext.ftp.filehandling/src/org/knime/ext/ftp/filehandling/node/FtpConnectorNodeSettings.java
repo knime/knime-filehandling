@@ -48,11 +48,15 @@
  */
 package org.knime.ext.ftp.filehandling.node;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.apache.http.client.utils.URIBuilder;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -78,6 +82,8 @@ import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
 class FtpConnectorNodeSettings {
+
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(FtpConnectorNodeSettings.class);
 
     private static final boolean DEFAULT_REUSE_SSL_SESSION = true;
 
@@ -558,15 +564,15 @@ class FtpConnectorNodeSettings {
 
         // Proxy
         if (isUseProxy()) {
-            final var proxyResult = GlobalProxySearch.getCurrentFor(ProxyProtocol.HTTP, ProxyProtocol.HTTPS);
-            final var proxyData = proxyResult
+            final var uri = createNullableURI(getHost(), getPort());
+            final var proxyData = GlobalProxySearch.getCurrentFor(uri, ProxyProtocol.HTTP, ProxyProtocol.HTTPS) //
+                    .filter(cfg -> !cfg.isHostExcluded(uri)) //
                     .orElseThrow(() -> new InvalidSettingsException("Eclipse HTTP proxy is not configured"));
             final var proxy = new ProtectedHostConfiguration();
             proxy.setHost(proxyData.host());
             proxy.setPort(proxyData.intPort());
             proxy.setUser(proxyData.username());
             proxy.setPassword(proxyData.password());
-
             conf.setProxy(proxy);
         }
 
@@ -577,4 +583,12 @@ class FtpConnectorNodeSettings {
         return settings.containsKey(KEY_VERIFY_HOSTNAME);
     }
 
+    static URI createNullableURI(final String host, final int port) {
+        try {
+            return new URIBuilder().setScheme("ftp").setHost(host).setPort(port).build();
+        } catch (URISyntaxException e) {
+            LOGGER.debug("Could not parse URL as URI for proxy selection", e);
+            return null;
+        }
+    }
 }
