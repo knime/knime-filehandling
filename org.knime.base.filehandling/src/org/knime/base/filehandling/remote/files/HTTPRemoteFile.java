@@ -55,18 +55,15 @@ import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.util.KnimeEncryption;
 import org.knime.core.util.proxy.URLConnectionFactory;
-import org.knime.core.util.proxy.search.GlobalProxySearch;
+import org.knime.core.util.proxy.apache.ProxyCredentialsProvider;
+import org.knime.core.util.proxy.apache.ProxyHttpClients;
 
 /**
  * Implementation of the HTTP and HTTPS remote file.
@@ -224,17 +221,16 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
      * @throws Exception If communication did not work
      */
     private HttpResponse getResponse() throws Exception {
-        Builder requestBuilder = RequestConfig.custom();
-        BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        ConnectionInformation connInfo = getConnectionInformation();
+        final var requestBuilder = RequestConfig.custom();
+        final var connInfo = getConnectionInformation();
         if (connInfo != null) {
             requestBuilder.setConnectTimeout(connInfo.getTimeout());
             requestBuilder.setSocketTimeout(connInfo.getTimeout());
-            configureProxyIfNecessary(getURI(), requestBuilder, credentialsProvider);
         }
 
         // Create request
-        HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+        final var credentialsProvider = new ProxyCredentialsProvider(getURI());
+        final var clientBuilder = ProxyHttpClients.custom().setDefaultCredentialsProvider(credentialsProvider);
 
         final HttpGet request;
         // If user info is given in the URI use HTTP basic authentication
@@ -249,36 +245,14 @@ public class HTTPRemoteFile extends RemoteFile<Connection> {
             final Credentials credentials = new UsernamePasswordCredentials(getURI().getUserInfo(), password);
 
             credentialsProvider.setCredentials(new AuthScope(getURI().getHost(), port), credentials);
-            clientBuilder.setDefaultCredentialsProvider(credentialsProvider);
             request = new HttpGet(getURI());
             request.addHeader(new BasicScheme().authenticate(credentials, request, null));
         } else {
             request = new HttpGet(getURI());
         }
-        request.setConfig(requestBuilder.build());
-        // Return response
-        return clientBuilder.build().execute(request);
-    }
 
-    /**
-     * Reads the proxy-data stored in {@code data} and updates the {@code requestBuilder} and
-     * {@code credentialsProvider} accordingly
-     *
-     * @param data
-     * @param requestBuilder
-     * @param credentialsProvider
-     */
-    private static void configureProxyIfNecessary(final URI uri, final Builder requestBuilder,
-        final CredentialsProvider credentialsProvider) {
-        final var proxyResult = GlobalProxySearch.getCurrentFor(uri);
-        if (proxyResult.isEmpty()) {
-            return;
-        }
-        final var data = proxyResult.get();
-        requestBuilder.setProxy(data.forApacheHttpClient().getFirst());
-        if (data.useAuthentication()) {
-            credentialsProvider.setCredentials(new AuthScope(data.host(), data.intPort()),
-                new UsernamePasswordCredentials(data.username(), data.password()));
-        }
+        // Return response (unclosed client within - needed for further processing)
+        request.setConfig(requestBuilder.build());
+        return clientBuilder.build().execute(request);
     }
 }
