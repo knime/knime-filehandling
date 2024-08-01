@@ -50,6 +50,7 @@ package org.knime.archive.zip.filehandling.fs;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
@@ -67,6 +68,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -77,12 +79,17 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.ZipSplitReadOnlySeekableByteChannel;
 import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.node.workflow.MetaNodeTemplateInformation;
+import org.knime.core.node.workflow.WorkflowPersistor;
+import org.knime.core.util.workflowalizer.MetadataConfig;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 import org.knime.filehandling.core.connections.base.UnixStylePathUtil;
 import org.knime.filehandling.core.connections.meta.FSDescriptorRegistry;
+import org.knime.filehandling.core.connections.workflowaware.Entity;
 import org.knime.filehandling.core.defaultnodesettings.ExceptionUtil;
 
 /**
@@ -401,4 +408,54 @@ public class ArchiveZipFileSystem extends BaseFileSystem<ArchiveZipPath> {
             return splitSegmentNumber1.compareTo(splitSegmentNumber2);
         }
     }
+
+    /**
+     * Returns which kind of entity (workflow, component, workflow group, meta node or data) the provided path points
+     * to.
+     *
+     * @param path for which to get the type of entity
+     * @return the type of entity at the provided path or {@link Optional#empty()} if the path doesn't point to anything
+     * @throws IOException if I/O problems occur
+     */
+    protected Optional<Entity> getEntity(final ArchiveZipPath path) throws IOException {
+        // throws NoSuchFileException if it points into a workflow
+        final var localPath = path.getParent().resolve(path.getFileName()).resolve(WorkflowPersistor.WORKFLOW_FILE);
+        // needs to be relative, not absolute
+        final var workflowEntry = m_zipFile.getEntry(localPath.toString().substring(1));
+        if (workflowEntry != null) {
+            return Optional.of(Entity.WORKFLOW);
+        } else {
+            return Optional.empty();
+        }
+        // FIXME: check for components, metanodes, etc.
+    }
+
+    private static Entity getTemplateEntity(final Path localPath) throws IOException {
+        if (isComponent(localPath.resolve(WorkflowPersistor.TEMPLATE_FILE))) {
+            return Entity.COMPONENT;
+        } else {
+            return Entity.METANODE;
+        }
+    }
+
+    private static boolean isComponent(final Path pathToTemplateFile) throws IOException {
+        assert pathToTemplateFile.endsWith(WorkflowPersistor.TEMPLATE_FILE);
+        final MetadataConfig c = new MetadataConfig("ignored");
+        try (final InputStream s = Files.newInputStream(pathToTemplateFile)) {
+            c.load(s);
+            return c.getConfigBase("workflow_template_information").getString("templateType")
+                .equals(MetaNodeTemplateInformation.TemplateType.SubNode.toString());
+        } catch (InvalidSettingsException ex) {
+            throw new IOException("Invalid template.knime file.", ex);
+        }
+    }
+
+    private static boolean hasTemplateFile(final Path localPath) {
+        return Files.exists(localPath.resolve(WorkflowPersistor.TEMPLATE_FILE));
+    }
+
+    private static boolean hasWorkflowFile(final Path localPath) {
+        return Files.exists(localPath.resolve(WorkflowPersistor.WORKFLOW_FILE));
+    }
+
 }

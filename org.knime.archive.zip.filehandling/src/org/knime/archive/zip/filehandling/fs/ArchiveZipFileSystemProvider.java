@@ -48,6 +48,8 @@
  */
 package org.knime.archive.zip.filehandling.fs;
 
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -56,23 +58,31 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.io.IOUtils;
+import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
+import org.knime.filehandling.core.connections.workflowaware.Entity;
+import org.knime.filehandling.core.connections.workflowaware.WorkflowAware;
+import org.knime.filehandling.core.util.TempPathCloseable;
 
 /**
  * File system provider for the {@link ArchiveZipFileSystem}.
  *
  * @author Dragan Keselj, KNIME GmbH
  */
-class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath, ArchiveZipFileSystem> {
+class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath, ArchiveZipFileSystem> implements WorkflowAware {
 
     ArchiveZipFileSystemProvider() throws IOException {
 
@@ -174,5 +184,63 @@ class ArchiveZipFileSystemProvider extends BaseFileSystemProvider<ArchiveZipPath
     @Override
     protected boolean exists(final ArchiveZipPath path) throws IOException { //NOSONAR
         return super.exists(path);
+    }
+
+    @Override
+    public Entity getEntityOf(final FSPath path) throws IOException {
+        checkFileSystemOpenAndNotClosing();
+        var checkedPath = checkCastAndAbsolutizePath(path);
+        return getEntity(checkedPath).orElseThrow(() -> new NoSuchFileException(path.toString()));
+    }
+
+    @SuppressWarnings("resource")// the file system has to stay open for further use
+    private Optional<Entity> getEntity(final ArchiveZipPath path) throws IOException {
+        return getFileSystemInternal().getEntity(path);
+    }
+
+    @Override
+    public void deployWorkflow(final Path source, final FSPath dest, final boolean overwrite, final boolean attemptOpen) throws IOException {
+        throw new AccessDeniedException("Deploying workflows is not supported");
+    }
+
+    @Override
+    public TempPathCloseable toLocalWorkflowDir(final FSPath workflowToRead) throws IOException {
+        final var tempDir = Files.createTempDirectory("zipped-KNIME-workflow");
+        final var path = workflowToRead.toAbsolutePath();
+
+        try(var fs = getFileSystemInternal(); var zipFile = fs.getZipFile()){
+
+            final var entries = zipFile.getEntries();
+            while (entries.hasMoreElements()) {
+                var entry = entries.nextElement();
+                // skip entries that use features that are unsupported by commons.io
+                if (!zipFile.canReadEntryData(entry)) {
+                    continue;
+                }
+                // only extract subdirectory that contains the workflow
+                final var entryPath = Path.of(entry.getName());
+                if (path.startsWith(entryPath)) {
+                    continue;
+                }
+                var targetPath = tempDir.resolve(entry.getName());
+                if (entry.isDirectory()) {
+                    Files.createDirectories(targetPath);
+                } else {
+                    Files.createDirectories(targetPath.getParent());
+                    try (var in = new BufferedInputStream(zipFile.getInputStream(entry));
+                            var out = new FileOutputStream(targetPath.toFile())) {
+                        // FIXME ChannelClosedException: null
+                        IOUtils.copy(in, out);
+                    }
+
+                }
+            }
+        }
+        return new TempPathCloseable(tempDir);
+    }
+
+    @Override
+    public Optional<String> getMountID() {
+        return Optional.empty();
     }
 }
