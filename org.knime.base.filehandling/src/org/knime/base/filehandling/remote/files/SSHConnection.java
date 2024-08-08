@@ -47,16 +47,15 @@
  */
 package org.knime.base.filehandling.remote.files;
 
+import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.core.util.FileUtil;
 import org.knime.core.util.KnimeEncryption;
-import org.knime.core.util.proxy.URLConnectionFactory;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
@@ -104,16 +103,14 @@ public class SSHConnection extends Connection {
         if (password != null) {
             password = KnimeEncryption.decrypt(password);
         }
-        final JSch jsch = new JSch();
+        final var jsch = new JSch();
         // Use keyfile if available
         final String keyfile = m_connectionInformation.getKeyfile();
         if (!StringUtils.isEmpty(keyfile)) {
             // Jsch seems to resolve ~ correctly, so to not break that functionality, we let jsch handle the keyfile
             // if it's not using the knime protocol.
             if (keyfile.startsWith("knime://")) {
-                final URL url = FileUtil.toURL(keyfile);
-                final byte[] keyFileByteArray =
-                    IOUtils.toByteArray(URLConnectionFactory.getConnection(url).getInputStream());
+                final byte[] keyFileByteArray = readAllBytesWithTimeout(keyfile, m_connectionInformation.getTimeout());
                 if (password == null) {
                     jsch.addIdentity(null, keyFileByteArray, null, null);
                 } else {
@@ -125,11 +122,11 @@ public class SSHConnection extends Connection {
 
         }
         // Set known hosts if available
-        final String knownHosts = m_connectionInformation.getKnownHosts();
+        final var knownHosts = m_connectionInformation.getKnownHosts();
         if (knownHosts != null) {
             jsch.setKnownHosts(knownHosts);
         }
-        final Session session = jsch.getSession(user, host, port);
+        final var session = jsch.getSession(user, host, port);
         session.setPassword(password);
         if (knownHosts == null) {
             session.setConfig("StrictHostKeyChecking", "no");
@@ -137,6 +134,13 @@ public class SSHConnection extends Connection {
         session.setTimeout(m_connectionInformation.getTimeout());
         session.connect();
         m_session = session;
+    }
+
+    private static byte[] readAllBytesWithTimeout(final String keyfile, final int timeout) throws IOException {
+        final var url = FileUtil.toURL(keyfile);
+        try (final var stream = FileUtil.openStreamWithTimeout(url, timeout)) {
+            return IOUtils.toByteArray(stream);
+        }
     }
 
     /**
