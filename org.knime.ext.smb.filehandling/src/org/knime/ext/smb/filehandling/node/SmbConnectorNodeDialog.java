@@ -171,13 +171,13 @@ class SmbConnectorNodeDialog extends NodeDialogPane {
     }
 
     private FSConnection createFSConnection() throws IOException {
+        final var credentialsProvider = getCredentialsProvider();
         try {
-            m_settings.validate();
+            m_settings.validateOnExecute(credentialsProvider::get);
         } catch (InvalidSettingsException e) {
             throw new IOException(e.getMessage(), e);
         }
 
-        final var credentialsProvider = getCredentialsProvider();
         final SmbFSConnectionConfig config = m_settings.createFSConnectionConfig(credentialsProvider::get);
         return new SmbFSConnection(config);
     }
