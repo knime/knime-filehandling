@@ -423,6 +423,19 @@ class SmbConnectorSettings {
         }
     }
 
+    void validateOnExecute(final Function<String, ICredentials> credentialsProvider) throws InvalidSettingsException {
+        validate();
+
+        if (getAuthSettings().getAuthType() == StandardAuthTypes.USER_PASSWORD) {
+            final UserPasswordAuthProviderSettings userPassSettings = getAuthSettings()
+                    .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
+
+            if (StringUtils.isBlank(userPassSettings.getUser(credentialsProvider))) {
+                throw new InvalidSettingsException("The username must not be empty. Please provide a valid username.");
+            }
+        }
+    }
+
     /**
      * @throws InvalidSettingsException
      */
@@ -467,8 +480,14 @@ class SmbConnectorSettings {
         if (getAuthSettings().getAuthType() == StandardAuthTypes.USER_PASSWORD) {
             final UserPasswordAuthProviderSettings userPassSettings = getAuthSettings()
                     .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
+
             config.setUser(userPassSettings.getUser(credentialsProvider));
-            config.setPassword(userPassSettings.getPassword(credentialsProvider));
+            final String password = userPassSettings.getPassword(credentialsProvider);
+            if (StringUtils.isBlank(password)) {
+                config.setPassword(""); // make sure we don't pass null
+            } else {
+                config.setPassword(userPassSettings.getPassword(credentialsProvider));
+            }
         }
 
         config.setTimeout(getTimeout());

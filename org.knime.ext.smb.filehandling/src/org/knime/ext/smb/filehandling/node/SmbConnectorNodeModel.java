@@ -116,6 +116,7 @@ class SmbConnectorNodeModel extends NodeModel {
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
 
         final CredentialsProvider credentialsProvider = getCredentialsProvider();
+        m_settings.validateOnExecute(credentialsProvider::get);
         final SmbFSConnectionConfig config = m_settings.createFSConnectionConfig(credentialsProvider::get);
         try {
             m_fsConnection = new SmbFSConnection(config, exec);
