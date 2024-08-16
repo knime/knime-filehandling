@@ -50,7 +50,8 @@
               "isHiddenPassword" : false,
               "isHiddenSecondFactor" : false,
               "username" : ""
-            }
+            },
+            "subConfigKeys" : [ ]
           },
           "enterpriseId" : {
             "type" : "string",
