@@ -60,16 +60,18 @@ import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Effect.EffectType;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.OneOfEnumCondition;
-import org.knime.core.webui.node.dialog.defaultdialog.rule.Signal;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.ButtonWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.button.CancelableActionHandler;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Predicate;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicateProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
 import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.oauth.api.nodesettings.TokenCacheKeyPersistor;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
@@ -121,10 +123,13 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         CLIENT_CREDENTIALS;
     }
 
-    static class AuthTypeIsClientCreds extends OneOfEnumCondition<AuthType> {
+    interface AuthTypeRef extends Reference<AuthType> {
+    }
+
+    static class AuthTypeIsClientCreds implements PredicateProvider {
         @Override
-        public AuthType[] oneOf() {
-            return new AuthType[] { AuthType.CLIENT_CREDENTIALS };
+        public Predicate init(final PredicateInitializer i) {
+            return i.getEnum(AuthTypeRef.class).isOneOf(AuthType.CLIENT_CREDENTIALS);
         }
     }
 
@@ -133,7 +138,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
 
     @Widget(title = "Type", description = "Authentication method to use.")
     @Layout(AuthenticationSection.TypeSwitcher.class)
-    @Signal(condition = AuthTypeIsClientCreds.class)
+    @ValueReference(AuthTypeRef.class)
     @ValueSwitchWidget
     AuthType m_authType = AuthType.OAUTH;
 
@@ -143,7 +148,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
             service account</a>.
             """)
     @Layout(AuthenticationSection.Body.class)
-    @Effect(signals = AuthTypeIsClientCreds.class, type = EffectType.SHOW)
+    @Effect(predicate = AuthTypeIsClientCreds.class, type = EffectType.SHOW)
     String m_enterpriseId;
 
     @Widget(title = "Redirect URL (should be http://localhost:XXXXX)", description = """
@@ -152,7 +157,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
             the App configuration in Box.
             """)
     @Layout(AuthenticationSection.Body.class)
-    @Effect(signals = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
+    @Effect(predicate = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
     String m_redirectUrl = "http://localhost:33749/";
 
     @ButtonWidget(actionHandler = LoginActionHandler.class, //
@@ -163,7 +168,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
                     + "allows to interactively log into Box.")
     @Persist(optional = true, hidden = true, customPersistor = TokenCacheKeyPersistor.class)
     @Layout(AuthenticationSection.Body.class)
-    @Effect(signals = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
+    @Effect(predicate = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
     UUID m_tokenCacheKey;
 
     static class LoginActionHandler extends CancelableActionHandler<UUID, BoxAuthenticatorSettings> {
