@@ -1,7 +1,7 @@
 #!groovy
 def BN = (BRANCH_NAME == 'master' || BRANCH_NAME.startsWith('releases/')) ? BRANCH_NAME : 'releases/2024-12'
 
-library "knime-pipeline@$BN"
+library "knime-pipeline@todo/DEVOPS-2151-workflow-tests-default-mac-os-arm"
 
 properties([
     pipelineTriggers([
@@ -25,7 +25,8 @@ try {
             UnitTests: {
                 stage('Testing remote FS'){
                     // The integrated workflowtests only work on ubunutu at the moment
-                    workflowTests.runIntegratedWorkflowTests(configurations: workflowTests.DEFAULT_FEATURE_BRANCH_CONFIGURATIONS,
+                    workflowTests.runIntegratedWorkflowTests(
+                        configurations: workflowTests.DEFAULT_FEATURE_BRANCH_CONFIGURATIONS,
                         profile: "test", sidecarContainers: [
                             [ image: SSHD_IMAGE, namePrefix: "SSHD", port: 22 ]
                     ])
@@ -54,6 +55,7 @@ try {
                             'knime-ensembles'
                         ]
                     ],
+                    // configurations: ['MacOS_12_M1_knime420', 'MacOS_13_M1_knime421', 'MacOS_14_M1_knime494'],
                     sidecarContainers: [
                         [ image: SSHD_IMAGE, namePrefix: "SSHD", port: 22 ],
                         [ image: SMBD_IMAGE, namePrefix: "SMBD", port: 445 ]
@@ -67,6 +69,7 @@ try {
                             "knime-filehandling", "knime-kerberos"
                         ]
                     ],
+                    // configurations: ['MacOS_12_M1_knime420', 'MacOS_13_M1_knime421', 'MacOS_14_M1_knime494'],
                 )
             }
         ]
@@ -74,10 +77,10 @@ try {
         parallel testConfigs
     }
 
-     stage('Sonarqube analysis') {
-         env.lastStage = env.STAGE_NAME
-         workflowTests.runSonar()
-     }
+    //  stage('Sonarqube analysis') {
+    //      env.lastStage = env.STAGE_NAME
+    //      workflowTests.runSonar()
+    //  }
 } catch (ex) {
     currentBuild.result = 'FAILURE'
     throw ex
