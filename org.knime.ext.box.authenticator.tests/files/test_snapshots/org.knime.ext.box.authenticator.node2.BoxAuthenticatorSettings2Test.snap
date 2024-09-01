@@ -44,7 +44,7 @@
                 "default" : ""
               }
             },
-            "title" : "App ID and secret",
+            "title" : "Client/App configuration",
             "description" : "The app/client ID and secret of the custom Box app.\nThese fields can be found in the configuration settings of your custom Box app.\n",
             "default" : {
               "isHiddenPassword" : false,
@@ -84,7 +84,7 @@
         "scope" : "#/properties/model/properties/boxApp",
         "options" : {
           "format" : "credentials",
-          "usernameLabel" : "Client/App ID",
+          "usernameLabel" : "ID",
           "passwordLabel" : "Secret"
         }
       } ]
