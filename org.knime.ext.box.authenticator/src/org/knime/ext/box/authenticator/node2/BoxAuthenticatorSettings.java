@@ -129,12 +129,12 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         }
     }
 
-    @Widget(title = "App ID and secret", //
+    @Widget(title = "Client/App configuration", //
             description = """
                     The app/client ID and secret of the custom Box app.
                     These fields can be found in the configuration settings of your custom Box app.
                     """)
-    @CredentialsWidget(usernameLabel = "Client/App ID", passwordLabel = "Secret")
+    @CredentialsWidget(usernameLabel = "ID", passwordLabel = "Secret")
     @Layout(BoxAppSection.class)
     Credentials m_boxApp = new Credentials();
 
