@@ -51,19 +51,20 @@ package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
 
-import org.apache.sshd.sftp.client.SftpClient;
+import org.apache.sshd.client.channel.ChannelExec;
 
 /**
- * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
- *
+ * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
+ * @param <R>
+ *            return type of the invocation
  */
 @FunctionalInterface
-public interface WithClientInvocable<R> {
+public interface WithExecChannelInvocable<R> {
     /**
-     * @param sftpClient
-     *            SFTP client.
+     * @param channel
+     *            channel
      * @return invocation result.
      * @throws IOException
      */
-    R invoke(SftpClient sftpClient) throws IOException;
+    R invoke(final ChannelExec channel) throws IOException;
 }

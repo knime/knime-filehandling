@@ -64,6 +64,7 @@ public class SshFSConnectionConfig extends BaseFSConnectionConfig {
     private Duration m_connectionTimeout = Duration
             .ofSeconds(SshConnectorNodeSettings.DEFAULT_CONNECTION_TIMEOUT_SECONDS);
     private int m_maxSftpSessionLimit = SshConnectorNodeSettings.DEFAULT_MAX_SESSION_COUNT;
+    private int m_maxExecChannelLimit = SshConnectorNodeSettings.DEFAULT_MAX_EXEC_CHANNEL_COUNT;
     private int m_port = 22;
     private String m_host;
     private String m_userName;
@@ -103,7 +104,7 @@ public class SshFSConnectionConfig extends BaseFSConnectionConfig {
      * @return connection time out.
      */
     public Duration getConnectionTimeout() {
-        return m_connectionTimeout;
+        return m_connectionTimeout.isZero() ? null : m_connectionTimeout;
     }
 
     /**
@@ -233,5 +234,20 @@ public class SshFSConnectionConfig extends BaseFSConnectionConfig {
      */
     public void setMaxSftpSessionLimit(final int count) {
         this.m_maxSftpSessionLimit = count;
+    }
+
+    /**
+     * @return maximum number of execution channels.
+     */
+    public int getMaxExecChannelLimit() {
+        return m_maxExecChannelLimit;
+    }
+
+    /**
+     * @param count
+     *            maximum number of execution channels
+     */
+    public void setMaxExecChannelLimit(final int count) {
+        this.m_maxExecChannelLimit = count;
     }
 }
