@@ -50,8 +50,7 @@
               "isHiddenPassword" : false,
               "isHiddenSecondFactor" : false,
               "username" : ""
-            },
-            "subConfigKeys" : [ ]
+            }
           },
           "enterpriseId" : {
             "type" : "string",
@@ -62,8 +61,7 @@
             "type" : "string",
             "format" : "uuid",
             "title" : "Login",
-            "description" : "Clicking on login opens a new browser window/tab which allows to interactively log into Box.",
-            "configKeys" : [ "loginCredentialRef_Internals" ]
+            "description" : "Clicking on login opens a new browser window/tab which allows to interactively log into Box."
           },
           "redirectUrl" : {
             "type" : "string",
@@ -170,5 +168,24 @@
         }
       } ]
     } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "boxApp" : {
+            "configPaths" : [ [ "boxApp" ] ]
+          },
+          "authType" : { },
+          "enterpriseId" : { },
+          "redirectUrl" : { },
+          "loginCredentialRef" : {
+            "configPaths" : [ ]
+          }
+        }
+      }
+    }
   }
 }

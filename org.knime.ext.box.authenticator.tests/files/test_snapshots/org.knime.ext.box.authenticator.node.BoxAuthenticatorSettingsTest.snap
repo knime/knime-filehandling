@@ -50,8 +50,7 @@
             "type" : "string",
             "format" : "uuid",
             "title" : "Login",
-            "description" : "Clicking on login opens a new browser window/tab which allows to interactively log into Box.",
-            "configKeys" : [ "tokenCacheKey_Internals" ]
+            "description" : "Clicking on login opens a new browser window/tab which allows to interactively log into Box."
           }
         }
       }
@@ -155,5 +154,27 @@
         }
       } ]
     } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "boxApp" : {
+            "type" : "object",
+            "properties" : {
+              "flowVariable" : { }
+            }
+          },
+          "authType" : { },
+          "enterpriseId" : { },
+          "redirectUrl" : { },
+          "tokenCacheKey" : {
+            "configPaths" : [ ]
+          }
+        }
+      }
+    }
   }
 }
