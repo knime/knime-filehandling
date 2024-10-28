@@ -71,7 +71,7 @@ final class ScribeJavaHelper {
             final BoxAuthenticatorSettings settings) throws Exception {
 
         try (var service = settings.createService(credsProvider)) {
-            final var scribeJavaToken = new AuthCodeFlow(service, URI.create(settings.m_redirectUrl))//
+            final var scribeJavaToken = new AuthCodeFlow(service, URI.create(settings.m_redirectUrl), true)//
                     .login(null);
             return CredentialFactory.fromScribeToken(scribeJavaToken, () -> settings.createService(credsProvider));
         }
