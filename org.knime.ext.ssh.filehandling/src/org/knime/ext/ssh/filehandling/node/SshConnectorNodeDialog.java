@@ -270,6 +270,20 @@ public class SshConnectorNodeDialog extends NodeDialogPane {
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        panel.add(new JLabel("Maximum concurrent shell sessions:"), gbc);
+
+        gbc.gridx++;
+        panel.add(new DialogComponentNumber(m_settings.getMaxExecChannelCountModel(), "", 1).getComponentPanel(), gbc);
+
+        gbc.gridx++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        panel.add(Box.createHorizontalGlue(), gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.insets = new Insets(0, 0, 0, 5);
         gbc.weightx = 0;
         panel.add(new DialogComponentBoolean(m_settings.getUseKnownHostsFileModel(), "Use known hosts file")

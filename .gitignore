@@ -3,3 +3,4 @@
 */build/
 **/.flattened-pom.xml
 **/CHANGELOG.md
+org.knime.ext.ssh.filehandling.tests/files/test_snapshots/**/*.snap.debug

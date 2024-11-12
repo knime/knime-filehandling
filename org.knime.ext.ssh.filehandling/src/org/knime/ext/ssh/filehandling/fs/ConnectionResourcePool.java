@@ -50,12 +50,14 @@
 package org.knime.ext.ssh.filehandling.fs;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.exception.SshChannelOpenException;
 import org.apache.sshd.common.session.Session;
@@ -84,10 +86,13 @@ public class ConnectionResourcePool implements SessionListener {
     private final LinkedList<ConnectionResource> m_freeResources = new LinkedList<>();
     private final Set<ConnectionResource> m_busyResources = new HashSet<>();
 
+    private final Set<ChannelExec> m_currentExecChannels = new HashSet<>();
+
     private final SftpSessionFactory m_sessionFactory;
     private ClientSession m_session;
 
     private final int m_maxResourcesLimit;
+    private final int m_maxExecChannelLimit;
     private final Duration m_connectionTimeOut;
 
     /**
@@ -97,6 +102,7 @@ public class ConnectionResourcePool implements SessionListener {
     public ConnectionResourcePool(final SshFSConnectionConfig settings) {
         super();
         m_maxResourcesLimit = settings.getMaxSftpSessionLimit();
+        m_maxExecChannelLimit = settings.getMaxExecChannelLimit();
         m_connectionTimeOut = settings.getConnectionTimeout();
 
         m_sessionFactory = new SftpSessionFactory(settings);
@@ -108,21 +114,73 @@ public class ConnectionResourcePool implements SessionListener {
      * @throws IOException
      */
     public synchronized ConnectionResource take() throws IOException {
+        return take(this::takeImpl, m_connectionTimeOut, "Wait of resource time out exceed");
+    }
+
+    /**
+     * Try to create a new execution channel within a given timeout but do not open
+     * it.
+     *
+     * @param command
+     *            the command to execute
+     * @param encoding
+     *            the encoding in which to send the command
+     * @param timeOut
+     *            the maximum time out to wait for the resource to be created and
+     *            the connection to be established. A duration of {@code null} means
+     *            no time out
+     * @return the newly created execution channel
+     * @throws IOException
+     */
+    public synchronized ChannelExec takeExecChannel(final String command, final Charset encoding,
+            final Duration timeOut) throws IOException {
+        return take(() -> takeExecChannelImpl(command, encoding), timeOut,
+                "Waiting for shell session timed out. "
+                        + "Please consider decreasing the maximum SFTP sessions or increasing the maximum "
+                        + "shell sessions in the SSH Connector.");
+    }
+
+    private synchronized <R> R take(final TakeSupplier<R> supplier, final Duration timeout, final String timeoutMessage)
+            throws IOException {
+        if (timeout == null || timeout.isZero()) {
+            return takeWithoutTimeout(supplier);
+        } else {
+            return takeWithTimeout(supplier, timeout.toMillis(), timeoutMessage);
+        }
+    }
+
+    private synchronized <R> R takeWithoutTimeout(final TakeSupplier<R> supplier) throws IOException {
+        while (true) {
+            try {
+                return supplier.take();
+            } catch (ResourcesLimitExceedException ignored) { // NOSONAR used for waiting
+                try {
+                    wait();
+                } catch (InterruptedException iex) { // NOSONAR
+                    throw new IOException("Thread interrupted", iex);
+                }
+            }
+        }
+    }
+
+    private synchronized <R> R takeWithTimeout(final TakeSupplier<R> supplier, final long millis,
+            final String timeoutMessage) throws IOException {
         long startTime = System.currentTimeMillis();
 
         while (true) {
             try {
-                return takeImpl();
-            } catch (ResourcesLimitExceedException ex) {
-                long waitTime = m_connectionTimeOut.toMillis() - (System.currentTimeMillis() - startTime);
+                return supplier.take();
+            } catch (ResourcesLimitExceedException ignored) { // NOSONAR used for waiting
+                long waitTime = millis - (System.currentTimeMillis() - startTime);
                 if (waitTime > 0) {
                     try {
                         wait(waitTime);
-                    } catch (InterruptedException ex1) {
-                        throw new IOException("Thread interrupted", ex1);
+                    } catch (InterruptedException iex) { // NOSONAR
+                        Thread.currentThread().interrupt();
+                        throw new IOException("Thread interrupted", iex);
                     }
                 } else {
-                    throw new IOException("Wait of resource time out exceed");
+                    throw new IOException(timeoutMessage);
                 }
             }
         }
@@ -145,6 +203,20 @@ public class ConnectionResourcePool implements SessionListener {
         return resource;
     }
 
+    private ChannelExec takeExecChannelImpl(final String command, final Charset encoding)
+            throws IOException, ResourcesLimitExceedException {
+        checkStarted();
+        makeSureSessionOpened();
+
+        if (m_currentExecChannels.size() < m_maxExecChannelLimit) {
+            final var newChan = createExecChannel(command, encoding);
+            m_currentExecChannels.add(newChan);
+            return newChan;
+        }
+
+        throw new ResourcesLimitExceedException();
+    }
+
     private void makeSureSessionOpened() throws IOException {
         if (!m_session.isOpen()) {
             sessionClosed(m_session);
@@ -159,6 +231,14 @@ public class ConnectionResourcePool implements SessionListener {
     private ConnectionResource createResource() throws IOException {
         final SftpClient client = SftpClientFactory.instance().createSftpClient(m_session);
         return new ConnectionResource(client);
+    }
+
+    /**
+     * @return SSH execution channel resource.
+     * @throws IOException
+     */
+    private ChannelExec createExecChannel(final String command, final Charset encoding) throws IOException {
+        return m_session.createExecChannel(command, encoding, null, null);
     }
 
     private void checkStarted() {
@@ -176,6 +256,20 @@ public class ConnectionResourcePool implements SessionListener {
         if (m_session != null && !resource.isClosed()) {
             m_freeResources.add(resource);
         }
+
+        // notify resource consumers if any waits it
+        notifyAll();
+    }
+
+    /**
+     * Remove a channel from the open channel list and closes it
+     *
+     * @param channel
+     *            the channel.
+     */
+    public synchronized void release(final ChannelExec channel) {
+        m_currentExecChannels.remove(channel);
+        close(channel);
 
         // notify resource consumers if any waits it
         notifyAll();
@@ -227,6 +321,14 @@ public class ConnectionResourcePool implements SessionListener {
             close(res);
         }
 
+        // close execution channels
+        List<ChannelExec> channelsToClose = new LinkedList<>(m_currentExecChannels);
+        m_currentExecChannels.clear();
+
+        for (var chan : channelsToClose) {
+            close(chan);
+        }
+
         // close session
         closeSession();
 
@@ -253,6 +355,7 @@ public class ConnectionResourcePool implements SessionListener {
         if (m_session != null && m_session == session) { // is not closed by API
             m_freeResources.clear();
             m_busyResources.clear();
+            m_currentExecChannels.clear();
 
             try {
                 m_session = m_sessionFactory.createSession();
@@ -272,5 +375,21 @@ public class ConnectionResourcePool implements SessionListener {
             resource.close();
         } catch (final Throwable e) {
         }
+    }
+
+    /**
+     * @param channel
+     *            channel to close
+     */
+    private static void close(final ChannelExec channel) {
+        try {
+            channel.close();
+        } catch (final Throwable e) { // NOSONAR
+        }
+    }
+
+    @FunctionalInterface
+    private interface TakeSupplier<R> {
+        R take() throws IOException, ResourcesLimitExceedException;
     }
 }

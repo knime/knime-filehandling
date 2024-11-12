@@ -44,26 +44,24 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-08-01 (Vyacheslav Soldatov): created
+ *   Jul 19, 2023 (Paul Bärnreuther): created
  */
+package org.knime.ext.ssh.commandexecutor;
 
-package org.knime.ext.ssh.filehandling.fs;
+import java.util.Map;
 
-import java.io.IOException;
-
-import org.apache.sshd.sftp.client.SftpClient;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.testing.node.dialog.DefaultNodeSettingsSnapshotTest;
 
 /**
- * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
- *
+ * @author Jannik Löscher
  */
-@FunctionalInterface
-public interface WithClientInvocable<R> {
-    /**
-     * @param sftpClient
-     *            SFTP client.
-     * @return invocation result.
-     * @throws IOException
-     */
-    R invoke(SftpClient sftpClient) throws IOException;
+@SuppressWarnings("restriction")
+public class SshCommandExecutorNodeSettingsTest extends DefaultNodeSettingsSnapshotTest {
+
+    @SuppressWarnings("javadoc")
+    protected SshCommandExecutorNodeSettingsTest() {
+        super(Map.of(SettingsType.MODEL, SshCommandExecutorNodeSettings.class));
+    }
+
 }

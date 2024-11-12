@@ -90,6 +90,11 @@ public class SshConnectorNodeSettings {
     public static final int DEFAULT_MAX_SESSION_COUNT = 8;
 
     /**
+     * Default value for the maximum number of execution to open.
+     */
+    public static final int DEFAULT_MAX_EXEC_CHANNEL_COUNT = 1;
+
+    /**
      * Default value for connection timeout in seconds.
      */
     public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 30;
@@ -104,6 +109,8 @@ public class SshConnectorNodeSettings {
 
     private static final String KEY_MAX_SESSION_COUNT = "maxSessionCount";
 
+    private static final String KEY_MAX_EXEC_CHANNEL_COUNT = "maxExecChannelCount";
+
     private static final String KEY_USE_KNOWN_HOSTS = "useKnownHosts";
 
     private static final String KEY_KNOWN_HOSTS_FILE = "knownHostsFile";
@@ -117,6 +124,7 @@ public class SshConnectorNodeSettings {
 
     private final SettingsModelIntegerBounded m_connectionTimeout;
     private final SettingsModelIntegerBounded m_maxSessionCount;
+    private final SettingsModelIntegerBounded m_maxExecChannelCount;
     private final SettingsModelBoolean m_useKnownHostsFile;
     private SettingsModelReaderFileChooser m_knownHostsFile;
 
@@ -131,9 +139,12 @@ public class SshConnectorNodeSettings {
         m_port = new SettingsModelIntegerBounded(KEY_PORT, 22, 1, 65535);
         m_connectionTimeout = new SettingsModelIntegerBounded(KEY_CONNECTION_TIMEOUT,
                 DEFAULT_CONNECTION_TIMEOUT_SECONDS,
-                1,
+                0,
                 Integer.MAX_VALUE);
-        m_maxSessionCount = new SettingsModelIntegerBounded(KEY_MAX_SESSION_COUNT, DEFAULT_MAX_SESSION_COUNT, 1, Integer.MAX_VALUE);
+        m_maxSessionCount = new SettingsModelIntegerBounded(KEY_MAX_SESSION_COUNT, DEFAULT_MAX_SESSION_COUNT, 0,
+                Integer.MAX_VALUE);
+        m_maxExecChannelCount = new SettingsModelIntegerBounded(KEY_MAX_EXEC_CHANNEL_COUNT,
+                DEFAULT_MAX_EXEC_CHANNEL_COUNT, 0, Integer.MAX_VALUE);
 
         m_authSettings = SshAuth.createAuthSettings(cfg);
 
@@ -159,6 +170,7 @@ public class SshConnectorNodeSettings {
 
         m_connectionTimeout.saveSettingsTo(settings);
         m_maxSessionCount.saveSettingsTo(settings);
+        m_maxExecChannelCount.saveSettingsTo(settings);
         m_useKnownHostsFile.saveSettingsTo(settings);
     }
 
@@ -194,6 +206,9 @@ public class SshConnectorNodeSettings {
 
         m_connectionTimeout.loadSettingsFrom(settings);
         m_maxSessionCount.loadSettingsFrom(settings);
+        if (settings.containsKey(KEY_MAX_EXEC_CHANNEL_COUNT)) {
+            m_maxSessionCount.loadSettingsFrom(settings);
+        }
         m_useKnownHostsFile.loadSettingsFrom(settings);
 
         m_knownHostsFile.setEnabled(m_useKnownHostsFile.getBooleanValue());
@@ -262,6 +277,9 @@ public class SshConnectorNodeSettings {
         m_workingDirectory.validateSettings(settings);
         m_connectionTimeout.validateSettings(settings);
         m_maxSessionCount.validateSettings(settings);
+        if (settings.containsKey(KEY_MAX_EXEC_CHANNEL_COUNT)) {
+            m_maxExecChannelCount.validateSettings(settings);
+        }
         m_useKnownHostsFile.validateSettings(settings);
         m_knownHostsFile.validateSettings(settings);
 
@@ -413,6 +431,20 @@ public class SshConnectorNodeSettings {
     }
 
     /**
+     * @return maximum number of SFTP sessions.
+     */
+    public int getMaxExecChannelCount() {
+        return m_maxExecChannelCount.getIntValue();
+    }
+
+    /**
+     * @return settings model of maximum number of execution channels.
+     */
+    public SettingsModelIntegerBounded getMaxExecChannelCountModel() {
+        return m_maxExecChannelCount;
+    }
+
+    /**
      * @return a (deep) clone of this node settings object.
      */
     public SshConnectorNodeSettings createClone() {
@@ -439,6 +471,7 @@ public class SshConnectorNodeSettings {
         cfg.setConnectionTimeout(getConnectionTimeout());
         cfg.setPort(getPort());
         cfg.setMaxSftpSessionLimit(getMaxSessionCount());
+        cfg.setMaxExecChannelLimit(getMaxExecChannelCount());
 
         // auth
         final AuthSettings auth = getAuthenticationSettings();

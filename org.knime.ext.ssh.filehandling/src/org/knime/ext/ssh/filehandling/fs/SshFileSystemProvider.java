@@ -54,6 +54,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.Charset;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream.Filter;
@@ -68,6 +69,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -264,8 +266,7 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
      *            function to invoke with resource.
      * @return invocation result.
      */
-    private <R> R invokeWithResource(final boolean releaseResource,
-            final WithResourceInvocable<R> func)
+    private <R> R invokeWithResource(final boolean releaseResource, final WithResourceInvocable<R> func)
             throws IOException {
 
         final ConnectionResource resource = m_resources.take();
@@ -282,6 +283,35 @@ public class SshFileSystemProvider extends BaseFileSystemProvider<SshPath, SshFi
         } catch (Exception e) { // NOSONAR prevent resource leakage caused by non-IOEs being thrown
             m_resources.release(resource);
             throw ExceptionUtil.wrapAsIOException(e);
+        }
+    }
+
+    /**
+     * @param command
+     *            the command to execute
+     * @param encoding
+     *            the encoding in which to send the command
+     * @param timeOut
+     *            the maximum time out to wait for the resource to be created and
+     *            the connection to be established. A duration of {@code null} means
+     *            no time out
+     * @param func
+     *            function to invoke with channel.
+     * @return invocation result.
+     * @throws IOException
+     *             if any exception occurs
+     */
+    @SuppressWarnings("resource")
+    public <R> R invokeWithExecChannel(final String command, final Charset encoding, final Duration timeOut,
+            final WithExecChannelInvocable<R> func) throws IOException {
+
+        final var chan = m_resources.takeExecChannel(command, encoding, timeOut);
+        try {
+            return func.invoke(chan);
+        } catch (Exception e) { // NOSONAR prevent resource leakage caused by non-IOEs being thrown
+            throw ExceptionUtil.wrapAsIOException(e);
+        } finally {
+            m_resources.release(chan);
         }
     }
 

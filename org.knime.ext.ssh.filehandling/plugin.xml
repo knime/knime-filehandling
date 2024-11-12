@@ -7,6 +7,10 @@
             category-path="/io/connectors"
             factory-class="org.knime.ext.ssh.filehandling.node.SshConnectorNodeFactory"
             id="org.knime.ext.ssh.filehandling.nodes.connection.SshConnectorNodeFactory"/>
+      <node
+            category-path="/toolintegration"
+            factory-class="org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeFactory"
+            id="org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeFactory"/>
    </extension>
    <extension point="org.knime.filehandling.core.FSDescriptorProvider">
       <FSDescriptorProvider class="org.knime.ext.ssh.filehandling.fs.SshFSDescriptorProvider" />

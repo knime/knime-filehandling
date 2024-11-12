@@ -1,10 +1,11 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Tests for SSH Connector
+Bundle-Name: Tests for SSH Connector and Command Executor
 Bundle-SymbolicName: org.knime.ext.ssh.filehandling.tests;singleton:=true
 Bundle-Version: 5.4.0.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Automatic-Module-Name: org.knime.ext.ssh.filehandling.tests
 Fragment-Host: org.knime.ext.ssh.filehandling;bundle-version="[5.4.0,6.0.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-11
-Require-Bundle: junit-jupiter-api;bundle-version="[5.9.2,6.0.0)"
+Require-Bundle: org.knime.core.ui.testing;bundle-version="[5.4.0,6.0.0)",
+ junit-jupiter-api;bundle-version="[5.9.2,6.0.0)"

@@ -60,11 +60,15 @@
 	    
         <tab name="Advanced">
 		    <option name="Connection timeout">
-		        Timeout in seconds to establish a connection or 0 for an infinite timeout. 
+		        Timeout in seconds to establish a connection or 0 for an infinite timeout.
 		    </option>
 		    <option name="Maximum SFTP sessions">
 		        Number of SFTP sessions the node will try to open. Actual number of sessions may be less,
-		        depending on the limits of the SSH server. 
+		        depending on the limits of the SSH server.
+		    </option>
+		    <option name="Maximum concurrent shell sessions">
+                Number of concurrent shell sessions to allow. This resource is shared with the SFTP sessions, so
+                decreasing the number of SFTP sessions will allow for more shells and vice versa.
 		    </option>
 		    <option name="Use known hosts file">
 		        If this options selected, then provided known hosts file will be used to validate the (public) key of the SSH server. If not

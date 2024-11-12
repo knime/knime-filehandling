@@ -1,0 +1,668 @@
+{
+  "data" : {
+    "model" : {
+      "command" : "",
+      "commandEncoding" : "UTF_8",
+      "customCommandEncoding" : "",
+      "policyReturnCode" : "FAIL",
+      "exposeStdout" : false,
+      "outputEncoding" : "UTF_8",
+      "customOutputEncoding" : "",
+      "useInputPath" : false,
+      "inputPath" : {
+        "path" : {
+          "fsCategory" : "LOCAL",
+          "path" : "",
+          "timeout" : 10000,
+          "context" : {
+            "fsToString" : "(LOCAL, )"
+          }
+        }
+      },
+      "policyInputPathMissing" : "FAIL",
+      "useOutputPath" : false,
+      "outputPath" : {
+        "path" : {
+          "fsCategory" : "LOCAL",
+          "path" : "",
+          "timeout" : 10000,
+          "context" : {
+            "fsToString" : "(LOCAL, )"
+          }
+        }
+      },
+      "policyOutputPathExists" : "IGNORE",
+      "enforceSh" : true,
+      "useDOSPaths" : false,
+      "policyForbiddenCharacters" : "FAIL",
+      "forbiddenCharacterSet" : "DEFAULT",
+      "customForbiddenCharactersIncludeControl" : true,
+      "customForbiddenCharacters" : "<\";$`&'|>\\",
+      "shellSessionTimeout" : 30
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "command" : {
+            "type" : "string",
+            "title" : "Command",
+            "description" : "Specifies the remote command to run.<br/>The special strings “<code>%%inputFile%%</code>” and “<code>%%outputFile%%</code>” will be replaced by the paths specified below if desired. <b>Placeholders must be quoted using the target shell's quoting mechanism</b> to prevent unexpected syntax errors or code injection. Normally the node enforces a POSIX compliant <code>sh</code> shell and provides the paths as the first and second argument respectively, thus placeholders must be quoted using double quotes (<code>\"\"</code>). The same is true for Windows's cmd.exe. In the case POSIX compliance could not be determined and enforcement is disabled, the file/folder paths will be directly inserted into the command string and <b> are <i>NOT</i> escaped!</b> If the target shell is partially POSIX compliant (like Windows PowerShell or fish), single quotes (<code>''</code>) should be used to quote the directly inserted file/folder paths. Even if not POSIX compliant, depending on the advanced “Forbidden Characters” option, a path may be rejected before execution if it contains dangerous characters.<br/>All paths will be made <i>absolute</i> before they are used to work from every working directory. The command will <i>not</i> use the working directory specified in the SSH Connector Node and instead usually uses the remote user's user folder as its working directory.<br/>Most target shells support providing a shell script instead of a single command. Thus, for example, multiple commands can be separated with “<code>&amp;&amp;</code>” on POSIX shells and Windows's cmd.exe.",
+            "default" : ""
+          },
+          "commandEncoding" : {
+            "oneOf" : [ {
+              "const" : "UTF_8",
+              "title" : "UTF-8"
+            }, {
+              "const" : "UTF_16LE",
+              "title" : "UTF-16LE"
+            }, {
+              "const" : "CUSTOM",
+              "title" : "Other"
+            } ],
+            "title" : "Command Encoding",
+            "description" : "String encoding in which to send the command to the remote machine. This setting depends on the SSH server implementation on the remote machine. On modern machines, the server will likely expect UTF-8, even on Windows.\n<ul>\n<li><b>UTF-8</b>: Standard encoding used on most Linux machines and OpenSSH (Eight-bit UCS Transformation Format).</li>\n<li><b>UTF-16LE</b>: May be used by some Windows machines (Sixteen-bit UCS Transformation Format, little-endian byte order).</li>\n<li><b>Other</b>: Allows to specify a custom valid charset name supported by the Java Virtual Machine.</li>\n</ul>",
+            "default" : "UTF_8"
+          },
+          "customCommandEncoding" : {
+            "type" : "string",
+            "title" : "Custom command encoding",
+            "description" : "Name of a custom character encoding known to the JVM.",
+            "default" : ""
+          },
+          "customForbiddenCharacters" : {
+            "type" : "string",
+            "title" : "Forbidden characters",
+            "description" : "A custom list of characters to use. These characters are used verbatim. That means trailing white space will not be removed and escape sequences for special characters like <code>\\n</code> are not supported.",
+            "default" : "<\";$`&'|>\\"
+          },
+          "customForbiddenCharactersIncludeControl" : {
+            "type" : "boolean",
+            "title" : "Forbid Control Characters",
+            "description" : "Whether to add all <a href=\"https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html#isISOControl(int)\">ISO control characters</a> like new lines and tabs to the custom character set defined below.",
+            "default" : true
+          },
+          "customOutputEncoding" : {
+            "type" : "string",
+            "title" : "Custom output encoding",
+            "description" : "Name of a custom character enconding known to the JVM.",
+            "default" : ""
+          },
+          "enforceSh" : {
+            "type" : "boolean",
+            "title" : "Enforce POSIX compliant shell (recommended)",
+            "description" : "Whether to fail execution if the node could not detect a POSIX compliant <code>sh</code> shell.<br/>Using a POSIX shell allows the node to pass the input and output files or folders as arguments/variables instead of inserting them into the command string. This increases security greatly as the paths only have to be quoted, and no special characters have to be escaped.<br/>This option should only be disabled if no POSIX shell is available. In that case the “forbidden character set” will still be checked as a fallback. It is recommended to <b><i>NOT</i></b> control input and output files or folders with flow variables if this option is disabled! (See respective option description.)",
+            "default" : true
+          },
+          "exposeStdout" : {
+            "type" : "boolean",
+            "title" : "Capture command output in flow variable",
+            "description" : "Whether to make the standard output and standard error output of the remote command available as a flow variable named <code>ssh_command_output</code> or logged depending on the exit code setting.<br/>This can remain disabled if the output is not needed, the command produces a lot of output or the output contains sensitive information.",
+            "default" : false
+          },
+          "forbiddenCharacterSet" : {
+            "oneOf" : [ {
+              "const" : "DEFAULT",
+              "title" : "Default"
+            }, {
+              "const" : "CUSTOM",
+              "title" : "Custom"
+            } ],
+            "title" : "Forbidden character set to use",
+            "description" : "Which character set to use for dangerous characters.\n<ul>\n<li><b>Default</b>: Forbids characters that can be used to start a new command or do command substitution in a POSIX shell or Windows's cmd.exe (namely <code>&lt;\";$`&amp;'|&gt;\\</code>) as well as all <a href=\"https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html#isISOControl(int)\">ISO control characters</a>.</li>\n<li><b>Custom</b>: Allows to define a custom character set to disallow.</li>\n</ul>",
+            "default" : "DEFAULT"
+          },
+          "inputPath" : {
+            "type" : "object",
+            "properties" : {
+              "path" : {
+                "type" : "object",
+                "default" : {
+                  "fsCategory" : "LOCAL",
+                  "path" : "",
+                  "timeout" : 10000,
+                  "context" : {
+                    "fsToString" : "(LOCAL, )"
+                  }
+                }
+              }
+            },
+            "title" : "File/Folder",
+            "description" : "Specifies a path to an input file or folder which will be used in the external command.<br/><b>When this file is specified by a flow variable, special care has to be taken to avoid code injection!</b> The advanced “Security” option can be used to reject paths with dangerous characters. However, in general relying on flow variables is <b><i>NOT</i></b> recommended, and instead using a <a href=\"https://hub.knime.com/n/44-o-1aGfQ_mRTaI\">Transfer Files</a> node before this node to ensure that the input file is at the required location is more robust and secure.",
+            "default" : {
+              "path" : {
+                "fsCategory" : "LOCAL",
+                "path" : "",
+                "timeout" : 10000,
+                "context" : {
+                  "fsToString" : "(LOCAL, )"
+                }
+              }
+            }
+          },
+          "outputEncoding" : {
+            "oneOf" : [ {
+              "const" : "UTF_8",
+              "title" : "UTF-8"
+            }, {
+              "const" : "UTF_16LE",
+              "title" : "UTF-16LE"
+            }, {
+              "const" : "CUSTOM",
+              "title" : "Other"
+            } ],
+            "title" : "Output Encoding",
+            "description" : "String encoding in which to expect any response output from the remote machine. This setting depends on the PTY implementation on the remote machine. On modern machines, the output will likely be in UTF-8, even on Windows.\n<ul>\n<li><b>UTF-8</b>: Standard encoding used on most Linux machines and OpenSSH (Eight-bit UCS Transformation Format).</li>\n<li><b>UTF-16LE</b>: May be used by some Windows machines (Sixteen-bit UCS Transformation Format, little-endian byte order).</li>\n<li><b>Other</b>: Allows to specify a custom valid charset name supported by the Java Virtual Machine.</li>\n</ul>",
+            "default" : "UTF_8"
+          },
+          "outputPath" : {
+            "type" : "object",
+            "properties" : {
+              "path" : {
+                "type" : "object",
+                "default" : {
+                  "fsCategory" : "LOCAL",
+                  "path" : "",
+                  "timeout" : 10000,
+                  "context" : {
+                    "fsToString" : "(LOCAL, )"
+                  }
+                }
+              }
+            },
+            "title" : "File/Folder",
+            "description" : "Specifies a path to an output file or folder which will be used in the external command.<br/><b>When this file is specified by a flow variable, special care has to be taken to avoid code injection!</b> The advanced “Security” option can be used to reject paths with dangerous characters. However, in general relying on flow variables is <b><i>NOT</i></b> recommended, and instead using a <a href=\"https://hub.knime.com/n/44-o-1aGfQ_mRTaI\">Transfer Files Node</a> after this node to ensure that the output file is moved to the desired location is more robust and secure.",
+            "default" : {
+              "path" : {
+                "fsCategory" : "LOCAL",
+                "path" : "",
+                "timeout" : 10000,
+                "context" : {
+                  "fsToString" : "(LOCAL, )"
+                }
+              }
+            }
+          },
+          "policyForbiddenCharacters" : {
+            "oneOf" : [ {
+              "const" : "FAIL",
+              "title" : "Fail"
+            }, {
+              "const" : "WARN",
+              "title" : "Warn"
+            }, {
+              "const" : "IGNORE",
+              "title" : "Ignore"
+            } ],
+            "title" : "If file/folder paths contain forbidden characters",
+            "description" : "What to do if a specified absolute path of file or folder contains a character from the set below.\n<ul>\n<li><b>Fail</b>: Fail node execution.</li>\n<li><b>Warn</b>: Set a node warning message.</li>\n<li><b>Ignore</b>: Do nothing.</li>\n</ul>",
+            "default" : "FAIL"
+          },
+          "policyInputPathMissing" : {
+            "oneOf" : [ {
+              "const" : "FAIL",
+              "title" : "Fail"
+            }, {
+              "const" : "WARN",
+              "title" : "Warn"
+            }, {
+              "const" : "IGNORE",
+              "title" : "Ignore"
+            } ],
+            "title" : "If input file/folder does not not exist before execution",
+            "description" : "What to do if the specified file or folder does not exist before execution.\n<ul>\n<li><b>Fail</b>: Fail node execution.</li>\n<li><b>Warn</b>: Set a node warning message.</li>\n<li><b>Ignore</b>: Do nothing.</li>\n</ul>",
+            "default" : "FAIL"
+          },
+          "policyOutputPathExists" : {
+            "oneOf" : [ {
+              "const" : "FAIL",
+              "title" : "Fail"
+            }, {
+              "const" : "WARN",
+              "title" : "Warn"
+            }, {
+              "const" : "IGNORE",
+              "title" : "Ignore"
+            } ],
+            "title" : "If output file/folder already exist",
+            "description" : "What to do if the specified file or folder already exists before execution. This can be used to avoid accidental overwrite of existing output files.\n<ul>\n<li><b>Fail</b>: Fail node execution.</li>\n<li><b>Warn</b>: Set a node warning message.</li>\n<li><b>Ignore</b>: Do nothing.</li>\n</ul>",
+            "default" : "IGNORE"
+          },
+          "policyReturnCode" : {
+            "oneOf" : [ {
+              "const" : "FAIL",
+              "title" : "Fail"
+            }, {
+              "const" : "REPORT",
+              "title" : "Report"
+            } ],
+            "title" : "If the remote command exits with non-zero status",
+            "description" : "What to do if the remote command returns a non-zero (or no) exit code.\n<ul>\n<li><b>Fail</b>: Node execution will fail and command output (if enabled) will be logged.</li>\n<li><b>Report</b>: The return value will be made available as a flow variable called <code>ssh_command_exit</code>.</li>\n</ul>",
+            "default" : "FAIL"
+          },
+          "shellSessionTimeout" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Shell session timeout (seconds)",
+            "description" : "The timeout to open a shell session using the SSH connection. A value of “0” means no timeout. Upon frequent timeouts, it may help to increase the number of maximum concurrent shell sessions in the SSH Connector, while decreasing the number of SFTP sessions.",
+            "default" : 30,
+            "minimum" : 0.0
+          },
+          "useDOSPaths" : {
+            "type" : "boolean",
+            "title" : "Use DOS-style paths if no POSIX shell is detected",
+            "description" : "Whether to convert absolute file/folder paths to their DOS-style equivalent by removing the leading slash and replacing slashes with backslashes. If the command is running on a Windows or DOS shell, a path is invalid otherwise.<br/>DOS-style paths are only used if no POSIX compliant shell is detected, even if this option is enabled.",
+            "default" : false
+          },
+          "useInputPath" : {
+            "type" : "boolean",
+            "title" : "Use input file or folder",
+            "description" : "Whether to replace “<code>%%inputFile%%</code>” in the command with the file or folder specified below.",
+            "default" : false
+          },
+          "useOutputPath" : {
+            "type" : "boolean",
+            "title" : "Use output file or folder",
+            "description" : "Whether to replace “<code>%%outputFile%%</code>” in the command with the file or folder specified below.",
+            "default" : false
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Remote Command",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/command",
+        "options" : {
+          "hideOnNull" : false,
+          "placeholderProvider" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$CmdPlaceholderProvider"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/commandEncoding",
+        "options" : {
+          "isAdvanced" : true
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/customCommandEncoding",
+        "options" : {
+          "isAdvanced" : true
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/commandEncoding",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "CUSTOM"
+              } ]
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/policyReturnCode",
+        "options" : {
+          "isAdvanced" : true,
+          "format" : "valueSwitch"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/exposeStdout",
+        "options" : {
+          "format" : "checkbox",
+          "isAdvanced" : true
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/outputEncoding",
+        "options" : {
+          "isAdvanced" : true
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/exposeStdout",
+            "schema" : {
+              "const" : true
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/customOutputEncoding",
+        "options" : {
+          "isAdvanced" : true
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "type" : "AND",
+            "conditions" : [ {
+              "scope" : "#/properties/model/properties/exposeStdout",
+              "schema" : {
+                "const" : true
+              }
+            }, {
+              "scope" : "#/properties/model/properties/outputEncoding",
+              "schema" : {
+                "oneOf" : [ {
+                  "const" : "CUSTOM"
+                } ]
+              }
+            } ]
+          }
+        }
+      } ]
+    }, {
+      "label" : "Input",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/useInputPath",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/inputPath",
+        "options" : {
+          "format" : "fileChooser"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/useInputPath",
+            "schema" : {
+              "const" : true
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/policyInputPathMissing",
+        "options" : {
+          "isAdvanced" : true,
+          "format" : "valueSwitch"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/useInputPath",
+            "schema" : {
+              "const" : true
+            }
+          }
+        }
+      } ]
+    }, {
+      "label" : "Output",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/useOutputPath",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/outputPath",
+        "options" : {
+          "format" : "fileChooser"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/useOutputPath",
+            "schema" : {
+              "const" : true
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/policyOutputPathExists",
+        "options" : {
+          "format" : "valueSwitch"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/useOutputPath",
+            "schema" : {
+              "const" : true
+            }
+          }
+        }
+      } ]
+    }, {
+      "label" : "Security",
+      "type" : "Section",
+      "options" : {
+        "isAdvanced" : true
+      },
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/enforceSh",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/useDOSPaths",
+        "options" : {
+          "format" : "checkbox"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/enforceSh",
+            "schema" : {
+              "const" : false
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/policyForbiddenCharacters",
+        "options" : {
+          "format" : "valueSwitch"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/forbiddenCharacterSet",
+        "options" : {
+          "format" : "valueSwitch"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/policyForbiddenCharacters",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "FAIL"
+              }, {
+                "const" : "WARN"
+              } ]
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/customForbiddenCharactersIncludeControl",
+        "options" : {
+          "format" : "checkbox"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "type" : "AND",
+            "conditions" : [ {
+              "scope" : "#/properties/model/properties/policyForbiddenCharacters",
+              "schema" : {
+                "oneOf" : [ {
+                  "const" : "FAIL"
+                }, {
+                  "const" : "WARN"
+                } ]
+              }
+            }, {
+              "scope" : "#/properties/model/properties/forbiddenCharacterSet",
+              "schema" : {
+                "oneOf" : [ {
+                  "const" : "CUSTOM"
+                } ]
+              }
+            } ]
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/customForbiddenCharacters",
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "type" : "AND",
+            "conditions" : [ {
+              "scope" : "#/properties/model/properties/policyForbiddenCharacters",
+              "schema" : {
+                "oneOf" : [ {
+                  "const" : "FAIL"
+                }, {
+                  "const" : "WARN"
+                } ]
+              }
+            }, {
+              "scope" : "#/properties/model/properties/forbiddenCharacterSet",
+              "schema" : {
+                "oneOf" : [ {
+                  "const" : "CUSTOM"
+                } ]
+              }
+            } ]
+          }
+        }
+      } ]
+    }, {
+      "label" : "Timeouts",
+      "type" : "Section",
+      "options" : {
+        "isAdvanced" : true
+      },
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/shellSessionTimeout"
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "command" : { },
+          "commandEncoding" : { },
+          "customCommandEncoding" : { },
+          "policyReturnCode" : { },
+          "exposeStdout" : { },
+          "outputEncoding" : { },
+          "customOutputEncoding" : { },
+          "useInputPath" : { },
+          "inputPath" : {
+            "type" : "object",
+            "properties" : {
+              "path" : { }
+            }
+          },
+          "policyInputPathMissing" : { },
+          "useOutputPath" : { },
+          "outputPath" : {
+            "type" : "object",
+            "properties" : {
+              "path" : { }
+            }
+          },
+          "policyOutputPathExists" : { },
+          "enforceSh" : { },
+          "useDOSPaths" : { },
+          "policyForbiddenCharacters" : { },
+          "forbiddenCharacterSet" : { },
+          "customForbiddenCharactersIncludeControl" : { },
+          "customForbiddenCharacters" : { },
+          "shellSessionTimeout" : { }
+        }
+      }
+    }
+  },
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog",
+      "triggerInitially" : true
+    },
+    "dependencies" : [ {
+      "scopes" : [ "#/properties/model/properties/enforceSh" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsEnforceShDisabled$EnforceShRef"
+    }, {
+      "scopes" : [ "#/properties/model/properties/useInputPath" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsInputPathSelected$InputPathRef"
+    }, {
+      "scopes" : [ "#/properties/model/properties/useOutputPath" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsOutputPathSelected$OutputPathRef"
+    } ]
+  }, {
+    "trigger" : {
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsEnforceShDisabled$EnforceShRef",
+      "scopes" : [ "#/properties/model/properties/enforceSh" ]
+    },
+    "dependencies" : [ {
+      "scopes" : [ "#/properties/model/properties/enforceSh" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsEnforceShDisabled$EnforceShRef"
+    }, {
+      "scopes" : [ "#/properties/model/properties/useInputPath" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsInputPathSelected$InputPathRef"
+    }, {
+      "scopes" : [ "#/properties/model/properties/useOutputPath" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsOutputPathSelected$OutputPathRef"
+    } ]
+  }, {
+    "trigger" : {
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsInputPathSelected$InputPathRef",
+      "scopes" : [ "#/properties/model/properties/useInputPath" ]
+    },
+    "dependencies" : [ {
+      "scopes" : [ "#/properties/model/properties/enforceSh" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsEnforceShDisabled$EnforceShRef"
+    }, {
+      "scopes" : [ "#/properties/model/properties/useInputPath" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsInputPathSelected$InputPathRef"
+    }, {
+      "scopes" : [ "#/properties/model/properties/useOutputPath" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsOutputPathSelected$OutputPathRef"
+    } ]
+  }, {
+    "trigger" : {
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsOutputPathSelected$OutputPathRef",
+      "scopes" : [ "#/properties/model/properties/useOutputPath" ]
+    },
+    "dependencies" : [ {
+      "scopes" : [ "#/properties/model/properties/enforceSh" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsEnforceShDisabled$EnforceShRef"
+    }, {
+      "scopes" : [ "#/properties/model/properties/useInputPath" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsInputPathSelected$InputPathRef"
+    }, {
+      "scopes" : [ "#/properties/model/properties/useOutputPath" ],
+      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsOutputPathSelected$OutputPathRef"
+    } ]
+  } ]
+}

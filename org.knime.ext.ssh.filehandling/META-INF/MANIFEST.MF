@@ -11,6 +11,7 @@ Require-Bundle: org.knime.core;bundle-version="[5.4.0,6.0.0)",
  org.apache.sshd.sftp;bundle-version="[2.9.2,3.0.0)",
  org.apache.sshd.osgi;bundle-version="[2.9.2,3.0.0)",
  org.apache.sshd.putty;bundle-version="[2.9.2.v20230510-knime,3.0.0)",
+ org.knime.core.ui;bundle-version="[5.4.0,6.0.0)",
  org.apache.commons.lang3;bundle-version="[3.9.0,4.0.0)"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-11
