@@ -1,13 +1,14 @@
 {
   "data" : {
     "model" : {
+      "authType" : "OAUTH",
+      "clientSelection" : "DEFAULT",
       "boxApp" : {
         "isHiddenPassword" : false,
         "isHiddenSecondFactor" : false,
         "username" : ""
       },
-      "authType" : "OAUTH",
-      "redirectUrl" : "http://localhost:33749/"
+      "redirectUrl" : "http://localhost:33749"
     }
   },
   "schema" : {
@@ -19,13 +20,13 @@
           "authType" : {
             "oneOf" : [ {
               "const" : "OAUTH",
-              "title" : "OAuth 2"
+              "title" : "User authentication"
             }, {
               "const" : "CLIENT_CREDENTIALS",
-              "title" : "Client credentials"
+              "title" : "Server authentication (client credentials)"
             } ],
-            "title" : "Type",
-            "description" : "Authentication method to use.",
+            "title" : "Authentication type",
+            "description" : "Authentication type to use. The following types are supported:\n<ul>\n    <li>\n        <a href=\"https://developer.box.com/guides/authentication/oauth2/\">\n            <b>User authentication</b>\n        </a>\n    </li>\n    <li>\n        <a href=\"https://developer.box.com/guides/authentication/client-credentials/\">\n            <b>Server authentication (client credentials)</b>\n        </a>\n    </li>\n</ul>\n",
             "default" : "OAUTH"
           },
           "boxApp" : {
@@ -52,6 +53,18 @@
               "username" : ""
             }
           },
+          "clientSelection" : {
+            "oneOf" : [ {
+              "const" : "DEFAULT",
+              "title" : "Default"
+            }, {
+              "const" : "CUSTOM",
+              "title" : "Custom"
+            } ],
+            "title" : "Which client/app to use",
+            "description" : "Whether to use the KNIME default app, or enter a custom one. The\nKNIME default app is called \"KNIME Analytics Platform\".\n",
+            "default" : "DEFAULT"
+          },
           "enterpriseId" : {
             "type" : "string",
             "title" : "Enterprise ID",
@@ -67,7 +80,7 @@
             "type" : "string",
             "title" : "Redirect URL (should be http://localhost:XXXXX)",
             "description" : "The redirect URL to be used at the end of the interactive login.\nShould be chosen as http://localhost:XXXXX where XXXXX is a random number in the 10000 - 65000 range\nto avoid conflicts. The redirect URL is part of the App configuration in Box.\n",
-            "default" : "http://localhost:33749/"
+            "default" : "http://localhost:33749"
           }
         }
       }
@@ -75,25 +88,80 @@
   },
   "ui_schema" : {
     "elements" : [ {
-      "label" : "Box App",
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/authType"
+    }, {
+      "label" : "Client/App configuration",
       "type" : "Section",
       "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/clientSelection",
+        "options" : {
+          "format" : "valueSwitch"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/authType",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "OAUTH"
+              } ]
+            }
+          }
+        }
+      }, {
         "type" : "Control",
         "scope" : "#/properties/model/properties/boxApp",
         "options" : {
           "format" : "credentials",
           "usernameLabel" : "ID",
           "passwordLabel" : "Secret"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "type" : "OR",
+            "conditions" : [ {
+              "scope" : "#/properties/model/properties/authType",
+              "schema" : {
+                "oneOf" : [ {
+                  "const" : "CLIENT_CREDENTIALS"
+                } ]
+              }
+            }, {
+              "scope" : "#/properties/model/properties/clientSelection",
+              "schema" : {
+                "oneOf" : [ {
+                  "const" : "CUSTOM"
+                } ]
+              }
+            } ]
+          }
         }
-      } ]
-    }, {
-      "label" : "Authentication method",
-      "type" : "Section",
-      "elements" : [ {
+      }, {
         "type" : "Control",
-        "scope" : "#/properties/model/properties/authType",
-        "options" : {
-          "format" : "valueSwitch"
+        "scope" : "#/properties/model/properties/redirectUrl",
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "type" : "AND",
+            "conditions" : [ {
+              "scope" : "#/properties/model/properties/authType",
+              "schema" : {
+                "oneOf" : [ {
+                  "const" : "OAUTH"
+                } ]
+              }
+            }, {
+              "scope" : "#/properties/model/properties/clientSelection",
+              "schema" : {
+                "oneOf" : [ {
+                  "const" : "CUSTOM"
+                } ]
+              }
+            } ]
+          }
         }
       }, {
         "type" : "Control",
@@ -109,21 +177,22 @@
             }
           }
         }
-      }, {
-        "type" : "Control",
-        "scope" : "#/properties/model/properties/redirectUrl",
-        "rule" : {
-          "effect" : "HIDE",
-          "condition" : {
-            "scope" : "#/properties/model/properties/authType",
-            "schema" : {
-              "oneOf" : [ {
-                "const" : "CLIENT_CREDENTIALS"
-              } ]
-            }
+      } ]
+    }, {
+      "label" : "Authentication",
+      "type" : "Section",
+      "rule" : {
+        "effect" : "SHOW",
+        "condition" : {
+          "scope" : "#/properties/model/properties/authType",
+          "schema" : {
+            "oneOf" : [ {
+              "const" : "OAUTH"
+            } ]
           }
         }
-      }, {
+      },
+      "elements" : [ {
         "type" : "Control",
         "scope" : "#/properties/model/properties/loginCredentialRef",
         "options" : {
@@ -149,21 +218,10 @@
           } ],
           "displayErrorMessage" : true,
           "showTitleAndDescription" : false,
-          "dependencies" : [ "#/properties/model/properties/boxApp", "#/properties/model/properties/authType", "#/properties/model/properties/enterpriseId", "#/properties/model/properties/redirectUrl" ],
+          "dependencies" : [ "#/properties/model/properties/authType", "#/properties/model/properties/clientSelection", "#/properties/model/properties/boxApp", "#/properties/model/properties/redirectUrl", "#/properties/model/properties/enterpriseId" ],
           "updateOptions" : {
             "updateHandler" : "org.knime.ext.box.authenticator.node2.BoxAuthenticatorSettings$LoginUpdateHandler",
-            "dependencies" : [ "#/properties/model/properties/boxApp", "#/properties/model/properties/authType", "#/properties/model/properties/enterpriseId", "#/properties/model/properties/redirectUrl" ]
-          }
-        },
-        "rule" : {
-          "effect" : "HIDE",
-          "condition" : {
-            "scope" : "#/properties/model/properties/authType",
-            "schema" : {
-              "oneOf" : [ {
-                "const" : "CLIENT_CREDENTIALS"
-              } ]
-            }
+            "dependencies" : [ "#/properties/model/properties/authType", "#/properties/model/properties/clientSelection", "#/properties/model/properties/boxApp", "#/properties/model/properties/redirectUrl", "#/properties/model/properties/enterpriseId" ]
           }
         }
       } ]
@@ -175,12 +233,13 @@
       "model" : {
         "type" : "object",
         "properties" : {
+          "authType" : { },
+          "clientSelection" : { },
           "boxApp" : {
             "configPaths" : [ [ "boxApp" ] ]
           },
-          "authType" : { },
-          "enterpriseId" : { },
           "redirectUrl" : { },
+          "enterpriseId" : { },
           "loginCredentialRef" : {
             "configPaths" : [ ]
           }

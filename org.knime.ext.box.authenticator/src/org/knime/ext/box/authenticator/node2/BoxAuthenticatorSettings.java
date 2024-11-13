@@ -48,16 +48,22 @@
  */
 package org.knime.ext.box.authenticator.node2;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.NodeSettingsPersistorWithConfigKey;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
 import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Credentials;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
@@ -95,36 +101,50 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     private static final String PARAM_BOX_SUBJECT_TYPE = "box_subject_type";
     private static final String PARAM_BOX_SUBJECT_ID = "box_subject_id";
     private static final String ENTERPRISE_SUBJECT_TYPE = "enterprise";
+    private static final String DEFAULT_APP_ID = "ba33glhgadtrtp2hvl2pnulat70sm1xq";
+    private static final String DEFAULT_APP_SECRET = "E2sOEHf94qFI69GubGE9fesAZFIoHlOJ"; // NOSONAR
+    private static final String DEFAULT_REDIRECT_URL = "http://localhost:33749";
 
     private static final CustomApi20 BOX_API = new CustomApi20("https://api.box.com/oauth2/token", //
             "https://account.box.com/api/oauth2/authorize", //
             Verb.POST, //
             RequestBodyAuthenticationScheme.instance());
 
-    @Section(title = "Box App")
-    interface BoxAppSection {
-    }
-
-    @Section(title = "Authentication method")
-    @After(BoxAppSection.class)
-    interface AuthenticationSection {
-        interface TypeSwitcher {
-        }
-
-        @After(TypeSwitcher.class)
-        interface Body {
-        }
-    }
+    @Widget(title = "Authentication type", //
+            description = """
+                    Authentication type to use. The following types are supported:
+                    <ul>
+                        <li>
+                            <a href="https://developer.box.com/guides/authentication/oauth2/">
+                                <b>User authentication</b>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://developer.box.com/guides/authentication/client-credentials/">
+                                <b>Server authentication (client credentials)</b>
+                            </a>
+                        </li>
+                    </ul>
+                    """)
+    @ValueReference(AuthTypeRef.class)
+    AuthType m_authType = AuthType.OAUTH;
 
     enum AuthType {
-        @Label("OAuth 2")
+        @Label("User authentication")
         OAUTH,
 
-        @Label("Client credentials")
+        @Label("Server authentication (client credentials)")
         CLIENT_CREDENTIALS;
     }
 
     interface AuthTypeRef extends Reference<AuthType> {
+    }
+
+    static class AuthTypeIsOAuth implements PredicateProvider {
+        @Override
+        public Predicate init(final PredicateInitializer i) {
+            return i.getEnum(AuthTypeRef.class).isOneOf(AuthType.OAUTH);
+        }
     }
 
     static class AuthTypeIsClientCreds implements PredicateProvider {
@@ -134,38 +154,105 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         }
     }
 
+    @Section(title = "Client/App configuration")
+    interface ClientAppSection {
+    }
+
+    @Section(title = "Authentication")
+    @Effect(predicate = AuthTypeIsOAuth.class, type = EffectType.SHOW)
+    @After(ClientAppSection.class)
+    interface AuthenticationSection {
+    }
+
+    @Widget(title = "Which client/app to use", //
+            description = """
+                    Whether to use the KNIME default app, or enter a custom one. The
+                    KNIME default app is called "KNIME Analytics Platform".
+                    """)
+    @ValueSwitchWidget
+    @Layout(ClientAppSection.class)
+    @Effect(predicate = AuthTypeIsOAuth.class, type = EffectType.SHOW)
+    @ValueReference(ClientSelectionRef.class)
+    @Persist(customPersistor = ClientSelectionPersistor.class)
+    ClientSelection m_clientSelection = ClientSelection.DEFAULT;
+
+    enum ClientSelection {
+        DEFAULT, CUSTOM;
+    }
+
+    interface ClientSelectionRef extends Reference<ClientSelection> {
+    }
+
+    static class IsCustomSelection implements PredicateProvider {
+        @Override
+        public Predicate init(final PredicateInitializer i) {
+            return i.getEnum(ClientSelectionRef.class).isOneOf(ClientSelection.CUSTOM);
+        }
+    }
+
+    static class IsCredsOrCustomSelection implements PredicateProvider {
+        @Override
+        public Predicate init(final PredicateInitializer i) {
+            final var typeOAuth = i.getPredicate(AuthTypeIsClientCreds.class);
+            final var customSelection = i.getPredicate(IsCustomSelection.class);
+            return or(typeOAuth, customSelection);
+        }
+    }
+
+    static class ClientSelectionPersistor extends NodeSettingsPersistorWithConfigKey<ClientSelection> {
+
+        @Override
+        public void save(final ClientSelection selection, final NodeSettingsWO settings) {
+            settings.addString(getConfigKey(), selection.toString());
+        }
+
+        @Override
+        public ClientSelection load(final NodeSettingsRO settings) throws InvalidSettingsException {
+            if (settings.containsKey(getConfigKey())) {
+                return ClientSelection.valueOf(settings.getString(getConfigKey()));
+            }
+            return ClientSelection.CUSTOM;
+        }
+    }
+
+    static class IsOAuthAndCustom implements PredicateProvider {
+
+        @Override
+        public Predicate init(final PredicateInitializer i) {
+            final var typeOAuth = i.getPredicate(AuthTypeIsOAuth.class);
+            final var customSelection = i.getPredicate(IsCustomSelection.class);
+            return and(typeOAuth, customSelection);
+        }
+    }
+
     @Widget(title = "Client/App configuration", //
             description = """
                     The app/client ID and secret of the custom Box app.
                     These fields can be found in the configuration settings of your custom Box app.
                     """)
     @CredentialsWidget(usernameLabel = "ID", passwordLabel = "Secret")
-    @Layout(BoxAppSection.class)
+    @Layout(ClientAppSection.class)
+    @Effect(predicate = IsCredsOrCustomSelection.class, type = EffectType.SHOW)
+    @Persist(optional = true)
     Credentials m_boxApp = new Credentials();
-
-    @Widget(title = "Type", description = "Authentication method to use.")
-    @Layout(AuthenticationSection.TypeSwitcher.class)
-    @ValueReference(AuthTypeRef.class)
-    @ValueSwitchWidget
-    AuthType m_authType = AuthType.OAUTH;
-
-    @Widget(title = "Enterprise ID", description = """
-            The Box Enterprise ID when authenticating as a
-            <a href="https://developer.box.com/guides/getting-started/user-types/service-account/">
-            service account</a>.
-            """)
-    @Layout(AuthenticationSection.Body.class)
-    @Effect(predicate = AuthTypeIsClientCreds.class, type = EffectType.SHOW)
-    String m_enterpriseId;
 
     @Widget(title = "Redirect URL (should be http://localhost:XXXXX)", description = """
             The redirect URL to be used at the end of the interactive login.
             Should be chosen as http://localhost:XXXXX where XXXXX is a random number in the 10000 - 65000 range
             to avoid conflicts. The redirect URL is part of the App configuration in Box.
             """)
-    @Layout(AuthenticationSection.Body.class)
-    @Effect(predicate = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
-    String m_redirectUrl = "http://localhost:33749/";
+    @Layout(ClientAppSection.class)
+    @Effect(predicate = IsOAuthAndCustom.class, type = EffectType.SHOW)
+    String m_redirectUrl = DEFAULT_REDIRECT_URL;
+
+    @Widget(title = "Enterprise ID", description = """
+            The Box Enterprise ID when authenticating as a
+            <a href="https://developer.box.com/guides/getting-started/user-types/service-account/">
+            service account</a>.
+            """)
+    @Layout(ClientAppSection.class)
+    @Effect(predicate = AuthTypeIsClientCreds.class, type = EffectType.SHOW)
+    String m_enterpriseId;
 
     @ButtonWidget(actionHandler = LoginActionHandler.class, //
             updateHandler = LoginUpdateHandler.class, //
@@ -174,8 +261,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
             description = "Clicking on login opens a new browser window/tab which "
                     + "allows to interactively log into Box.")
     @Persist(optional = true, hidden = true, customPersistor = TokenCacheKeyPersistor.class)
-    @Layout(AuthenticationSection.Body.class)
-    @Effect(predicate = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
+    @Layout(AuthenticationSection.class)
     UUID m_loginCredentialRef;
 
     static class LoginActionHandler extends CancelableActionHandler<UUID, BoxAuthenticatorSettings> {
@@ -209,17 +295,52 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         }
     }
 
+    void validate() throws InvalidSettingsException {
+        if (m_clientSelection == ClientSelection.CUSTOM) {
+            validateClientIdAndSecret();
+            validateRedirectURL();
+        } else if (m_authType == AuthType.CLIENT_CREDENTIALS) {
+            validateClientIdAndSecret();
+            CheckUtils.checkSetting(StringUtils.isNotEmpty(m_enterpriseId),
+                    "Enterprise ID is required");
+        }
+    }
+
+    private void validateClientIdAndSecret() throws InvalidSettingsException {
+        CheckUtils.checkSetting(StringUtils.isNotEmpty(m_boxApp.getUsername()), "Client/App ID is required");
+        CheckUtils.checkSetting(StringUtils.isNotEmpty(m_boxApp.getPassword()), "Client/App secret is required");
+    }
+
+    private void validateRedirectURL() throws InvalidSettingsException {
+        if (StringUtils.isBlank(m_redirectUrl)) {
+            throw new InvalidSettingsException("Please specify the redirect URL");
+        }
+
+        try {
+            var uri = new URI(m_redirectUrl);
+            if (!Objects.equals(uri.getScheme(), "http") && !Objects.equals(uri.getScheme(), "https")) {
+                throw new InvalidSettingsException("Redirect URL must start with http:// or https://.");
+            }
+
+            if (StringUtils.isBlank(uri.getHost())) {
+                throw new InvalidSettingsException("Redirect URL must specify a host.");
+            }
+        } catch (URISyntaxException ex) {// NOSONAR
+            throw new InvalidSettingsException("Please specify a valid redirect URL: " + ex.getMessage());
+        }
+    }
+
     static class LoginUpdateHandler extends CancelableActionHandler.UpdateHandler<UUID, BoxAuthenticatorSettings> {
     }
 
-    void validate() throws InvalidSettingsException {
-        CheckUtils.checkSetting(StringUtils.isNotEmpty(m_boxApp.getUsername()), "Client/App ID is required");
-        CheckUtils.checkSetting(StringUtils.isNotEmpty(m_boxApp.getPassword()), "Client/App secret is required");
-
-        if (m_authType == AuthType.CLIENT_CREDENTIALS) {
-            CheckUtils.checkSetting(StringUtils.isNotEmpty(m_enterpriseId), "Enterprise ID is required");
+    /**
+     * @return The redirect URL.
+     */
+    public String getRedirectURL() {
+        if (m_clientSelection == ClientSelection.CUSTOM) {
+            return m_redirectUrl;
         } else {
-            CheckUtils.checkSetting(StringUtils.isNotEmpty(m_redirectUrl), "Redirect URL is required");
+            return DEFAULT_REDIRECT_URL;
         }
     }
 
@@ -231,8 +352,17 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
      */
     OAuth20Service createService() {
 
-        var builder = new CustomOAuth2ServiceBuilder(m_boxApp.getUsername())//
-                .apiSecret(m_boxApp.getPassword());
+        var username = DEFAULT_APP_ID;
+        var password = DEFAULT_APP_SECRET; // NOSONAR
+
+        if ((m_authType == AuthType.OAUTH && m_clientSelection == ClientSelection.CUSTOM)
+                || m_authType == AuthType.CLIENT_CREDENTIALS) {
+            username = m_boxApp.getUsername();
+            password = m_boxApp.getPassword();
+        }
+
+        var builder = new CustomOAuth2ServiceBuilder(username)//
+                .apiSecret(password);
 
         if (m_authType == AuthType.CLIENT_CREDENTIALS) {
             var subjectType = ENTERPRISE_SUBJECT_TYPE;
@@ -241,7 +371,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
             builder.additionalRequestBodyField(PARAM_BOX_SUBJECT_TYPE, subjectType);
             builder.additionalRequestBodyField(PARAM_BOX_SUBJECT_ID, subjectId);
         } else {
-            builder.callback(m_redirectUrl);
+            builder.callback(getRedirectURL());
         }
 
         return builder.build(BOX_API);

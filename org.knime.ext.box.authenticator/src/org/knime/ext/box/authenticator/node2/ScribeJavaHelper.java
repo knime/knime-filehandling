@@ -69,7 +69,7 @@ final class ScribeJavaHelper {
     static Credential fetchCredentialViaAuthCodeFlow(final BoxAuthenticatorSettings settings) throws Exception {
         try (var service = settings.createService()) {
 
-            final var scribeJavaToken = new AuthCodeFlow(service, URI.create(settings.m_redirectUrl), true)//
+            final var scribeJavaToken = new AuthCodeFlow(service, URI.create(settings.getRedirectURL()), true)//
                     .login(null);
             return CredentialFactory.fromScribeToken(scribeJavaToken, settings::createService);
         }
