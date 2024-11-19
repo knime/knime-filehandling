@@ -119,7 +119,7 @@ public final class SshCommandExecutorNodeFactory extends WebUINodeFactory<SshCom
 
     private static final WebUINodeConfiguration CONFIG = WebUINodeConfiguration.builder()//
             .name("SSH Command Executor")//
-            .icon("./externalTool.png").shortDescription("Execute command(s) on a remote machine using SSH")//
+            .icon("./commandExecutor.png").shortDescription("Execute command(s) on a remote machine using SSH")//
         .fullDescription(FULL_DESCRIPTION)//
             .modelSettingsClass(SshCommandExecutorNodeSettings.class)//
             .nodeType(NodeType.Other)//
