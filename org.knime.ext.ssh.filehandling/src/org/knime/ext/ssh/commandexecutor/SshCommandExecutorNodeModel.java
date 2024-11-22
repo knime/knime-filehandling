@@ -49,23 +49,29 @@
 package org.knime.ext.ssh.commandexecutor;
 
 import static org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.FV_EXIT;
-import static org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.FV_SOUT;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.channel.ClientChannelEvent;
-import org.apache.sshd.common.util.io.output.NullOutputStream;
+import org.knime.core.data.DataColumnSpecCreator;
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.RowKey;
+import org.knime.core.data.def.DefaultRow;
+import org.knime.core.data.def.StringCell;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -75,6 +81,14 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.flowvariable.FlowVariablePortObject;
 import org.knime.core.node.port.flowvariable.FlowVariablePortObjectSpec;
+import org.knime.core.node.streamable.BufferedDataTableRowOutput;
+import org.knime.core.node.streamable.PartitionInfo;
+import org.knime.core.node.streamable.PortInput;
+import org.knime.core.node.streamable.PortObjectInput;
+import org.knime.core.node.streamable.PortObjectOutput;
+import org.knime.core.node.streamable.PortOutput;
+import org.knime.core.node.streamable.RowOutput;
+import org.knime.core.node.streamable.StreamableOperator;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.core.webui.node.impl.WebUINodeModel;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.ReturnCodePolicy;
@@ -111,8 +125,11 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
 
     private static final String SH_TEST_COMMAND_OUTPUT = "`echo` $(echo) .$HOME's. .. shtest";
 
-    // for cancelation
-    private final ExecutorService m_executor = Executors.newSingleThreadExecutor();
+    private static final DataTableSpec TABLE_SPEC = new DataTableSpec(
+            new DataColumnSpecCreator("Output", StringCell.TYPE).createSpec());
+
+    // for reading output and cancelation
+    private final ExecutorService m_executor = Executors.newFixedThreadPool(2);
 
     SshCommandExecutorNodeModel(final WebUINodeConfiguration config) {
         super(config, SshCommandExecutorNodeSettings.class);
@@ -124,27 +141,54 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
 
         settings.validateOnConfigure(inSpecs[0]).ifPresent(this::setWarningMessage);
 
-        return new PortObjectSpec[] { FlowVariablePortObjectSpec.INSTANCE };
+        return new PortObjectSpec[] { FlowVariablePortObjectSpec.INSTANCE, TABLE_SPEC };
     }
 
     @Override
-    protected PortObject[] execute(final PortObject[] inData, final ExecutionContext exec,
+    protected PortObject[] execute(final PortObject[] inPorts, final ExecutionContext exec,
             final SshCommandExecutorNodeSettings settings) throws Exception {
 
-        settings.validateOnExecute(inData[0]).ifPresent(this::setWarningMessage);
+        var table = new BufferedDataTableRowOutput(exec.createDataContainer(TABLE_SPEC));
+        createStreamableOperator(null, null).runFinal( //
+                new PortInput[] { new PortObjectInput(inPorts[0]) }, //
+                new PortOutput[] { new PortObjectOutput(), table }, //
+                exec);
 
-        final var port = (FileSystemPortObject) inData[0];
-        try (final var fscon = port.getFileSystemConnection().orElseThrow(); // NOSONAR checked in validate
-                final var fs = fscon.getFileSystem()) {
-            final var provider = (SshFileSystemProvider) fs.provider();
-            prepareAndExecuteCommand(provider, fs, settings, exec);
-        }
+        return new PortObject[] { FlowVariablePortObject.INSTANCE, table.getDataTable() };
 
-        return new PortObject[] { FlowVariablePortObject.INSTANCE };
+    }
+
+    @Override
+    public StreamableOperator createStreamableOperator(final PartitionInfo partitionInfo,
+            final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+
+        return new StreamableOperator() {
+
+            @Override
+            public void runFinal(final PortInput[] inputs, final PortOutput[] outputs, final ExecutionContext exec)
+                    throws Exception {
+
+                var settings = getSettings().orElseThrow(() -> new IllegalStateException("Node not configured"));
+                final var in = ((PortObjectInput) inputs[0]).getPortObject();
+                ((PortObjectOutput) outputs[0]).setPortObject(FlowVariablePortObject.INSTANCE);
+                settings.validateOnExecute(in).ifPresent(SshCommandExecutorNodeModel.this::setWarningMessage);
+
+                final var port = (FileSystemPortObject) in;
+                final var table = (RowOutput) outputs[1];
+                try (final var fscon = port.getFileSystemConnection().orElseThrow(); // NOSONAR checked in validate
+                        final var fs = fscon.getFileSystem()) {
+                    final var provider = (SshFileSystemProvider) fs.provider();
+                    prepareAndExecuteCommand(provider, fs, settings, exec, new RowLineReader(table));
+                } finally {
+                    table.close();
+                }
+            }
+        };
     }
 
     private void prepareAndExecuteCommand(final SshFileSystemProvider provider, final FSFileSystem<?> fs,
-            final SshCommandExecutorNodeSettings settings, final ExecutionContext exec) throws IOException {
+            final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
+            final RowLineReader rowLineReader) throws IOException {
 
         final var isPosixShell = testPosixShell(provider, settings, exec);
         if (settings.m_enforceSh && !isPosixShell) {
@@ -157,41 +201,49 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
                 SshCommandUtil.getCommand(settings, fs, isPosixShell), //
                 settings.getCommandEncoding(), //
                 settings.getShellSessionTimeout(), //
-                chan -> executeCommand(settings, exec, chan));
+                chan -> executeCommand(settings, exec, chan, rowLineReader));
     }
 
     private Void executeCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
-            final ChannelExec chan) throws IOException {
-        try (final var stdin = new ByteArrayOutputStream();
-                final var stdout = settings.m_exposeStdout ? new ByteArrayOutputStream()
-                        : new NullOutputStream()) {
-            chan.setOut(stdout);
+            final ChannelExec chan, final LineReader reader) throws IOException {
 
-            handleCommand(settings, exec, chan, "Executing command");
+        try (final var stdin = new ByteArrayOutputStream()) {
+
+            handleCommand(settings, exec, chan, "Executing command", reader);
 
             exec.setMessage("Collecting results");
-            handleExitCode(settings, chan, stdout);
+            handleExitCode(settings, chan);
             return null;
         }
     }
 
+    private Future<LineReader> createReaderThread(final BufferedReader input, final LineReader ouput) {
+        return m_executor.submit(() -> {
+            var line = "";
+            while (null != (line = input.readLine())) {
+                ouput.read(line);
+            }
+            return ouput;
+        });
+    }
+
     private String executeTestCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
             final ChannelExec chan) throws IOException {
-        try (final var stdin = new ByteArrayOutputStream();
-                final var stdout = new ByteArrayOutputStream()) {
-            chan.setOut(stdout);
+        try (final var stdin = new ByteArrayOutputStream()) {
+            final var stdout = new LimitedLineReader(2);
 
-            handleCommand(settings, exec, chan, "Running test command");
+            handleCommand(settings, exec, chan, "Running test command", stdout);
 
             if (chan.getExitStatus() != 0) {
                 return null;
             }
-            return stdout.toString(settings.getOutputEncoding());
+            return stdout.m_string.toString();
         }
     }
 
     private void handleCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
-            final ChannelExec chan, final String executionStartedMessage) throws IOException {
+            final ChannelExec chan, final String executionStartedMessage, final LineReader reader)
+            throws IOException {
 
         // request a tty to be able to send CTRL-C
         // this combines stderr and stdout!
@@ -199,16 +251,7 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
         chan.setupSensibleDefaultPty();
         chan.setUsePty(true);
 
-        exec.setMessage("Opening connection");
-        try {
-            chan.open().verify(settings.getShellSessionTimeout());
-        } catch (IOException ioe) {
-            if (ExceptionUtil.getDeepestError(ioe) instanceof TimeoutException) {
-                throw new IOException("Connecting timed out!", ioe);
-            } else {
-                throw new IOException("Could not open connection!", ioe);
-            }
-        }
+        openChannel(chan, settings.getShellSessionTimeout(), exec);
 
         exec.setMessage(executionStartedMessage);
         var waitMask = Collections.<ClientChannelEvent>emptySet();
@@ -216,10 +259,12 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
         // try to cancel the node or the command is hung
         // to be able to still cancel the wait we wrap the wait invocation into a Future
         // which will respond to interrupts
-        try {
-            final var future = m_executor.submit(() -> chan.waitFor(EnumSet.of(ClientChannelEvent.CLOSED),
-                    null));
+        try (final var stdout = new BufferedReader(
+                new InputStreamReader(chan.getInvertedOut(), settings.getOutputEncoding()))) {
+            final var read = createReaderThread(stdout, reader);
+            final var future = m_executor.submit(() -> chan.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), null));
             waitMask = future.get();
+            read.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             tryCancelCommandSafely(chan);
@@ -236,6 +281,21 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
         if (waitMask.contains(ClientChannelEvent.TIMEOUT)) {
             tryCancelCommand(chan);
             throw new IOException("Execution timed out! " + INTERRUPT_WARNING);
+        }
+    }
+
+    private static void openChannel(final ChannelExec chan, final Duration timeout, final ExecutionContext exec)
+            throws IOException {
+
+        exec.setMessage("Opening connection");
+        try {
+            chan.open().verify(timeout);
+        } catch (IOException ioe) {
+            if (ExceptionUtil.getDeepestError(ioe) instanceof TimeoutException) {
+                throw new IOException("Connecting timed out!", ioe);
+            } else {
+                throw new IOException("Could not open connection!", ioe);
+            }
         }
     }
 
@@ -257,7 +317,7 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
     }
 
     private void handleExitCode(final SshCommandExecutorNodeSettings settings,
-            final ChannelExec chan, final OutputStream stdout) throws IOException {
+            final ChannelExec chan) throws IOException {
         final var exit = chan.getExitStatus();
         if (settings.m_policyReturnCode == ReturnCodePolicy.FAIL && (exit == null || exit != 0)) {
             String msg;
@@ -266,17 +326,9 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
             } else {
                 msg = "Command returned non-zero exit code '" + exit + "'!";
             }
-            if (settings.m_exposeStdout) {
-                final var out = ((ByteArrayOutputStream) stdout).toString(settings.getOutputEncoding());
-                LOGGER.error(msg + " Output:\n" + out);
-                msg += " Please check the logs for output.";
-            }
             throw new IOException(msg);
         } else if (exit != null) {
             pushFlowVariableInt(FV_EXIT, exit);
-        }
-        if (settings.m_exposeStdout) {
-            pushFlowVariableString(FV_SOUT, ((ByteArrayOutputStream) stdout).toString(settings.getOutputEncoding()));
         }
     }
 
@@ -291,6 +343,45 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
             tryCancelCommand(chan);
         } catch (IOException e) {
             LOGGER.debug("Could not cancel command!", e);
+        }
+    }
+
+    private abstract static class LineReader {
+        protected long m_row;
+
+        public abstract void read(String line) throws Exception; // NOSONAR
+    }
+
+    private static class RowLineReader extends LineReader {
+        final RowOutput m_output;
+
+        public RowLineReader(final RowOutput output) {
+            m_output = output;
+        }
+
+        @Override
+        public void read(final String line) throws InterruptedException {
+            final var cell = StringCell.StringCellFactory.create(line);
+            m_output.push(new DefaultRow(RowKey.createRowKey(m_row), cell));
+            m_row++;
+        }
+    }
+
+    private static class LimitedLineReader extends LineReader {
+        final StringBuilder m_string = new StringBuilder();
+        final long m_limit;
+
+        public LimitedLineReader(final long limit) {
+            m_limit = limit;
+        }
+
+        @Override
+        public void read(final String line) throws Exception {
+            if (m_row < m_limit) {
+                m_string.append(line);
+                m_string.append('\n');
+                m_row++;
+            }
         }
     }
 

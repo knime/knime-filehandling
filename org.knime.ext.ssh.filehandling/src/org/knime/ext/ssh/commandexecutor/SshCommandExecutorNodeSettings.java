@@ -83,7 +83,6 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicatePr
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.StateProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
-import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCommandOutputSelected.CommandOutputRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomCommandEncodingSelected.CommandEncodingRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomDangerousCharactersDefined.CustomForbiddenCharactersDefinedRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomOutputEncodingSelected.OutputEncodingRef;
@@ -110,8 +109,6 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
     private static final String ESCAPED_FORBIDDEN_CHAR_SET = "&lt;\";$`&amp;'|&gt;\\";
 
     static final String FV_EXIT = "ssh_command_exit";
-    static final String FV_SOUT = "ssh_command_output";
-    static final String FV_SERR = "ssh_command_errors";
 
     private static final String ISO_LINK = "https://docs.oracle.com/en/"
             + "java/javase/17/docs/api/java.base/java/lang/Character.html#isISOControl(int)";
@@ -166,7 +163,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
     @Layout(RemoteCommandSection.class)
     String m_command = "";
 
-    @Widget(title = "Command Encoding", //
+    @Widget(title = "Command encoding", //
             description = "String encoding in which to send the command to the remote machine. This setting depends on "
                     + "the SSH server implementation on the remote machine. On modern machines, the server will "
                     + "likely expect UTF-8, even on Windows.", //
@@ -189,17 +186,6 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
     @ValueSwitchWidget
     ReturnCodePolicy m_policyReturnCode = ReturnCodePolicy.FAIL;
 
-    @Widget(title = "Capture command output in flow variable", //
-            description = "Whether to make the standard output and standard error output of the remote "
-                    + "command available as a flow variable named <code>" + FV_SOUT + "</code> "
-                    + "or logged depending on the exit code setting.<br/>" //
-                    + "This can remain disabled if the output is not needed, "
-                    + "the command produces a lot of output or the output contains sensitive information.",
-            advanced = true)
-    @ValueReference(CommandOutputRef.class)
-    @Layout(RemoteCommandSection.class)
-    boolean m_exposeStdout;
-
     @Widget(title = "Output Encoding", //
             description = "String encoding in which to expect any response output from the remote machine. This "
                     + "setting depends on the PTY implementation on the remote machine. On modern machines, the "
@@ -207,11 +193,10 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
             advanced = true)
     @Layout(RemoteCommandSection.class)
     @ValueReference(OutputEncodingRef.class)
-    @Effect(predicate = IsCommandOutputSelected.class, type = EffectType.SHOW)
     Encoding m_outputEncoding = Encoding.UTF_8;
 
     @Widget(title = "Custom output encoding", //
-            description = "Name of a custom character enconding known to the JVM.", //
+            description = "Name of a custom character encoding known to the JVM.", //
             advanced = true)
     @Effect(predicate = IsCustomOutputEncodingSelected.class, type = EffectType.SHOW)
     @Layout(RemoteCommandSection.class)
@@ -238,7 +223,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
     @Layout(InputSection.class)
     FileSelection m_inputPath = new FileSelection();
 
-    @Widget(title = "If input file/folder does not not exist before execution", //
+    @Widget(title = "If input file/folder does not exist before execution", //
             description = "What to do if the specified file or folder does not exist before execution.", //
             advanced = true)
     @Effect(predicate = IsInputPathSelected.class, type = EffectType.SHOW)
@@ -267,7 +252,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
     @Layout(OutputSection.class)
     FileSelection m_outputPath = new FileSelection();
 
-    @Widget(title = "If output file/folder already exist", //
+    @Widget(title = "If output file/folder already exists", //
             description = "What to do if the specified file or folder already exists before execution. This can be "
                     + "used to avoid accidental overwrite of existing output files.")
     @Effect(predicate = IsOutputPathSelected.class, type = EffectType.SHOW)
@@ -315,7 +300,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
     @Layout(SecuritySection.class)
     ForbiddenCharacterSet m_forbiddenCharacterSet = ForbiddenCharacterSet.DEFAULT;
 
-    @Widget(title = "Forbid Control Characters", //
+    @Widget(title = "Forbid control characters", //
             description = "Whether to add all <a href=\"" + ISO_LINK + "\">ISO control characters</a> like new lines "
                     + "and tabs to the custom character set defined below.")
     @Effect(predicate = IsCustomDangerousCharactersDefined.class, type = EffectType.SHOW)
@@ -364,7 +349,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
         return validate(port.getSpec(), true);
     }
 
-    private Optional<String> validate(final PortObjectSpec spec, final boolean checkPathExistence)
+    private Optional<String> validate(final PortObjectSpec spec, final boolean isExecute)
             throws InvalidSettingsException {
         if (!(spec instanceof FileSystemPortObjectSpec)
                 || !((FileSystemPortObjectSpec) spec).getFSType().equals(SshFileSystem.FS_TYPE)) {
@@ -374,16 +359,15 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
         basicChecks();
 
         final var fsSpec = (FileSystemPortObjectSpec) spec;
-        if (m_useInputPath || m_useOutputPath) {
-            if (fsSpec.getFileSystemConnection().isPresent()) {
-                try (final var fscon = fsSpec.getFileSystemConnection().get(); // NOSONAR checked above
-                        final var fs = fscon.getFileSystem()) {
-                    return checkPaths(fs, checkPathExistence);
-                } catch (IOException ex) { // connection and fs should be opened by connector
-                    throw new InvalidSettingsException("Could not check paths", ex);
-                }
+        if (fsSpec.getFileSystemConnection().isPresent() || (m_useInputPath || m_useOutputPath)) {
+            try (final var fscon = fsSpec.getFileSystemConnection().get(); // NOSONAR checked above
+                    final var fs = fscon.getFileSystem()) {
+                return checkPaths(fs, isExecute);
+            } catch (IOException ex) { // connection and fs should be opened by connector
+                throw new InvalidSettingsException("Could not check paths", ex);
             }
-            return Optional.of("Please execute the SSH Connector");
+        } else if (isExecute) {
+            throw new InvalidSettingsException("Please (re-)execute the SSH Connector");
         }
         return Optional.empty();
     }
@@ -393,16 +377,16 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
             throw new InvalidSettingsException("Please specify a remote command");
         }
 
-        CheckUtils.checkSetting(m_shellSessionTimeout >= 0, "Please specify a non-negative connection timeout");
+        CheckUtils.checkSetting(m_shellSessionTimeout >= 0, "Please specify a non-negative shell session timeout");
 
         if (m_useInputPath && m_inputPath.getFSLocation() != null
                 && m_inputPath.getFSLocation().getPath().isBlank()) {
-            throw new InvalidSettingsException("Please specify a input file or folder, or disable it.");
+            throw new InvalidSettingsException("Please specify a input file or folder, or disable it");
         }
 
         if (m_useOutputPath && m_outputPath.getFSLocation() != null
                 && m_outputPath.getFSLocation().getPath().isBlank()) {
-            throw new InvalidSettingsException("Please specify a output file or folder, or disable it");
+            throw new InvalidSettingsException("Please specify an output file or folder, or disable it");
         }
 
         try {
@@ -516,7 +500,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
     enum ReturnCodePolicy {
 
         @Label(value = "Fail", //
-                description = "Node execution will fail and command output (if enabled) will be logged.")
+                description = "Node execution will fail.")
         FAIL,
 
         @Label(value = "Report", //
@@ -626,21 +610,10 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
         }
     }
 
-    static final class IsCommandOutputSelected implements PredicateProvider {
-        @Override
-        public Predicate init(final PredicateInitializer i) {
-            return i.getBoolean(CommandOutputRef.class).isTrue();
-        }
-
-        static final class CommandOutputRef implements Reference<Boolean> {
-        }
-    }
-
     static final class IsCustomOutputEncodingSelected implements PredicateProvider {
         @Override
         public Predicate init(final PredicateInitializer i) {
-            return i.getBoolean(CommandOutputRef.class).isTrue() //
-                    .and(i.getEnum(OutputEncodingRef.class).isOneOf(Encoding.CUSTOM));
+            return i.getEnum(OutputEncodingRef.class).isOneOf(Encoding.CUSTOM);
         }
 
         static final class OutputEncodingRef implements Reference<Encoding> {

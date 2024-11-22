@@ -48,6 +48,7 @@
  */
 package org.knime.ext.ssh.commandexecutor;
 
+import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.port.flowvariable.FlowVariablePortObject;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.core.webui.node.impl.WebUINodeFactory;
@@ -88,7 +89,7 @@ public final class SshCommandExecutorNodeFactory extends WebUINodeFactory<SshCom
             + "      descriptions." //
             + "  </li>" //
             + "  <li>Upon cancellation, the node sends a <code>CTRL-C</code> to the target shell and then terminates. "
-            + "      Not that a remote command may continue to execute beyond that. "
+            + "      Note that a remote command may continue to execute beyond that. "
             + "      This may happen either because the current program ignores the signal, or because the shell "
             + "      jumped to the next specified command. In POSIX this can be avoided "
             + "      by using conditional (<code>&amp;&amp;</code>) instead of sequential (<code>;</code>)"
@@ -107,16 +108,14 @@ public final class SshCommandExecutorNodeFactory extends WebUINodeFactory<SshCom
             + "An SSH File System Connection whose existing SSH connection will be used to "
             + "execute the command. The file system is also browsable to select input and output files or folders.";
 
-    private static final String OUTPUT_PORT = "Output Flow Variables";
-    private static final String OUTPUT_PORT_DESC = "" //
-            + "The node exports the following flow variables:" //
-            + "<ul>"//
-            + "  <li><code>" + SshCommandExecutorNodeSettings.FV_EXIT + "</code> (if enabled): "
-            + "      contains the exit code of the command(s) (integer)</li>" //
-            + "  <li><code>" + SshCommandExecutorNodeSettings.FV_SOUT + "</code> (if enabled): "
-            + "      contains the complete standard and error output (string)</li>" //
-            + "</ul>";
+    private static final String OUTPUT_PORT_VARS = "Output Flow Variables";
+    private static final String OUTPUT_PORT_VARS_DESC = "" //
+            + "The node exports the flow variable <code>" + SshCommandExecutorNodeSettings.FV_EXIT + "</code> "
+            + "(if enabled) which contains the exit code of the command(s) (integer).";
 
+    private static final String OUTPUT_PORT_OUT = "Command output";
+    private static final String OUTPUT_PORT_OUT_DESC = "" //
+            + "A table containing the complete standard and error output in one string column, a row for each line.";
     private static final WebUINodeConfiguration CONFIG = WebUINodeConfiguration.builder()//
             .name("SSH Command Executor")//
             .icon("./commandExecutor.png").shortDescription("Execute command(s) on a remote machine using SSH")//
@@ -124,7 +123,8 @@ public final class SshCommandExecutorNodeFactory extends WebUINodeFactory<SshCom
             .modelSettingsClass(SshCommandExecutorNodeSettings.class)//
             .nodeType(NodeType.Other)//
             .addInputPort(INPUT_PORT, FileSystemPortObject.TYPE, INPUT_PORT_DESC)//
-            .addOutputPort(OUTPUT_PORT, FlowVariablePortObject.TYPE_OPTIONAL, OUTPUT_PORT_DESC)//
+            .addOutputPort(OUTPUT_PORT_VARS, FlowVariablePortObject.TYPE, OUTPUT_PORT_VARS_DESC)//
+            .addOutputPort(OUTPUT_PORT_OUT, BufferedDataTable.TYPE, OUTPUT_PORT_OUT_DESC)//
             .sinceVersion(5, 4, 0).build();
 
     /**

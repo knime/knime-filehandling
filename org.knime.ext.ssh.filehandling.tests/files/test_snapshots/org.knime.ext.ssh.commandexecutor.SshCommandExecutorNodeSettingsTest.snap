@@ -5,7 +5,6 @@
       "commandEncoding" : "UTF_8",
       "customCommandEncoding" : "",
       "policyReturnCode" : "FAIL",
-      "exposeStdout" : false,
       "outputEncoding" : "UTF_8",
       "customOutputEncoding" : "",
       "useInputPath" : false,
@@ -64,7 +63,7 @@
               "const" : "CUSTOM",
               "title" : "Other"
             } ],
-            "title" : "Command Encoding",
+            "title" : "Command encoding",
             "description" : "String encoding in which to send the command to the remote machine. This setting depends on the SSH server implementation on the remote machine. On modern machines, the server will likely expect UTF-8, even on Windows.\n<ul>\n<li><b>UTF-8</b>: Standard encoding used on most Linux machines and OpenSSH (Eight-bit UCS Transformation Format).</li>\n<li><b>UTF-16LE</b>: May be used by some Windows machines (Sixteen-bit UCS Transformation Format, little-endian byte order).</li>\n<li><b>Other</b>: Allows to specify a custom valid charset name supported by the Java Virtual Machine.</li>\n</ul>",
             "default" : "UTF_8"
           },
@@ -82,14 +81,14 @@
           },
           "customForbiddenCharactersIncludeControl" : {
             "type" : "boolean",
-            "title" : "Forbid Control Characters",
+            "title" : "Forbid control characters",
             "description" : "Whether to add all <a href=\"https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html#isISOControl(int)\">ISO control characters</a> like new lines and tabs to the custom character set defined below.",
             "default" : true
           },
           "customOutputEncoding" : {
             "type" : "string",
             "title" : "Custom output encoding",
-            "description" : "Name of a custom character enconding known to the JVM.",
+            "description" : "Name of a custom character encoding known to the JVM.",
             "default" : ""
           },
           "enforceSh" : {
@@ -97,12 +96,6 @@
             "title" : "Enforce POSIX compliant shell (recommended)",
             "description" : "Whether to fail execution if the node could not detect a POSIX compliant <code>sh</code> shell.<br/>Using a POSIX shell allows the node to pass the input and output files or folders as arguments/variables instead of inserting them into the command string. This increases security greatly as the paths only have to be quoted, and no special characters have to be escaped.<br/>This option should only be disabled if no POSIX shell is available. In that case the “forbidden character set” will still be checked as a fallback. It is recommended to <b><i>NOT</i></b> control input and output files or folders with flow variables if this option is disabled! (See respective option description.)",
             "default" : true
-          },
-          "exposeStdout" : {
-            "type" : "boolean",
-            "title" : "Capture command output in flow variable",
-            "description" : "Whether to make the standard output and standard error output of the remote command available as a flow variable named <code>ssh_command_output</code> or logged depending on the exit code setting.<br/>This can remain disabled if the output is not needed, the command produces a lot of output or the output contains sensitive information.",
-            "default" : false
           },
           "forbiddenCharacterSet" : {
             "oneOf" : [ {
@@ -213,7 +206,7 @@
               "const" : "IGNORE",
               "title" : "Ignore"
             } ],
-            "title" : "If input file/folder does not not exist before execution",
+            "title" : "If input file/folder does not exist before execution",
             "description" : "What to do if the specified file or folder does not exist before execution.\n<ul>\n<li><b>Fail</b>: Fail node execution.</li>\n<li><b>Warn</b>: Set a node warning message.</li>\n<li><b>Ignore</b>: Do nothing.</li>\n</ul>",
             "default" : "FAIL"
           },
@@ -228,7 +221,7 @@
               "const" : "IGNORE",
               "title" : "Ignore"
             } ],
-            "title" : "If output file/folder already exist",
+            "title" : "If output file/folder already exists",
             "description" : "What to do if the specified file or folder already exists before execution. This can be used to avoid accidental overwrite of existing output files.\n<ul>\n<li><b>Fail</b>: Fail node execution.</li>\n<li><b>Warn</b>: Set a node warning message.</li>\n<li><b>Ignore</b>: Do nothing.</li>\n</ul>",
             "default" : "IGNORE"
           },
@@ -241,7 +234,7 @@
               "title" : "Report"
             } ],
             "title" : "If the remote command exits with non-zero status",
-            "description" : "What to do if the remote command returns a non-zero (or no) exit code.\n<ul>\n<li><b>Fail</b>: Node execution will fail and command output (if enabled) will be logged.</li>\n<li><b>Report</b>: The return value will be made available as a flow variable called <code>ssh_command_exit</code>.</li>\n</ul>",
+            "description" : "What to do if the remote command returns a non-zero (or no) exit code.\n<ul>\n<li><b>Fail</b>: Node execution will fail.</li>\n<li><b>Report</b>: The return value will be made available as a flow variable called <code>ssh_command_exit</code>.</li>\n</ul>",
             "default" : "FAIL"
           },
           "shellSessionTimeout" : {
@@ -317,25 +310,9 @@
         }
       }, {
         "type" : "Control",
-        "scope" : "#/properties/model/properties/exposeStdout",
-        "options" : {
-          "format" : "checkbox",
-          "isAdvanced" : true
-        }
-      }, {
-        "type" : "Control",
         "scope" : "#/properties/model/properties/outputEncoding",
         "options" : {
           "isAdvanced" : true
-        },
-        "rule" : {
-          "effect" : "SHOW",
-          "condition" : {
-            "scope" : "#/properties/model/properties/exposeStdout",
-            "schema" : {
-              "const" : true
-            }
-          }
         }
       }, {
         "type" : "Control",
@@ -346,20 +323,12 @@
         "rule" : {
           "effect" : "SHOW",
           "condition" : {
-            "type" : "AND",
-            "conditions" : [ {
-              "scope" : "#/properties/model/properties/exposeStdout",
-              "schema" : {
-                "const" : true
-              }
-            }, {
-              "scope" : "#/properties/model/properties/outputEncoding",
-              "schema" : {
-                "oneOf" : [ {
-                  "const" : "CUSTOM"
-                } ]
-              }
-            } ]
+            "scope" : "#/properties/model/properties/outputEncoding",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "CUSTOM"
+              } ]
+            }
           }
         }
       } ]
@@ -574,7 +543,6 @@
           "commandEncoding" : { },
           "customCommandEncoding" : { },
           "policyReturnCode" : { },
-          "exposeStdout" : { },
           "outputEncoding" : { },
           "customOutputEncoding" : { },
           "useInputPath" : { },
