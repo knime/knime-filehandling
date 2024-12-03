@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Optional;
@@ -325,12 +326,13 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
     int m_shellSessionTimeout = 30;
 
     Charset getOutputEncoding() throws IllegalCharsetNameException {
-        return Optional.ofNullable(m_outputEncoding.m_charset).orElseGet(() -> Charset.forName(m_customOutputEncoding));
+        return Optional.ofNullable(m_outputEncoding.m_charset) //
+                .orElseGet(() -> Charset.forName(m_customOutputEncoding.trim()));
     }
 
     Charset getCommandEncoding() throws IllegalCharsetNameException {
-        return Optional.ofNullable(m_commandEncoding.m_charset)
-                .orElseGet(() -> Charset.forName(m_customCommandEncoding));
+        return Optional.ofNullable(m_commandEncoding.m_charset) //
+                .orElseGet(() -> Charset.forName(m_customCommandEncoding.trim()));
     }
 
     Duration getShellSessionTimeout() {
@@ -389,12 +391,22 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
             throw new InvalidSettingsException("Please specify an output file or folder, or disable it");
         }
 
-        try {
-            getOutputEncoding();
-            getCommandEncoding();
-        } catch (IllegalCharsetNameException e) {
-            throw new InvalidSettingsException("The selected command or output encoding is not available. " //
-                    + "Please choose a different encoding.", e);
+        checkEncoding(m_outputEncoding, m_customOutputEncoding, "output");
+        checkEncoding(m_commandEncoding, m_customCommandEncoding, "command");
+    }
+
+    private static void checkEncoding(final Encoding encoding, final String custom, final String name)
+            throws InvalidSettingsException {
+        if (encoding.m_charset == null) {
+            if (custom.isBlank()) {
+                throw new InvalidSettingsException("Please provide a custom " + name + " encoding");
+            }
+            try {
+                Charset.forName(custom.trim());
+            } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
+                throw new InvalidSettingsException(
+                        "Unknown " + name + " encoding, please specify a known custom " + name + " encoding.", e);
+            }
         }
     }
 

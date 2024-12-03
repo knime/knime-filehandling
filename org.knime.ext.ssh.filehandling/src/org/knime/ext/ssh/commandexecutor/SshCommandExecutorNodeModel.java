@@ -51,13 +51,13 @@ package org.knime.ext.ssh.commandexecutor;
 import static org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.FV_EXIT;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -192,7 +192,7 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
 
         final var isPosixShell = testPosixShell(provider, settings, exec);
         if (settings.m_enforceSh && !isPosixShell) {
-            throw new IOException("Shell is not POSIX compliant! " //
+            throw new IOException("Shell is not POSIX compliant or different encodings have to be used! " //
                     + "Please see node description about how to handle non-POSIX shells.");
         }
 
@@ -206,15 +206,11 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
 
     private Void executeCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
             final ChannelExec chan, final LineReader reader) throws IOException {
+        handleCommand(settings, exec, chan, "Executing command", reader);
 
-        try (final var stdin = new ByteArrayOutputStream()) {
-
-            handleCommand(settings, exec, chan, "Executing command", reader);
-
-            exec.setMessage("Collecting results");
-            handleExitCode(settings, chan);
-            return null;
-        }
+        exec.setMessage("Collecting results");
+        handleExitCode(settings, chan);
+        return null;
     }
 
     private Future<LineReader> createReaderThread(final BufferedReader input, final LineReader ouput) {
@@ -229,16 +225,14 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
 
     private String executeTestCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
             final ChannelExec chan) throws IOException {
-        try (final var stdin = new ByteArrayOutputStream()) {
-            final var stdout = new LimitedLineReader(2);
+        final var stdout = new LimitedLineReader(2);
 
-            handleCommand(settings, exec, chan, "Running test command", stdout);
+        handleCommand(settings, exec, chan, "Running test command", stdout);
 
-            if (chan.getExitStatus() != 0) {
-                return null;
-            }
-            return stdout.m_string.toString();
+        if (!Objects.equals(chan.getExitStatus(), 0)) {
+            return null;
         }
+        return stdout.m_string.toString();
     }
 
     private void handleCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
