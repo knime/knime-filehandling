@@ -369,9 +369,9 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
                 throw new InvalidSettingsException("Could not check paths", ex);
             }
         } else if (isExecute) {
-            throw new InvalidSettingsException("Please (re-)execute the SSH Connector");
+            throw new InvalidSettingsException("No connection available. Execute the SSH Connector first.");
         }
-        return Optional.empty();
+        return Optional.of("No connection available. Execute the SSH Connector first.");
     }
 
     private void basicChecks() throws InvalidSettingsException {
