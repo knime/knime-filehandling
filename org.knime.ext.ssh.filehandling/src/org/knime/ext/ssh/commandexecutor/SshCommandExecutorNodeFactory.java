@@ -100,6 +100,8 @@ public final class SshCommandExecutorNodeFactory extends WebUINodeFactory<SshCom
             + "      with SFTP sessions from the preceding SSH Connector. The number of available "
             + "      shell sessions can be increased in the advanced tab of the SSH Connector." //
             + "  </li>" //
+            + "  <li>The node does not provide any standard input, so commands waiting for input will hang forever." //
+            + "  </li>" //
             + "</ul>"//
             + "</p>";
 
@@ -115,7 +117,9 @@ public final class SshCommandExecutorNodeFactory extends WebUINodeFactory<SshCom
 
     private static final String OUTPUT_PORT_OUT = "Command output";
     private static final String OUTPUT_PORT_OUT_DESC = "" //
-            + "A table containing the complete standard and error output in one string column, a row for each line.";
+            + "A table containing the complete standard and error output in one string column, a row for each line "
+            + "(all line delimiters (CRNL, CR and NL) are processed regarding of platform and removed from the "
+            + "output).";
     private static final WebUINodeConfiguration CONFIG = WebUINodeConfiguration.builder()//
             .name("SSH Command Executor")//
             .icon("./commandExecutor.png").shortDescription("Execute command(s) on a remote machine using SSH")//

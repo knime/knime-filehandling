@@ -50,10 +50,8 @@ package org.knime.ext.ssh.commandexecutor;
 
 import static org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.FV_EXIT;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -61,7 +59,6 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -69,8 +66,6 @@ import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.RowKey;
-import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.StringCell;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -91,6 +86,8 @@ import org.knime.core.node.streamable.RowOutput;
 import org.knime.core.node.streamable.StreamableOperator;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.core.webui.node.impl.WebUINodeModel;
+import org.knime.ext.ssh.commandexecutor.LineReader.LimitedLineReader;
+import org.knime.ext.ssh.commandexecutor.LineReader.RowLineReader;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.ReturnCodePolicy;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystemProvider;
 import org.knime.filehandling.core.connections.FSFileSystem;
@@ -110,7 +107,7 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
     private static final int CTRL_C = 0x3; // = 'C' - 64, INTERRUPT
 
     private static final String INTERRUPT_WARNING = "Command may still be running or "
-            + "have been only partially executed!";
+            + "has been only partially executed!";
 
     // commands
 
@@ -129,7 +126,7 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
             new DataColumnSpecCreator("Output", StringCell.TYPE).createSpec());
 
     // for reading output and cancelation
-    private final ExecutorService m_executor = Executors.newFixedThreadPool(2);
+    private final ExecutorService m_executor = Executors.newSingleThreadExecutor();
 
     SshCommandExecutorNodeModel(final WebUINodeConfiguration config) {
         super(config, SshCommandExecutorNodeSettings.class);
@@ -213,16 +210,6 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
         return null;
     }
 
-    private Future<LineReader> createReaderThread(final BufferedReader input, final LineReader ouput) {
-        return m_executor.submit(() -> {
-            var line = "";
-            while (null != (line = input.readLine())) {
-                ouput.read(line);
-            }
-            return ouput;
-        });
-    }
-
     private String executeTestCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
             final ChannelExec chan) throws IOException {
         final var stdout = new LimitedLineReader(2);
@@ -238,43 +225,42 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
     private void handleCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
             final ChannelExec chan, final String executionStartedMessage, final LineReader reader)
             throws IOException {
+        try (final var stdout = reader.asOutputStream(settings.getOutputEncoding())) {
+            // request a tty to be able to send CTRL-C
+            // this combines stderr and stdout!
+            // it also causes CRNL used for line endings
+            chan.setupSensibleDefaultPty();
+            chan.setUsePty(true);
+            chan.setOut(stdout);
 
-        // request a tty to be able to send CTRL-C
-        // this combines stderr and stdout!
-        // it also causes CRNL used for line endings
-        chan.setupSensibleDefaultPty();
-        chan.setUsePty(true);
+            openChannel(chan, settings.getShellSessionTimeout(), exec);
 
-        openChannel(chan, settings.getShellSessionTimeout(), exec);
+            exec.setMessage(executionStartedMessage);
+            var waitMask = Collections.<ClientChannelEvent>emptySet();
+            // the ChannelExec method ignores interrupts which can be problematic when we
+            // try to cancel the node or the command is hung
+            // to be able to still cancel the wait we wrap the wait invocation into a Future
+            // which will respond to interrupts
+            try {
+                final var future = m_executor.submit(() -> chan.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), null));
+                waitMask = future.get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                tryCancelCommandSafely(chan);
+                final var msg = "Execution was interrupted! " + INTERRUPT_WARNING;
+                // the exception seems to get swallowed when execution is canceled,
+                // so we can only log the problem
+                LOGGER.warn(msg);
+                throw new IOException(msg);
+            } catch (ExecutionException ex) { // NOSONAR interested in content
+                tryCancelCommandSafely(chan);
+                throw new IOException("Error during execution!", ex.getCause());
+            }
 
-        exec.setMessage(executionStartedMessage);
-        var waitMask = Collections.<ClientChannelEvent>emptySet();
-        // the ChannelExec method ignores interrupts which can be problematic when we
-        // try to cancel the node or the command is hung
-        // to be able to still cancel the wait we wrap the wait invocation into a Future
-        // which will respond to interrupts
-        try (final var stdout = new BufferedReader(
-                new InputStreamReader(chan.getInvertedOut(), settings.getOutputEncoding()))) {
-            final var read = createReaderThread(stdout, reader);
-            final var future = m_executor.submit(() -> chan.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), null));
-            waitMask = future.get();
-            read.get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            tryCancelCommandSafely(chan);
-            final var msg = "Execution was interrupted! " + INTERRUPT_WARNING;
-            // the exception seems to get swallowed when execution is canceled,
-            // so we can only log the problem
-            LOGGER.warn(msg);
-            throw new IOException(msg);
-        } catch (ExecutionException ex) { // NOSONAR interested in content
-            tryCancelCommandSafely(chan);
-            throw new IOException("Error during execution!", ex.getCause());
-        }
-
-        if (waitMask.contains(ClientChannelEvent.TIMEOUT)) {
-            tryCancelCommand(chan);
-            throw new IOException("Execution timed out! " + INTERRUPT_WARNING);
+            if (waitMask.contains(ClientChannelEvent.TIMEOUT)) {
+                tryCancelCommand(chan);
+                throw new IOException("Execution timed out! " + INTERRUPT_WARNING);
+            }
         }
     }
 
@@ -337,45 +323,6 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
             tryCancelCommand(chan);
         } catch (IOException e) {
             LOGGER.debug("Could not cancel command!", e);
-        }
-    }
-
-    private abstract static class LineReader {
-        protected long m_row;
-
-        public abstract void read(String line) throws Exception; // NOSONAR
-    }
-
-    private static class RowLineReader extends LineReader {
-        final RowOutput m_output;
-
-        public RowLineReader(final RowOutput output) {
-            m_output = output;
-        }
-
-        @Override
-        public void read(final String line) throws InterruptedException {
-            final var cell = StringCell.StringCellFactory.create(line);
-            m_output.push(new DefaultRow(RowKey.createRowKey(m_row), cell));
-            m_row++;
-        }
-    }
-
-    private static class LimitedLineReader extends LineReader {
-        final StringBuilder m_string = new StringBuilder();
-        final long m_limit;
-
-        public LimitedLineReader(final long limit) {
-            m_limit = limit;
-        }
-
-        @Override
-        public void read(final String line) throws Exception {
-            if (m_row < m_limit) {
-                m_string.append(line);
-                m_string.append('\n');
-                m_row++;
-            }
         }
     }
 
