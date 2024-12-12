@@ -242,8 +242,7 @@
             "format" : "int32",
             "title" : "Shell session timeout (seconds)",
             "description" : "The timeout to open a shell session using the SSH connection. A value of “0” means no timeout. Upon frequent timeouts, it may help to increase the number of maximum concurrent shell sessions in the SSH Connector, while decreasing the number of SFTP sessions.",
-            "default" : 30,
-            "minimum" : 0.0
+            "default" : 30
           },
           "useDOSPaths" : {
             "type" : "boolean",
@@ -529,7 +528,10 @@
       },
       "elements" : [ {
         "type" : "Control",
-        "scope" : "#/properties/model/properties/shellSessionTimeout"
+        "scope" : "#/properties/model/properties/shellSessionTimeout",
+        "options" : {
+          "min" : 0.0
+        }
       } ]
     } ]
   },
