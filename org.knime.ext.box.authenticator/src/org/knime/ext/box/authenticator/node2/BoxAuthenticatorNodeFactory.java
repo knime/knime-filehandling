@@ -61,36 +61,41 @@ import org.knime.credentials.base.CredentialPortObject;
 public class BoxAuthenticatorNodeFactory extends WebUINodeFactory<BoxAuthenticatorNodeModel> {
     private static final String FULL_DESCRIPTION = """
                     <p>This node authenticates against <a href="https://box.com/">Box</a>. The resulting credential
-                    can then be used with the Box Connector node. The following authentication methods are supported:
+                    can then be used with the <a href="https://hub.knime.com/n/iICKTxfnHis42DpH">Box Connector node.</a>
+                    The following authentication methods are supported:
                     <ul>
 
-                    <li><a href="https://developer.box.com/guides/authentication/oauth2/">User Authentication (OAuth
+                    <li><a href="https://developer.box.com/guides/authentication/oauth2/">User authentication (OAuth
                     2.0)</a>
                     </li>
 
                     <li><a href="https://developer.box.com/guides/authentication/client-credentials/">
-                        Server Authentication (Client Credentials Grant)</a></li>
+                        Server authentication (Client Credentials Grant)</a>
+                    </li>
                     </ul>
+                    We recommend to use User authentication for interactive workflow building and Server authentication
+                    for <a href="https://docs.knime.com/latest/business_hub_deployments_guide/index.html">deployed workflows</a>
+                    (e.g. schedules or data apps). For further details on which authentication method to select see the
+                    <a href="https://developer.box.com/guides/authentication/select/">Box documentation.</a>
                     </p>
 
                     <p>
-                    In order to use this node, a Custom App has to be created and approved in Box first. The steps are
-                    as follows:
+                    To use <i>User authentication</i>, you can either use the Default App or create and use
+                    a Custom App. The Default App is provided by KNIME via the
+                    <a href="https://cloud.app.box.com/integrations/knime_analytics_platform/i/arZJuPwEfy">Box Marketplace.</a>
+                    To use the Default App simply select Default as client/app and, when asked, grant the
+                    KNIME Analytics Platform access to Box.
+
+                    To use a Custom App you need to first create and approve a Custom App in Box.
+                    The steps are as follows:
                     <ul>
 
                     <li>Create a <a href="https://developer.box.com/guides/applications/custom-apps/">Custom App</a> in
-                    Box. While creating the app choose the authentication method you want to use in KNIME (OAuth 2.0 or
-                    Client Credentials Grant).
+                    Box. While creating the app choose OAuth 2.0 as the authentication method.
                     </li>
 
                     <li>
-                    For Client Credentials Grant, configure the app as follows: Set <b>Access Level = App + Enterprise
-                    Access</b> (to be able to access files/folders of your Box enterprise), and <b>Application Scopes =
-                    Write all files and folders stored in Box.</b>
-                    </li>
-
-                    <li>
-                    For OAuth 2.0, configure the app as follows: Set <b>OAuth 2.0 Redirect URI = http://localhost</b>,
+                    Configure the app as follows: Set <b>OAuth 2.0 Redirect URI = http://localhost</b>,
                     and <b>Application Scopes = Write all files and folders stored in Box.</b>
                     </li>
 
@@ -102,10 +107,38 @@ public class BoxAuthenticatorNodeFactory extends WebUINodeFactory<BoxAuthenticat
                     <li>As soon as a Box admin has approved your app it can be used in KNIME.</li>
                     </ul>
                     </p>
+
                     <p>
-                    <b>Note:</b> If <i>OAuth 2</i> is selected, the node can currently only be executed in KNIME
-                    Analytics Platform, i.e. execution on KNIME (Business) Hub, KNIME Server, or via Remote Workflow
-                    Editor will fail. Authentication via <i>Client Credentials</i> should work in all cases.
+                    To use <i>Server authentication</i>, you need to first create and approve a Custom App in Box.
+                    The steps are as follows:
+                    <ul>
+
+                    <li>Create a <a href="https://developer.box.com/guides/applications/custom-apps/">Custom App</a> in
+                    Box. While creating the app choose Client Credentials Grant as the authentication method.
+                    </li>
+
+                    <li>
+                    Configure the app as follows: Set <b>Access Level = App + Enterprise
+                    Access</b> (to be able to access files/folders of your Box enterprise), and <b>Application Scopes =
+                    Write all files and folders stored in Box.</b>
+                    </li>
+
+                    <li>Request approval of your app
+                    <a href="https://developer.box.com/guides/authorization/custom-app-approval/"> as described here.
+                    </a>
+                    </li>
+
+                    <li>As soon as a Box admin has approved your app it can be used in KNIME.</li>
+                    </ul>
+                    </p>
+                    <p>
+                    <b>Note:</b> If <i>User authentication</i> is selected, the node can currently only be executed in
+                    KNIME Analytics Platform, i.e. execution on KNIME Hub, KNIME Server, or via Remote
+                    Workflow Editor will fail. Authentication via <i>Server authentication</i> works in all cases.
+
+                    If you have a KNIME Hub account you can centrally manage and share your Box secrets. For further
+                    details see the
+                    <a href="https://docs.knime.com/latest/business_hub_secrets_guide/index.html#secrets">KNIME Secrets User Guide.</a>
                     </p>
             """;
 
