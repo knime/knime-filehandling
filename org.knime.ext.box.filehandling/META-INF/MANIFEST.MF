@@ -4,12 +4,12 @@ Bundle-Name: KNIME Extension for box.com
 Bundle-SymbolicName: org.knime.ext.box.filehandling;singleton:=true
 Bundle-Version: 5.5.0.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
-Require-Bundle: org.knime.workbench.repository;bundle-version="[5.4.0,6.0.0)",
- org.knime.core;bundle-version="[5.4.0,6.0.0)",
- org.knime.filehandling.core;bundle-version="[5.4.0,6.0.0)",
+Require-Bundle: org.knime.workbench.repository;bundle-version="[5.5.0,6.0.0)",
+ org.knime.core;bundle-version="[5.5.0,6.0.0)",
+ org.knime.filehandling.core;bundle-version="[5.5.0,6.0.0)",
  com.squareup.okhttp3.okhttp;bundle-version="[4.0.0,5.0.0)",
- org.knime.credentials.base;bundle-version="[5.4.0,6.0.0)",
- org.knime.credentials.base.oauth;bundle-version="[5.4.0,6.0.0)"
+ org.knime.credentials.base;bundle-version="[5.5.0,6.0.0)",
+ org.knime.credentials.base.oauth;bundle-version="[5.5.0,6.0.0)"
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  libs/bcpkix-jdk18on-1.78.1.jar,
