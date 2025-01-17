@@ -178,7 +178,7 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
                 try (final var fscon = port.getFileSystemConnection().orElseThrow(); // NOSONAR checked in validate
                         final var fs = fscon.getFileSystem()) {
                     final var provider = (SshFileSystemProvider) fs.provider();
-                    prepareAndExecuteCommand(provider, fs, settings, exec, new RowLineReader(table));
+                    prepareAndExecuteCommand(provider, fs, settings, exec, new RowLineWriter(table));
                 } finally {
                     table.close();
                 }
@@ -188,7 +188,7 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
 
     private void prepareAndExecuteCommand(final SshFileSystemProvider provider, final FSFileSystem<?> fs,
             final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
-            final RowLineReader rowLineReader) throws IOException {
+            final RowLineWriter rowLineWriter) throws IOException {
 
         final var isPosixShell = testPosixShell(provider, settings, exec);
         if (settings.m_enforceSh && !isPosixShell) {
@@ -201,23 +201,23 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
                 SshCommandUtil.getCommand(settings, fs, isPosixShell), //
                 settings.getCommandEncoding(), //
                 settings.getShellSessionTimeout(), //
-                chan -> executeCommand(settings, exec, chan, rowLineReader));
+                chan -> executeCommand(settings, exec, chan, rowLineWriter));
     }
 
     private Void executeCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
-            final ChannelExec chan, final LineReader reader) throws IOException {
-        handleCommand(settings, exec, chan, "Executing command", reader);
+            final ChannelExec chan, final LineWriter writer) throws IOException {
+        handleCommand(settings, exec, chan, "Executing command", writer);
 
         exec.setMessage("Collecting results");
         handleExitCode(settings, chan);
         return null;
     }
 
-    private Future<LineReader> createReaderThread(final BufferedReader input, final LineReader ouput) {
+    private Future<LineWriter> createOutputThread(final BufferedReader input, final LineWriter ouput) {
         return m_executor.submit(() -> {
             var line = "";
             while (null != (line = input.readLine())) {
-                ouput.read(line);
+                ouput.write(line);
             }
             return ouput;
         });
@@ -225,7 +225,7 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
 
     private String executeTestCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
             final ChannelExec chan) throws IOException {
-        final var stdout = new LimitedLineReader(2);
+        final var stdout = new LimitedLineWriter(2);
 
         handleCommand(settings, exec, chan, "Running test command", stdout);
 
@@ -236,7 +236,7 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
     }
 
     private void handleCommand(final SshCommandExecutorNodeSettings settings, final ExecutionContext exec,
-            final ChannelExec chan, final String executionStartedMessage, final LineReader reader)
+            final ChannelExec chan, final String executionStartedMessage, final LineWriter writer)
             throws IOException {
 
         // request a tty to be able to send CTRL-C
@@ -253,12 +253,16 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
         // try to cancel the node or the command is hung
         // to be able to still cancel the wait we wrap the wait invocation into a Future
         // which will respond to interrupts
-        try (final var stdout = new BufferedReader(
-                new InputStreamReader(chan.getInvertedOut(), settings.getOutputEncoding()))) {
-            final var read = createReaderThread(stdout, reader);
-            final var future = m_executor.submit(() -> chan.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), null));
-            waitMask = future.get();
-            read.get();
+        @SuppressWarnings("resource")
+        final var stdout = new BufferedReader(
+                new InputStreamReader(chan.getInvertedOut(), settings.getOutputEncoding()));
+        Future<LineWriter> taskReadOutput = null;
+        try {
+            taskReadOutput = createOutputThread(stdout, writer);
+            final var taskWaitExecuted = m_executor
+                    .submit(() -> chan.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), null));
+            waitMask = taskWaitExecuted.get();
+            taskReadOutput.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             tryCancelCommandSafely(chan);
@@ -270,6 +274,15 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
         } catch (ExecutionException ex) { // NOSONAR interested in content
             tryCancelCommandSafely(chan);
             throw new IOException("Error during execution!", ex.getCause());
+        } finally {
+            if (taskReadOutput != null) {
+                taskReadOutput.cancel(true); // is ignored if done
+            }
+            try {
+                stdout.close();
+            } catch (IOException ex) {
+                LOGGER.warn("Could not close standard output!", ex);
+            }
         }
 
         if (waitMask.contains(ClientChannelEvent.TIMEOUT)) {
@@ -340,42 +353,44 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
         }
     }
 
-    private abstract static class LineReader {
+    private abstract static class LineWriter {
         protected long m_row;
 
-        public abstract void read(String line) throws Exception; // NOSONAR
+        public abstract void write(String line) throws Exception; // NOSONAR
     }
 
-    private static class RowLineReader extends LineReader {
+    private static class RowLineWriter extends LineWriter {
         final RowOutput m_output;
 
-        public RowLineReader(final RowOutput output) {
+        public RowLineWriter(final RowOutput output) {
             m_output = output;
         }
 
         @Override
-        public void read(final String line) throws InterruptedException {
+        public void write(final String line) throws InterruptedException {
             final var cell = StringCell.StringCellFactory.create(line);
             m_output.push(new DefaultRow(RowKey.createRowKey(m_row), cell));
             m_row++;
         }
     }
 
-    private static class LimitedLineReader extends LineReader {
+    private static class LimitedLineWriter extends LineWriter {
         final StringBuilder m_string = new StringBuilder();
         final long m_limit;
 
-        public LimitedLineReader(final long limit) {
+        public LimitedLineWriter(final long limit) {
             m_limit = limit;
         }
 
         @Override
-        public void read(final String line) throws Exception {
+        public void write(final String line) throws Exception {
             if (m_row < m_limit) {
                 m_string.append(line);
                 m_string.append('\n');
-                m_row++;
+            } else if (m_row == m_limit) {
+                m_string.append("[...]\n");
             }
+            m_row++;
         }
     }
 
@@ -386,7 +401,7 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
 
     @Override
     protected void onDispose() {
-        m_executor.shutdown();
+        m_executor.shutdownNow();
     }
 
     @Override
