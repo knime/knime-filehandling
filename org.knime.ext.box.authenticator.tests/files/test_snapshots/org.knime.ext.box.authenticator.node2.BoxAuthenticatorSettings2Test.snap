@@ -234,10 +234,12 @@
         "type" : "object",
         "properties" : {
           "authType" : { },
-          "clientSelection" : { },
-          "boxApp" : {
-            "configPaths" : [ [ "boxApp" ] ]
+          "clientSelection" : {
+            "deprecatedConfigKeys" : [ {
+              "deprecated" : [ ]
+            } ]
           },
+          "boxApp" : { },
           "redirectUrl" : { },
           "enterpriseId" : { },
           "loginCredentialRef" : {

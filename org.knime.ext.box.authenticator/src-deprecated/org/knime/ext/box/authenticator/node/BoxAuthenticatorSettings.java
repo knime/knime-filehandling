@@ -59,7 +59,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Persistor;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
@@ -73,7 +73,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicatePr
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
 import org.knime.credentials.base.CredentialCache;
-import org.knime.credentials.base.oauth.api.nodesettings.TokenCacheKeyPersistor;
+import org.knime.credentials.base.oauth.api.nodesettings.AbstractTokenCacheKeyPersistor;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
 
@@ -166,10 +166,16 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     @Widget(title = "Login", //
             description = "Clicking on login opens a new browser window/tab which "
                     + "allows to interactively log into Box.")
-    @Persist(optional = true, hidden = true, customPersistor = TokenCacheKeyPersistor.class)
+    @Persistor(TokenCacheKeyPersistor.class)
     @Layout(AuthenticationSection.Body.class)
     @Effect(predicate = AuthTypeIsClientCreds.class, type = EffectType.HIDE)
     UUID m_tokenCacheKey;
+
+    static final class TokenCacheKeyPersistor extends AbstractTokenCacheKeyPersistor {
+        TokenCacheKeyPersistor() {
+            super("tokenCacheKey");
+        }
+    }
 
     static class LoginActionHandler extends CancelableActionHandler<UUID, BoxAuthenticatorSettings> {
 

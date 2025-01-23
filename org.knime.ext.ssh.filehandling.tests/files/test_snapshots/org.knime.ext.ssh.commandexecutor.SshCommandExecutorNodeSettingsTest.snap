@@ -344,7 +344,9 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/inputPath",
         "options" : {
-          "format" : "fileChooser"
+          "format" : "fileChooser",
+          "isLocal":true,
+          "mountId":"Local space"
         },
         "rule" : {
           "effect" : "SHOW",
@@ -385,7 +387,9 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/outputPath",
         "options" : {
-          "format" : "fileChooser"
+          "format" : "fileChooser",
+          "isLocal":true,
+          "mountId":"Local space"
         },
         "rule" : {
           "effect" : "SHOW",

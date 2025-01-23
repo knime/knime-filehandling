@@ -56,15 +56,15 @@ import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.NodeSettingsPersistorWithConfigKey;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.field.Persist;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.DefaultProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Migrate;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Migration;
+import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Persistor;
 import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Credentials;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
@@ -80,7 +80,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicatePr
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
 import org.knime.credentials.base.CredentialCache;
-import org.knime.credentials.base.oauth.api.nodesettings.TokenCacheKeyPersistor;
+import org.knime.credentials.base.oauth.api.nodesettings.AbstractTokenCacheKeyPersistor;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
 
@@ -173,7 +173,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     @Layout(ClientAppSection.class)
     @Effect(predicate = AuthTypeIsOAuth.class, type = EffectType.SHOW)
     @ValueReference(ClientSelectionRef.class)
-    @Persist(customPersistor = ClientSelectionPersistor.class)
+    @Migration(ClientSelectionLegacyDefault.class)
     ClientSelection m_clientSelection = ClientSelection.DEFAULT;
 
     enum ClientSelection {
@@ -199,18 +199,10 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         }
     }
 
-    static class ClientSelectionPersistor extends NodeSettingsPersistorWithConfigKey<ClientSelection> {
+    static class ClientSelectionLegacyDefault implements DefaultProvider<ClientSelection> {
 
         @Override
-        public void save(final ClientSelection selection, final NodeSettingsWO settings) {
-            settings.addString(getConfigKey(), selection.toString());
-        }
-
-        @Override
-        public ClientSelection load(final NodeSettingsRO settings) throws InvalidSettingsException {
-            if (settings.containsKey(getConfigKey())) {
-                return ClientSelection.valueOf(settings.getString(getConfigKey()));
-            }
+        public ClientSelection getDefault() {
             return ClientSelection.CUSTOM;
         }
     }
@@ -233,7 +225,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     @CredentialsWidget(usernameLabel = "ID", passwordLabel = "Secret")
     @Layout(ClientAppSection.class)
     @Effect(predicate = IsCredsOrCustomSelection.class, type = EffectType.SHOW)
-    @Persist(optional = true)
+    @Migrate(loadDefaultIfAbsent = true)
     Credentials m_boxApp = new Credentials();
 
     @Widget(title = "Redirect URL (should be http://localhost:XXXXX)", description = """
@@ -260,9 +252,15 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     @Widget(title = "Login", //
             description = "Clicking on login opens a new browser window/tab which "
                     + "allows to interactively log into Box.")
-    @Persist(optional = true, hidden = true, customPersistor = TokenCacheKeyPersistor.class)
+    @Persistor(LoginCredentialRefPersistor.class)
     @Layout(AuthenticationSection.class)
     UUID m_loginCredentialRef;
+
+    static final class LoginCredentialRefPersistor extends AbstractTokenCacheKeyPersistor {
+        LoginCredentialRefPersistor() {
+            super("loginCredentialRef");
+        }
+    }
 
     static class LoginActionHandler extends CancelableActionHandler<UUID, BoxAuthenticatorSettings> {
 
@@ -301,8 +299,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
             validateRedirectURL();
         } else if (m_authType == AuthType.CLIENT_CREDENTIALS) {
             validateClientIdAndSecret();
-            CheckUtils.checkSetting(StringUtils.isNotEmpty(m_enterpriseId),
-                    "Enterprise ID is required");
+            CheckUtils.checkSetting(StringUtils.isNotEmpty(m_enterpriseId), "Enterprise ID is required");
         }
     }
 
