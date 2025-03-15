@@ -51,7 +51,8 @@ try {
                             'knime-distance',
                             'knime-streaming',
                             'knime-kerberos',
-                            'knime-ensembles'
+                            'knime-ensembles',
+                            'knime-hubclient-sdk'
                         ]
                     ],
                     sidecarContainers: [
