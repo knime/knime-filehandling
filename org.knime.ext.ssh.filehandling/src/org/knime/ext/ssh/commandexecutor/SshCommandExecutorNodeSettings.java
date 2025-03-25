@@ -84,6 +84,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicatePr
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.StateProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.validation.NumberInputWidgetValidation.MinValidation.IsNonNegativeValidation;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomCommandEncodingSelected.CommandEncodingRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomDangerousCharactersDefined.CustomForbiddenCharactersDefinedRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomOutputEncodingSelected.OutputEncodingRef;
@@ -322,7 +323,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
                     + "maximum concurrent shell sessions in the SSH Connector, while decreasing the number of SFTP "
                     + "sessions.")
     @Layout(TimeoutsSection.class)
-    @NumberInputWidget(min = 0)
+    @NumberInputWidget(validation = IsNonNegativeValidation.class)
     int m_shellSessionTimeout = 30;
 
     Charset getOutputEncoding() throws IllegalCharsetNameException {

@@ -345,8 +345,8 @@
         "scope" : "#/properties/model/properties/inputPath",
         "options" : {
           "format" : "fileChooser",
-          "isLocal":true,
-          "mountId":"Local space"
+          "isLocal" : true,
+          "mountId" : "Local space"
         },
         "rule" : {
           "effect" : "SHOW",
@@ -388,8 +388,8 @@
         "scope" : "#/properties/model/properties/outputPath",
         "options" : {
           "format" : "fileChooser",
-          "isLocal":true,
-          "mountId":"Local space"
+          "isLocal" : true,
+          "mountId" : "Local space"
         },
         "rule" : {
           "effect" : "SHOW",
@@ -534,7 +534,14 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/shellSessionTimeout",
         "options" : {
-          "min" : 0.0
+          "validations" : [ {
+            "id" : "min",
+            "parameters" : {
+              "min" : 0.0,
+              "isExclusive" : false
+            },
+            "errorMessage" : "The value must be at least 0."
+          } ]
         }
       } ]
     } ]
