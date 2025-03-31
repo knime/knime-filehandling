@@ -159,8 +159,9 @@ final class SshCommandExecutorNodeModel extends WebUINodeModel<SshCommandExecuto
     }
 
     @Override
-    public StreamableOperator createStreamableOperator(final PartitionInfo partitionInfo,
-            final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+    protected StreamableOperator createStreamableOperator(final PartitionInfo partitionInfo,
+            final PortObjectSpec[] inSpecs, final SshCommandExecutorNodeSettings modelSettings)
+            throws InvalidSettingsException {
 
         return new StreamableOperator() {
 

@@ -50,8 +50,8 @@ package org.knime.ext.box.authenticator.node;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ChoicesWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProvider;
 import org.knime.credentials.base.node.CredentialsSettings;
 
 /**
@@ -71,7 +71,7 @@ public class BoxAppSettings implements CredentialsSettings {
                     Specifies a credentials flow variable with the app/client ID and secret of the custom Box app.
                     These fields can be found in the configuration settings of your custom Box app.
                     """)
-    @ChoicesWidget(choices = CredentialsFlowVarChoicesProvider.class, showNoneColumn = false)
+    @ChoicesProvider(CredentialsFlowVarChoicesProvider.class)
     public String m_flowVariable;
 
     @Override

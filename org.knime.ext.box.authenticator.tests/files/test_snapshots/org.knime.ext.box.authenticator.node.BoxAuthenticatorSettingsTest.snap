@@ -64,12 +64,8 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/boxApp/properties/flowVariable",
         "options" : {
-          "possibleValues" : [ ],
-          "format" : "dropDown",
-          "showNoneColumn" : false,
-          "showRowKeys" : false,
-          "showSearch" : true,
-          "showMode" : true
+          "choicesProvider" : "org.knime.credentials.base.node.CredentialsSettings$CredentialsFlowVarChoicesProvider",
+          "format" : "dropDown"
         }
       } ]
     }, {
@@ -176,5 +172,13 @@
         }
       }
     }
-  }
+  },
+  "initialUpdates" : [ {
+    "scopes" : null,
+    "id" : "org.knime.credentials.base.node.CredentialsSettings$CredentialsFlowVarChoicesProvider",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ ]
+    } ]
+  } ]
 }
