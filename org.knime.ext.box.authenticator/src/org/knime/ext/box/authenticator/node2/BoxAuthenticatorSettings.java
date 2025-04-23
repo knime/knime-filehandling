@@ -154,7 +154,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         }
     }
 
-    @Section(title = "Client/App configuration")
+    @Section(title = "Client/App configuration", advanced = true)
     interface ClientAppSection {
     }
 

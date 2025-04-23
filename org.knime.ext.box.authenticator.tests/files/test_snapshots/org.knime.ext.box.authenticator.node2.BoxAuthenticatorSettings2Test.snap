@@ -93,6 +93,9 @@
     }, {
       "label" : "Client/App configuration",
       "type" : "Section",
+      "options" : {
+        "isAdvanced" : true
+      },
       "elements" : [ {
         "type" : "Control",
         "scope" : "#/properties/model/properties/clientSelection",
