@@ -64,9 +64,9 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/boxApp/properties/flowVariable",
         "options" : {
-          "choicesProvider" : "org.knime.credentials.base.node.CredentialsSettings$CredentialsFlowVarChoicesProvider",
           "format" : "dropDown"
-        }
+        },
+        "providedOptions" : [ "possibleValues" ]
       } ]
     }, {
       "label" : "Authentication method",
@@ -174,8 +174,8 @@
     }
   },
   "initialUpdates" : [ {
-    "scopes" : null,
-    "id" : "org.knime.credentials.base.node.CredentialsSettings$CredentialsFlowVarChoicesProvider",
+    "scope" : "#/properties/model/properties/boxApp/properties/flowVariable",
+    "providedOptionName" : "possibleValues",
     "values" : [ {
       "indices" : [ ],
       "value" : [ ]

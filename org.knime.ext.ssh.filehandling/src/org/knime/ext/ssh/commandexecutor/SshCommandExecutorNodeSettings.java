@@ -323,7 +323,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
                     + "maximum concurrent shell sessions in the SSH Connector, while decreasing the number of SFTP "
                     + "sessions.")
     @Layout(TimeoutsSection.class)
-    @NumberInputWidget(validation = IsNonNegativeValidation.class)
+    @NumberInputWidget(minValidation = IsNonNegativeValidation.class)
     int m_shellSessionTimeout = 30;
 
     Charset getOutputEncoding() throws IllegalCharsetNameException {

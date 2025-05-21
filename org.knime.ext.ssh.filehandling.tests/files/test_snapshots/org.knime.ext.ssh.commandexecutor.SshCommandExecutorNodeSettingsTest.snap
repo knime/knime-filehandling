@@ -273,9 +273,7 @@
       "elements" : [ {
         "type" : "Control",
         "scope" : "#/properties/model/properties/command",
-        "options" : {
-          "placeholderProvider" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$CmdPlaceholderProvider"
-        }
+        "providedOptions" : [ "placeholder" ]
       }, {
         "type" : "Control",
         "scope" : "#/properties/model/properties/commandEncoding",
@@ -533,21 +531,22 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/shellSessionTimeout",
         "options" : {
-          "validations" : [ {
-            "errorMessage" : "The value must be at least 0.",
-            "id" : "min",
-            "parameters" : {
-              "min" : 0.0,
-              "isExclusive" : false
+          "validation" : {
+            "max" : {
+              "parameters" : {
+                "max" : 2.147483647E9,
+                "isExclusive" : false
+              },
+              "errorMessage" : "The value must not exceed 2147483647."
+            },
+            "min" : {
+              "parameters" : {
+                "min" : 0.0,
+                "isExclusive" : false
+              },
+              "errorMessage" : "The value must be at least 0."
             }
-          }, {
-            "errorMessage" : "The value must not exceed 2147483647.",
-            "id" : "max",
-            "parameters" : {
-              "max" : 2.147483647E9,
-              "isExclusive" : false
-            }
-          } ]
+          }
         }
       } ]
     } ]
@@ -593,63 +592,24 @@
   },
   "globalUpdates" : [ {
     "trigger" : {
-      "id" : "after-open-dialog",
-      "triggerInitially" : true
+      "id" : "after-open-dialog"
     },
-    "dependencies" : [ {
-      "scopes" : [ "#/properties/model/properties/enforceSh" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsEnforceShDisabled$EnforceShRef"
-    }, {
-      "scopes" : [ "#/properties/model/properties/useInputPath" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsInputPathSelected$InputPathRef"
-    }, {
-      "scopes" : [ "#/properties/model/properties/useOutputPath" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsOutputPathSelected$OutputPathRef"
-    } ]
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/enforceSh", "#/properties/model/properties/useInputPath", "#/properties/model/properties/useOutputPath" ]
   }, {
     "trigger" : {
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsEnforceShDisabled$EnforceShRef",
-      "scopes" : [ "#/properties/model/properties/enforceSh" ]
+      "scope" : "#/properties/model/properties/enforceSh"
     },
-    "dependencies" : [ {
-      "scopes" : [ "#/properties/model/properties/enforceSh" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsEnforceShDisabled$EnforceShRef"
-    }, {
-      "scopes" : [ "#/properties/model/properties/useInputPath" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsInputPathSelected$InputPathRef"
-    }, {
-      "scopes" : [ "#/properties/model/properties/useOutputPath" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsOutputPathSelected$OutputPathRef"
-    } ]
+    "dependencies" : [ "#/properties/model/properties/enforceSh", "#/properties/model/properties/useInputPath", "#/properties/model/properties/useOutputPath" ]
   }, {
     "trigger" : {
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsInputPathSelected$InputPathRef",
-      "scopes" : [ "#/properties/model/properties/useInputPath" ]
+      "scope" : "#/properties/model/properties/useInputPath"
     },
-    "dependencies" : [ {
-      "scopes" : [ "#/properties/model/properties/enforceSh" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsEnforceShDisabled$EnforceShRef"
-    }, {
-      "scopes" : [ "#/properties/model/properties/useInputPath" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsInputPathSelected$InputPathRef"
-    }, {
-      "scopes" : [ "#/properties/model/properties/useOutputPath" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsOutputPathSelected$OutputPathRef"
-    } ]
+    "dependencies" : [ "#/properties/model/properties/enforceSh", "#/properties/model/properties/useInputPath", "#/properties/model/properties/useOutputPath" ]
   }, {
     "trigger" : {
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsOutputPathSelected$OutputPathRef",
-      "scopes" : [ "#/properties/model/properties/useOutputPath" ]
+      "scope" : "#/properties/model/properties/useOutputPath"
     },
-    "dependencies" : [ {
-      "scopes" : [ "#/properties/model/properties/enforceSh" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsEnforceShDisabled$EnforceShRef"
-    }, {
-      "scopes" : [ "#/properties/model/properties/useInputPath" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsInputPathSelected$InputPathRef"
-    }, {
-      "scopes" : [ "#/properties/model/properties/useOutputPath" ],
-      "id" : "org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings$IsOutputPathSelected$OutputPathRef"
-    } ]
+    "dependencies" : [ "#/properties/model/properties/enforceSh", "#/properties/model/properties/useInputPath", "#/properties/model/properties/useOutputPath" ]
   } ]
 }
