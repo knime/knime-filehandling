@@ -66,6 +66,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Migrate;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Migration;
 import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Persistor;
 import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Credentials;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.Advanced;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
@@ -154,7 +155,8 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         }
     }
 
-    @Section(title = "Client/App configuration", advanced = true)
+    @Section(title = "Client/App configuration")
+    @Advanced
     interface ClientAppSection {
     }
 

@@ -71,6 +71,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.layout.AfterAllOf;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
 import org.knime.core.webui.node.dialog.defaultdialog.setting.fileselection.FileSelection;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.Advanced;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.FileReaderWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.NumberInputWidget;
@@ -129,12 +130,14 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
     interface OutputSection {
     }
 
-    @Section(title = "Security", advanced = true)
+    @Section(title = "Security")
+    @Advanced
     @After(OutputSection.class)
     interface SecuritySection {
     }
 
-    @Section(title = "Timeouts", advanced = true)
+    @Section(title = "Timeouts")
+    @Advanced
     @AfterAllOf(value = { @After(OutputSection.class), @After(SecuritySection.class) })
     interface TimeoutsSection {
 
