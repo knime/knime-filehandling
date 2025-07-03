@@ -225,7 +225,8 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
 
     }
 
-    private void validate() throws InvalidSettingsException {
+    @Override
+    public void validate() throws InvalidSettingsException {
         if (m_authType == AuthType.CLIENT_CREDENTIALS) {
             CheckUtils.checkSetting(StringUtils.isNotEmpty(m_enterpriseId), "Enterprise ID is required");
         } else {
