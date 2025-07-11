@@ -65,27 +65,8 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.util.Pair;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileReaderWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelection;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.AfterAllOf;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Advanced;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.NumberInputWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.TextInputWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Predicate;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicateProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.StateProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.validation.NumberInputWidgetValidation.MinValidation.IsNonNegativeValidation;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomCommandEncodingSelected.CommandEncodingRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomDangerousCharactersDefined.CustomForbiddenCharactersDefinedRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomOutputEncodingSelected.OutputEncodingRef;
@@ -96,6 +77,26 @@ import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsPathFi
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.filehandling.core.connections.FSFileSystem;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
+import org.knime.node.parameters.NodeParameters;
+import org.knime.node.parameters.NodeParametersInput;
+import org.knime.node.parameters.layout.After;
+import org.knime.node.parameters.layout.AfterAllOf;
+import org.knime.node.parameters.layout.Layout;
+import org.knime.node.parameters.layout.Section;
+import org.knime.node.parameters.widget.Advanced;
+import org.knime.node.parameters.widget.Widget;
+import org.knime.node.parameters.widget.number.NumberInputWidget;
+import org.knime.node.parameters.widget.number.NumberInputWidgetValidation.MinValidation.IsNonNegativeValidation;
+import org.knime.node.parameters.widget.singleselection.Label;
+import org.knime.node.parameters.widget.singleselection.ValueSwitchWidget;
+import org.knime.node.parameters.widget.text.TextInputWidget;
+import org.knime.node.parameters.widget.updates.Effect;
+import org.knime.node.parameters.widget.updates.Predicate;
+import org.knime.node.parameters.widget.updates.PredicateProvider;
+import org.knime.node.parameters.widget.updates.Reference;
+import org.knime.node.parameters.widget.updates.StateProvider;
+import org.knime.node.parameters.widget.updates.ValueReference;
+import org.knime.node.parameters.widget.updates.Effect.EffectType;
 
 /**
  * Settings of the SSH command executor node managing all configurations
@@ -104,7 +105,7 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
  */
 @SuppressWarnings("restriction") // New Node UI is not yet API
-final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
+final class SshCommandExecutorNodeSettings implements NodeParameters {
 
     static final String INPUT_FILE_PLACEHOLDER = "%%inputFile%%";
     static final String OUTPUT_FILE_PLACEHOLDER = "%%outputFile%%";
@@ -600,7 +601,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
         }
 
         @Override
-        public String computeState(final DefaultNodeSettingsContext context) {
+        public String computeState(final NodeParametersInput context) {
             final boolean in = m_inputFile.get();
             final boolean out = m_outputFile.get();
             // provide some usage examples (and best practices)
