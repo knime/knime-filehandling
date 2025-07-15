@@ -4,13 +4,13 @@ Bundle-Name: SMB Connector extension
 Bundle-SymbolicName: org.knime.ext.smb.filehandling;singleton:=true
 Bundle-Version: 5.6.0.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
-Require-Bundle: org.knime.workbench.repository;bundle-version="[5.5.0,6.0.0)",
- org.knime.core;bundle-version="[5.5.0,6.0.0)",
- org.knime.filehandling.core;bundle-version="[5.5.0,6.0.0)",
+Require-Bundle: org.knime.workbench.repository;bundle-version="[5.6.0,6.0.0)",
+ org.knime.core;bundle-version="[5.6.0,6.0.0)",
+ org.knime.filehandling.core;bundle-version="[5.6.0,6.0.0)",
  org.eclipse.ui.workbench,
  slf4j.api;bundle-version="[2.0.12,3.0.0)",
  bcprov;bundle-version="[1.72.0,2.0.0)",
- org.knime.kerberos;bundle-version="[5.5.0,6.0.0)",
+ org.knime.kerberos;bundle-version="[5.6.0,6.0.0)",
  org.apache.commons.lang3;bundle-version="[3.9.0,4.0.0)"
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
