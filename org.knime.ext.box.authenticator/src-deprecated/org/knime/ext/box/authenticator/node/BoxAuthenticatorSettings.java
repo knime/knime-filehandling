@@ -55,7 +55,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.node.parameters.NodeParameters;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.button.ButtonWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.button.CancelableActionHandler;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
@@ -87,7 +87,7 @@ import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthent
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class BoxAuthenticatorSettings implements DefaultNodeSettings {
+public class BoxAuthenticatorSettings implements NodeParameters {
 
     private static final NodeLogger LOG = NodeLogger.getLogger(BoxAuthenticatorSettings.class);
 
@@ -180,7 +180,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     static class LoginActionHandler extends CancelableActionHandler<UUID, BoxAuthenticatorSettings> {
 
         @Override
-        protected UUID invoke(final BoxAuthenticatorSettings settings, final DefaultNodeSettingsContext context)
+        protected UUID invoke(final BoxAuthenticatorSettings settings, final NodeParametersInput context)
                 throws WidgetHandlerException {
 
             try {

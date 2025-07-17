@@ -65,7 +65,7 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.util.Pair;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.node.parameters.NodeParameters;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileReaderWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelection;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.AfterAllOf;
@@ -104,7 +104,7 @@ import org.knime.node.parameters.widget.text.TextInputWidget;
  * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
  */
 @SuppressWarnings("restriction") // New Node UI is not yet API
-final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
+final class SshCommandExecutorNodeSettings implements NodeParameters {
 
     static final String INPUT_FILE_PLACEHOLDER = "%%inputFile%%";
     static final String OUTPUT_FILE_PLACEHOLDER = "%%outputFile%%";
@@ -600,7 +600,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
         }
 
         @Override
-        public String computeState(final DefaultNodeSettingsContext context) {
+        public String computeState(final NodeParametersInput context) {
             final boolean in = m_inputFile.get();
             final boolean out = m_outputFile.get();
             // provide some usage examples (and best practices)
