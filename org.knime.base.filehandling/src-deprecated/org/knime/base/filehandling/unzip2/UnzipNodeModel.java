@@ -503,7 +503,7 @@ class UnzipNodeModel extends NodeModel {
 
         /** {@inheritDoc} */
         @Override
-        protected synchronized void afterRead(final int n) {
+        protected synchronized void afterRead(final int n) throws IOException {
             super.afterRead(n);
             if (n > 0) {
                 m_progress.advance(n);
