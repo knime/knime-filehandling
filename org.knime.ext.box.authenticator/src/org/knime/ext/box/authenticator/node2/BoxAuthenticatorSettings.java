@@ -60,7 +60,6 @@ import org.knime.core.node.util.CheckUtils;
 import org.knime.node.parameters.NodeParameters;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.button.ButtonWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.button.CancelableActionHandler;
-import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Credentials;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
 import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.oauth.api.nodesettings.AbstractTokenCacheKeyPersistor;
@@ -83,6 +82,7 @@ import org.knime.node.parameters.updates.ValueReference;
 import org.knime.node.parameters.updates.Effect.EffectType;
 import org.knime.node.parameters.widget.choices.Label;
 import org.knime.node.parameters.widget.choices.ValueSwitchWidget;
+import org.knime.node.parameters.widget.credentials.Credentials;
 import org.knime.node.parameters.widget.credentials.CredentialsWidget;
 
 import com.github.scribejava.core.model.Verb;
