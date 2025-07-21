@@ -41,63 +41,65 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.filestobinaryobjects;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * <code>NodeFactory</code> for the node.
- * 
- * 
+ * Factory for SettingsModels.
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
-public class FilesToBinaryObjectsNodeFactory extends NodeFactory<FilesToBinaryObjectsNodeModel> {
+@Deprecated
+final class SettingsFactory {
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public FilesToBinaryObjectsNodeModel createNodeModel() {
-        return new FilesToBinaryObjectsNodeModel();
+    private SettingsFactory() {
+        // Disables default constructor
     }
 
     /**
-     * {@inheritDoc}
+     * Factory method for the URI column setting.
+     *
+     *
+     * @return URI column <code>SettingsModel</code>
+     * @deprecated
      */
-    @Override
-    public int getNrNodeViews() {
-        return 0;
+    @Deprecated
+    static SettingsModelString createURIColumnSettings() {
+        return new SettingsModelString("uricolumn", "");
     }
 
     /**
-     * {@inheritDoc}
+     * Factory method for the binary object column name setting.
+     *
+     *
+     * @param replacePolicy <code>SettingsModel</code> for the replace policy
+     *            setting
+     * @return Binary object column name <code>SettingsModel</code>
+     * @deprecated
      */
-    @Override
-    public NodeView<FilesToBinaryObjectsNodeModel> createNodeView(final int viewIndex,
-            final FilesToBinaryObjectsNodeModel nodeModel) {
-        return null;
+    @Deprecated
+    static SettingsModelString createBinaryObjectColumnNameSettings(final SettingsModelString replacePolicy) {
+        SettingsModelString columnName = new SettingsModelString("binaryobjectcolumnname", "BinaryObject");
+        columnName.setEnabled(replacePolicy.getStringValue().equals(ReplacePolicy.APPEND.getName()));
+        return columnName;
     }
 
     /**
-     * {@inheritDoc}
+     * Factory method for the replace setting.
+     *
+     *
+     * @return Replace <code>SettingsModel</code>
+     * @deprecated
      */
-    @Override
-    public boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new FilesToBinaryObjectsNodeDialog();
+    @Deprecated
+    static SettingsModelString createReplacePolicySettings() {
+        return new SettingsModelString("replace", ReplacePolicy.APPEND.getName());
     }
 
 }

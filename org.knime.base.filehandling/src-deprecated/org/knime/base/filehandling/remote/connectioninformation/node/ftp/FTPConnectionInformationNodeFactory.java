@@ -60,6 +60,7 @@ import org.knime.core.node.NodeView;
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
+@Deprecated
 public class FTPConnectionInformationNodeFactory extends NodeFactory<ConnectionInformationNodeModel> {
 
     /**

@@ -41,59 +41,64 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.filestobinaryobjects;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import org.knime.core.data.uri.URIDataValue;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
-import org.knime.core.node.defaultnodesettings.DialogComponentString;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeFactory;
+import org.knime.core.node.NodeView;
 
 /**
- * <code>NodeDialog</code> for the node.
- * 
- * 
+ * <code>NodeFactory</code> for the node.
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
-class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
-
-    private SettingsModelString m_uricolumn;
-
-    private SettingsModelString m_bocolumnname;
-
-    private SettingsModelString m_replace;
+@Deprecated
+public class FilesToBinaryObjectsNodeFactory extends NodeFactory<FilesToBinaryObjectsNodeModel> {
 
     /**
-     * New pane for configuring the node dialog.
+     * {@inheritDoc}
      */
-    @SuppressWarnings("unchecked")
-    protected FilesToBinaryObjectsNodeDialog() {
-        super();
-        m_uricolumn = SettingsFactory.createURIColumnSettings();
-        m_replace = SettingsFactory.createReplacePolicySettings();
-        m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings(m_replace);
-        m_replace.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
-                m_bocolumnname.setEnabled(append);
-            }
-        });
-        // URI column
-        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn, "URI column", 0, URIDataValue.class));
-        createNewGroup("New column...");
-        // Replace setting
-        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "", ReplacePolicy.getAllSettings()));
-        // Binary object column name
-        addDialogComponent(new DialogComponentString(m_bocolumnname, "Name", true, 20));
-        closeCurrentGroup();
+    @Override
+    public FilesToBinaryObjectsNodeModel createNodeModel() {
+        return new FilesToBinaryObjectsNodeModel();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getNrNodeViews() {
+        return 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeView<FilesToBinaryObjectsNodeModel> createNodeView(final int viewIndex,
+            final FilesToBinaryObjectsNodeModel nodeModel) {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasDialog() {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeDialogPane createNodeDialogPane() {
+        return new FilesToBinaryObjectsNodeDialog();
+    }
+
 }

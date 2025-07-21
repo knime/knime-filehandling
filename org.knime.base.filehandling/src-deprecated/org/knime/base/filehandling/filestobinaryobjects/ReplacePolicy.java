@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 3, 2012 (Patrick Winter): created
  */
@@ -49,10 +49,11 @@ package org.knime.base.filehandling.filestobinaryobjects;
 
 /**
  * Enums for replace policies.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
+@Deprecated
 enum ReplacePolicy {
 
     /**
@@ -69,21 +70,27 @@ enum ReplacePolicy {
 
     /**
      * @param name Name of this policy
+     * @deprecated
      */
+    @Deprecated
     ReplacePolicy(final String name) {
         m_name = name;
     }
 
     /**
      * @return Name of this policy
+     * @deprecated
      */
+    @Deprecated
     String getName() {
         return m_name;
     }
 
     /**
      * @return Array of all replace policy settings
+     * @deprecated
      */
+    @Deprecated
     static String[] getAllSettings() {
         return new String[]{APPEND.getName(), REPLACE.getName()};
     }

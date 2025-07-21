@@ -41,58 +41,62 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.filestobinaryobjects;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+import org.knime.core.data.uri.URIDataValue;
+import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
+import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
+import org.knime.core.node.defaultnodesettings.DialogComponentString;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
- * Factory for SettingsModels.
- * 
- * 
+ * <code>NodeDialog</code> for the node.
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
-final class SettingsFactory {
+@Deprecated
+class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
 
-    private SettingsFactory() {
-        // Disables default constructor
-    }
+    private SettingsModelString m_uricolumn;
 
-    /**
-     * Factory method for the URI column setting.
-     * 
-     * 
-     * @return URI column <code>SettingsModel</code>
-     */
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
-    }
+    private SettingsModelString m_bocolumnname;
+
+    private SettingsModelString m_replace;
 
     /**
-     * Factory method for the binary object column name setting.
-     * 
-     * 
-     * @param replacePolicy <code>SettingsModel</code> for the replace policy
-     *            setting
-     * @return Binary object column name <code>SettingsModel</code>
+     * New pane for configuring the node dialog.
+     * @deprecated
      */
-    static SettingsModelString createBinaryObjectColumnNameSettings(final SettingsModelString replacePolicy) {
-        SettingsModelString columnName = new SettingsModelString("binaryobjectcolumnname", "BinaryObject");
-        columnName.setEnabled(replacePolicy.getStringValue().equals(ReplacePolicy.APPEND.getName()));
-        return columnName;
+    @Deprecated
+    @SuppressWarnings("unchecked")
+    protected FilesToBinaryObjectsNodeDialog() {
+        super();
+        m_uricolumn = SettingsFactory.createURIColumnSettings();
+        m_replace = SettingsFactory.createReplacePolicySettings();
+        m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings(m_replace);
+        m_replace.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(final ChangeEvent e) {
+                boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
+                m_bocolumnname.setEnabled(append);
+            }
+        });
+        // URI column
+        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn, "URI column", 0, URIDataValue.class));
+        createNewGroup("New column...");
+        // Replace setting
+        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "", ReplacePolicy.getAllSettings()));
+        // Binary object column name
+        addDialogComponent(new DialogComponentString(m_bocolumnname, "Name", true, 20));
+        closeCurrentGroup();
     }
-
-    /**
-     * Factory method for the replace setting.
-     * 
-     * 
-     * @return Replace <code>SettingsModel</code>
-     */
-    static SettingsModelString createReplacePolicySettings() {
-        return new SettingsModelString("replace", ReplacePolicy.APPEND.getName());
-    }
-
 }
