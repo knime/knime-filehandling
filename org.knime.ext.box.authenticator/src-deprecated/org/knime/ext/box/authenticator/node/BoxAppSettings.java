@@ -50,9 +50,9 @@ package org.knime.ext.box.authenticator.node;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProvider;
 import org.knime.credentials.base.node.CredentialsSettings;
+import org.knime.node.parameters.Widget;
+import org.knime.node.parameters.widget.choices.ChoicesProvider;
 
 /**
  * Implementation of {@link CredentialsSettings} to supply the ID and secret of

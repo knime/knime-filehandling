@@ -65,27 +65,9 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.util.Pair;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileReaderWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelection;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.AfterAllOf;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Advanced;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.NumberInputWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.TextInputWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Predicate;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicateProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.StateProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.validation.NumberInputWidgetValidation.MinValidation.IsNonNegativeValidation;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomCommandEncodingSelected.CommandEncodingRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomDangerousCharactersDefined.CustomForbiddenCharactersDefinedRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomOutputEncodingSelected.OutputEncodingRef;
@@ -96,6 +78,25 @@ import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsPathFi
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.filehandling.core.connections.FSFileSystem;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
+import org.knime.node.parameters.Advanced;
+import org.knime.node.parameters.NodeParameters;
+import org.knime.node.parameters.NodeParametersInput;
+import org.knime.node.parameters.Widget;
+import org.knime.node.parameters.layout.After;
+import org.knime.node.parameters.layout.Layout;
+import org.knime.node.parameters.layout.Section;
+import org.knime.node.parameters.updates.Effect;
+import org.knime.node.parameters.updates.Effect.EffectType;
+import org.knime.node.parameters.updates.EffectPredicate;
+import org.knime.node.parameters.updates.EffectPredicateProvider;
+import org.knime.node.parameters.updates.ParameterReference;
+import org.knime.node.parameters.updates.StateProvider;
+import org.knime.node.parameters.updates.ValueReference;
+import org.knime.node.parameters.widget.choices.Label;
+import org.knime.node.parameters.widget.choices.ValueSwitchWidget;
+import org.knime.node.parameters.widget.number.NumberInputWidget;
+import org.knime.node.parameters.widget.number.NumberInputWidgetValidation.MinValidation.IsNonNegativeValidation;
+import org.knime.node.parameters.widget.text.TextInputWidget;
 
 /**
  * Settings of the SSH command executor node managing all configurations
@@ -104,7 +105,7 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
  */
 @SuppressWarnings("restriction") // New Node UI is not yet API
-final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
+final class SshCommandExecutorNodeSettings implements NodeParameters {
 
     static final String INPUT_FILE_PLACEHOLDER = "%%inputFile%%";
     static final String OUTPUT_FILE_PLACEHOLDER = "%%outputFile%%";
@@ -600,7 +601,7 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
         }
 
         @Override
-        public String computeState(final DefaultNodeSettingsContext context) {
+        public String computeState(final NodeParametersInput context) {
             final boolean in = m_inputFile.get();
             final boolean out = m_outputFile.get();
             // provide some usage examples (and best practices)
@@ -626,75 +627,75 @@ final class SshCommandExecutorNodeSettings implements DefaultNodeSettings {
         }
     }
 
-    static final class IsCustomOutputEncodingSelected implements PredicateProvider {
+    static final class IsCustomOutputEncodingSelected implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             return i.getEnum(OutputEncodingRef.class).isOneOf(Encoding.CUSTOM);
         }
 
-        static final class OutputEncodingRef implements Reference<Encoding> {
+        static final class OutputEncodingRef implements ParameterReference<Encoding> {
         }
     }
 
-    static final class IsCustomCommandEncodingSelected implements PredicateProvider {
+    static final class IsCustomCommandEncodingSelected implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             return i.getEnum(CommandEncodingRef.class).isOneOf(Encoding.CUSTOM);
         }
 
-        static final class CommandEncodingRef implements Reference<Encoding> {
+        static final class CommandEncodingRef implements ParameterReference<Encoding> {
         }
     }
 
-    static final class IsInputPathSelected implements PredicateProvider {
+    static final class IsInputPathSelected implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             return i.getBoolean(InputPathRef.class).isTrue();
         }
 
-        static final class InputPathRef implements Reference<Boolean> {
+        static final class InputPathRef implements ParameterReference<Boolean> {
         }
     }
 
-    static final class IsOutputPathSelected implements PredicateProvider {
+    static final class IsOutputPathSelected implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             return i.getBoolean(OutputPathRef.class).isTrue();
         }
 
-        static final class OutputPathRef implements Reference<Boolean> {
+        static final class OutputPathRef implements ParameterReference<Boolean> {
         }
     }
 
-    static final class IsEnforceShDisabled implements PredicateProvider {
+    static final class IsEnforceShDisabled implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             return i.getBoolean(EnforceShRef.class).isFalse();
         }
 
-        static final class EnforceShRef implements Reference<Boolean> {
+        static final class EnforceShRef implements ParameterReference<Boolean> {
         }
     }
 
-    static final class IsPathFilterUsed implements PredicateProvider {
+    static final class IsPathFilterUsed implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             return i.getEnum(PolicyForbiddenPathsRef.class).isOneOf(ErrorPolicy.FAIL, ErrorPolicy.WARN);
         }
 
-        static final class PolicyForbiddenPathsRef implements Reference<ErrorPolicy> {
+        static final class PolicyForbiddenPathsRef implements ParameterReference<ErrorPolicy> {
         }
     }
 
 
-    static final class IsCustomDangerousCharactersDefined implements PredicateProvider {
+    static final class IsCustomDangerousCharactersDefined implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             return i.getPredicate(IsPathFilterUsed.class)
                     .and(i.getEnum(CustomForbiddenCharactersDefinedRef.class).isOneOf(ForbiddenCharacterSet.CUSTOM));
         }
 
-        static final class CustomForbiddenCharactersDefinedRef implements Reference<ForbiddenCharacterSet> {
+        static final class CustomForbiddenCharactersDefinedRef implements ParameterReference<ForbiddenCharacterSet> {
         }
     }
 

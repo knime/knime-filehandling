@@ -57,33 +57,34 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.util.CheckUtils;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.button.ButtonWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.button.CancelableActionHandler;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.After;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.DefaultProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Migrate;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Migration;
-import org.knime.core.webui.node.dialog.defaultdialog.persistence.api.Persistor;
-import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.Credentials;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Advanced;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Label;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.ValueSwitchWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.credentials.CredentialsWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Effect.EffectType;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Predicate;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.PredicateProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
 import org.knime.credentials.base.CredentialCache;
 import org.knime.credentials.base.oauth.api.nodesettings.AbstractTokenCacheKeyPersistor;
 import org.knime.credentials.base.oauth.api.scribejava.CustomApi20;
 import org.knime.credentials.base.oauth.api.scribejava.CustomOAuth2ServiceBuilder;
+import org.knime.node.parameters.Advanced;
+import org.knime.node.parameters.NodeParameters;
+import org.knime.node.parameters.NodeParametersInput;
+import org.knime.node.parameters.Widget;
+import org.knime.node.parameters.layout.After;
+import org.knime.node.parameters.layout.Layout;
+import org.knime.node.parameters.layout.Section;
+import org.knime.node.parameters.migration.DefaultProvider;
+import org.knime.node.parameters.migration.Migrate;
+import org.knime.node.parameters.migration.Migration;
+import org.knime.node.parameters.persistence.Persistor;
+import org.knime.node.parameters.updates.Effect;
+import org.knime.node.parameters.updates.Effect.EffectType;
+import org.knime.node.parameters.updates.EffectPredicate;
+import org.knime.node.parameters.updates.EffectPredicateProvider;
+import org.knime.node.parameters.updates.ParameterReference;
+import org.knime.node.parameters.updates.ValueReference;
+import org.knime.node.parameters.widget.choices.Label;
+import org.knime.node.parameters.widget.choices.ValueSwitchWidget;
+import org.knime.node.parameters.widget.credentials.Credentials;
+import org.knime.node.parameters.widget.credentials.CredentialsWidget;
 
 import com.github.scribejava.core.model.Verb;
 import com.github.scribejava.core.oauth.OAuth20Service;
@@ -95,7 +96,7 @@ import com.github.scribejava.core.oauth2.clientauthentication.RequestBodyAuthent
  * @author Alexander Bondaletov, Redfield SE
  */
 @SuppressWarnings("restriction")
-public class BoxAuthenticatorSettings implements DefaultNodeSettings {
+public class BoxAuthenticatorSettings implements NodeParameters {
 
     private static final NodeLogger LOG = NodeLogger.getLogger(BoxAuthenticatorSettings.class);
 
@@ -138,19 +139,19 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         CLIENT_CREDENTIALS;
     }
 
-    interface AuthTypeRef extends Reference<AuthType> {
+    interface AuthTypeRef extends ParameterReference<AuthType> {
     }
 
-    static class AuthTypeIsOAuth implements PredicateProvider {
+    static class AuthTypeIsOAuth implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             return i.getEnum(AuthTypeRef.class).isOneOf(AuthType.OAUTH);
         }
     }
 
-    static class AuthTypeIsClientCreds implements PredicateProvider {
+    static class AuthTypeIsClientCreds implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             return i.getEnum(AuthTypeRef.class).isOneOf(AuthType.CLIENT_CREDENTIALS);
         }
     }
@@ -182,19 +183,19 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         DEFAULT, CUSTOM;
     }
 
-    interface ClientSelectionRef extends Reference<ClientSelection> {
+    interface ClientSelectionRef extends ParameterReference<ClientSelection> {
     }
 
-    static class IsCustomSelection implements PredicateProvider {
+    static class IsCustomSelection implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             return i.getEnum(ClientSelectionRef.class).isOneOf(ClientSelection.CUSTOM);
         }
     }
 
-    static class IsCredsOrCustomSelection implements PredicateProvider {
+    static class IsCredsOrCustomSelection implements EffectPredicateProvider {
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             final var typeOAuth = i.getPredicate(AuthTypeIsClientCreds.class);
             final var customSelection = i.getPredicate(IsCustomSelection.class);
             return or(typeOAuth, customSelection);
@@ -209,10 +210,10 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
         }
     }
 
-    static class IsOAuthAndCustom implements PredicateProvider {
+    static class IsOAuthAndCustom implements EffectPredicateProvider {
 
         @Override
-        public Predicate init(final PredicateInitializer i) {
+        public EffectPredicate init(final PredicateInitializer i) {
             final var typeOAuth = i.getPredicate(AuthTypeIsOAuth.class);
             final var customSelection = i.getPredicate(IsCustomSelection.class);
             return and(typeOAuth, customSelection);
@@ -267,7 +268,7 @@ public class BoxAuthenticatorSettings implements DefaultNodeSettings {
     static class LoginActionHandler extends CancelableActionHandler<UUID, BoxAuthenticatorSettings> {
 
         @Override
-        protected UUID invoke(final BoxAuthenticatorSettings settings, final DefaultNodeSettingsContext context)
+        protected UUID invoke(final BoxAuthenticatorSettings settings, final NodeParametersInput context)
                 throws WidgetHandlerException {
 
             try {
