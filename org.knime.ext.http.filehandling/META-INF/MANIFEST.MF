@@ -17,6 +17,6 @@ Require-Bundle: org.knime.core;bundle-version="[5.6.0,6.0.0)",
  org.apache.cxf.cxf-rt-transports-http-hc;bundle-version="[4.0.3,5.0.0)"
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.knime.ext.http.filehandling.Activator
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Automatic-Module-Name: org.knime.ext.http.filehandling
 Bundle-ClassPath: .
