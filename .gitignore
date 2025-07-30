@@ -6,3 +6,4 @@
 org.knime.ext.ssh.filehandling.tests/files/test_snapshots/**/*.snap.debug
 */.polyglot.feature.xml
 */.polyglot.META-INF
+.idea
