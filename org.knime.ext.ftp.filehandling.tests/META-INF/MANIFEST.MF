@@ -5,7 +5,7 @@ Bundle-SymbolicName: org.knime.ext.ftp.filehandling.tests;singleton:=true
 Bundle-Version: 5.6.0.qualifier
 Automatic-Module-Name: org.knime.ext.ftp.filehandling.tests
 Fragment-Host: org.knime.ext.ftp.filehandling;bundle-version="[5.2.0,6.0.0)"
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Import-Package: org.junit,
  org.junit.runner,
  org.junit.rules,
