@@ -41,23 +41,76 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.stringtouri;
 
+import static org.knime.node.impl.description.PortDescription.fixedPort;
+
+import java.util.List;
+import java.util.Map;
+
+import org.knime.core.node.NodeDescription;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
+import org.knime.core.webui.node.dialog.NodeDialog;
+import org.knime.core.webui.node.dialog.NodeDialogFactory;
+import org.knime.core.webui.node.dialog.NodeDialogManager;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
+import org.knime.node.impl.description.DefaultNodeDescriptionUtil;
+import org.knime.node.impl.description.PortDescription;
 
 /**
- * <code>NodeFactory</code> for the node.
- * 
+ * <code>NodeFactory</code> for the String to URI node.
  * 
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
-public class StringToURINodeFactory extends NodeFactory<StringToURINodeModel> {
+@SuppressWarnings("restriction")
+public class StringToURINodeFactory extends NodeFactory<StringToURINodeModel>
+    implements NodeDialogFactory, KaiNodeInterfaceFactory {
+
+    private static final String NODE_NAME = "String to URI";
+    private static final String NODE_ICON = "./stringtouri16x16.png";
+    private static final String SHORT_DESCRIPTION = """
+            Converts strings in a column to URIs.
+            """;
+    private static final String FULL_DESCRIPTION = """
+            Converts strings in a column to URIs. The strings must contain valid URI syntax.
+            You can choose to either replace the selected column with the URI column or append a new URI column.
+            
+            <p>
+            For local files, you can optionally check if the files referenced by the URIs exist and abort 
+            execution if any file is missing.
+            </p>
+            """;
+    private static final List<PortDescription> INPUT_PORTS = List.of(
+            fixedPort("Input table", """
+                Input table containing a string column to be converted to URIs.
+                """)
+    );
+    private static final List<PortDescription> OUTPUT_PORTS = List.of(
+            fixedPort("Output table", """
+                Output table with the string column converted to URIs or a new URI column appended.
+                """)
+    );
+    private static final List<String> KEYWORDS = List.of(
+        "URI", "String", "Convert", "File", "Path"
+    );
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected NodeDialogPane createNodeDialogPane() {
+        return NodeDialogManager.createLegacyFlowVariableNodeDialog(createNodeDialog());
+    }
 
     /**
      * {@inheritDoc}
@@ -71,7 +124,7 @@ public class StringToURINodeFactory extends NodeFactory<StringToURINodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public int getNrNodeViews() {
+    protected int getNrNodeViews() {
         return 0;
     }
 
@@ -79,7 +132,8 @@ public class StringToURINodeFactory extends NodeFactory<StringToURINodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public NodeView<StringToURINodeModel> createNodeView(final int viewIndex, final StringToURINodeModel nodeModel) {
+    public NodeView<StringToURINodeModel> createNodeView(final int viewIndex,
+        final StringToURINodeModel nodeModel) {
         return null;
     }
 
@@ -87,7 +141,7 @@ public class StringToURINodeFactory extends NodeFactory<StringToURINodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public boolean hasDialog() {
+    protected boolean hasDialog() {
         return true;
     }
 
@@ -95,8 +149,37 @@ public class StringToURINodeFactory extends NodeFactory<StringToURINodeModel> {
      * {@inheritDoc}
      */
     @Override
-    public NodeDialogPane createNodeDialogPane() {
-        return new StringToURINodeDialog();
+    public NodeDialog createNodeDialog() {
+        return new DefaultNodeDialog(SettingsType.MODEL, StringToURINodeParameters.class);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NodeDescription createNodeDescription() {
+        return DefaultNodeDescriptionUtil.createNodeDescription(
+            NODE_NAME,
+            NODE_ICON,
+            INPUT_PORTS,
+            OUTPUT_PORTS,
+            SHORT_DESCRIPTION,
+            FULL_DESCRIPTION,
+            List.of(),
+            StringToURINodeParameters.class,
+            null,
+            NodeType.Manipulator,
+            KEYWORDS,
+            null
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public KaiNodeInterface createKaiNodeInterface() {
+        return new DefaultKaiNodeInterface(Map.of(SettingsType.MODEL, StringToURINodeParameters.class));
     }
 
 }

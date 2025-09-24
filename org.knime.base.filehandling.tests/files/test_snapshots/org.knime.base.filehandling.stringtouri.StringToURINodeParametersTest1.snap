@@ -1,0 +1,146 @@
+{
+  "data" : {
+    "model" : {
+      "columnSelection" : "Location",
+      "missingFileAbort" : false,
+      "replacePolicy" : "APPEND",
+      "columnName" : "URI"
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnName" : {
+            "type" : "string",
+            "title" : "New column name",
+            "description" : "Name of the appended column.",
+            "default" : "URI"
+          },
+          "columnSelection" : {
+            "type" : "string",
+            "title" : "Column selection",
+            "description" : "Column that will be converted. It has to contain a string with correct URI syntax.",
+            "default" : "Location"
+          },
+          "missingFileAbort" : {
+            "type" : "boolean",
+            "title" : "Fail if file does not exist (only applies to local files)",
+            "description" : "Checks if the files referenced by the created URIs are existing and will abort if one is not.",
+            "default" : false
+          },
+          "replacePolicy" : {
+            "oneOf" : [ {
+              "const" : "APPEND",
+              "title" : "Append"
+            }, {
+              "const" : "REPLACE",
+              "title" : "Replace"
+            } ],
+            "title" : "Append or replace",
+            "description" : "Choose whether to append a new column or replace the selected column.",
+            "default" : "APPEND"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Column Configuration",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/columnSelection",
+        "options" : {
+          "format" : "dropDown"
+        },
+        "providedOptions" : [ "possibleValues" ]
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/missingFileAbort",
+        "options" : {
+          "format" : "checkbox"
+        }
+      } ]
+    }, {
+      "label" : "Output Configuration",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/replacePolicy",
+        "options" : {
+          "format" : "radio",
+          "radioLayout" : "vertical"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/columnName",
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/replacePolicy",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "APPEND"
+              } ]
+            }
+          }
+        }
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnSelection" : {
+            "configKey" : "columnselection"
+          },
+          "missingFileAbort" : {
+            "configKey" : "missingfileabort"
+          },
+          "replacePolicy" : {
+            "configPaths" : [ [ "replace" ] ]
+          },
+          "columnName" : {
+            "configKey" : "columnname"
+          }
+        }
+      }
+    }
+  },
+  "initialUpdates" : [ {
+    "scope" : "#/properties/model/properties/columnSelection",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ {
+        "id" : "Location",
+        "text" : "Location",
+        "type" : {
+          "id" : "org.knime.core.data.StringValue",
+          "text" : "String"
+        }
+      }, {
+        "id" : "Other_Column",
+        "text" : "Other_Column",
+        "type" : {
+          "id" : "org.knime.core.data.StringValue",
+          "text" : "String"
+        }
+      } ]
+    } ]
+  } ],
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/columnSelection" ]
+  } ]
+}

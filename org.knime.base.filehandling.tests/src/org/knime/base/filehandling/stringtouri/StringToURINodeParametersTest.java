@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,55 +42,66 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
- * History
- *   Sep 3, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.stringtouri;
 
-import org.knime.node.parameters.widget.choices.Label;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
+import org.knime.core.data.def.StringCell;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettings;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersUtil;
+import org.knime.testing.node.dialog.DefaultNodeSettingsSnapshotTest;
+import org.knime.testing.node.dialog.SnapshotTestConfiguration;
 
 /**
- * Enums for replace policies.
- * 
- * 
- * @author Patrick Winter, KNIME AG, Zurich, Switzerland
+ * Snapshot test for {@link StringToURINodeParameters}.
+ *
+ * @author AI Migration Pipeline
  */
-enum ReplacePolicy {
+@SuppressWarnings("restriction")
+final class StringToURINodeParametersTest extends DefaultNodeSettingsSnapshotTest {
 
-    /**
-     * Append new column.
-     */
-    @Label("Append")
-    APPEND("Append"),
-
-    /**
-     * Replace source column.
-     */
-    @Label("Replace")
-    REPLACE("Replace");
-
-    private final String m_name;
-
-    /**
-     * @param name Name of this policy
-     */
-    ReplacePolicy(final String name) {
-        m_name = name;
+    StringToURINodeParametersTest() {
+        super(getConfig());
     }
 
-    /**
-     * @return Name of this policy
-     */
-    String getName() {
-        return m_name;
+    private static SnapshotTestConfiguration getConfig() {
+        return SnapshotTestConfiguration.builder() //
+            .withInputPortObjectSpecs(createInputPortSpecs()) //
+            .testJsonFormsForModel(StringToURINodeParameters.class) //
+            .testJsonFormsWithInstance(SettingsType.MODEL, () -> readSettings()) //
+            .testNodeSettingsStructure(() -> readSettings()) //
+            .build();
     }
 
-    /**
-     * @return Array of all replace policy settings
-     */
-    static String[] getAllSettings() {
-        return new String[]{APPEND.getName(), REPLACE.getName()};
+    private static StringToURINodeParameters readSettings() {
+        try {
+            var path = getSnapshotPath(StringToURINodeParameters.class).getParent().resolve("node_settings")
+                .resolve("StringToURINodeParameters.xml");
+            try (var fis = new FileInputStream(path.toFile())) {
+                var nodeSettings = NodeSettings.loadFromXML(fis);
+                return NodeParametersUtil.loadSettings(nodeSettings.getNodeSettings(SettingsType.MODEL.getConfigKey()),
+                    StringToURINodeParameters.class);
+            }
+        } catch (IOException | InvalidSettingsException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
+    private static PortObjectSpec[] createInputPortSpecs() {
+        return new PortObjectSpec[]{createDefaultTestTableSpec()};
+    }
+
+    private static DataTableSpec createDefaultTestTableSpec() {
+        return new DataTableSpec(
+            new String[]{"Location", "Other_Column"}, 
+            new DataType[]{DataType.getType(StringCell.class), DataType.getType(StringCell.class)}
+        );
+    }
 }
