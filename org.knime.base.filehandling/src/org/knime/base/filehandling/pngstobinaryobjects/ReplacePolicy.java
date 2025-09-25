@@ -41,29 +41,34 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 3, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.pngstobinaryobjects;
 
+import org.knime.node.parameters.widget.choices.Label;
+
 /**
  * Enums for replace policies.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 enum ReplacePolicy {
 
-    /**
-     * Append new column.
-     */
-    APPEND("Append"),
 
     /**
      * Replace source column.
      */
-    REPLACE("Replace");
+    @Label(value = "Replace", description = "Replaces the original column with the binary objects.")
+    REPLACE("Replace"),
+
+    /**
+     * Append new column.
+     */
+    @Label(value = "Append", description = "Adds a new column with the binary objects.")
+    APPEND("Append");
 
     private final String m_name;
 

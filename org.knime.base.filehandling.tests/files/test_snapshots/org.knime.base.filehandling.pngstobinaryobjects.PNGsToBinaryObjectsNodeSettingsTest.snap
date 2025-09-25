@@ -1,0 +1,114 @@
+{
+  "data" : {
+    "model" : {
+      "columnSelection" : "",
+      "replacePolicy" : "REPLACE",
+      "columnName" : "BinaryObject"
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnName" : {
+            "type" : "string",
+            "title" : "New column name",
+            "description" : "Name for the new column containing the binary objects. Only used when 'Append' is selected.",
+            "default" : "BinaryObject"
+          },
+          "columnSelection" : {
+            "type" : "string",
+            "title" : "Column selection",
+            "description" : "Select the PNG image column that will be converted to binary objects.",
+            "default" : ""
+          },
+          "replacePolicy" : {
+            "oneOf" : [ {
+              "const" : "REPLACE",
+              "title" : "Replace"
+            }, {
+              "const" : "APPEND",
+              "title" : "Append"
+            } ],
+            "title" : "Output handling",
+            "description" : "Select how the output column with the binary objects should be handled.\n<ul>\n<li><b>Replace</b>: Replaces the original column with the binary objects.</li>\n<li><b>Append</b>: Adds a new column with the binary objects.</li>\n</ul>",
+            "default" : "REPLACE"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/columnSelection",
+      "options" : {
+        "format" : "dropDown"
+      },
+      "providedOptions" : [ "possibleValues" ]
+    }, {
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/replacePolicy",
+      "options" : {
+        "format" : "valueSwitch"
+      }
+    }, {
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/columnName",
+      "rule" : {
+        "effect" : "SHOW",
+        "condition" : {
+          "scope" : "#/properties/model/properties/replacePolicy",
+          "schema" : {
+            "oneOf" : [ {
+              "const" : "APPEND"
+            } ]
+          }
+        }
+      }
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnSelection" : {
+            "configKey" : "columnselection"
+          },
+          "replacePolicy" : {
+            "configPaths" : [ [ "replace" ] ]
+          },
+          "columnName" : {
+            "configKey" : "columnname"
+          }
+        }
+      }
+    }
+  },
+  "initialUpdates" : [ {
+    "scope" : "#/properties/model/properties/columnSelection",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ {
+        "id" : "PNG_Column",
+        "text" : "PNG_Column",
+        "type" : {
+          "id" : "org.knime.core.data.image.png.PNGImageValue",
+          "text" : "Image (PNG)"
+        }
+      } ]
+    } ]
+  } ],
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/columnSelection" ]
+  } ]
+}
