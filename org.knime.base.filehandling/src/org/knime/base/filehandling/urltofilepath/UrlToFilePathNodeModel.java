@@ -114,14 +114,48 @@ class UrlToFilePathNodeModel extends SimpleStreamableFunctionNodeModel {
      */
     static final String DEF_COLNAME_FILEPATH = "File path";
 
-    private SettingsModelString m_stringColMode =
-        UrlToFilePathNodeDialog.getStringColModel();
+    /**
+     * Creates and returns the settings model, storing the selected column.
+     *
+     * @return The settings model with the selected column.
+     */
+    static final SettingsModelString getStringColModel() {
+        return new SettingsModelString(
+                UrlToFilePathConfigKeys.COLUMN_NAME,
+                UrlToFilePathNodeModel.DEF_COLNAME);
+    }
 
-    private SettingsModelBoolean m_failOnInvalidSyntaxModel =
-        UrlToFilePathNodeDialog.getFailOnInvalidSyntaxModel();
+    /**
+     * Creates and returns the settings model, storing the "fail on invalid
+     * syntax" flag.
+     *
+     * @return The settings model, storing the "fail on invalid
+     * syntax" flag.
+     */
+    static final SettingsModelBoolean getFailOnInvalidSyntaxModel() {
+        return new SettingsModelBoolean(
+                UrlToFilePathConfigKeys.FAIL_ON_INVALID_SYNTAX,
+                UrlToFilePathNodeModel.DEF_FAIL_ON_INVALID_SYNTAX);
+    }
 
-    private SettingsModelBoolean m_failOnInvalidLocationModel =
-        UrlToFilePathNodeDialog.getFailOnInvalidLocationModel();
+    /**
+     * Creates and returns the settings model, storing the "fail on invalid
+     * location" flag.
+     *
+     * @return The settings model, storing the "fail on invalid
+     * location" flag.
+     */
+    static final SettingsModelBoolean getFailOnInvalidLocationModel() {
+        return new SettingsModelBoolean(
+                UrlToFilePathConfigKeys.FAIL_ON_INVALID_LOCATION,
+                UrlToFilePathNodeModel.DEF_FAIL_ON_INVALID_LOCATION);
+    }
+
+    private SettingsModelString m_stringColMode = getStringColModel();
+
+    private SettingsModelBoolean m_failOnInvalidSyntaxModel = getFailOnInvalidSyntaxModel();
+
+    private SettingsModelBoolean m_failOnInvalidLocationModel = getFailOnInvalidLocationModel();
 
     /**
      * Creates and returns the <code>ColumnRearranger</code> used to create the

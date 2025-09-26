@@ -47,17 +47,36 @@
  */
 package org.knime.base.filehandling.urltofilepath;
 
+import static org.knime.node.impl.description.PortDescription.fixedPort;
+
+import java.util.List;
+import java.util.Map;
+
+import org.knime.core.node.NodeDescription;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
+import org.knime.core.webui.node.dialog.NodeDialog;
+import org.knime.core.webui.node.dialog.NodeDialogFactory;
+import org.knime.core.webui.node.dialog.NodeDialogManager;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
+import org.knime.node.impl.description.DefaultNodeDescriptionUtil;
+import org.knime.node.impl.description.PortDescription;
 
 /**
  * Factory of url to file path converter node.
  *
  * @author Kilian Thiel, KNIME.com, Berlin, Germany
+ * @author Halil Yerlikaya, KNIME GmbH, Berlin, Germany
+ * @author AI Migration Pipeline v1.1
  */
+@SuppressWarnings("restriction")
 public class UrlToFilePathNodeFactory extends
-        NodeFactory<UrlToFilePathNodeModel> {
+        NodeFactory<UrlToFilePathNodeModel> implements NodeDialogFactory, KaiNodeInterfaceFactory {
 
     /**
      * {@inheritDoc}
@@ -92,11 +111,62 @@ public class UrlToFilePathNodeFactory extends
         return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    private static final String NODE_NAME = "URL to File Path";
+    private static final String NODE_ICON = "urltofilepath.png";
+    private static final String SHORT_DESCRIPTION = """
+            Converts URLs into file paths.
+            """;
+
+    private static final String FULL_DESCRIPTION = """
+            Converts the url strings of the specified string column into file path strings. Four columns will be
+            appended on the input data table. One, containing the complete file paths, one containing the parent
+            folder of the files, one containing the file names (without extensions), and one containing the file
+            extensions. It can be specified whether the node will fail if an invalid url string occurs or a file
+            location does not exist. If failing is switched off (default) missing values will be inserted as file
+            paths, parent folders, file names, as well as file extensions.
+            """;
+    private static final List<PortDescription> INPUT_PORTS = List.of(
+            fixedPort("Table containing URL strings", """
+                The input table containing URL strings to convert.
+                """)
+    );
+    private static final List<PortDescription> OUTPUT_PORTS = List.of(
+            fixedPort("Table containing converted strings", """
+                The output table with appended file paths, parent folders, file names, and file extensions of converted
+                urls.
+                """)
+    );
+
     @Override
-    protected NodeDialogPane createNodeDialogPane() {
-        return new UrlToFilePathNodeDialog();
+    public NodeDialogPane createNodeDialogPane() {
+        return NodeDialogManager.createLegacyFlowVariableNodeDialog(createNodeDialog());
+    }
+
+    @Override
+    public NodeDialog createNodeDialog() {
+        return new DefaultNodeDialog(SettingsType.MODEL, UrlToFilePathNodeParameters.class);
+    }
+
+    @Override
+    public NodeDescription createNodeDescription() {
+        return DefaultNodeDescriptionUtil.createNodeDescription(
+            NODE_NAME,
+            NODE_ICON,
+            INPUT_PORTS,
+            OUTPUT_PORTS,
+            SHORT_DESCRIPTION,
+            FULL_DESCRIPTION,
+            List.of(),
+            UrlToFilePathNodeParameters.class,
+            null,
+            NodeType.Manipulator,
+            List.of(),
+            null
+        );
+    }
+
+    @Override
+    public KaiNodeInterface createKaiNodeInterface() {
+        return new DefaultKaiNodeInterface(Map.of(SettingsType.MODEL, UrlToFilePathNodeParameters.class));
     }
 }

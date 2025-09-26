@@ -1,0 +1,122 @@
+{
+  "data" : {
+    "model" : {
+      "columnName" : "URL",
+      "failOnInvalidSyntax" : false,
+      "failOnInvalidLocation" : false
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnName" : {
+            "type" : "string",
+            "title" : "Column containing URLs",
+            "description" : "The column containing the URL strings.",
+            "default" : "URI"
+          },
+          "failOnInvalidLocation" : {
+            "type" : "boolean",
+            "title" : "Fail if file does not exist",
+            "description" : "If checked, node will fail if a file location does not exist, otherwise a missing value will be inserted as file path, parent folder, file name, and file extension.",
+            "default" : false
+          },
+          "failOnInvalidSyntax" : {
+            "type" : "boolean",
+            "title" : "Fail if URL has invalid syntax",
+            "description" : "If checked, node will fail if an invalid URL string occurs, otherwise a missing value will be inserted as file path, parent folder, file name, and file extension.",
+            "default" : false
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Column Selection",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/columnName",
+        "options" : {
+          "format" : "dropDown"
+        },
+        "providedOptions" : [ "possibleValues" ]
+      } ]
+    }, {
+      "label" : "Failing Behavior",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/failOnInvalidSyntax",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/failOnInvalidLocation",
+        "options" : {
+          "format" : "checkbox"
+        }
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnName" : {
+            "configKey" : "StringColName"
+          },
+          "failOnInvalidSyntax" : {
+            "configKey" : "FailOnInvalidSyntax"
+          },
+          "failOnInvalidLocation" : {
+            "configKey" : "FailOnInvalidLocation"
+          }
+        }
+      }
+    }
+  },
+  "initialUpdates" : [ {
+    "scope" : "#/properties/model/properties/columnName",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ {
+        "id" : "URI",
+        "text" : "URI",
+        "type" : {
+          "id" : "org.knime.core.data.uri.URIDataValue",
+          "text" : "URI"
+        }
+      }, {
+        "id" : "String_Column",
+        "text" : "String_Column",
+        "type" : {
+          "id" : "org.knime.core.data.StringValue",
+          "text" : "String"
+        }
+      }, {
+        "id" : "Another_URI",
+        "text" : "Another_URI",
+        "type" : {
+          "id" : "org.knime.core.data.uri.URIDataValue",
+          "text" : "URI"
+        }
+      } ]
+    } ]
+  } ],
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/columnName" ]
+  } ]
+}
