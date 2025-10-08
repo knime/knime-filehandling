@@ -34,7 +34,8 @@
 	  Contra: Alters the maven dependency tree, which may be confusing.
 	 -->
 	<properties>
-		<jetty.version>9.4.32.v20200930</jetty.version>
+    <!-- later versions have a changed package structure (e.g. jetty-servlet has been moved) -->
+		<jetty.version>11.0.26</jetty.version>
 	</properties>
 
 	<dependencies>
