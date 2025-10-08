@@ -44,11 +44,10 @@
  * ------------------------------------------------------------------------
  */
 
-package org.knime.base.filehandling.stringtouri;
+package org.knime.base.filehandling.uritostring;
 
 import org.apache.commons.lang.StringUtils;
 import org.knime.core.data.DataColumnSpec;
-import org.knime.core.data.StringValue;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
@@ -78,34 +77,34 @@ import org.knime.node.parameters.widget.choices.util.FilteredInputTableColumnsPr
 import org.knime.node.parameters.widget.text.TextInputWidget;
 
 /**
- * Node parameters for String to URI.
+ * Node parameters for URI to String.
  *
  * @author Halil Yerlikaya, KNIME GmbH, Berlin, Germany
  * @author AI Migration Pipeline v1.1
  */
 @LoadDefaultsForAbsentFields
-final class StringToURINodeParameters implements NodeParameters {
+final class URIToStringNodeParameters implements NodeParameters {
 
-    StringToURINodeParameters() {
+    URIToStringNodeParameters() {
     }
 
-    StringToURINodeParameters(final NodeParametersInput input) {
+    URIToStringNodeParameters(final NodeParametersInput input) {
         m_columnSelection = guessColumnName(input);
     }
 
     private static String guessColumnName(final NodeParametersInput input) {
-        return ColumnSelectionUtil.getFilteredColumns(input, 0, StringToURINodeParameters::colIsStringButNotURI)
+        return ColumnSelectionUtil.getFilteredColumns(input, 0, URIToStringNodeParameters::colIsURI)
             .stream().findFirst().map(DataColumnSpec::getName).orElse("");
     }
 
-    private static boolean colIsStringButNotURI(final DataColumnSpec col) {
-        return col.getType().isCompatible(StringValue.class) && !col.getType().isCompatible(URIDataValue.class);
+    private static boolean colIsURI(final DataColumnSpec col) {
+        return col.getType().isCompatible(URIDataValue.class);
     }
 
-    static class OnlyStringColumnsProvider implements FilteredInputTableColumnsProvider {
+    static class OnlyURIColumnsProvider implements FilteredInputTableColumnsProvider {
         @Override
         public boolean isIncluded(final DataColumnSpec col) {
-            return colIsStringButNotURI(col);
+            return colIsURI(col);
         }
     }
 
@@ -127,48 +126,41 @@ final class StringToURINodeParameters implements NodeParameters {
     }
 
     /**
-     * Column selection setting. Column that will be converted. It has to contain a string with correct URI syntax.
+     * Column selection setting. Column that will be converted to string.
      */
     @Layout(ColumnConfigurationSection.class)
     @Persist(configKey = "columnselection")
     @Widget(title = "Column selection",
-        description = "Column that will be converted. It has to contain a string with correct URI syntax.")
+        description = "Column that will be converted.")
     @ValueReference(ColumnsSelectionValueProvider.class)
     @ValueProvider(ColumnsSelectionValueProvider.class)
-    @ChoicesProvider(OnlyStringColumnsProvider.class)
-    String m_columnSelection = "";
+    @ChoicesProvider(OnlyURIColumnsProvider.class)
+    String m_columnSelection = "URI";
 
     /**
-     * Missing file abort setting. Checks if the files referenced by the created URIs are existing and will abort if one
-     * is not.
-     */
-    @Layout(ColumnConfigurationSection.class)
-    @Persist(configKey = "missingfileabort")
-    @Widget(title = "Fail if file does not exist (only applies to local files)",
-        description = "Checks if the files referenced by the created URIs are existing and will abort if one is not.")
-    boolean m_missingFileAbort = false; // NOSONAR explicit default
-
-    /**
-     * Replace policy setting. Append or replace configuration for output column handling.
+     * Replace policy setting.
+     * Append or replace configuration for output column handling.
      */
     @Layout(OutputConfigurationSection.class)
     @Persistor(ReplacePolicyPersistor.class)
     @Widget(title = "Append or replace",
-        description = "Choose whether to append a new column or replace the selected column.")
+            description = "Choose whether to append a new column or replace the selected column.")
     @ValueSwitchWidget
     @RadioButtonsWidget
     @ValueReference(ReplacePolicyValueRef.class)
     ReplacePolicy m_replacePolicy = ReplacePolicy.APPEND;
 
     /**
-     * New column name setting. Name of the appended column.
+     * New column name setting.
+     * Name of the appended column.
      */
     @Layout(OutputConfigurationSection.class)
     @Persist(configKey = "columnname")
-    @Widget(title = "New column name", description = "Name of the appended column.")
+    @Widget(title = "New column name",
+            description = "Name of the appended column.")
     @TextInputWidget
     @Effect(predicate = ReplacePolicyIsAppend.class, type = Effect.EffectType.SHOW)
-    String m_columnName = "URI";
+    String m_columnName = "String";
 
     /**
      * Persistor for ReplacePolicy enum to handle backward compatibility with string values.
@@ -202,7 +194,7 @@ final class StringToURINodeParameters implements NodeParameters {
     /**
      * Reference interface for the replace policy field.
      */
-    public interface ReplacePolicyValueRef extends ParameterReference<ReplacePolicy> {
+    interface ReplacePolicyValueRef extends ParameterReference<ReplacePolicy> {
     }
 
     /**

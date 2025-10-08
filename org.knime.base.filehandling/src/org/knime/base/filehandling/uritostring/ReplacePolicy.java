@@ -47,6 +47,8 @@
  */
 package org.knime.base.filehandling.uritostring;
 
+import org.knime.node.parameters.widget.choices.Label;
+
 /**
  * Enums for replace policies.
  * 
@@ -58,11 +60,13 @@ enum ReplacePolicy {
     /**
      * Append new column.
      */
+    @Label(value = "Append", description = "Does append the new string column to the table.")
     APPEND("Append"),
 
     /**
      * Replace source column.
      */
+    @Label(value = "Replace", description = "Does replace the selected column with the new string column.")
     REPLACE("Replace");
 
     private final String m_name;

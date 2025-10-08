@@ -1,10 +1,9 @@
 {
   "data" : {
     "model" : {
-      "columnSelection" : "Location",
-      "missingFileAbort" : false,
+      "columnSelection" : "URI",
       "replacePolicy" : "APPEND",
-      "columnName" : "URI"
+      "columnName" : "String"
     }
   },
   "schema" : {
@@ -17,19 +16,13 @@
             "type" : "string",
             "title" : "New column name",
             "description" : "Name of the appended column.",
-            "default" : "URI"
+            "default" : "String"
           },
           "columnSelection" : {
             "type" : "string",
             "title" : "Column selection",
-            "description" : "Column that will be converted. It has to contain a string with correct URI syntax.",
-            "default" : "Location"
-          },
-          "missingFileAbort" : {
-            "type" : "boolean",
-            "title" : "Fail if file does not exist (only applies to local files)",
-            "description" : "Checks if the files referenced by the created URIs are existing and will abort if one is not.",
-            "default" : false
+            "description" : "Column that will be converted.",
+            "default" : "URI"
           },
           "replacePolicy" : {
             "oneOf" : [ {
@@ -40,7 +33,7 @@
               "title" : "Replace"
             } ],
             "title" : "Append or replace",
-            "description" : "Choose whether to append a new column or replace the selected column.",
+            "description" : "Choose whether to append a new column or replace the selected column.\n<ul>\n<li><b>Append</b>: Does append the new string column to the table.</li>\n<li><b>Replace</b>: Does replace the selected column with the new string column.</li>\n</ul>",
             "default" : "APPEND"
           }
         }
@@ -58,12 +51,6 @@
           "format" : "dropDown"
         },
         "providedOptions" : [ "possibleValues" ]
-      }, {
-        "type" : "Control",
-        "scope" : "#/properties/model/properties/missingFileAbort",
-        "options" : {
-          "format" : "checkbox"
-        }
       } ]
     }, {
       "label" : "Output Configuration",
@@ -101,9 +88,6 @@
           "columnSelection" : {
             "configKey" : "columnselection"
           },
-          "missingFileAbort" : {
-            "configKey" : "missingfileabort"
-          },
           "replacePolicy" : {
             "configPaths" : [ [ "replace" ] ]
           },
@@ -120,18 +104,11 @@
     "values" : [ {
       "indices" : [ ],
       "value" : [ {
-        "id" : "Location",
-        "text" : "Location",
+        "id" : "URI",
+        "text" : "URI",
         "type" : {
-          "id" : "org.knime.core.data.StringValue",
-          "text" : "String"
-        }
-      }, {
-        "id" : "Other_Column",
-        "text" : "Other_Column",
-        "type" : {
-          "id" : "org.knime.core.data.StringValue",
-          "text" : "String"
+          "id" : "org.knime.core.data.uri.URIDataValue",
+          "text" : "URI"
         }
       } ]
     } ]

@@ -1,0 +1,123 @@
+{
+  "data" : {
+    "model" : {
+      "columnSelection" : "URI",
+      "replacePolicy" : "APPEND",
+      "columnName" : "String"
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnName" : {
+            "type" : "string",
+            "title" : "New column name",
+            "description" : "Name of the appended column.",
+            "default" : "String"
+          },
+          "columnSelection" : {
+            "type" : "string",
+            "title" : "Column selection",
+            "description" : "Column that will be converted.",
+            "default" : "URI"
+          },
+          "replacePolicy" : {
+            "oneOf" : [ {
+              "const" : "APPEND",
+              "title" : "Append"
+            }, {
+              "const" : "REPLACE",
+              "title" : "Replace"
+            } ],
+            "title" : "Append or replace",
+            "description" : "Choose whether to append a new column or replace the selected column.\n<ul>\n<li><b>Append</b>: Does append the new string column to the table.</li>\n<li><b>Replace</b>: Does replace the selected column with the new string column.</li>\n</ul>",
+            "default" : "APPEND"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Column Configuration",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/columnSelection",
+        "options" : {
+          "format" : "dropDown"
+        },
+        "providedOptions" : [ "possibleValues" ]
+      } ]
+    }, {
+      "label" : "Output Configuration",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/replacePolicy",
+        "options" : {
+          "format" : "radio",
+          "radioLayout" : "vertical"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/columnName",
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/replacePolicy",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "APPEND"
+              } ]
+            }
+          }
+        }
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnSelection" : {
+            "configKey" : "columnselection"
+          },
+          "replacePolicy" : {
+            "configPaths" : [ [ "replace" ] ]
+          },
+          "columnName" : {
+            "configKey" : "columnname"
+          }
+        }
+      }
+    }
+  },
+  "initialUpdates" : [ {
+    "scope" : "#/properties/model/properties/columnSelection",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ {
+        "id" : "URI",
+        "text" : "URI",
+        "type" : {
+          "id" : "org.knime.core.data.uri.URIDataValue",
+          "text" : "URI"
+        }
+      } ]
+    } ]
+  } ],
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/columnSelection" ]
+  } ]
+}
