@@ -121,7 +121,9 @@ public class UrlToFilePathNodeFactory extends
             Converts the url strings of the specified string column into file path strings. Four columns will be
             appended on the input data table. One, containing the complete file paths, one containing the parent
             folder of the files, one containing the file names (without extensions), and one containing the file
-            extensions. It can be specified whether the node will fail if an invalid url string occurs or a file
+            extensions.
+            <br />
+            It can be specified whether the node will fail if an invalid url string occurs or a file
             location does not exist. If failing is switched off (default) missing values will be inserted as file
             paths, parent folders, file names, as well as file extensions.
             """;
