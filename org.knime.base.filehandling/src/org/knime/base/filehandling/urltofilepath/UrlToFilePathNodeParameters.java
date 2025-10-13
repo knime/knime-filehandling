@@ -48,10 +48,10 @@ package org.knime.base.filehandling.urltofilepath;
 
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.StringValue;
 import org.knime.core.data.uri.URIDataValue;
+import org.knime.core.webui.node.dialog.defaultdialog.util.updates.StateComputationFailureException;
 import org.knime.node.parameters.NodeParameters;
 import org.knime.node.parameters.NodeParametersInput;
 import org.knime.node.parameters.Widget;
@@ -59,9 +59,10 @@ import org.knime.node.parameters.layout.Layout;
 import org.knime.node.parameters.layout.Section;
 import org.knime.node.parameters.migration.LoadDefaultsForAbsentFields;
 import org.knime.node.parameters.persistence.Persist;
+import org.knime.node.parameters.updates.ParameterReference;
 import org.knime.node.parameters.updates.ValueProvider;
 import org.knime.node.parameters.updates.ValueReference;
-import org.knime.node.parameters.updates.legacy.UpdateOnOpenValueProvider;
+import org.knime.node.parameters.updates.legacy.AutoGuessValueProvider;
 import org.knime.node.parameters.widget.choices.ChoicesProvider;
 import org.knime.node.parameters.widget.choices.util.ColumnSelectionUtil;
 import org.knime.node.parameters.widget.choices.util.CompatibleColumnsProvider;
@@ -94,25 +95,30 @@ final class UrlToFilePathNodeParameters implements NodeParameters {
         }
     }
 
-    public static final class ColumnSelectionValueProvider extends UpdateOnOpenValueProvider<String> {
-        @Override
-        protected String getValueOnOpen(final String currentValue, final NodeParametersInput parametersInput) {
-            // If current value is null/empty, guess a column name
-            if (StringUtils.stripToNull(currentValue) == null) {
-                return guessColumnName(parametersInput);
-            }
+    interface ColumnNameReference extends ParameterReference<String> {
+    }
 
-            // If current value is the default "URL" but no column named "URL" exists, guess a column name
-            if (UrlToFilePathNodeModel.DEF_COLNAME.equals(currentValue)
-                && !columnExists(currentValue, parametersInput)) {
-                return guessColumnName(parametersInput);
-            }
-
-            return currentValue;
+    static final class ColumnNameValueProvider extends AutoGuessValueProvider<String> {
+        ColumnNameValueProvider() {
+            super(ColumnNameReference.class);
         }
 
-        private static boolean columnExists(final String columnName, final NodeParametersInput parametersInput) {
-            return parametersInput.getInTableSpec(0).map(spec -> spec.containsName(columnName)).orElse(false);
+        @Override
+        protected boolean isEmpty(final String value) {
+            // If value is the default, it has likely not been set by the user, so consider guessing a sensible name
+            return UrlToFilePathNodeModel.DEF_COLNAME.equals(value);
+        }
+
+        @Override
+        protected String autoGuessValue(final NodeParametersInput parametersInput)
+            throws StateComputationFailureException {
+
+            final var spec = parametersInput.getInTableSpec(0);
+            // if input table is not available or default column name actually exists, abort update
+            if (spec.isEmpty() || spec.get().containsName(UrlToFilePathNodeModel.DEF_COLNAME)) {
+                throw new StateComputationFailureException();
+            }
+            return guessColumnName(parametersInput);
         }
     }
 
@@ -130,8 +136,8 @@ final class UrlToFilePathNodeParameters implements NodeParameters {
     @Layout(ColumnSelectionSection.class)
     @Persist(configKey = UrlToFilePathConfigKeys.COLUMN_NAME)
     @Widget(title = "Column containing URLs", description = "The column containing the URL strings.")
-    @ValueReference(ColumnSelectionValueProvider.class)
-    @ValueProvider(ColumnSelectionValueProvider.class)
+    @ValueReference(ColumnNameReference.class)
+    @ValueProvider(ColumnNameValueProvider.class)
     @ChoicesProvider(URLColumnProvider.class)
     String m_columnName = UrlToFilePathNodeModel.DEF_COLNAME;
 

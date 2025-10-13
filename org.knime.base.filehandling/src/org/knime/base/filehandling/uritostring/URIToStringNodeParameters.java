@@ -46,7 +46,8 @@
 
 package org.knime.base.filehandling.uritostring;
 
-import org.apache.commons.lang.StringUtils;
+import java.util.Optional;
+
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.uri.URIDataValue;
 import org.knime.core.node.InvalidSettingsException;
@@ -68,12 +69,12 @@ import org.knime.node.parameters.updates.EffectPredicateProvider;
 import org.knime.node.parameters.updates.ParameterReference;
 import org.knime.node.parameters.updates.ValueProvider;
 import org.knime.node.parameters.updates.ValueReference;
-import org.knime.node.parameters.updates.legacy.UpdateOnOpenValueProvider;
+import org.knime.node.parameters.updates.legacy.ColumnNameAutoGuessValueProvider;
 import org.knime.node.parameters.widget.choices.ChoicesProvider;
 import org.knime.node.parameters.widget.choices.RadioButtonsWidget;
 import org.knime.node.parameters.widget.choices.ValueSwitchWidget;
 import org.knime.node.parameters.widget.choices.util.ColumnSelectionUtil;
-import org.knime.node.parameters.widget.choices.util.FilteredInputTableColumnsProvider;
+import org.knime.node.parameters.widget.choices.util.CompatibleColumnsProvider;
 import org.knime.node.parameters.widget.text.TextInputWidget;
 
 /**
@@ -89,22 +90,16 @@ final class URIToStringNodeParameters implements NodeParameters {
     }
 
     URIToStringNodeParameters(final NodeParametersInput input) {
-        m_columnSelection = guessColumnName(input);
+        m_columnSelection = guessColumnName(input).map(DataColumnSpec::getName).orElse("");
     }
 
-    private static String guessColumnName(final NodeParametersInput input) {
-        return ColumnSelectionUtil.getFilteredColumns(input, 0, URIToStringNodeParameters::colIsURI)
-            .stream().findFirst().map(DataColumnSpec::getName).orElse("");
+    private static Optional<DataColumnSpec> guessColumnName(final NodeParametersInput input) {
+        return ColumnSelectionUtil.getFirstCompatibleColumnOfFirstPort(input, URIDataValue.class);
     }
 
-    private static boolean colIsURI(final DataColumnSpec col) {
-        return col.getType().isCompatible(URIDataValue.class);
-    }
-
-    static class OnlyURIColumnsProvider implements FilteredInputTableColumnsProvider {
-        @Override
-        public boolean isIncluded(final DataColumnSpec col) {
-            return colIsURI(col);
+    static class OnlyURIColumnsProvider extends CompatibleColumnsProvider {
+        protected OnlyURIColumnsProvider() {
+            super(URIDataValue.class);
         }
     }
 
@@ -117,11 +112,18 @@ final class URIToStringNodeParameters implements NodeParameters {
     interface OutputConfigurationSection {
     }
 
+    interface ColumnSelectionReference extends ParameterReference<String> {
+    }
+
     @SuppressWarnings("restriction")
-    static final class ColumnsSelectionValueProvider extends UpdateOnOpenValueProvider<String> {
+    static final class ColumnSelectionValueProvider extends ColumnNameAutoGuessValueProvider {
+        ColumnSelectionValueProvider() {
+            super(ColumnSelectionReference.class);
+        }
+
         @Override
-        protected String getValueOnOpen(final String currentValue, final NodeParametersInput parametersInput) {
-            return StringUtils.stripToNull(currentValue) == null ? guessColumnName(parametersInput) : currentValue;
+        protected Optional<DataColumnSpec> autoGuessColumn(final NodeParametersInput parametersInput) {
+            return guessColumnName(parametersInput);
         }
     }
 
@@ -132,8 +134,8 @@ final class URIToStringNodeParameters implements NodeParameters {
     @Persist(configKey = "columnselection")
     @Widget(title = "Column selection",
         description = "Column that will be converted.")
-    @ValueReference(ColumnsSelectionValueProvider.class)
-    @ValueProvider(ColumnsSelectionValueProvider.class)
+    @ValueReference(ColumnSelectionReference.class)
+    @ValueProvider(ColumnSelectionValueProvider.class)
     @ChoicesProvider(OnlyURIColumnsProvider.class)
     String m_columnSelection = "URI";
 
