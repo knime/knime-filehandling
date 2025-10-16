@@ -1,0 +1,204 @@
+{
+  "data" : {
+    "model" : {
+      "columnSelection" : "URI",
+      "authority" : false,
+      "fragment" : false,
+      "host" : false,
+      "path" : false,
+      "port" : false,
+      "query" : false,
+      "scheme" : false,
+      "user" : false
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "authority" : {
+            "type" : "boolean",
+            "title" : "Authority",
+            "description" : "Append column with authority information of the URI.",
+            "default" : false
+          },
+          "columnSelection" : {
+            "type" : "string",
+            "title" : "Column selection",
+            "description" : "Column containing the URIs to extract information from.",
+            "default" : "URI"
+          },
+          "fragment" : {
+            "type" : "boolean",
+            "title" : "Fragment",
+            "description" : "Append column with fragment information of the URI.",
+            "default" : false
+          },
+          "host" : {
+            "type" : "boolean",
+            "title" : "Host",
+            "description" : "Append column with host information of the URI.",
+            "default" : false
+          },
+          "path" : {
+            "type" : "boolean",
+            "title" : "Path",
+            "description" : "Append column with path information of the URI.",
+            "default" : false
+          },
+          "port" : {
+            "type" : "boolean",
+            "title" : "Port",
+            "description" : "Append column with port information of the URI.",
+            "default" : false
+          },
+          "query" : {
+            "type" : "boolean",
+            "title" : "Query",
+            "description" : "Append column with query information of the URI.",
+            "default" : false
+          },
+          "scheme" : {
+            "type" : "boolean",
+            "title" : "Scheme",
+            "description" : "Append column with scheme information of the URI.",
+            "default" : false
+          },
+          "user" : {
+            "type" : "boolean",
+            "title" : "User",
+            "description" : "Append column with user information of the URI.",
+            "default" : false
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Column Configuration",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/columnSelection",
+        "options" : {
+          "format" : "dropDown"
+        },
+        "providedOptions" : [ "possibleValues" ]
+      } ]
+    }, {
+      "label" : "Extract Options",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/authority",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/fragment",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/host",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/path",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/port",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/query",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/scheme",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/user",
+        "options" : {
+          "format" : "checkbox"
+        }
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnSelection" : {
+            "configKey" : "columnselection"
+          },
+          "authority" : {
+            "configKey" : "authority"
+          },
+          "fragment" : {
+            "configKey" : "fragment"
+          },
+          "host" : {
+            "configKey" : "Host"
+          },
+          "path" : {
+            "configKey" : "path"
+          },
+          "port" : {
+            "configKey" : "port"
+          },
+          "query" : {
+            "configKey" : "query"
+          },
+          "scheme" : {
+            "configKey" : "scheme"
+          },
+          "user" : {
+            "configKey" : "userinfo"
+          }
+        }
+      }
+    }
+  },
+  "initialUpdates" : [ {
+    "scope" : "#/properties/model/properties/columnSelection",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ {
+        "id" : "URI",
+        "text" : "URI",
+        "type" : {
+          "id" : "org.knime.core.data.uri.URIDataValue",
+          "text" : "URI"
+        }
+      } ]
+    } ]
+  } ],
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/columnSelection" ]
+  } ]
+}
