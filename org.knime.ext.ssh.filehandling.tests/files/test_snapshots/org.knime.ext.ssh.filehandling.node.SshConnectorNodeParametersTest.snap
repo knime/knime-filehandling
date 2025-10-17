@@ -1,0 +1,729 @@
+{
+  "data" : {
+    "model" : {
+      "host" : "localhost",
+      "port" : 22,
+      "authentication" : {
+        "type" : "USERNAME_PASSWORD",
+        "userPwdAuth" : {
+          "userPassword" : {
+            "isHiddenPassword" : false,
+            "isHiddenSecondFactor" : false,
+            "username" : "motacilla"
+          },
+          "useCredentials" : false
+        },
+        "keyFileAuth" : {
+          "keyFileUser" : {
+            "isHiddenPassword" : false,
+            "isHiddenSecondFactor" : false,
+            "username" : "motacilla"
+          },
+          "keyFilePwd" : null,
+          "usePassphrase" : false,
+          "keyFile" : {
+            "path" : {
+              "fsCategory" : "LOCAL",
+              "path" : "",
+              "timeout" : 10000,
+              "context" : {
+                "fsToString" : "(LOCAL, )"
+              }
+            }
+          }
+        }
+      },
+      "workingDirectory" : "/",
+      "connectionTimeout" : 30,
+      "maxSessionCount" : 8,
+      "maxExecChannelCount" : 1,
+      "useKnownHostsFile" : false,
+      "knownHostsFile" : {
+        "path" : {
+          "fsCategory" : "LOCAL",
+          "path" : "",
+          "timeout" : 10000,
+          "context" : {
+            "fsToString" : "(LOCAL, )"
+          }
+        }
+      }
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "authentication" : {
+            "type" : "object",
+            "properties" : {
+              "keyFileAuth" : {
+                "type" : "object",
+                "properties" : {
+                  "keyFile" : {
+                    "type" : "object",
+                    "properties" : {
+                      "path" : {
+                        "type" : "object",
+                        "default" : {
+                          "fsCategory" : "LOCAL",
+                          "path" : "",
+                          "timeout" : 10000,
+                          "context" : {
+                            "fsToString" : "(LOCAL, )"
+                          }
+                        }
+                      }
+                    },
+                    "title" : "Key file",
+                    "description" : "Private key file for authentication.",
+                    "default" : {
+                      "path" : {
+                        "fsCategory" : "LOCAL",
+                        "path" : "",
+                        "timeout" : 10000,
+                        "context" : {
+                          "fsToString" : "(LOCAL, )"
+                        }
+                      }
+                    }
+                  },
+                  "keyFilePwd" : {
+                    "type" : [ "object", "null" ],
+                    "properties" : {
+                      "password" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "secondFactor" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "username" : {
+                        "type" : "string",
+                        "default" : ""
+                      }
+                    },
+                    "title" : "Key passphrase",
+                    "description" : "Passphrase for key file authentication.",
+                    "default" : null
+                  },
+                  "keyFileUser" : {
+                    "type" : "object",
+                    "properties" : {
+                      "password" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "secondFactor" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "username" : {
+                        "type" : "string",
+                        "default" : ""
+                      }
+                    },
+                    "title" : "Username",
+                    "description" : "Username for key file authentication.",
+                    "default" : {
+                      "isHiddenPassword" : false,
+                      "isHiddenSecondFactor" : false,
+                      "username" : "motacilla"
+                    }
+                  },
+                  "usePassphrase" : {
+                    "type" : "boolean",
+                    "default" : false
+                  }
+                },
+                "default" : {
+                  "keyFileUser" : {
+                    "isHiddenPassword" : false,
+                    "isHiddenSecondFactor" : false,
+                    "username" : "motacilla"
+                  },
+                  "keyFilePwd" : null,
+                  "usePassphrase" : false,
+                  "keyFile" : {
+                    "path" : {
+                      "fsCategory" : "LOCAL",
+                      "path" : "",
+                      "timeout" : 10000,
+                      "context" : {
+                        "fsToString" : "(LOCAL, )"
+                      }
+                    }
+                  }
+                }
+              },
+              "type" : {
+                "oneOf" : [ {
+                  "const" : "USERNAME_PASSWORD",
+                  "title" : "Username & password"
+                }, {
+                  "const" : "CREDENTIALS",
+                  "title" : "Use credentials"
+                }, {
+                  "const" : "KEY_FILE",
+                  "title" : "Key file"
+                } ],
+                "title" : "Authentication method",
+                "description" : "Specify the authentication method to use.\n<ul>\n<li><b>Username &amp; password</b>: Authenticate with a username and password. Either enter a username and password, in which case the password will be persistently stored (in encrypted form) with the workflow. Or check Use credentials and a select a credentials flow variable to supply the username and password. The password may be empty if the SSH server permits empty passwords.</li>\n<li><b>Use credentials</b>: Authenticate with a username and password stored in a credentials flow variable. The password may be empty if the SSH server permits empty passwords.</li>\n<li><b>Key file</b>: Authenticate using a private key file. You have to specify the Username and the private Key file. A Key passphrase can optionally be provided, in case the private key file is passphrase-protected. Note that the passphrase is persistently stored (in encrypted form) in the settings of this node and will be saved with the workflow. This node supports the following private key formats: RFC4716 (default OpenSSH2 private key format), PKCS#8, PKCS#1 (traditional PEM format, OpenSSL-compatible), and ppk (PuTTY format).</li>\n</ul>",
+                "default" : "USERNAME_PASSWORD"
+              },
+              "userPwdAuth" : {
+                "type" : "object",
+                "properties" : {
+                  "credentialsFlowVarName" : {
+                    "type" : "string",
+                    "title" : "Use credentials",
+                    "description" : "Use credentials from a flow variable."
+                  },
+                  "useCredentials" : {
+                    "type" : "boolean",
+                    "default" : false
+                  },
+                  "userPassword" : {
+                    "type" : "object",
+                    "properties" : {
+                      "password" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "secondFactor" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "username" : {
+                        "type" : "string",
+                        "default" : ""
+                      }
+                    },
+                    "title" : "Username & password",
+                    "description" : "Authentication settings for username and password.",
+                    "default" : {
+                      "isHiddenPassword" : false,
+                      "isHiddenSecondFactor" : false,
+                      "username" : "motacilla"
+                    }
+                  }
+                },
+                "default" : {
+                  "userPassword" : {
+                    "isHiddenPassword" : false,
+                    "isHiddenSecondFactor" : false,
+                    "username" : "motacilla"
+                  },
+                  "useCredentials" : false
+                }
+              }
+            },
+            "default" : {
+              "type" : "USERNAME_PASSWORD",
+              "userPwdAuth" : {
+                "userPassword" : {
+                  "isHiddenPassword" : false,
+                  "isHiddenSecondFactor" : false,
+                  "username" : "motacilla"
+                },
+                "useCredentials" : false
+              },
+              "keyFileAuth" : {
+                "keyFileUser" : {
+                  "isHiddenPassword" : false,
+                  "isHiddenSecondFactor" : false,
+                  "username" : "motacilla"
+                },
+                "keyFilePwd" : null,
+                "usePassphrase" : false,
+                "keyFile" : {
+                  "path" : {
+                    "fsCategory" : "LOCAL",
+                    "path" : "",
+                    "timeout" : 10000,
+                    "context" : {
+                      "fsToString" : "(LOCAL, )"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "connectionTimeout" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Connection timeout",
+            "description" : "Timeout in seconds to establish a connection or 0 for an infinite timeout.",
+            "default" : 30
+          },
+          "host" : {
+            "type" : "string",
+            "title" : "Host",
+            "description" : "Address of the host where the SSH server runs.",
+            "default" : "localhost"
+          },
+          "knownHostsFile" : {
+            "type" : "object",
+            "properties" : {
+              "path" : {
+                "type" : "object",
+                "default" : {
+                  "fsCategory" : "LOCAL",
+                  "path" : "",
+                  "timeout" : 10000,
+                  "context" : {
+                    "fsToString" : "(LOCAL, )"
+                  }
+                }
+              }
+            },
+            "title" : "Known hosts file",
+            "description" : "Path to the known hosts file for SSH server key validation.",
+            "default" : {
+              "path" : {
+                "fsCategory" : "LOCAL",
+                "path" : "",
+                "timeout" : 10000,
+                "context" : {
+                  "fsToString" : "(LOCAL, )"
+                }
+              }
+            }
+          },
+          "maxExecChannelCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Maximum concurrent shell sessions",
+            "description" : "Number of concurrent shell sessions to allow. This resource is shared with the SFTP sessions, so decreasing the number of SFTP sessions will allow for more shells and vice versa.",
+            "default" : 1
+          },
+          "maxSessionCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Maximum SFTP sessions",
+            "description" : "Number of SFTP sessions the node will try to open. Actual number of sessions may be less, depending on the limits of the SSH server.",
+            "default" : 8
+          },
+          "port" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Port",
+            "description" : "Port that the SSH server is listening on for incoming connections.",
+            "default" : 22
+          },
+          "useKnownHostsFile" : {
+            "type" : "boolean",
+            "title" : "Use known hosts file",
+            "description" : "If this option is selected, then provided known hosts file will be used to validate the (public) key of the SSH server. If not selected, then server key will not be validated.",
+            "default" : false
+          },
+          "workingDirectory" : {
+            "type" : "string",
+            "title" : "Working directory",
+            "description" : "Specify the working directory of the resulting file system connection, using the Path syntax explained above. The working directory must be specified as an absolute path. A working directory allows downstream nodes to access files/folders using relative paths, i.e. paths that do not have a leading slash. The default working directory is the root \"/\".",
+            "default" : "/"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Connection Settings",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/host",
+        "options" : {
+          "validation" : {
+            "minLength" : {
+              "errorMessage" : "The field cannot be empty (it must contain at least one character).",
+              "parameters" : {
+                "minLength" : 1
+              }
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/port",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 65535.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 65535.0
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 1.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 1.0
+              }
+            }
+          }
+        }
+      } ]
+    }, {
+      "label" : "Authentication Settings",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/authentication/properties/type"
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/authentication/properties/userPwdAuth/properties/userPassword",
+        "options" : {
+          "passwordLabel" : "Password",
+          "usernameLabel" : "Username",
+          "format" : "credentials"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/authentication/properties/type",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "USERNAME_PASSWORD"
+              } ]
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/authentication/properties/userPwdAuth/properties/credentialsFlowVarName",
+        "options" : {
+          "format" : "dropDown"
+        },
+        "providedOptions" : [ "possibleValues" ],
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/authentication/properties/type",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "CREDENTIALS"
+              } ]
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/authentication/properties/keyFileAuth/properties/keyFileUser",
+        "options" : {
+          "hasPassword" : false,
+          "usernameLabel" : "Username",
+          "format" : "credentials"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/authentication/properties/type",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "KEY_FILE"
+              } ]
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/authentication/properties/keyFileAuth/properties/keyFilePwd",
+        "options" : {
+          "hasUsername" : false,
+          "passwordLabel" : "Password",
+          "format" : "credentials",
+          "hideOnNull" : true
+        },
+        "providedOptions" : [ "default" ],
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/authentication/properties/type",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "KEY_FILE"
+              } ]
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/authentication/properties/keyFileAuth/properties/keyFile",
+        "options" : {
+          "format" : "fileChooser",
+          "isLocal" : true,
+          "mountId" : "Local space",
+          "fileExtensions" : [ "*" ]
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/authentication/properties/type",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "KEY_FILE"
+              } ]
+            }
+          }
+        }
+      } ]
+    }, {
+      "label" : "File System Settings",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/workingDirectory",
+        "options" : {
+          "format" : "customFileSystemFileChooser",
+          "selectionMode" : "FOLDER"
+        },
+        "providedOptions" : [ "fileSystemId" ]
+      } ]
+    }, {
+      "label" : "Advanced",
+      "type" : "Section",
+      "options" : {
+        "isAdvanced" : true
+      },
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/connectionTimeout",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 0.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 0.0
+              }
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/maxSessionCount",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 0.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 0.0
+              }
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/maxExecChannelCount",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 0.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 0.0
+              }
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/useKnownHostsFile",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/knownHostsFile",
+        "options" : {
+          "format" : "fileChooser",
+          "isLocal" : true,
+          "mountId" : "Local space",
+          "fileExtensions" : [ "*" ]
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/useKnownHostsFile",
+            "schema" : {
+              "const" : true
+            }
+          }
+        }
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "host" : { },
+          "port" : { },
+          "authentication" : {
+            "type" : "object",
+            "properties" : {
+              "type" : {
+                "configPaths" : [ [ "type" ] ]
+              },
+              "userPwdAuth" : {
+                "type" : "object",
+                "properties" : {
+                  "userPassword" : {
+                    "configPaths" : [ [ "user" ], [ "password" ] ]
+                  },
+                  "useCredentials" : {
+                    "configKey" : "use_credentials"
+                  },
+                  "credentialsFlowVarName" : {
+                    "configKey" : "credentials"
+                  }
+                },
+                "configKey" : "user_pwd"
+              },
+              "keyFileAuth" : {
+                "type" : "object",
+                "properties" : {
+                  "keyFileUser" : {
+                    "configPaths" : [ [ "user" ] ]
+                  },
+                  "keyFilePwd" : {
+                    "configPaths" : [ [ "passphrase" ] ]
+                  },
+                  "usePassphrase" : {
+                    "configKey" : "use_passphrase"
+                  },
+                  "keyFile" : {
+                    "configPaths" : [ [ "file", "path" ] ]
+                  }
+                },
+                "configKey" : "key"
+              }
+            },
+            "configKey" : "auth"
+          },
+          "workingDirectory" : { },
+          "connectionTimeout" : { },
+          "maxSessionCount" : { },
+          "maxExecChannelCount" : { },
+          "useKnownHostsFile" : {
+            "configKey" : "useKnownHosts"
+          },
+          "knownHostsFile" : {
+            "configPaths" : [ [ "knownHostsFile", "path" ] ]
+          }
+        }
+      }
+    }
+  },
+  "initialUpdates" : [ {
+    "scope" : "#/properties/model/properties/authentication/properties/keyFileAuth/properties/keyFilePwd",
+    "providedOptionName" : "default",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : {
+        "username" : "",
+        "password" : "",
+        "secondFactor" : ""
+      }
+    } ]
+  }, {
+    "scope" : "#/properties/model/properties/authentication/properties/userPwdAuth/properties/credentialsFlowVarName",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ ]
+    } ]
+  } ],
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/authentication"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/authentication/properties/keyFileAuth/properties/keyFilePwd"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication/properties/keyFileAuth/properties/keyFilePwd" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/authentication/properties/type"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication/properties/type" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/connectionTimeout"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/host"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/knownHostsFile"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/maxExecChannelCount"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/maxSessionCount"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/port"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/useKnownHostsFile"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/workingDirectory"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  } ]
+}

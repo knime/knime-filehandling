@@ -66,6 +66,7 @@ import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
 import org.knime.ext.ssh.filehandling.fs.SshFSConnectionConfig;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
+import org.knime.ext.ssh.filehandling.node.SshConnectorNodeParameters.FileSystemConnectionProvider.FileSystemConnectionProviderConfiguration;
 import org.knime.ext.ssh.filehandling.node.auth.KeyFileAuthProviderSettings;
 import org.knime.ext.ssh.filehandling.node.auth.SshAuth;
 import org.knime.filehandling.core.connections.FSLocation;
@@ -111,9 +112,9 @@ public class SshConnectorNodeSettings {
 
     private static final String KEY_MAX_EXEC_CHANNEL_COUNT = "maxExecChannelCount";
 
-    private static final String KEY_USE_KNOWN_HOSTS = "useKnownHosts";
+    static final String KEY_USE_KNOWN_HOSTS = "useKnownHosts";
 
-    private static final String KEY_KNOWN_HOSTS_FILE = "knownHostsFile";
+    static final String KEY_KNOWN_HOSTS_FILE = "knownHostsFile";
 
     private NodeCreationConfiguration m_nodeCreationConfig;
 
@@ -228,6 +229,19 @@ public class SshConnectorNodeSettings {
         } catch (InvalidSettingsException ex) {
             throw new NotConfigurableException(ex.getMessage(), ex);
         }
+    }
+
+    void loadSettingsForDialog(final FileSystemConnectionProviderConfiguration config) throws InvalidSettingsException {
+        m_host.setStringValue(config.host());
+        m_port.setIntValue(config.port());
+        m_workingDirectory.setStringValue(config.workingDirectory());
+        m_connectionTimeout.setIntValue(config.connectionTimeout());
+        m_maxSessionCount.setIntValue(config.maxSessionCount());
+        m_maxExecChannelCount.setIntValue(config.maxExecChannelCount());
+        m_useKnownHostsFile.setBooleanValue(config.useKnownHostsFile());
+        m_knownHostsFile.setEnabled(config.useKnownHostsFile());
+        m_knownHostsFile.setLocation(config.knownHostsFile());
+        m_authSettings.loadSettingsForModel(config.authSettings());
     }
 
     /**

@@ -17,4 +17,5 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Automatic-Module-Name: org.knime.ext.ssh.filehandling
 Bundle-ClassPath: .
+Import-Package: org.knime.credentials.base.node
 

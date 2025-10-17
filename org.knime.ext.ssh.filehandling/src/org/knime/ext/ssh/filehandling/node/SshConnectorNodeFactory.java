@@ -48,29 +48,78 @@
  */
 package org.knime.ext.ssh.filehandling.node;
 
+import static org.knime.node.impl.description.PortDescription.dynamicPort;
+import static org.knime.node.impl.description.PortDescription.fixedPort;
+
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.knime.core.node.ConfigurableNodeFactory;
+import org.knime.core.node.NodeDescription;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeView;
 import org.knime.core.node.context.NodeCreationConfiguration;
+import org.knime.core.webui.node.dialog.NodeDialog;
+import org.knime.core.webui.node.dialog.NodeDialogFactory;
+import org.knime.core.webui.node.dialog.NodeDialogManager;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
 import org.knime.filehandling.core.port.FileSystemPortObject;
+import org.knime.node.impl.description.DefaultNodeDescriptionUtil;
+import org.knime.node.impl.description.PortDescription;
 
 /**
  * Factory class for SSH Connection Node.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ * @author Kai Franze, KNIME GmbH, Germany
+ * @author AI Migration Pipeline v1.1
  */
-public class SshConnectorNodeFactory extends ConfigurableNodeFactory<SshConnectorNodeModel> {
+@SuppressWarnings("restriction")
+public class SshConnectorNodeFactory extends ConfigurableNodeFactory<SshConnectorNodeModel>
+        implements NodeDialogFactory, KaiNodeInterfaceFactory {
+
     /**
      * Connect group ID of dynamic port.
      */
     public static final String FS_CONNECT_GRP_ID = "Input File System";
 
-    @Override
-    protected NodeDialogPane createNodeDialogPane(final NodeCreationConfiguration cfg) {
-        return new SshConnectorNodeDialog(cfg);
-    }
+    private static final String NODE_NAME = "SSH Connector";
+
+    private static final String NODE_ICON = "./file_system_connector.png";
+
+    private static final String SHORT_DESCRIPTION = """
+            Connects to remote file system via SSH in order to read/write files in downstream nodes.
+            """;
+
+    private static final String FULL_DESCRIPTION = """
+            <p>
+                This node connects to a remote SSH server using SFTP. The resulting output port allows downstream
+                nodes to access the <i>files</i> of the remote server, e.g. to read or write, or to perform other file
+                system operations (browse/list files, copy, move, ...).
+            </p>
+            <p>
+                <b>Path syntax:</b> Paths for SSH are specified with a UNIX-like syntax such as /myfolder/myfile.
+                An absolute path for SSH consists of:
+                <ol>
+                    <li>A leading slash ("/").</li>
+                    <li>Followed by the path to the file ("myfolder/myfile" in the above example).</li>
+                </ol>
+            </p>
+            """;
+
+    private static final List<PortDescription> INPUT_PORTS = List
+            .of(dynamicPort(FS_CONNECT_GRP_ID, FS_CONNECT_GRP_ID, """
+                    File system that can be used to provide an SSH private key and/or known hosts file.
+                    """));
+
+    private static final List<PortDescription> OUTPUT_PORTS = List.of(fixedPort("SSH File System Connection", """
+            SSH File System Connection.
+            """));
 
     @Override
     protected SshConnectorNodeModel createNodeModel(
@@ -87,28 +136,51 @@ public class SshConnectorNodeFactory extends ConfigurableNodeFactory<SshConnecto
         return Optional.of(builder);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected int getNrNodeViews() {
         return 0;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public NodeView<SshConnectorNodeModel> createNodeView(final int viewIndex,
-            final SshConnectorNodeModel nodeModel) {
+    public NodeView<SshConnectorNodeModel> createNodeView(final int viewIndex, final SshConnectorNodeModel nodeModel) {
         throw new UnsupportedOperationException();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected boolean hasDialog() {
         return true;
+    }
+
+    @Override
+    public NodeDialogPane createNodeDialogPane(final NodeCreationConfiguration cfg) {
+        return NodeDialogManager.createLegacyFlowVariableNodeDialog(createNodeDialog());
+    }
+
+    @Override
+    public NodeDialog createNodeDialog() {
+        return new DefaultNodeDialog(SettingsType.MODEL, SshConnectorNodeParameters.class);
+    }
+
+    @Override
+    public NodeDescription createNodeDescription() {
+        return DefaultNodeDescriptionUtil.createNodeDescription(
+            NODE_NAME,
+            NODE_ICON,
+            INPUT_PORTS,
+            OUTPUT_PORTS,
+            SHORT_DESCRIPTION,
+            FULL_DESCRIPTION,
+            List.of(),
+            SshConnectorNodeParameters.class,
+            null,
+            NodeType.Source,
+            List.of(),
+            null
+        );
+    }
+
+    @Override
+    public KaiNodeInterface createKaiNodeInterface() {
+        return new DefaultKaiNodeInterface(Map.of(SettingsType.MODEL, SshConnectorNodeParameters.class));
     }
 }
