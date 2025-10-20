@@ -9,18 +9,13 @@
           "userPassword" : {
             "isHiddenPassword" : false,
             "isHiddenSecondFactor" : false,
-            "username" : "motacilla"
+            "username" : "snapshotTestUser"
           },
           "useCredentials" : false
         },
         "keyFileAuth" : {
-          "keyFileUser" : {
-            "isHiddenPassword" : false,
-            "isHiddenSecondFactor" : false,
-            "username" : "motacilla"
-          },
+          "keyFileUser" : "snapshotTestUser",
           "keyFilePwd" : null,
-          "usePassphrase" : false,
           "keyFile" : {
             "path" : {
               "fsCategory" : "LOCAL",
@@ -111,42 +106,15 @@
                     "default" : null
                   },
                   "keyFileUser" : {
-                    "type" : "object",
-                    "properties" : {
-                      "password" : {
-                        "type" : "string",
-                        "default" : ""
-                      },
-                      "secondFactor" : {
-                        "type" : "string",
-                        "default" : ""
-                      },
-                      "username" : {
-                        "type" : "string",
-                        "default" : ""
-                      }
-                    },
+                    "type" : "string",
                     "title" : "Username",
                     "description" : "Username for key file authentication.",
-                    "default" : {
-                      "isHiddenPassword" : false,
-                      "isHiddenSecondFactor" : false,
-                      "username" : "motacilla"
-                    }
-                  },
-                  "usePassphrase" : {
-                    "type" : "boolean",
-                    "default" : false
+                    "default" : "snapshotTestUser"
                   }
                 },
                 "default" : {
-                  "keyFileUser" : {
-                    "isHiddenPassword" : false,
-                    "isHiddenSecondFactor" : false,
-                    "username" : "motacilla"
-                  },
+                  "keyFileUser" : "snapshotTestUser",
                   "keyFilePwd" : null,
-                  "usePassphrase" : false,
                   "keyFile" : {
                     "path" : {
                       "fsCategory" : "LOCAL",
@@ -207,7 +175,7 @@
                     "default" : {
                       "isHiddenPassword" : false,
                       "isHiddenSecondFactor" : false,
-                      "username" : "motacilla"
+                      "username" : "snapshotTestUser"
                     }
                   }
                 },
@@ -215,7 +183,7 @@
                   "userPassword" : {
                     "isHiddenPassword" : false,
                     "isHiddenSecondFactor" : false,
-                    "username" : "motacilla"
+                    "username" : "snapshotTestUser"
                   },
                   "useCredentials" : false
                 }
@@ -227,18 +195,13 @@
                 "userPassword" : {
                   "isHiddenPassword" : false,
                   "isHiddenSecondFactor" : false,
-                  "username" : "motacilla"
+                  "username" : "snapshotTestUser"
                 },
                 "useCredentials" : false
               },
               "keyFileAuth" : {
-                "keyFileUser" : {
-                  "isHiddenPassword" : false,
-                  "isHiddenSecondFactor" : false,
-                  "username" : "motacilla"
-                },
+                "keyFileUser" : "snapshotTestUser",
                 "keyFilePwd" : null,
-                "usePassphrase" : false,
                 "keyFile" : {
                   "path" : {
                     "fsCategory" : "LOCAL",
@@ -416,9 +379,14 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/authentication/properties/keyFileAuth/properties/keyFileUser",
         "options" : {
-          "hasPassword" : false,
-          "usernameLabel" : "Username",
-          "format" : "credentials"
+          "validation" : {
+            "pattern" : {
+              "errorMessage" : "The field cannot be blank (it must contain at least one non-whitespace character).",
+              "parameters" : {
+                "pattern" : ".*\\S.*"
+              }
+            }
+          }
         },
         "rule" : {
           "effect" : "SHOW",
@@ -593,13 +561,13 @@
             "type" : "object",
             "properties" : {
               "type" : {
-                "configPaths" : [ [ "type" ] ]
+                "configPaths" : [ [ "type" ], [ "user_pwd", "use_credentials" ] ]
               },
               "userPwdAuth" : {
                 "type" : "object",
                 "properties" : {
                   "userPassword" : {
-                    "configPaths" : [ [ "user" ], [ "password" ] ]
+                    "configPaths" : [ [ "user" ] ]
                   },
                   "useCredentials" : {
                     "configKey" : "use_credentials"
@@ -617,10 +585,7 @@
                     "configPaths" : [ [ "user" ] ]
                   },
                   "keyFilePwd" : {
-                    "configPaths" : [ [ "passphrase" ] ]
-                  },
-                  "usePassphrase" : {
-                    "configKey" : "use_passphrase"
+                    "configPaths" : [ ]
                   },
                   "keyFile" : {
                     "configPaths" : [ [ "file", "path" ] ]
@@ -651,9 +616,9 @@
     "values" : [ {
       "indices" : [ ],
       "value" : {
+        "secondFactor" : "",
         "username" : "",
-        "password" : "",
-        "secondFactor" : ""
+        "password" : ""
       }
     } ]
   }, {
@@ -669,17 +634,12 @@
       "id" : "after-open-dialog"
     },
     "triggerInitially" : true,
-    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/authentication"
     },
-    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
-  }, {
-    "trigger" : {
-      "scope" : "#/properties/model/properties/authentication/properties/keyFileAuth/properties/keyFilePwd"
-    },
-    "dependencies" : [ "#/properties/model/properties/authentication/properties/keyFileAuth/properties/keyFilePwd" ]
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/authentication/properties/type"
@@ -689,32 +649,46 @@
     "trigger" : {
       "scope" : "#/properties/model/properties/connectionTimeout"
     },
-    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/host"
     },
-    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/knownHostsFile"
     },
-    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/maxExecChannelCount"
     },
-    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/maxSessionCount"
     },
-    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/port"
     },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/useKnownHostsFile"
+    },
+    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
+  } ]
+}/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/workingDirectory"
+    },
     "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
+  } ]
+}/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/useKnownHostsFile"

@@ -65,6 +65,7 @@ import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileReaderWi
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelection;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.LegacyReaderFileSelectionPersistor;
 import org.knime.credentials.base.node.CredentialsSettings.CredentialsFlowVarChoicesProvider;
+import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.ext.ssh.filehandling.node.auth.KeyFileAuthProviderSettings;
 import org.knime.filehandling.core.connections.FSLocation;
 import org.knime.filehandling.core.connections.base.auth.IDWithSecretAuthProviderSettings;
@@ -94,12 +95,12 @@ import org.knime.node.parameters.widget.choices.Label;
 import org.knime.node.parameters.widget.credentials.Credentials;
 import org.knime.node.parameters.widget.credentials.CredentialsWidget;
 import org.knime.node.parameters.widget.credentials.PasswordWidget;
-import org.knime.node.parameters.widget.credentials.UsernameWidget;
 import org.knime.node.parameters.widget.number.NumberInputWidget;
 import org.knime.node.parameters.widget.number.NumberInputWidgetValidation.MaxValidation;
 import org.knime.node.parameters.widget.number.NumberInputWidgetValidation.MinValidation.IsNonNegativeValidation;
 import org.knime.node.parameters.widget.number.NumberInputWidgetValidation.MinValidation.IsPositiveIntegerValidation;
 import org.knime.node.parameters.widget.text.TextInputWidget;
+import org.knime.node.parameters.widget.text.TextInputWidgetValidation.PatternValidation.IsNotBlankValidation;
 import org.knime.node.parameters.widget.text.TextInputWidgetValidation.PatternValidation.IsNotEmptyValidation;
 
 /**
@@ -134,7 +135,6 @@ final class SshConnectorNodeParameters implements NodeParameters {
     interface AdvancedSection {
     }
 
-
     // ----- CONNECTION PARAMETERS -----
 
     @Layout(ConnectionSection.class)
@@ -162,7 +162,6 @@ final class SshConnectorNodeParameters implements NodeParameters {
         }
     }
 
-
     // ----- AUTHENTICATION PARAMETERS -----
 
     @Layout(AuthenticationSection.class)
@@ -182,12 +181,7 @@ final class SshConnectorNodeParameters implements NodeParameters {
             nodes to access files/folders using relative paths, i.e. paths that do not have a leading slash. \
             The default working directory is the root "/".""")
     @CustomFileConnectionFolderReaderWidget(connectionProvider = FileSystemConnectionProvider.class)
-    @ValueReference(WorkingDirectoryRef.class)
     String m_workingDirectory = "/";
-
-    static final class WorkingDirectoryRef implements ParameterReference<String> {
-    }
-
 
     // ----- ADVANCED PARAMETERS -----
 
@@ -259,7 +253,6 @@ final class SshConnectorNodeParameters implements NodeParameters {
         private Supplier<Integer> m_maxExecChannelCountSupplier;
         private Supplier<Boolean> m_useKnownHostsFileSupplier;
         private Supplier<FileSelection> m_knownHostsFileSupplier;
-        private Supplier<String> m_workingDirectorySupplier;
         private Supplier<AuthenticationParameters> m_authParametersSupplier;
 
         @Override
@@ -271,7 +264,6 @@ final class SshConnectorNodeParameters implements NodeParameters {
             m_maxExecChannelCountSupplier = initializer.computeFromValueSupplier(MaxExecChannelCountRef.class);
             m_useKnownHostsFileSupplier = initializer.computeFromValueSupplier(UseKnownHostsFileRef.class);
             m_knownHostsFileSupplier = initializer.computeFromValueSupplier(KnownHostsFileRef.class);
-            m_workingDirectorySupplier = initializer.computeFromValueSupplier(WorkingDirectoryRef.class);
             m_authParametersSupplier = initializer.computeFromValueSupplier(AuthenticationParametersRef.class);
             initializer.computeAfterOpenDialog();
         }
@@ -288,7 +280,7 @@ final class SshConnectorNodeParameters implements NodeParameters {
                     m_maxExecChannelCountSupplier.get(), //
                     m_useKnownHostsFileSupplier.get(), //
                     m_knownHostsFileSupplier.get().getFSLocation(), //
-                    m_workingDirectorySupplier.get(), //
+                    SshFileSystem.PATH_SEPARATOR, // Don't depend on the current working directory here
                     createAuthNodeSettings(m_authParametersSupplier.get()));
             return createFSConnectionProvider(nodeCreationConfig, connectionProviderConfig, credentialsProvider);
         }
@@ -344,8 +336,6 @@ final class SshConnectorNodeParameters implements NodeParameters {
                     keyFileSettings);
             AuthenticationParameters.KeyFileAuthParameters.KeyFilePwdPersistor.saveInternal(keyFileAuth.m_keyFilePwd,
                     keyFileSettings);
-            keyFileSettings.addBoolean(AuthenticationParameters.KeyFileAuthParameters.ENTRY_KEY_USE_PASSPHRASE,
-                    keyFileAuth.m_usePassphrase);
             LegacyReaderFileSelectionPersistor.save(keyFileAuth.m_keyFile, keyFileSettings,
                     AuthenticationParameters.KeyFileAuthParameters.KeyFilePersistor.CFG_KEY_FILE);
             return keyFileSettings;
@@ -376,7 +366,6 @@ final class SshConnectorNodeParameters implements NodeParameters {
             super(SshConnectorNodeSettings.KEY_KNOWN_HOSTS_FILE);
         }
     }
-
 
     // ----- INTERNAL PARAMETER CLASSES -----
 
@@ -465,12 +454,15 @@ final class SshConnectorNodeParameters implements NodeParameters {
                     return AuthenticationMethod.KEY_FILE;
                 }
 
-                if (typeString.equals(CFG_KEY_USER_PWD)
-                        && settings.getNodeSettings(CFG_KEY_USER_PWD).getBoolean(ENTRY_KEY_USE_CREDENTIALS, false)) {
-                    return AuthenticationMethod.CREDENTIALS;
+                if (typeString.equals(CFG_KEY_USER_PWD)) {
+                    final var useCredentials = settings.getNodeSettings(CFG_KEY_USER_PWD)
+                            .getBoolean(ENTRY_KEY_USE_CREDENTIALS, false);
+                    return useCredentials ? AuthenticationMethod.CREDENTIALS : AuthenticationMethod.USERNAME_PASSWORD;
                 }
+                throw new InvalidSettingsException(
+                        String.format("Unknown authentication method: '%s'. Possible values: '%s', '%s'", typeString,
+                                CFG_KEY_USER_PWD, CFG_KEY_KEY_FILE));
 
-                return AuthenticationMethod.USERNAME_PASSWORD;
             }
 
             @Override
@@ -480,14 +472,14 @@ final class SshConnectorNodeParameters implements NodeParameters {
 
             private static void saveInternal(final AuthenticationMethod param, final NodeSettingsWO settings) {
                 switch (param) {
-                    case KEY_FILE -> settings.addString(ENTRY_KEY, CFG_KEY_KEY_FILE);
-                    case USERNAME_PASSWORD, CREDENTIALS -> settings.addString(ENTRY_KEY, CFG_KEY_USER_PWD);
+                case KEY_FILE -> settings.addString(ENTRY_KEY, CFG_KEY_KEY_FILE);
+                case USERNAME_PASSWORD, CREDENTIALS -> settings.addString(ENTRY_KEY, CFG_KEY_USER_PWD);
                 }
             }
 
             @Override
             public String[][] getConfigPaths() {
-                return new String[][] { { ENTRY_KEY } };
+                return new String[][] { { ENTRY_KEY }, { CFG_KEY_USER_PWD, ENTRY_KEY_USE_CREDENTIALS } };
             }
         }
 
@@ -547,20 +539,19 @@ final class SshConnectorNodeParameters implements NodeParameters {
 
                 @Override
                 public String[][] getConfigPaths() {
-                    return new String[][] { { ENTRY_KEY_USER }, { ENTRY_KEY_PASSWORD } };
+                    return new String[][] { { ENTRY_KEY_USER } }; // See AP-14067: It is not possible to overwrite
+                                                                  // password fields
                 }
             }
         }
 
         static final class KeyFileAuthParameters implements NodeParameters {
 
-            private static final String ENTRY_KEY_USE_PASSPHRASE = "use_passphrase";
-
             @Widget(title = "Username", description = "Username for key file authentication.")
             @Effect(predicate = IsKeyFileAuth.class, type = EffectType.SHOW)
-            @UsernameWidget
             @Persistor(KeyFileUserPersistor.class)
-            Credentials m_keyFileUser = new Credentials(System.getProperty("user.name"), "");
+            @TextInputWidget(patternValidation = IsNotBlankValidation.class)
+            String m_keyFileUser = System.getProperty("user.name");
 
             @Widget(title = "Key passphrase", description = "Passphrase for key file authentication.")
             @OptionalWidget(defaultProvider = KeyFilePasswordDefaultProvider.class)
@@ -569,10 +560,6 @@ final class SshConnectorNodeParameters implements NodeParameters {
             @Persistor(KeyFilePwdPersistor.class)
             @ValueReference(KeyFilePwdRef.class)
             Optional<Credentials> m_keyFilePwd = Optional.empty();
-
-            @ValueProvider(UsePassphraseValueProvider.class)
-            @Persist(configKey = ENTRY_KEY_USE_PASSPHRASE)
-            boolean m_usePassphrase;
 
             @Widget(title = "Key file", description = "Private key file for authentication.")
             @Effect(predicate = IsKeyFileAuth.class, type = EffectType.SHOW)
@@ -590,38 +577,22 @@ final class SshConnectorNodeParameters implements NodeParameters {
                 }
             }
 
-            static final class UsePassphraseValueProvider implements StateProvider<Boolean> {
-
-                private Supplier<Optional<Credentials>> m_keyFilePwdSupplier;
-
-                @Override
-                public void init(final StateProviderInitializer initializer) {
-                    m_keyFilePwdSupplier = initializer.computeFromValueSupplier(KeyFilePwdRef.class);
-                }
-
-                @Override
-                public Boolean computeState(final NodeParametersInput parametersInput) {
-                    return m_keyFilePwdSupplier.get().isPresent();
-                }
-            }
-
-            static final class KeyFileUserPersistor implements NodeParametersPersistor<Credentials> {
+            static final class KeyFileUserPersistor implements NodeParametersPersistor<String> {
 
                 private static final String ENTRY_KEY_USER = "user";
 
                 @Override
-                public Credentials load(final NodeSettingsRO settings) throws InvalidSettingsException {
-                    final var user = settings.getString(ENTRY_KEY_USER, System.getProperty("user.name"));
-                    return new Credentials(user, "");
+                public String load(final NodeSettingsRO settings) throws InvalidSettingsException {
+                    return settings.getString(ENTRY_KEY_USER, System.getProperty("user.name"));
                 }
 
                 @Override
-                public void save(final Credentials param, final NodeSettingsWO settings) {
+                public void save(final String param, final NodeSettingsWO settings) {
                     saveInternal(param, settings);
                 }
 
-                private static void saveInternal(final Credentials param, final NodeSettingsWO settings) {
-                    settings.addString(ENTRY_KEY_USER, param.getUsername());
+                private static void saveInternal(final String param, final NodeSettingsWO settings) {
+                    settings.addString(ENTRY_KEY_USER, param);
                 }
 
                 @Override
@@ -637,9 +608,13 @@ final class SshConnectorNodeParameters implements NodeParameters {
                  */
                 private static final String KEY_FILE_ENCRYPTION_KEY = "ekerjvjhmzle,ptktysq";
                 private static final String ENTRY_KEY_PASSPHRASE = "passphrase";
+                private static final String ENTRY_KEY_USE_PASSPHRASE = "use_passphrase";
 
                 @Override
                 public Optional<Credentials> load(final NodeSettingsRO settings) throws InvalidSettingsException {
+                    if (!settings.getBoolean(ENTRY_KEY_USE_PASSPHRASE, false)) {
+                        return Optional.empty();
+                    }
                     if (!settings.containsKey(ENTRY_KEY_PASSPHRASE)) {
                         return Optional.empty();
                     }
@@ -660,11 +635,12 @@ final class SshConnectorNodeParameters implements NodeParameters {
                 private static void saveInternal(final Optional<Credentials> param, final NodeSettingsWO settings) {
                     final var passphrase = param.map(Credentials::getPassword).orElse("");
                     settings.addPassword(ENTRY_KEY_PASSPHRASE, KEY_FILE_ENCRYPTION_KEY, passphrase);
+                    settings.addBoolean(ENTRY_KEY_USE_PASSPHRASE, param.isPresent());
                 }
 
                 @Override
                 public String[][] getConfigPaths() {
-                    return new String[][] { { ENTRY_KEY_PASSPHRASE } };
+                    return new String[0][]; // See AP-14067: It is not possible to overwrite password fields
                 }
             }
 

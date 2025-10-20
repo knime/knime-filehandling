@@ -49,6 +49,8 @@ package org.knime.ext.ssh.filehandling.node;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.webui.node.dialog.SettingsType;
@@ -68,6 +70,27 @@ final class SshConnectorNodeParametersTest extends DefaultNodeSettingsSnapshotTe
         super(getConfig());
     }
 
+    private static String previousUser;
+    private static String USER_NAME = "user.name";
+
+    @BeforeAll
+    static void setUpSystemProps() {
+        previousUser = System.setProperty(USER_NAME, "snapshotTestUser");
+    }
+
+    @AfterAll
+    static void tearDownComponentUiModeJs() {
+        setToPrevious(USER_NAME, previousUser);
+    }
+
+    private static void setToPrevious(final String key, final String previousValue) {
+        if (previousValue != null) {
+            System.setProperty(key, previousValue);
+        } else {
+            System.clearProperty(key);
+        }
+    }
+
     private static SnapshotTestConfiguration getConfig() {
         return SnapshotTestConfiguration.builder() //
                 .testJsonFormsForModel(SshConnectorNodeParameters.class) //
@@ -79,11 +102,11 @@ final class SshConnectorNodeParametersTest extends DefaultNodeSettingsSnapshotTe
     private static SshConnectorNodeParameters readSettings() {
         try {
             var path = getSnapshotPath(SshConnectorNodeParameters.class).getParent().resolve("node_settings")
-                .resolve("SshConnectorNodeParameters.xml");
+                    .resolve("SshConnectorNodeParameters.xml");
             try (var fis = new FileInputStream(path.toFile())) {
                 var nodeSettings = NodeSettings.loadFromXML(fis);
                 return NodeParametersUtil.loadSettings(nodeSettings.getNodeSettings(SettingsType.MODEL.getConfigKey()),
-                    SshConnectorNodeParameters.class);
+                        SshConnectorNodeParameters.class);
             }
         } catch (IOException | InvalidSettingsException e) {
             throw new IllegalStateException(e);
