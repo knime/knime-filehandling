@@ -139,7 +139,7 @@
                   "title" : "Key file"
                 } ],
                 "title" : "Authentication method",
-                "description" : "Specify the authentication method to use.\n<ul>\n<li><b>Username &amp; password</b>: Authenticate with a username and password. Either enter a username and password, in which case the password will be persistently stored (in encrypted form) with the workflow. Or check Use credentials and a select a credentials flow variable to supply the username and password. The password may be empty if the SSH server permits empty passwords.</li>\n<li><b>Use credentials</b>: Authenticate with a username and password stored in a credentials flow variable. The password may be empty if the SSH server permits empty passwords.</li>\n<li><b>Key file</b>: Authenticate using a private key file. You have to specify the Username and the private Key file. A Key passphrase can optionally be provided, in case the private key file is passphrase-protected. Note that the passphrase is persistently stored (in encrypted form) in the settings of this node and will be saved with the workflow. This node supports the following private key formats: RFC4716 (default OpenSSH2 private key format), PKCS#8, PKCS#1 (traditional PEM format, OpenSSL-compatible), and ppk (PuTTY format).</li>\n</ul>",
+                "description" : "Specify the authentication method to use.\n<ul>\n<li><b>Username &amp; password</b>: Authenticate with a username and password. Either enter a username and password, in which case the password will be persistently stored (in encrypted form) with the workflow. Or select \"Use credentials\" and a choose a credentials flow variable to supply the username and password. The password may be empty if the SSH server permits empty passwords.</li>\n<li><b>Use credentials</b>: Authenticate with a username and password stored in a credentials flow variable. The password may be empty if the SSH server permits empty passwords.</li>\n<li><b>Key file</b>: Authenticate using a private key file. You have to specify the Username and the private Key file. A Key passphrase can optionally be provided, in case the private key file is passphrase-protected. Note that the passphrase is persistently stored (in encrypted form) in the settings of this node and will be saved with the workflow. This node supports the following private key formats: RFC4716 (default OpenSSH2 private key format), PKCS#8, PKCS#1 (traditional PEM format, OpenSSL-compatible), and ppk (PuTTY format).</li>\n</ul>",
                 "default" : "USERNAME_PASSWORD"
               },
               "userPwdAuth" : {
@@ -171,7 +171,7 @@
                       }
                     },
                     "title" : "Username & password",
-                    "description" : "Authentication settings for username and password.",
+                    "description" : "Authentication settings for username and password. Select \"Use credentials\" as authentication method to provide the username and password via a credentials flow variable.\n",
                     "default" : {
                       "isHiddenPassword" : false,
                       "isHiddenSecondFactor" : false,
@@ -618,9 +618,9 @@
     "values" : [ {
       "indices" : [ ],
       "value" : {
-        "secondFactor" : "",
         "username" : "",
-        "password" : ""
+        "password" : "",
+        "secondFactor" : ""
       }
     } ]
   }, {

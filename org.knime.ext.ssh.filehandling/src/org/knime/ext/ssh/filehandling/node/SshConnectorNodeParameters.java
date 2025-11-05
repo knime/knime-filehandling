@@ -50,12 +50,10 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.context.ModifiableNodeCreationConfiguration;
-import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.context.ports.ModifiablePortsConfiguration;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersInputImpl;
@@ -271,38 +269,28 @@ final class SshConnectorNodeParameters implements NodeParameters {
 
         @Override
         public FSConnectionProvider computeState(final NodeParametersInput parametersInput) {
-            final var nodeCreationConfig = createNodeCreationConfig(parametersInput);
-            final var credentialsProvider = getCredentialsProvider(parametersInput);
-            final var connectionProviderConfig = new FileSystemConnectionProviderConfiguration( //
-                    m_hostSupplier.get(), //
-                    m_portSupplier.get(), //
-                    m_connectionTimeoutSupplier.get(), //
-                    m_maxSessionCountSupplier.get(), //
-                    m_maxExecChannelCountSupplier.get(), //
-                    m_useKnownHostsFileSupplier.get(), //
-                    m_knownHostsFileSupplier.get().getFSLocation(), //
-                    SshFileSystem.PATH_SEPARATOR, // Don't depend on the current working directory here
-                    createAuthNodeSettings(m_authParametersSupplier.get()));
-            return createFSConnectionProvider(nodeCreationConfig, connectionProviderConfig, credentialsProvider);
+            return () -> { // NOSONAR: Longer lambda acceptable, as it improves readability
+                final var connectionProviderConfig = new FileSystemConnectionProviderConfiguration( //
+                        m_hostSupplier.get(), //
+                        m_portSupplier.get(), //
+                        m_connectionTimeoutSupplier.get(), //
+                        m_maxSessionCountSupplier.get(), //
+                        m_maxExecChannelCountSupplier.get(), //
+                        m_useKnownHostsFileSupplier.get(), //
+                        m_knownHostsFileSupplier.get().getFSLocation(), //
+                        SshFileSystem.PATH_SEPARATOR, // Don't depend on the current working directory here
+                        createAuthNodeSettings(m_authParametersSupplier.get()));
+                final var nodeSettings = createNodeSettings(parametersInput);
+                final var credentialsProvider = getCredentialsProvider(parametersInput);
+                nodeSettings.loadSettingsForDialog(connectionProviderConfig);
+                return SshConnectorNodeModel.createConnection(nodeSettings, credentialsProvider);
+            };
         }
 
-        private static FSConnectionProvider createFSConnectionProvider(
-                final NodeCreationConfiguration nodeCreationConfig,
-                final FileSystemConnectionProviderConfiguration fsConnectionProviderConfig,
-                final CredentialsProvider credentialsProvider) {
-            try {
-                final var settings = new SshConnectorNodeSettings(nodeCreationConfig);
-                settings.loadSettingsForDialog(fsConnectionProviderConfig);
-                return () -> SshConnectorNodeModel.createConnection(settings, credentialsProvider);
-            } catch (final InvalidSettingsException e) {
-                NodeLogger.getLogger(SshConnectorNodeParameters.class).error("Invalid SSH settings", e);
-                return () -> null;
-            }
-        }
-
-        private static NodeCreationConfiguration createNodeCreationConfig(final NodeParametersInput input) {
+        private static SshConnectorNodeSettings createNodeSettings(final NodeParametersInput input) {
             final var portsConfiguration = (ModifiablePortsConfiguration) input.getPortsConfiguration();
-            return new ModifiableNodeCreationConfiguration(portsConfiguration);
+            final var nodeCreationConfig = new ModifiableNodeCreationConfiguration(portsConfiguration);
+            return new SshConnectorNodeSettings(nodeCreationConfig);
         }
 
         private static CredentialsProvider getCredentialsProvider(final NodeParametersInput input) {
@@ -380,8 +368,8 @@ final class SshConnectorNodeParameters implements NodeParameters {
         enum AuthenticationMethod {
             @Label(value = "Username & password", description = """
                     Authenticate with a username and password. Either enter a username and password, in which case \
-                    the password will be persistently stored (in encrypted form) with the workflow. Or check Use \
-                    credentials and a select a credentials flow variable to supply the username and password. The \
+                    the password will be persistently stored (in encrypted form) with the workflow. Or select "Use \
+                    credentials" and a choose a credentials flow variable to supply the username and password. The \
                     password may be empty if the SSH server permits empty passwords.""")
             USERNAME_PASSWORD,
 
@@ -496,7 +484,10 @@ final class SshConnectorNodeParameters implements NodeParameters {
 
             private static final String ENTRY_KEY_CREDENTIALS = "credentials";
 
-            @Widget(title = "Username & password", description = "Authentication settings for username and password.")
+            @Widget(title = "Username & password", description = """
+                    Authentication settings for username and password. Select "Use credentials" as authentication \
+                    method to provide the username and password via a credentials flow variable.
+                    """)
             @Effect(predicate = IsUserPwdAuth.class, type = EffectType.SHOW)
             @CredentialsWidget
             @Persistor(UserPasswordPersistor.class)
