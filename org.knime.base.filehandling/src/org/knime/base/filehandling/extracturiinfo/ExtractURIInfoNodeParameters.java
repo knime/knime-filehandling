@@ -74,10 +74,6 @@ import org.knime.node.parameters.widget.choices.util.CompatibleColumnsProvider;
 @LoadDefaultsForAbsentFields
 class ExtractURIInfoNodeParameters implements NodeParameters {
 
-    @Section(title = "Column Configuration")
-    interface ColumnConfigurationSection {
-    }
-
     @Section(title = "Extract Options")
     interface ExtractOptionsSection {
     }
@@ -111,9 +107,14 @@ class ExtractURIInfoNodeParameters implements NodeParameters {
         }
     }
 
-    @Layout(ColumnConfigurationSection.class)
     @Persist(configKey = "columnselection")
-    @Widget(title = "Column selection", description = "Column containing the URIs to extract information from.")
+    @Widget(title = "Column selection", description = """
+            Column containing the URIs to extract information from.
+            URIs are made up of several components, such as scheme, authority, path, query, and fragment.
+            For instance, in the URI "https://www.example.com:8080/path/to/resource?query=example#fragment",
+            the scheme is "https", the authority is "www.example.com:8080", the path is "/path/to/resource",
+            the query is "query=example", and the fragment is "fragment".
+            """)
     @ChoicesProvider(OnlyURIColumnsProvider.class)
     @ValueReference(ColumnSelectionRef.class)
     @ValueProvider(ColumnSelectionProvider.class)
@@ -121,41 +122,72 @@ class ExtractURIInfoNodeParameters implements NodeParameters {
 
     @Layout(ExtractOptionsSection.class)
     @Persist(configKey = "authority")
-    @Widget(title = "Authority", description = "Append column with authority information of the URI.")
+    @Widget(title = "Authority", description = """
+            Append column with authority information of the URI.
+            The authority component of a URI is typically composed of the user, host, and port.
+            """)
     boolean m_authority = false;
 
     @Layout(ExtractOptionsSection.class)
     @Persist(configKey = "fragment")
-    @Widget(title = "Fragment", description = "Append column with fragment information of the URI.")
+    @Widget(title = "Fragment", description = """
+            Append column with fragment information of the URI.
+            The fragment component of a URI is the last part of the URI that starts after the '#' symbol.
+            It is often used to identify a specific section or element within the resource.
+            """)
     boolean m_fragment = false;
 
     @Layout(ExtractOptionsSection.class)
     @Persist(configKey = "Host")
-    @Widget(title = "Host", description = "Append column with host information of the URI.")
+    @Widget(title = "Host", description = """
+            Append column with host information of the URI.
+            The host component of a URI typically represents the domain name or IP address of the server where the
+            resource is located.
+            """)
     boolean m_host = false;
 
     @Layout(ExtractOptionsSection.class)
     @Persist(configKey = "path")
-    @Widget(title = "Path", description = "Append column with path information of the URI.")
+    @Widget(title = "Path", description = """
+            Append column with path information of the URI.
+            The path component of a URI is the section that comes after the authority.
+            It specifies the hierarchical location of the resource on the server.
+            """)
     boolean m_path = false;
 
     @Layout(ExtractOptionsSection.class)
     @Persist(configKey = "port")
-    @Widget(title = "Port", description = "Append column with port information of the URI.")
+    @Widget(title = "Port", description = """
+            Append column with port information of the URI.
+            The port component of a URI specifies the network port number on the server where the resource is hosted.
+            """)
     boolean m_port = false;
 
     @Layout(ExtractOptionsSection.class)
     @Persist(configKey = "query")
-    @Widget(title = "Query", description = "Append column with query information of the URI.")
+    @Widget(title = "Query", description = """
+            Append column with query information of the URI.
+            The query component of a URI is the part that comes after the '?' symbol.
+            It typically contains key-value pairs that provide additional parameters or instructions for accessing
+            the resource.
+            """)
     boolean m_query = false;
 
     @Layout(ExtractOptionsSection.class)
     @Persist(configKey = "scheme")
-    @Widget(title = "Scheme", description = "Append column with scheme information of the URI.")
+    @Widget(title = "Scheme", description = """
+            Append column with scheme information of the URI.
+            The scheme component of a URI indicates the protocol or method used to access the resource,
+            such as "http", "https", "ftp", etc.
+            """)
     boolean m_scheme = false;
 
     @Layout(ExtractOptionsSection.class)
     @Persist(configKey = "userinfo")
-    @Widget(title = "User", description = "Append column with user information of the URI.")
+    @Widget(title = "User", description = """
+            Append column with user information of the URI.
+            The user component of a URI typically contains the username and, optionally, the password
+            required to access the resource.
+            """)
     boolean m_user = false;
 }

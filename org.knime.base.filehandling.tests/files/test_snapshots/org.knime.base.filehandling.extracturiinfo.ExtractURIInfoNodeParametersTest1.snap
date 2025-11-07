@@ -21,55 +21,55 @@
           "authority" : {
             "type" : "boolean",
             "title" : "Authority",
-            "description" : "Append column with authority information of the URI.",
+            "description" : "Append column with authority information of the URI.\nThe authority component of a URI is typically composed of the user, host, and port.\n",
             "default" : false
           },
           "columnSelection" : {
             "type" : "string",
             "title" : "Column selection",
-            "description" : "Column containing the URIs to extract information from.",
+            "description" : "Column containing the URIs to extract information from.\nURIs are made up of several components, such as scheme, authority, path, query, and fragment.\nFor instance, in the URI \"https://www.example.com:8080/path/to/resource?query=example#fragment\",\nthe scheme is \"https\", the authority is \"www.example.com:8080\", the path is \"/path/to/resource\",\nthe query is \"query=example\", and the fragment is \"fragment\".\n",
             "default" : "URI"
           },
           "fragment" : {
             "type" : "boolean",
             "title" : "Fragment",
-            "description" : "Append column with fragment information of the URI.",
+            "description" : "Append column with fragment information of the URI.\nThe fragment component of a URI is the last part of the URI that starts after the '#' symbol.\nIt is often used to identify a specific section or element within the resource.\n",
             "default" : false
           },
           "host" : {
             "type" : "boolean",
             "title" : "Host",
-            "description" : "Append column with host information of the URI.",
+            "description" : "Append column with host information of the URI.\nThe host component of a URI typically represents the domain name or IP address of the server where the\nresource is located.\n",
             "default" : false
           },
           "path" : {
             "type" : "boolean",
             "title" : "Path",
-            "description" : "Append column with path information of the URI.",
+            "description" : "Append column with path information of the URI.\nThe path component of a URI is the section that comes after the authority.\nIt specifies the hierarchical location of the resource on the server.\n",
             "default" : false
           },
           "port" : {
             "type" : "boolean",
             "title" : "Port",
-            "description" : "Append column with port information of the URI.",
+            "description" : "Append column with port information of the URI.\nThe port component of a URI specifies the network port number on the server where the resource is hosted.\n",
             "default" : false
           },
           "query" : {
             "type" : "boolean",
             "title" : "Query",
-            "description" : "Append column with query information of the URI.",
+            "description" : "Append column with query information of the URI.\nThe query component of a URI is the part that comes after the '?' symbol.\nIt typically contains key-value pairs that provide additional parameters or instructions for accessing\nthe resource.\n",
             "default" : false
           },
           "scheme" : {
             "type" : "boolean",
             "title" : "Scheme",
-            "description" : "Append column with scheme information of the URI.",
+            "description" : "Append column with scheme information of the URI.\nThe scheme component of a URI indicates the protocol or method used to access the resource,\nsuch as \"http\", \"https\", \"ftp\", etc.\n",
             "default" : false
           },
           "user" : {
             "type" : "boolean",
             "title" : "User",
-            "description" : "Append column with user information of the URI.",
+            "description" : "Append column with user information of the URI.\nThe user component of a URI typically contains the username and, optionally, the password\nrequired to access the resource.\n",
             "default" : false
           }
         }
@@ -78,16 +78,12 @@
   },
   "ui_schema" : {
     "elements" : [ {
-      "label" : "Column Configuration",
-      "type" : "Section",
-      "elements" : [ {
-        "type" : "Control",
-        "scope" : "#/properties/model/properties/columnSelection",
-        "options" : {
-          "format" : "dropDown"
-        },
-        "providedOptions" : [ "possibleValues" ]
-      } ]
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/columnSelection",
+      "options" : {
+        "format" : "dropDown"
+      },
+      "providedOptions" : [ "possibleValues" ]
     }, {
       "label" : "Extract Options",
       "type" : "Section",
