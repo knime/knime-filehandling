@@ -59,11 +59,12 @@ import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.context.ports.ModifiablePortsConfiguration;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersInputImpl;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.CustomFileConnectionFolderReaderWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FSConnectionProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileReaderWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelection;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelectionWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.LegacyReaderFileSelectionPersistor;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.SingleFileSelectionMode;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.WithCustomFileSystem;
 import org.knime.credentials.base.node.CredentialsSettings.CredentialsFlowVarChoicesProvider;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.ext.ssh.filehandling.node.auth.KeyFileAuthProviderSettings;
@@ -180,7 +181,8 @@ final class SshConnectorNodeParameters implements NodeParameters {
             above. The working directory must be specified as an absolute path. A working directory allows downstream \
             nodes to access files/folders using relative paths, i.e. paths that do not have a leading slash. \
             The default working directory is the root "/".""")
-    @CustomFileConnectionFolderReaderWidget(connectionProvider = FileSystemConnectionProvider.class)
+    @FileSelectionWidget(SingleFileSelectionMode.FOLDER)
+    @WithCustomFileSystem(connectionProvider = FileSystemConnectionProvider.class)
     String m_workingDirectory = "/";
 
     // ----- ADVANCED PARAMETERS -----
@@ -231,7 +233,6 @@ final class SshConnectorNodeParameters implements NodeParameters {
     @Layout(AdvancedSection.class)
     @Widget(title = "Known hosts file", description = "Path to the known hosts file for SSH server key validation.")
     @Effect(predicate = UseKnownHostsFilePredicate.class, type = EffectType.SHOW)
-    @FileReaderWidget(fileExtensions = { "*" })
     @Persistor(KnownHostsFilePersistor.class)
     @ValueReference(KnownHostsFileRef.class)
     FileSelection m_knownHostsFile = new FileSelection();
@@ -563,7 +564,6 @@ final class SshConnectorNodeParameters implements NodeParameters {
 
             @Widget(title = "Key file", description = "Private key file for authentication.")
             @Effect(predicate = IsKeyFileAuth.class, type = EffectType.SHOW)
-            @FileReaderWidget(fileExtensions = { "*" })
             @Persistor(KeyFilePersistor.class)
             FileSelection m_keyFile = new FileSelection();
 

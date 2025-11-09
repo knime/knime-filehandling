@@ -341,9 +341,12 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/inputPath",
         "options" : {
-          "format" : "fileChooser",
           "isLocal" : true,
-          "mountId" : "Local space"
+          "selectionMode" : "FILE_OR_FOLDER",
+          "spaceFSOptions" : {
+            "mountId" : "Local space"
+          },
+          "format" : "fileChooser"
         },
         "rule" : {
           "effect" : "SHOW",
@@ -384,9 +387,11 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/outputPath",
         "options" : {
-          "format" : "fileChooser",
           "isLocal" : true,
-          "mountId" : "Local space"
+          "spaceFSOptions" : {
+            "mountId" : "Local space"
+          },
+          "format" : "fileChooser"
         },
         "rule" : {
           "effect" : "SHOW",
@@ -533,18 +538,18 @@
         "options" : {
           "validation" : {
             "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
               "parameters" : {
-                "max" : 2.147483647E9,
-                "isExclusive" : false
-              },
-              "errorMessage" : "The value must not exceed 2147483647."
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
             },
             "min" : {
+              "errorMessage" : "The value must be at least 0.",
               "parameters" : {
-                "min" : 0.0,
-                "isExclusive" : false
-              },
-              "errorMessage" : "The value must be at least 0."
+                "isExclusive" : false,
+                "min" : 0.0
+              }
             }
           }
         }

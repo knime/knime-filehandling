@@ -67,6 +67,8 @@ import org.knime.core.node.util.CheckUtils;
 import org.knime.core.util.Pair;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileReaderWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelection;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelectionWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.SingleFileSelectionMode;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.AfterAllOf;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomCommandEncodingSelected.CommandEncodingRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomDangerousCharactersDefined.CustomForbiddenCharactersDefinedRef;
@@ -225,7 +227,7 @@ final class SshCommandExecutorNodeSettings implements NodeParameters {
                     + "<a href=\"https://hub.knime.com/n/44-o-1aGfQ_mRTaI\">Transfer Files</a> node before this node "
                     + "to ensure that the input file is at the required location is more robust and secure.")
     @Effect(predicate = IsInputPathSelected.class, type = EffectType.SHOW)
-    @FileReaderWidget
+    @FileSelectionWidget(SingleFileSelectionMode.FILE_OR_FOLDER)
     @Layout(InputSection.class)
     FileSelection m_inputPath = new FileSelection();
 

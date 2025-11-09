@@ -424,10 +424,11 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/authentication/properties/keyFileAuth/properties/keyFile",
         "options" : {
-          "format" : "fileChooser",
           "isLocal" : true,
-          "mountId" : "Local space",
-          "fileExtensions" : [ "*" ]
+          "spaceFSOptions" : {
+            "mountId" : "Local space"
+          },
+          "format" : "fileChooser"
         },
         "rule" : {
           "effect" : "SHOW",
@@ -448,8 +449,8 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/workingDirectory",
         "options" : {
-          "format" : "customFileSystemFileChooser",
-          "selectionMode" : "FOLDER"
+          "selectionMode" : "FOLDER",
+          "format" : "stringFileChooser"
         },
         "providedOptions" : [ "fileSystemId" ]
       } ]
@@ -532,10 +533,11 @@
         "type" : "Control",
         "scope" : "#/properties/model/properties/knownHostsFile",
         "options" : {
-          "format" : "fileChooser",
           "isLocal" : true,
-          "mountId" : "Local space",
-          "fileExtensions" : [ "*" ]
+          "spaceFSOptions" : {
+            "mountId" : "Local space"
+          },
+          "format" : "fileChooser"
         },
         "rule" : {
           "effect" : "SHOW",
@@ -680,24 +682,5 @@
       "scope" : "#/properties/model/properties/useKnownHostsFile"
     },
     "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
-  } ]
-}/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
-  }, {
-    "trigger" : {
-      "scope" : "#/properties/model/properties/workingDirectory"
-    },
-    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
-  } ]
-}/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
-  }, {
-    "trigger" : {
-      "scope" : "#/properties/model/properties/useKnownHostsFile"
-    },
-    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
-  }, {
-    "trigger" : {
-      "scope" : "#/properties/model/properties/workingDirectory"
-    },
-    "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile", "#/properties/model/properties/workingDirectory" ]
   } ]
 }
