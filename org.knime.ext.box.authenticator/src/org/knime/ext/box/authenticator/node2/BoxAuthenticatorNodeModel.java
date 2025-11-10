@@ -95,7 +95,7 @@ public class BoxAuthenticatorNodeModel extends AuthenticatorNodeModel<BoxAuthent
     protected void validateOnConfigure(final PortObjectSpec[] inSpecs, final BoxAuthenticatorSettings settings)
             throws InvalidSettingsException {
 
-        settings.validate();
+        settings.validateOnConfigure();
 
         if (settings.m_authType == AuthType.OAUTH) {
             m_interactiveCredentialRef = Optional.ofNullable(settings.m_loginCredentialRef)//
