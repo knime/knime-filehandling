@@ -296,8 +296,7 @@ public class BoxAuthenticatorSettings implements NodeParameters {
         }
     }
 
-    @Override
-    public void validate() throws InvalidSettingsException {
+    void validateOnConfigure() throws InvalidSettingsException {
         if (m_clientSelection == ClientSelection.CUSTOM) {
             validateClientIdAndSecret();
             validateRedirectURL();
