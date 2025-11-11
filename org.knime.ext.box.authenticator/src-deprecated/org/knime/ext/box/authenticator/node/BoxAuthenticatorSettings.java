@@ -217,18 +217,17 @@ public class BoxAuthenticatorSettings implements NodeParameters {
     }
 
     void validateOnConfigure(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
-        validate();
+        validateOnConfigureOrExecute();
         m_boxApp.validateOnConfigure(credentialsProvider);
     }
 
     void validateOnExecute(final CredentialsProvider credentialsProvider) throws InvalidSettingsException {
-        validate();
+        validateOnConfigureOrExecute();
         m_boxApp.validateOnExecute(credentialsProvider);
 
     }
 
-    @Override
-    public void validate() throws InvalidSettingsException {
+    private void validateOnConfigureOrExecute() throws InvalidSettingsException {
         if (m_authType == AuthType.CLIENT_CREDENTIALS) {
             CheckUtils.checkSetting(StringUtils.isNotEmpty(m_enterpriseId), "Enterprise ID is required");
         } else {
