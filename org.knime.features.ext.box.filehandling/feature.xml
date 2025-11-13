@@ -2,7 +2,7 @@
 <feature
       id="org.knime.features.ext.box.filehandling"
       label="KNIME Box File Handling Extension"
-      version="5.6.0.qualifier"
+      version="5.8.1.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland"
       plugin="org.knime.base.filehandling">
 
