@@ -4,13 +4,13 @@ Bundle-Name: FTP Connector node
 Bundle-SymbolicName: org.knime.ext.ftp.filehandling;singleton:=true
 Bundle-Version: 5.9.0.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
-Require-Bundle: org.knime.core;bundle-version="[5.6.0,6.0.0)",
- org.knime.filehandling.core;bundle-version="[5.6.0,6.0.0)",
- org.knime.workbench.core;bundle-version="[5.6.0,6.0.0)",
+Require-Bundle: org.knime.core;bundle-version="[5.9.0,6.0.0)",
+ org.knime.filehandling.core;bundle-version="[5.9.0,6.0.0)",
+ org.knime.workbench.core;bundle-version="[5.9.0,6.0.0)",
  org.eclipse.core.resources;bundle-version="3.13.700",
  org.apache.commons.net;bundle-version="[3.7.0,4.0.0)",
  org.apache.commons.lang3;bundle-version="[3.2.1,4.0.0)",
- org.eclipse.core.net,
+ org.eclipse.core.net;bundle-version="0.0.0",
  org.apache.httpcomponents.httpclient;bundle-version="[4.5.10,5.0.0)"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-17
