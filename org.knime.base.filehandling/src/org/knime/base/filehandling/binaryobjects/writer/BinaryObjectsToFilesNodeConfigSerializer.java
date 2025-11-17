@@ -67,11 +67,11 @@ import org.knime.filehandling.core.node.table.writer.DefaultMultiTableWriterNode
 final class BinaryObjectsToFilesNodeConfigSerializer
     extends DefaultMultiTableWriterNodeConfigSerializer<BinaryObjectsToFilesNodeConfig> {
 
-    private static final String CFG_BINARY_COLUMN_NAME = "binary_object_column";
+    static final String CFG_BINARY_COLUMN_NAME = "binary_object_column";
 
-    private static final String CFG_REMOVE_BINARY_COLUMN_NAME = "remove_binary_object_column";
+    static final String CFG_REMOVE_BINARY_COLUMN_NAME = "remove_binary_object_column";
 
-    private static final String CFG_GENERATE_FILE_NAMES = "generate_file_names";
+    static final String CFG_GENERATE_FILE_NAMES = "generate_file_names";
 
     // needed to copy all the settings correctly…
     private final SettingsModelString m_binaryColumn;

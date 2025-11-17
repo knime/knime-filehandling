@@ -48,20 +48,43 @@
  */
 package org.knime.base.filehandling.binaryobjects.writer;
 
+import static org.knime.node.impl.description.PortDescription.dynamicPort;
+import static org.knime.node.impl.description.PortDescription.fixedPort;
+
+import java.util.List;
+import java.util.Map;
+
 import org.knime.core.data.blob.BinaryObjectDataValue;
+import org.knime.core.node.NodeDescription;
+import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
+import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.context.ports.PortsConfiguration;
+import org.knime.core.webui.node.dialog.NodeDialog;
+import org.knime.core.webui.node.dialog.NodeDialogFactory;
+import org.knime.core.webui.node.dialog.NodeDialogManager;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
 import org.knime.filehandling.core.node.table.writer.AbstractMultiTableWriterNodeFactory;
+import org.knime.node.impl.description.DefaultNodeDescriptionUtil;
+import org.knime.node.impl.description.PortDescription;
 
 /**
  * The {@link NodeFactory} to create the node model allowing to convert binary objects to files.
  *
  * @author Ayaz Ali Qureshi, KNIME GmbH, Berlin, Germany
  * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
+ * @author Thomas Reifenberger, TNG Technology Consulting GmbH
+ * @author AI Migration Pipeline v1.2
  */
+@SuppressWarnings("restriction")
 public final class BinaryObjectsToFilesNodeFactory
     extends AbstractMultiTableWriterNodeFactory<BinaryObjectDataValue, BinaryObjectsToFilesNodeConfig, //
-            BinaryObjectsToFilesNodeModel, BinaryObjectsToFilesNodeDialog> {
+            BinaryObjectsToFilesNodeModel, BinaryObjectsToFilesNodeDialog>
+    implements NodeDialogFactory, KaiNodeInterfaceFactory {
 
     @Override
     protected BinaryObjectsToFilesNodeConfig getNodeConfig(final PortsConfiguration portConfig,
@@ -79,6 +102,77 @@ public final class BinaryObjectsToFilesNodeFactory
     protected BinaryObjectsToFilesNodeDialog getDialog(final BinaryObjectsToFilesNodeConfig nodeConfig,
         final int dataTableInputIndex) {
         return new BinaryObjectsToFilesNodeDialog(nodeConfig, dataTableInputIndex);
+    }
+    private static final String NODE_NAME = "Binary Objects to Files";
+    private static final String NODE_ICON = "binaryobjectstofiles16x16.png";
+    private static final String SHORT_DESCRIPTION = """
+            Writes all binary objects from a specific column to a directory.
+            """;
+    private static final String FULL_DESCRIPTION = """
+            This node takes all binary objects in a certain column of the input table and writes them, each as a
+                separate file, into a directory. It will append the paths of the written files to the input table as
+                well as the corresponding write status (created, unmodified, overwritten). <p> <i>This node can access a
+                variety of different</i> <a
+                href="https://docs.knime.com/2021-06/analytics_platform_file_handling_guide/index.html#analytics-platform-file-systems"><i>file
+                systems.</i></a> <i>More information about file handling in KNIME can be found in the official</i> <a
+                href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling
+                Guide.</i></a> </p>
+            """;
+    private static final List<PortDescription> INPUT_PORTS = List.of(
+            dynamicPort("File System Connection", "File system connection", """
+                The file system connection.
+                """),
+            fixedPort("Input Table", """
+                Table that contains binary objects.
+                """)
+    );
+    private static final List<PortDescription> OUTPUT_PORTS = List.of(
+            fixedPort("Output Table", """
+                Input table with an additional path column that contains the paths of the written files, as well as
+                another String column which holds the write status (created, unmodified, overwritten). The original
+                binary object column is removed from the output if the option to remove is checked.
+                """)
+    );
+
+
+    @Override
+    public NodeDialogPane createNodeDialogPane(final NodeCreationConfiguration creationConfig) {
+        /*
+         * We need to override the implementation with parameter, even though we don't use it, because
+         * otherwise the {@link AbstractMultiTableWriterNodeFactory} and its superclasses take over and return the full
+         * legacy dialog by eventually calling {@link BinaryObjectsToFilesNodeFactory#getDialog}.
+         * This should be cleaned up once the other node ({@link ImageWriterTableNodeFactory}) using this abstract factory
+         * is migrated.
+         */
+        return NodeDialogManager.createLegacyFlowVariableNodeDialog(createNodeDialog());
+    }
+
+    @Override
+    public NodeDialog createNodeDialog() {
+        return new DefaultNodeDialog(SettingsType.MODEL, BinaryObjectsToFilesNodeParameters.class);
+    }
+
+    @Override
+    public NodeDescription createNodeDescription() {
+        return DefaultNodeDescriptionUtil.createNodeDescription(
+            NODE_NAME,
+            NODE_ICON,
+            INPUT_PORTS,
+            OUTPUT_PORTS,
+            SHORT_DESCRIPTION,
+            FULL_DESCRIPTION,
+            List.of(),
+            BinaryObjectsToFilesNodeParameters.class,
+            null,
+            NodeType.Manipulator,
+            List.of(),
+            null
+        );
+    }
+
+    @Override
+    public KaiNodeInterface createKaiNodeInterface() {
+        return new DefaultKaiNodeInterface(Map.of(SettingsType.MODEL, BinaryObjectsToFilesNodeParameters.class));
     }
 
 }
