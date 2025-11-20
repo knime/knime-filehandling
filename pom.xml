@@ -27,6 +27,7 @@
 			<modules>
 				<module>org.knime.ext.smb.filehandling/libs/fetch_jars</module>
 				<module>org.knime.ext.box.filehandling/libs/fetch_jars</module>
+				<module>org.knime.ext.ssh.filehandling/libs/fetch_jars</module>
 				<module>org.knime.base.filehandling</module>
 				<module>org.knime.ext.ftp.filehandling</module>
 				<module>org.knime.ext.http.filehandling</module>
@@ -48,6 +49,7 @@
 			<id>test</id>
 			<modules>
 				<module>org.knime.ext.ftp.filehandling.tests/lib/fetch_jars</module>
+				<module>org.knime.ext.ssh.filehandling/libs/fetch_jars</module>
 				<module>org.knime.base.filehandling</module>
 				<module>org.knime.base.filehandling.tests</module>
 				<module>org.knime.ext.ssh.filehandling</module>

@@ -1,0 +1,5 @@
+library,library-url,licence,,,,     licence-url,copyright
+sshd-common-2.16.0.jar,https://mina.apache.org/sshd-project/sshd-common,Apache 2.0 Licence,https://github.com/apache/mina-sshd/blob/master/LICENSE.txt,The Apache Software Foundation,,,
+sshd-core-2.16.0.jar,https://mina.apache.org/sshd-project/sshd-core,Apache 2.0 Licence,https://github.com/apache/mina-sshd/blob/master/LICENSE.txt,The Apache Software Foundation,,,
+sshd-putty-2.16.0.jar,https://mina.apache.org/sshd-project/sshd-putty,Apache 2.0 Licence,https://github.com/apache/mina-sshd/blob/master/LICENSE.txt,The Apache Software Foundation,,,
+sshd-sftp-2.16.0.jar,https://mina.apache.org/sshd-project/sshd-sftp,Apache 2.0 Licence,https://github.com/apache/mina-sshd/blob/master/LICENSE.txt,The Apache Software Foundation,,,
