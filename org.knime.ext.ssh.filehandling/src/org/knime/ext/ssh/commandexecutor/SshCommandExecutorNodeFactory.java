@@ -94,7 +94,7 @@ public final class SshCommandExecutorNodeFactory extends WebUINodeFactory<SshCom
             + "      jumped to the next specified command. In POSIX this can be avoided "
             + "      by using conditional (<code>&amp;&amp;</code>) instead of sequential (<code>;</code>)"
             + "      execution. In either case these commands may have to be canceled manually or with subsequent SSH "
-            + "      External Tool nodes." //
+            + "      Command Executor nodes." //
             + "  </li>" //
             + "  <li>Each command execution requests a shell session from  the SSH server. These sessions are shared"
             + "      with SFTP sessions from the preceding SSH Connector. The number of available "
