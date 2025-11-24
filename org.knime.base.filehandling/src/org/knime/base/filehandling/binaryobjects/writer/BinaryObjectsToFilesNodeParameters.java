@@ -79,7 +79,6 @@ import org.knime.node.parameters.migration.LoadDefaultsForAbsentFields;
 import org.knime.node.parameters.persistence.NodeParametersPersistor;
 import org.knime.node.parameters.persistence.Persist;
 import org.knime.node.parameters.persistence.Persistor;
-import org.knime.node.parameters.persistence.legacy.LegacyFileWriter.LegacyFileWriterModifier;
 import org.knime.node.parameters.persistence.legacy.LegacyFileWriterWithOverwritePolicyOptions;
 import org.knime.node.parameters.updates.Effect;
 import org.knime.node.parameters.updates.Effect.EffectType;
@@ -186,20 +185,20 @@ class BinaryObjectsToFilesNodeParameters implements NodeParameters {
     @Effect(predicate = IsUseFileNamePattern.class, type = EffectType.HIDE)
     StringOrEnum<RowIDChoice> m_fileNameColumn = new StringOrEnum<>(RowIDChoice.ROW_ID);
 
-    private static class OutputLocationModification implements LegacyFileWriterModifier {
+    private static class OutputLocationModification implements LegacyFileWriterWithOverwritePolicyOptions.Modifier {
 
         @Override
         public void modify(final WidgetGroupModifier group) {
-            LegacyFileWriterModifier.findFileSelection(group) //
+            findFileSelection(group) //
                 .modifyAnnotation(Widget.class) //
                 .withProperty("title", "Folder") //
                 .withProperty("description", "The folder to write the binary object files to.") //
                 .modify();
-            LegacyFileWriterModifier.findFileSelection(group) //
+            findFileSelection(group) //
                 .addAnnotation(FileSelectionWidget.class) //
                 .withValue(SingleFileSelectionMode.FOLDER) //
                 .modify();
-            LegacyFileWriterModifier.findFileSelection(group) //
+            findFileSelection(group) //
                 .addAnnotation(WithFileSystem.class) //
                 .withProperty("value", new FileSystemOption[]{FileSystemOption.LOCAL, FileSystemOption.SPACE,
                     FileSystemOption.EMBEDDED, FileSystemOption.CONNECTED})
