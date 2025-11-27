@@ -4,11 +4,11 @@ Bundle-Name: Plugin for the Box Authenticator node
 Bundle-SymbolicName: org.knime.ext.box.authenticator;singleton:=true
 Bundle-Version: 5.8.1.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
-Require-Bundle: org.knime.workbench.repository;bundle-version="[5.6.0,6.0.0)",
- org.knime.core;bundle-version="[5.6.0,6.0.0)",
- org.knime.core.ui;bundle-version="[5.6.0,6.0.0)",
+Require-Bundle: org.knime.workbench.repository;bundle-version="[5.8.0,6.0.0)",
+ org.knime.core;bundle-version="[5.8.1,6.0.0)",
+ org.knime.core.ui;bundle-version="[5.8.1,6.0.0)",
  org.knime.credentials.base;bundle-version="[5.6.0,6.0.0)",
- org.knime.credentials.base.oauth;bundle-version="[5.6.0,6.0.0)",
+ org.knime.credentials.base.oauth;bundle-version="[5.8.1,6.0.0)",
  org.apache.commons.lang3;bundle-version="[3.9.0,4.0.0)",
  com.github.scribejava.core;bundle-version="[8.3.3,9.0.0)",
  com.github.scribejava.apis;bundle-version="[8.3.3,9.0.0)"
