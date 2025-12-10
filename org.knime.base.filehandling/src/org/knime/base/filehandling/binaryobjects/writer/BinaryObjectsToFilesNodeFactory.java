@@ -119,12 +119,8 @@ public final class BinaryObjectsToFilesNodeFactory
                 Guide.</i></a> </p>
             """;
     private static final List<PortDescription> INPUT_PORTS = List.of(
-            dynamicPort("File System Connection", "File system connection", """
-                The file system connection.
-                """),
-            fixedPort("Input Table", """
-                Table that contains binary objects.
-                """)
+            dynamicPort(CONNECTION_INPUT_PORT_GRP_NAME, "File System Connection", "The file system connection."),
+            fixedPort("Input Table", "Table that contains binary objects.")
     );
     private static final List<PortDescription> OUTPUT_PORTS = List.of(
             fixedPort("Output Table", """

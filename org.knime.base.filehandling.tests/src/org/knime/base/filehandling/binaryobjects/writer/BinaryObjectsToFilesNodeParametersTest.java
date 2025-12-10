@@ -60,7 +60,7 @@ import org.knime.testing.node.dialog.DefaultNodeSettingsSnapshotTest;
 import org.knime.testing.node.dialog.SnapshotTestConfiguration;
 
 /**
- * Snapshot test for {@link ExtractURIInfoNodeParameters}.
+ * Snapshot test for {@link BinaryObjectsToFilesNodeParameters}.
  *
  * @author Thomas Reifenberger
  */
