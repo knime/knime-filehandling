@@ -127,6 +127,9 @@
                 }, {
                   "const" : "ignore",
                   "title" : "Ignore"
+                }, {
+                  "const" : "append",
+                  "title" : "Append"
                 } ],
                 "title" : "If exists",
                 "description" : "Specify the behavior of the node in case the output file already exists.<ul><li><b>Fail</b>: Will issue an error during the node's execution (to prevent unintentional overwrite).</li><li><b>Overwrite</b>: Will replace any existing file.</li><li><b>Ignore</b>: Will ignore if a file already exists and continues the copying process.</li></ul>",
@@ -265,7 +268,8 @@
         "scope" : "#/properties/model/properties/outputLocation/properties/overwritePolicy",
         "options" : {
           "format" : "valueSwitch"
-        }
+        },
+        "providedOptions" : [ "possibleValues" ]
       } ]
     } ]
   },
@@ -332,6 +336,22 @@
     "values" : [ {
       "indices" : [ ],
       "value" : [ ]
+    } ]
+  }, {
+    "scope" : "#/properties/model/properties/outputLocation/properties/overwritePolicy",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ {
+        "id" : "fail",
+        "text" : "Fail"
+      }, {
+        "id" : "overwrite",
+        "text" : "Overwrite"
+      }, {
+        "id" : "ignore",
+        "text" : "Ignore"
+      } ]
     } ]
   } ],
   "globalUpdates" : [ {
