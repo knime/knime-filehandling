@@ -8,4 +8,10 @@ Automatic-Module-Name: org.knime.ext.ssh.filehandling.tests
 Fragment-Host: org.knime.ext.ssh.filehandling;bundle-version="[5.6.0,6.0.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Require-Bundle: org.knime.core.ui.testing;bundle-version="[5.6.0,6.0.0)",
- junit-jupiter-api;bundle-version="[5.9.2,6.0.0)"
+ junit-jupiter-api;bundle-version="[5.9.2,6.0.0)",
+ bcprov;bundle-version="[1.80,2.0.0)"
+Bundle-ClassPath: .,
+ libs/sshd-common-2.16.0.jar,
+ libs/sshd-core-2.16.0.jar,
+ libs/sshd-putty-2.16.0.jar,
+ libs/sshd-sftp-2.16.0.jar

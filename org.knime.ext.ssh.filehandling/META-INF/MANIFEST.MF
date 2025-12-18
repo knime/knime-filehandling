@@ -18,7 +18,6 @@ Automatic-Module-Name: org.knime.ext.ssh.filehandling
 Bundle-ClassPath: .,
  libs/sshd-common-2.16.0.jar,
  libs/sshd-core-2.16.0.jar,
- libs/sshd-osgi-2.16.0.jar,
  libs/sshd-putty-2.16.0.jar,
  libs/sshd-sftp-2.16.0.jar
 Import-Package: org.knime.credentials.base.node
