@@ -89,6 +89,12 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
     private SmbProtocolVersion m_protocolVersion = SmbProtocolVersion.V_2_X;
 
     /**
+     * The {@link AuthType} for Username/Password (NTLM) authentication mode.
+     */
+    public static final AuthType USER_PASSWORD_AUTH_TYPE = new AuthType("user_pwd", "Username & password",
+            "Authenticate with username and password.");
+
+    /**
      * The {@link AuthType} for Kerberos authentication mode.
      */
     public static final AuthType KERBEROS_AUTH_TYPE = new AuthType("kerberos", "Kerberos",
@@ -269,8 +275,9 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
     }
 
     /**
-     * @return the authentication type to use (one of {@link #KERBEROS_AUTH_TYPE} or
-     *         {@link StandardAuthTypes#USER_PASSWORD}.
+     * @return the authentication type to use (one of
+     *         {@link #USER_PASSWORD_AUTH_TYPE}, {@link #KERBEROS_AUTH_TYPE} or
+     *         {@link StandardAuthTypes#ANONYMOUS}).
      */
     public AuthType getAuthType() {
         return m_authType;
@@ -279,16 +286,15 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
     /**
      * @param authType
      *            the authentication type to use (one of
-     *            {@link StandardAuthTypes#USER_PASSWORD},
-     *            {@link #KERBEROS_AUTH_TYPE} or
-     *            {@link StandardAuthTypes#ANONYMOUS})..
+     *            {@link #USER_PASSWORD_AUTH_TYPE}, {@link #KERBEROS_AUTH_TYPE} or
+     *            {@link StandardAuthTypes#ANONYMOUS}).
      */
     public void setAuthType(final AuthType authType) {
         m_authType = authType;
     }
 
     /**
-     * @return the username to use when {@link StandardAuthTypes#USER_PASSWORD}
+     * @return the username to use when {@link #USER_PASSWORD_AUTH_TYPE}
      *         authentication is used.
      */
     public String getUser() {
@@ -297,7 +303,7 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
 
     /**
      * @param user
-     *            the username to use when {@link StandardAuthTypes#USER_PASSWORD}
+     *            the username to use when {@link #USER_PASSWORD_AUTH_TYPE}
      *            authentication is used.
      */
     public void setUser(final String user) {
@@ -305,7 +311,7 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
     }
 
     /**
-     * @return the password to use when {@link StandardAuthTypes#USER_PASSWORD}
+     * @return the password to use when {@link #USER_PASSWORD_AUTH_TYPE}
      *         authentication is used.
      */
     public String getPassword() {
@@ -314,7 +320,7 @@ public class SmbFSConnectionConfig extends BaseFSConnectionConfig {
 
     /**
      * @param password
-     *            the password to use when {@link StandardAuthTypes#USER_PASSWORD}
+     *            the password to use when {@link #USER_PASSWORD_AUTH_TYPE}
      *            authentication is used.
      */
     public void setPassword(final String password) {

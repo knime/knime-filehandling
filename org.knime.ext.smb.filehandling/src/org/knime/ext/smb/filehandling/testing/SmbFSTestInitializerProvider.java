@@ -57,7 +57,6 @@ import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
 import org.knime.ext.smb.filehandling.fs.SmbFSDescriptorProvider;
 import org.knime.ext.smb.filehandling.fs.SmbFileSystem;
 import org.knime.filehandling.core.connections.FSLocationSpec;
-import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
 import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 import org.knime.filehandling.core.testing.FSTestInitializerProvider;
@@ -91,7 +90,7 @@ public class SmbFSTestInitializerProvider extends DefaultFSTestInitializerProvid
         config.setFileserverHost(getParameter(configuration, HOST));
         config.setFileserverPort(configuration.containsKey(PORT) ? Integer.parseInt(configuration.get(PORT)) : 445);
         config.setFileserverShare(getParameter(configuration, SHARE));
-        config.setAuthType(StandardAuthTypes.USER_PASSWORD);
+        config.setAuthType(SmbFSConnectionConfig.USER_PASSWORD_AUTH_TYPE);
         config.setUser(getParameter(configuration, USERNAME));
         config.setPassword(getParameter(configuration, PASSWORD));
         return config;
