@@ -1,0 +1,256 @@
+{
+  "data" : {
+    "model" : {
+      "file" : {
+        "path" : {
+          "fsCategory" : "relative-to-embedded-data",
+          "path" : "zip_cp437_with_funny_chars.zip",
+          "timeout" : 10000,
+          "context" : {
+            "fsToString" : "(RELATIVE, knime.workflow.data, zip_cp437_with_funny_chars.zip)"
+          }
+        }
+      },
+      "workingDirectory" : "/",
+      "encoding" : {
+        "encoding" : "DEFAULT",
+        "customEncoding" : ""
+      }
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "encoding" : {
+            "type" : "object",
+            "properties" : {
+              "customEncoding" : {
+                "type" : "string",
+                "title" : "Custom encoding",
+                "description" : "Enter a custom encoding.",
+                "default" : ""
+              },
+              "encoding" : {
+                "oneOf" : [ {
+                  "const" : "DEFAULT",
+                  "title" : "Default"
+                }, {
+                  "const" : "OS_DEFAULT",
+                  "title" : "OS default"
+                }, {
+                  "const" : "CP437",
+                  "title" : "CP437"
+                }, {
+                  "const" : "UTF_8",
+                  "title" : "UTF-8"
+                }, {
+                  "const" : "UTF_16",
+                  "title" : "UTF-16"
+                }, {
+                  "const" : "UTF_16BE",
+                  "title" : "UTF-16BE"
+                }, {
+                  "const" : "UTF_16LE",
+                  "title" : "UTF-16LE"
+                }, {
+                  "const" : "US_ASCII",
+                  "title" : "US-ASCII"
+                }, {
+                  "const" : "ISO_8859_1",
+                  "title" : "ISO-8859-1"
+                }, {
+                  "const" : "OTHER",
+                  "title" : "Other"
+                } ],
+                "title" : "File encoding",
+                "description" : "Sets the character set/encoding to use when reading the names of the compressed files in the archive. By default, UTF-8 is chosen. You can specify any other encoding supported by Java. In some cases <a href=\"https://en.wikipedia.org/wiki/Code_page_437\">CP437</a> has to be chosen to handle older ZIP files.\n<ul>\n<li><b>Default</b></li>\n<li><b>OS default</b>: The default encoding of the Java VM which may depend on the local operating system, or the Java property <tt>file.encoding</tt>. The current value is shown in the dropdown.</li>\n<li><b>CP437</b></li>\n<li><b>UTF-8</b></li>\n<li><b>UTF-16</b></li>\n<li><b>UTF-16BE</b></li>\n<li><b>UTF-16LE</b></li>\n<li><b>US-ASCII</b></li>\n<li><b>ISO-8859-1</b></li>\n<li><b>Other</b>: Use another encoding</li>\n</ul>",
+                "default" : "DEFAULT"
+              }
+            },
+            "default" : {
+              "encoding" : "DEFAULT",
+              "customEncoding" : ""
+            }
+          },
+          "file" : {
+            "type" : "object",
+            "properties" : {
+              "path" : {
+                "type" : "object",
+                "default" : {
+                  "fsCategory" : "LOCAL",
+                  "path" : "",
+                  "timeout" : 10000,
+                  "context" : {
+                    "fsToString" : "(LOCAL, )"
+                  }
+                }
+              }
+            },
+            "title" : "ZIP file",
+            "description" : "Select the ZIP or JAR archive file.",
+            "default" : {
+              "path" : {
+                "fsCategory" : "LOCAL",
+                "path" : "",
+                "timeout" : 10000,
+                "context" : {
+                  "fsToString" : "(LOCAL, )"
+                }
+              }
+            }
+          },
+          "workingDirectory" : {
+            "type" : "string",
+            "title" : "Working directory",
+            "description" : "Specify the <i>working directory</i> of the resulting file system connection.\nThe working directory must be specified as an absolute path. A\nworking directory allows downstream nodes to access files/folders using <i>relative</i> paths,\ni.e. paths that do not have a leading backslash. The default working directory is \"/\".",
+            "default" : "/"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Input File",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/file",
+        "options" : {
+          "fileExtensions" : [ "zip", "jar" ],
+          "isLocal" : true,
+          "spaceFSOptions" : {
+            "mountId" : "Local space"
+          },
+          "format" : "fileChooser"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/encoding/properties/encoding",
+        "options" : {
+          "isAdvanced" : true,
+          "format" : "dropDown"
+        },
+        "providedOptions" : [ "possibleValues" ]
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/encoding/properties/customEncoding",
+        "options" : {
+          "validation" : {
+            "pattern" : {
+              "errorMessage" : "The field cannot be blank (it must contain at least one non-whitespace character).",
+              "parameters" : {
+                "pattern" : ".*\\S.*"
+              }
+            }
+          },
+          "isAdvanced" : true
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/encoding/properties/encoding",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "OTHER"
+              } ]
+            }
+          }
+        }
+      } ]
+    }, {
+      "label" : "File System",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/workingDirectory",
+        "options" : {
+          "selectionMode" : "FOLDER",
+          "format" : "stringFileChooser"
+        },
+        "providedOptions" : [ "fileSystemId" ]
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "file" : {
+            "configPaths" : [ [ "file", "path" ] ]
+          },
+          "workingDirectory" : { },
+          "encoding" : {
+            "configPaths" : [ [ "encoding" ], [ "useDefaultEncoding" ] ]
+          }
+        }
+      }
+    }
+  },
+  "initialUpdates" : [ {
+    "scope" : "#/properties/model/properties/encoding/properties/encoding",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ {
+        "id" : "DEFAULT",
+        "text" : "Default"
+      }, {
+        "id" : "OS_DEFAULT",
+        "text" : "OS default (UTF-8)"
+      }, {
+        "id" : "CP437",
+        "text" : "CP437"
+      }, {
+        "id" : "UTF_8",
+        "text" : "UTF-8"
+      }, {
+        "id" : "UTF_16",
+        "text" : "UTF-16"
+      }, {
+        "id" : "UTF_16BE",
+        "text" : "UTF-16BE"
+      }, {
+        "id" : "UTF_16LE",
+        "text" : "UTF-16LE"
+      }, {
+        "id" : "US_ASCII",
+        "text" : "US-ASCII"
+      }, {
+        "id" : "ISO_8859_1",
+        "text" : "ISO-8859-1"
+      }, {
+        "id" : "OTHER",
+        "text" : "Other"
+      } ]
+    } ]
+  } ],
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/encoding", "#/properties/model/properties/file", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/encoding"
+    },
+    "dependencies" : [ "#/properties/model/properties/encoding", "#/properties/model/properties/file", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/file"
+    },
+    "dependencies" : [ "#/properties/model/properties/encoding", "#/properties/model/properties/file", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/workingDirectory"
+    },
+    "dependencies" : [ "#/properties/model/properties/encoding", "#/properties/model/properties/file", "#/properties/model/properties/workingDirectory" ]
+  } ]
+}
