@@ -58,13 +58,10 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
-import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.impl.WebUINodeModel;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnection;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig;
 import org.knime.ext.smb.filehandling.fs.SmbFSConnectionConfig.ConnectionMode;
@@ -77,61 +74,60 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  *
  * @author Alexander Bondaletov
  */
-class SmbConnectorNodeModel extends NodeModel {
+@SuppressWarnings({ "deprecation", "restriction" })
+class SmbConnectorNodeModel extends WebUINodeModel<SmbConnectorNodeParameters> {
+
     private static final String FILE_SYSTEM_NAME = "SMB";
     private static final String UNABLE_TO_CONNECT = "Unable to connect: ";
 
     private String m_fsId;
     private SmbFSConnection m_fsConnection;
-    private final SmbConnectorSettings m_settings;
 
     /**
      * Creates new instance.
      */
-    protected SmbConnectorNodeModel() {
-        super(new PortType[] {}, new PortType[] { FileSystemPortObject.TYPE });
-        m_settings = new SmbConnectorSettings();
+    SmbConnectorNodeModel() {
+        super(new PortType[] {}, new PortType[] { FileSystemPortObject.TYPE }, SmbConnectorNodeParameters.class);
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-        m_settings.validate();
-        m_settings.configureInModel(inSpecs, m -> {
-        }, getCredentialsProvider());
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs, final SmbConnectorNodeParameters params)
+            throws InvalidSettingsException {
 
+        params.validateOnConfigure(getCredentialsProvider());
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-        return new PortObjectSpec[] { createSpec() };
+        return new PortObjectSpec[] { createSpec(params) };
     }
 
-    private FileSystemPortObjectSpec createSpec() {
+    private FileSystemPortObjectSpec createSpec(final SmbConnectorNodeParameters params) {
 
-        final CredentialsProvider credentialsProvider = getCredentialsProvider();
-
-        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, //
-                m_fsId, //
-                m_settings.createFSConnectionConfig(credentialsProvider::get).createFSLocationSpec());
+        final var fsLocSpec = params.createFSConnectionConfig(getCredentialsProvider())
+                .createFSLocationSpec();
+        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId, fsLocSpec);
     }
 
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
+    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
+            final SmbConnectorNodeParameters params) throws Exception {
 
-        final CredentialsProvider credentialsProvider = getCredentialsProvider();
-        m_settings.validateOnExecute(credentialsProvider::get);
-        final SmbFSConnectionConfig config = m_settings.createFSConnectionConfig(credentialsProvider::get);
+
+        final var fsConfig = params.createFSConnectionConfig(getCredentialsProvider());
         try {
-            m_fsConnection = new SmbFSConnection(config, exec);
+            m_fsConnection = new SmbFSConnection(fsConfig, exec);
         } catch (IOException ex) {
-            amendErrorMessage(ex);
+            amendErrorMessage(ex, fsConfig);
         }
 
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
-        return new PortObject[] { new FileSystemPortObject(createSpec()) };
+        return new PortObject[] { new FileSystemPortObject(createSpec(params)) };
     }
 
-    private void amendErrorMessage(final IOException e) throws IOException {
+    private static void amendErrorMessage(final IOException e, final SmbFSConnectionConfig fsConfig)
+            throws IOException {
+
         if (e instanceof UnknownHostException) {
-            String host = m_settings.getConnectionMode() == ConnectionMode.DOMAIN ? "Domain" : "File server host";
+            String host = fsConfig.getConnectionMode() == ConnectionMode.DOMAIN ? "Domain" : "File server host";
             String message = UNABLE_TO_CONNECT + host + " is unknown.";
 
             throw new IOException(message, e);
@@ -153,21 +149,6 @@ class SmbConnectorNodeModel extends NodeModel {
     protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         // nothing to save
-    }
-
-    @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_settings.saveForModel(settings);
-    }
-
-    @Override
-    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.validate(settings);
-    }
-
-    @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.loadForModel(settings);
     }
 
     @Override

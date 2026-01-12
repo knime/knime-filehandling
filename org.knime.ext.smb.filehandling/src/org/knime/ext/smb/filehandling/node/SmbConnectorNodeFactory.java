@@ -48,16 +48,70 @@
  */
 package org.knime.ext.smb.filehandling.node;
 
+import static org.knime.node.impl.description.PortDescription.fixedPort;
+
+import java.util.List;
+import java.util.Map;
+
+import org.knime.core.node.NodeDescription;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
+import org.knime.core.webui.node.dialog.NodeDialog;
+import org.knime.core.webui.node.dialog.NodeDialogFactory;
+import org.knime.core.webui.node.dialog.NodeDialogManager;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
+import org.knime.node.impl.description.DefaultNodeDescriptionUtil;
+import org.knime.node.impl.description.PortDescription;
 
 /**
  * Factory class for the {@link SmbConnectorNodeModel} node.
  *
  * @author Alexander Bondaletov
+ * @author AI Migration Pipeline v1.2
  */
-public class SmbConnectorNodeFactory extends NodeFactory<SmbConnectorNodeModel> {
+@SuppressWarnings("restriction")
+public class SmbConnectorNodeFactory extends NodeFactory<SmbConnectorNodeModel>
+        implements NodeDialogFactory, KaiNodeInterfaceFactory {
+
+    private static final String NODE_NAME = "SMB Connector";
+
+    private static final String NODE_ICON = "./file_system_connector.png";
+
+    private static final String SHORT_DESCRIPTION = """
+            Connects to an SMB server (e.g. Samba, or Windows Server) in order to read/write files in downstream nodes.
+            """;
+
+    private static final String FULL_DESCRIPTION = """
+            <p>
+                This node connects to a remote SMB server (e.g. Samba, or Windows Server). The resulting output port
+                allows downstream nodes to access <i>files</i>, e.g. to read or write, or to perform other file system
+                operations (browse/list files, copy, move, ...). This node generally supports versions 2 and 3 of the
+                SMB protocol. It also supports connecting to a
+                <a href="https://docs.microsoft.com/en-us/windows-server/storage/dfs-namespaces/dfs-overview">Windows
+                DFS namespace</a>.
+            </p>
+            <p>
+                <b>Path syntax:</b> Paths for SMB are specified similar to Windows Paths, but with a leading backslash
+                (<tt>\\</tt>). The path is interpreted relative to the chosen <i>Share</i> (or DFS namespace). For
+                example <tt>\\myfolder\\file.csv</tt>, is an absolute path that consists of:
+                <ol>
+                    <li>A leading backslash (<tt>\\</tt>).</li>
+                    <li>The name of a folder (<tt>myfolder</tt>), followed by a backslash.</li>
+                    <li>Followed by the name of a file (<tt>file.csv</tt>).</li>
+                </ol>
+            </p>
+            """;
+
+    private static final List<PortDescription> INPUT_PORTS = List.of();
+
+    private static final List<PortDescription> OUTPUT_PORTS = List.of(fixedPort("SMB File System Connection", """
+            SMB File System Connection.
+            """));
 
     @Override
     public SmbConnectorNodeModel createNodeModel() {
@@ -71,7 +125,7 @@ public class SmbConnectorNodeFactory extends NodeFactory<SmbConnectorNodeModel> 
 
     @Override
     public NodeView<SmbConnectorNodeModel> createNodeView(final int viewIndex, final SmbConnectorNodeModel nodeModel) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -81,7 +135,35 @@ public class SmbConnectorNodeFactory extends NodeFactory<SmbConnectorNodeModel> 
 
     @Override
     protected NodeDialogPane createNodeDialogPane() {
-        return new SmbConnectorNodeDialog();
+        return NodeDialogManager.createLegacyFlowVariableNodeDialog(createNodeDialog());
     }
 
+    @Override
+    public NodeDialog createNodeDialog() {
+        return new DefaultNodeDialog(SettingsType.MODEL, SmbConnectorNodeParameters.class);
+    }
+
+    @Override
+    public NodeDescription createNodeDescription() {
+        return DefaultNodeDescriptionUtil.createNodeDescription(
+            NODE_NAME,
+            NODE_ICON,
+            INPUT_PORTS,
+            OUTPUT_PORTS,
+            SHORT_DESCRIPTION,
+            FULL_DESCRIPTION,
+            List.of(),
+            SmbConnectorNodeParameters.class,
+            null,
+            NodeType.Source,
+            List.of(),
+            null
+        );
+    }
+
+    @Override
+    public KaiNodeInterface createKaiNodeInterface() {
+        return new DefaultKaiNodeInterface(Map.of(SettingsType.MODEL, SmbConnectorNodeParameters.class));
+    }
 }
+
