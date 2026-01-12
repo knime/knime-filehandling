@@ -48,29 +48,44 @@
  */
 package org.knime.archive.zip.filehandling.node;
 
+import static org.knime.node.impl.description.PortDescription.dynamicPort;
+import static org.knime.node.impl.description.PortDescription.fixedPort;
+
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.knime.core.node.ConfigurableNodeFactory;
+import org.knime.core.node.NodeDescription;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeView;
 import org.knime.core.node.context.NodeCreationConfiguration;
+import org.knime.core.webui.node.dialog.NodeDialog;
+import org.knime.core.webui.node.dialog.NodeDialogFactory;
+import org.knime.core.webui.node.dialog.NodeDialogManager;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
 import org.knime.filehandling.core.port.FileSystemPortObject;
+import org.knime.node.impl.description.DefaultNodeDescriptionUtil;
+import org.knime.node.impl.description.PortDescription;
 
 /**
  * Node factory for the ArchiveZip Connector.
  *
  * @author Dragan Keselj, KNIME GmbH
+ * @author Halil Yerlikaya, KNIME GmbH, Berlin, Germany
+ * @author AI Migration Pipeline v1.2
  */
-public class ArchiveZipConnectorNodeFactory extends ConfigurableNodeFactory<ArchiveZipConnectorNodeModel> {
+@SuppressWarnings({"restriction", "removal"})
+public class ArchiveZipConnectorNodeFactory extends ConfigurableNodeFactory<ArchiveZipConnectorNodeModel>
+    implements NodeDialogFactory, KaiNodeInterfaceFactory {
     /**
      * Connect group ID of dynamic port.
      */
     public static final String FS_CONNECT_GRP_ID = "Input File System";
-
-    @Override
-    protected NodeDialogPane createNodeDialogPane(final NodeCreationConfiguration cfg) {
-        return new ArchiveZipConnectorNodeDialog(cfg);
-    }
 
     @Override
     protected ArchiveZipConnectorNodeModel createNodeModel(final NodeCreationConfiguration cfg) {
@@ -94,7 +109,7 @@ public class ArchiveZipConnectorNodeFactory extends ConfigurableNodeFactory<Arch
 
     @Override
     public NodeView<ArchiveZipConnectorNodeModel> createNodeView(final int viewIndex,
-            final ArchiveZipConnectorNodeModel nodeModel) {
+        final ArchiveZipConnectorNodeModel nodeModel) {
         return null;
     }
 
@@ -103,5 +118,76 @@ public class ArchiveZipConnectorNodeFactory extends ConfigurableNodeFactory<Arch
         return true;
     }
 
-}
+    private static final String NODE_NAME = "ZIP Archive Connector";
 
+    private static final String NODE_ICON = "./file_system_connector.png";
+
+    private static final String SHORT_DESCRIPTION = """
+            This node creates a file system connection that allows to read the files/folders stored inside a ZIP
+                archive.
+            """;
+
+    private static final String FULL_DESCRIPTION = """
+            <p>
+                This node creates a file system connection that allows to read the files/folders stored inside a ZIP
+                archive. The resulting file system connection output port allows downstream nodes to read the compressed
+                files from a zip archive file.
+            </p>
+            <p>
+                <b>Path syntax:</b> Paths for this connector are specified with a UNIX-like syntax such as
+                <code>/myfolder/myfile</code>. An absolute path consists of:
+                <ul>
+                    <li>A leading slash ("/").</li>
+                    <li>Followed by the path to the file ("myfolder/myfile" in the above example).</li>
+                </ul>
+            </p>
+            <p>
+                <b>Note:</b> When the ZIP file changes, this node has to be reset and re-executed, otherwise
+                its behavior is undefined, which may result in errors and/or invalid data being read.
+            </p>
+            """;
+
+    private static final List<PortDescription> INPUT_PORTS =
+        List.of(dynamicPort(FS_CONNECT_GRP_ID, FS_CONNECT_GRP_ID, """
+                File system that can be used to provide a zip archive file.
+                """));
+
+    private static final List<PortDescription> OUTPUT_PORTS =
+        List.of(fixedPort("ZIP Archive File System Connection", """
+                ZIP Archive File System Connection
+                """));
+
+    @Override
+    public NodeDialogPane createNodeDialogPane(final NodeCreationConfiguration cfg) {
+        return NodeDialogManager.createLegacyFlowVariableNodeDialog(createNodeDialog());
+    }
+
+    @Override
+    public NodeDialog createNodeDialog() {
+        return new DefaultNodeDialog(SettingsType.MODEL, ArchiveZipConnectorNodeParameters.class);
+    }
+
+    @Override
+    public NodeDescription createNodeDescription() {
+        return DefaultNodeDescriptionUtil.createNodeDescription( //
+            NODE_NAME, //
+            NODE_ICON, //
+            INPUT_PORTS, //
+            OUTPUT_PORTS, //
+            SHORT_DESCRIPTION, //
+            FULL_DESCRIPTION, //
+            List.of(), //
+            ArchiveZipConnectorNodeParameters.class, //
+            null, //
+            NodeType.Source, //
+            List.of(), //
+            null //
+        );
+    }
+
+    @Override
+    public KaiNodeInterface createKaiNodeInterface() {
+        return new DefaultKaiNodeInterface(Map.of(SettingsType.MODEL, ArchiveZipConnectorNodeParameters.class));
+    }
+
+}
