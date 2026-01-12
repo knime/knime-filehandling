@@ -5,4 +5,4 @@ idePrefixKey=
 indexingBasedOnEclipsePlugIns=true
 projectKey=KNIME_knime-filehandling
 serverId=SonarCloud
-sqPrefixKey=org.knime.ext.ssh.filehandling
+sqPrefixKey=org.knime.ext.smb.filehandling.tests
