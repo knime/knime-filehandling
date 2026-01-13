@@ -104,9 +104,10 @@ public class BoxConnectorNodeModel extends NodeModel {
         if (inSpecs[0] != null) {
             final var optType = ((CredentialPortObjectSpec) inSpecs[0]).getCredentialType();
             if (optType.isPresent() && optType.get() != AccessTokenCredential.TYPE) {
-                throw new InvalidSettingsException(String.format("Provided credential (via input port) is of type '%s', but should be '%s'",//
-                        optType.get().getName(),//
-                        AccessTokenCredential.TYPE.getName()));
+                throw new InvalidSettingsException(
+                        "Provided credential (via input port) is of type '%s', but should be '%s'"
+                                .formatted(optType.get().getName(),
+                                AccessTokenCredential.TYPE.getName()));
             }
         }
 
