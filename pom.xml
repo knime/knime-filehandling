@@ -35,6 +35,7 @@
 				<module>org.knime.ext.box.authenticator</module>
 				<module>org.knime.ext.box.authenticator.tests</module>
 				<module>org.knime.ext.box.filehandling</module>
+				<module>org.knime.ext.box.filehandling.tests</module>
 				<module>org.knime.features.base.filehandling</module>
 				<module>org.knime.features.ext.box.filehandling</module>
 				<module>org.knime.update.filehandling</module>

@@ -44,66 +44,61 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2023-02-15 (Alexander Bondaletov): created
+ *   2026-01-13 (AI Migration Pipeline v1.2): created
  */
 package org.knime.ext.box.filehandling.node;
 
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeFactory;
-import org.knime.credentials.base.CredentialPortObject;
-import org.knime.filehandling.core.port.FileSystemPortObject;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettings;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersUtil;
+import org.knime.credentials.base.CredentialPortObjectSpec;
+import org.knime.credentials.base.CredentialType;
+import org.knime.testing.node.dialog.DefaultNodeSettingsSnapshotTest;
+import org.knime.testing.node.dialog.SnapshotTestConfiguration;
 
 /**
- * Node factory for the Box Connector.
+ * Snapshot test for {@link BoxConnectorNodeParameters}.
  *
- * @author Alexander Bondaletov, Redfield SE
- * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
  * @author AI Migration Pipeline v1.2
  */
-@SuppressWarnings({ "restriction", "deprecation" })
-public class BoxConnectorNodeFactory extends WebUINodeFactory<BoxConnectorNodeModel> {
+@SuppressWarnings("restriction")
+final class BoxConnectorNodeParametersTest extends DefaultNodeSettingsSnapshotTest {
 
-    private static final String NODE_NAME = "Box Connector";
-
-    private static final String NODE_ICON = "./file_system_connector.png";
-
-    private static final String SHORT_DESCRIPTION = "Connects to Box in order to read/write files in downstream nodes.";
-
-    private static final String FULL_DESCRIPTION = """
-            <p>This node connects to Box. The resulting output port allows downstream nodes to access
-            <i>files</i>, e.g. to read or write, or to perform other file system operations
-            (browse/list files, copy, move, ...).</p>
-
-            <p><b>Path syntax:</b> Paths for this connector are specified with a UNIX-like syntax such as
-            /myfolder/myfile. An absolute path consists of:
-                <ol>
-                    <li>A leading slash ("/").</li>
-                    <li>Followed by the path to the file ("myfolder/myfile" in the above example).</li>
-                </ol>
-            </p>""";
-
-    private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder() //
-        .name(NODE_NAME) //
-        .icon(NODE_ICON) //
-        .shortDescription(SHORT_DESCRIPTION) //
-        .fullDescription(FULL_DESCRIPTION) //
-        .modelSettingsClass(BoxConnectorNodeParameters.class) //
-        .nodeType(NodeType.Source) //
-        .sinceVersion(5, 1, 0) //
-        .addInputPort("Box Credential", CredentialPortObject.TYPE, "Box Credential") //
-        .addOutputPort("Box File System Connection", FileSystemPortObject.TYPE, "Box File System Connection") //
-        .build();
-
-    /**
-     * Create a new factory.
-     */
-    public BoxConnectorNodeFactory() {
-        super(CONFIGURATION);
+    BoxConnectorNodeParametersTest() {
+        super(getConfig());
     }
 
-    @Override
-    public BoxConnectorNodeModel createNodeModel() {
-        return new BoxConnectorNodeModel();
+    private static SnapshotTestConfiguration getConfig() {
+        return SnapshotTestConfiguration.builder() //
+            .withInputPortObjectSpecs(createInputPortSpecs()) //
+            .testJsonFormsForModel(BoxConnectorNodeParameters.class) //
+            .testJsonFormsWithInstance(SettingsType.MODEL, BoxConnectorNodeParametersTest::readSettings) //
+            .testNodeSettingsStructure(BoxConnectorNodeParametersTest::readSettings) //
+            .build();
+    }
+
+    private static BoxConnectorNodeParameters readSettings() {
+        try {
+            var path = getSnapshotPath(BoxConnectorNodeParameters.class).getParent().resolve("node_settings")
+                .resolve("BoxConnectorNodeParameters.xml");
+            try (var fis = new FileInputStream(path.toFile())) {
+                var nodeSettings = NodeSettings.loadFromXML(fis);
+                return NodeParametersUtil.loadSettings(nodeSettings.getNodeSettings(SettingsType.MODEL.getConfigKey()),
+                    BoxConnectorNodeParameters.class);
+            }
+        } catch (IOException | InvalidSettingsException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static PortObjectSpec[] createInputPortSpecs() {
+        // Box Connector has a Credential input port
+        return new PortObjectSpec[]{new CredentialPortObjectSpec()};
     }
 
 }
