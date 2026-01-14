@@ -49,6 +49,7 @@
 package org.knime.ext.ssh.filehandling.node.auth;
 
 import org.knime.core.node.context.NodeCreationConfiguration;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentialsAuthProviderSettings;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.AuthType;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
@@ -79,6 +80,7 @@ public final class SshAuth {
     public static AuthSettings createAuthSettings(final NodeCreationConfiguration cfg) {
         return new AuthSettings.Builder() //
                 .add(new UserPasswordAuthProviderSettings(StandardAuthTypes.USER_PASSWORD, true)) //
+                .add(new LegacyCredentialsAuthProviderSettings(StandardAuthTypes.USER_PASSWORD_V2, true)) //
                 .add(new KeyFileAuthProviderSettings(cfg)) //
                 .defaultType(StandardAuthTypes.USER_PASSWORD) //
                 .build();
