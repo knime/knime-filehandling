@@ -63,11 +63,13 @@ import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelectio
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.LegacyReaderFileSelectionPersistor;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.SingleFileSelectionMode;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.WithCustomFileSystem;
-import org.knime.credentials.base.node.CredentialsSettings.CredentialsFlowVarChoicesProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentials;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentialsAuthProviderSettings;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
 import org.knime.ext.ssh.filehandling.node.auth.KeyFileAuthProviderSettings;
 import org.knime.filehandling.core.connections.FSLocation;
-import org.knime.filehandling.core.connections.base.auth.IDWithSecretAuthProviderSettings;
+import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;
+import org.knime.filehandling.core.connections.base.auth.UserPasswordAuthProviderSettings;
 import org.knime.node.parameters.Advanced;
 import org.knime.node.parameters.NodeParameters;
 import org.knime.node.parameters.NodeParametersInput;
@@ -76,6 +78,7 @@ import org.knime.node.parameters.layout.After;
 import org.knime.node.parameters.layout.Layout;
 import org.knime.node.parameters.layout.Section;
 import org.knime.node.parameters.migration.LoadDefaultsForAbsentFields;
+import org.knime.node.parameters.migration.Migration;
 import org.knime.node.parameters.persistence.NodeParametersPersistor;
 import org.knime.node.parameters.persistence.Persist;
 import org.knime.node.parameters.persistence.Persistor;
@@ -85,14 +88,11 @@ import org.knime.node.parameters.updates.EffectPredicate;
 import org.knime.node.parameters.updates.EffectPredicateProvider;
 import org.knime.node.parameters.updates.ParameterReference;
 import org.knime.node.parameters.updates.StateProvider;
-import org.knime.node.parameters.updates.ValueProvider;
 import org.knime.node.parameters.updates.ValueReference;
 import org.knime.node.parameters.widget.OptionalWidget;
 import org.knime.node.parameters.widget.OptionalWidget.DefaultValueProvider;
-import org.knime.node.parameters.widget.choices.ChoicesProvider;
 import org.knime.node.parameters.widget.choices.Label;
 import org.knime.node.parameters.widget.credentials.Credentials;
-import org.knime.node.parameters.widget.credentials.CredentialsWidget;
 import org.knime.node.parameters.widget.credentials.PasswordWidget;
 import org.knime.node.parameters.widget.number.NumberInputWidget;
 import org.knime.node.parameters.widget.number.NumberInputWidgetValidation.MaxValidation;
@@ -300,22 +300,18 @@ final class SshConnectorNodeParameters implements NodeParameters {
         private static final NodeSettingsRO createAuthNodeSettings(final AuthenticationParameters params) {
             final var settings = new NodeSettings(AuthenticationParameters.CFG_KEY);
             AuthenticationParameters.AuthenticationMethodPersistor.saveInternal(params.m_type, settings);
-            final var userPwdSettings = createUserPwdSettings(params.m_userPwdAuth);
+            final var userPwdSettings = createUserPwdAuth(params.m_userPasswordAuth);
             settings.addNodeSettings(userPwdSettings);
             final var keyFileSettings = createKeyFileSettings(params.m_keyFileAuth);
             settings.addNodeSettings(keyFileSettings);
             return settings;
         }
 
-        private static final NodeSettings createUserPwdSettings(
-                final AuthenticationParameters.UserPwdAuthParameters params) {
-            final var userPwdSettings = new NodeSettings(AuthenticationParameters.CFG_KEY_USER_PWD);
-            userPwdSettings.addBoolean(AuthenticationParameters.ENTRY_KEY_USE_CREDENTIALS, params.m_useCredentials);
-            userPwdSettings.addString(AuthenticationParameters.UserPwdAuthParameters.ENTRY_KEY_CREDENTIALS,
-                    params.m_credentialsFlowVarName);
-            AuthenticationParameters.UserPwdAuthParameters.UserPasswordPersistor.saveInternal(params.m_userPassword,
-                    userPwdSettings);
-            return userPwdSettings;
+        private static final NodeSettings createUserPwdAuth(final LegacyCredentials params) {
+            final var credentialsSettings = new NodeSettings(AuthenticationParameters.CFG_KEY_USER_PWD_V2);
+            new LegacyCredentialsAuthProviderSettings(StandardAuthTypes.USER_PASSWORD_V2, true, params)
+                    .saveSettingsForModel(credentialsSettings);
+            return credentialsSettings;
         }
 
         private static final NodeSettings createKeyFileSettings(
@@ -362,21 +358,17 @@ final class SshConnectorNodeParameters implements NodeParameters {
 
         private static final String CFG_KEY = "auth";
         private static final String CFG_KEY_USER_PWD = "user_pwd";
+        private static final String CFG_KEY_USER_PWD_V2 = "user_pwd_v2";
         private static final String CFG_KEY_KEY_FILE = "key";
         private static final String ENTRY_KEY_USE_CREDENTIALS = "use_credentials";
 
         enum AuthenticationMethod {
             @Label(value = "Username & password", description = """
                     Authenticate with a username and password. Either enter a username and password, in which case \
-                    the password will be persistently stored (in encrypted form) with the workflow. Or select "Use \
-                    credentials" and a choose a credentials flow variable to supply the username and password. The \
+                    the password will be persistently stored (in encrypted form) with the workflow. Or overwrite \
+                    the setting using a credentials flow variable to supply the username and password. The \
                     password may be empty if the SSH server permits empty passwords.""")
             USERNAME_PASSWORD,
-
-            @Label(value = "Use credentials", description = """
-                    Authenticate with a username and password stored in a credentials flow variable. The password may \
-                    be empty if the SSH server permits empty passwords.""")
-            CREDENTIALS,
 
             @Label(value = "Key file", description = """
                     Authenticate using a private key file. You have to specify the Username and the private Key file. \
@@ -403,32 +395,10 @@ final class SshConnectorNodeParameters implements NodeParameters {
             }
         }
 
-        static final class IsCredentialsAuth implements EffectPredicateProvider {
-            @Override
-            public EffectPredicate init(final PredicateInitializer i) {
-                return i.getEnum(AuthenticationMethodRef.class).isOneOf(AuthenticationMethod.CREDENTIALS);
-            }
-        }
-
         static final class IsKeyFileAuth implements EffectPredicateProvider {
             @Override
             public EffectPredicate init(final PredicateInitializer i) {
                 return i.getEnum(AuthenticationMethodRef.class).isOneOf(AuthenticationMethod.KEY_FILE);
-            }
-        }
-
-        static final class UseCredentialsValueProvider implements StateProvider<Boolean> {
-
-            private Supplier<AuthenticationMethod> m_authenticationMethodSupplier;
-
-            @Override
-            public void init(final StateProviderInitializer initializer) {
-                m_authenticationMethodSupplier = initializer.computeFromValueSupplier(AuthenticationMethodRef.class);
-            }
-
-            @Override
-            public Boolean computeState(final NodeParametersInput parametersInput) {
-                return m_authenticationMethodSupplier.get() == AuthenticationMethod.CREDENTIALS;
             }
         }
 
@@ -441,16 +411,12 @@ final class SshConnectorNodeParameters implements NodeParameters {
                 final var typeString = settings.getString(ENTRY_KEY, "");
                 if (typeString.equals(CFG_KEY_KEY_FILE)) {
                     return AuthenticationMethod.KEY_FILE;
-                }
-
-                if (typeString.equals(CFG_KEY_USER_PWD)) {
-                    final var useCredentials = settings.getNodeSettings(CFG_KEY_USER_PWD)
-                            .getBoolean(ENTRY_KEY_USE_CREDENTIALS, false);
-                    return useCredentials ? AuthenticationMethod.CREDENTIALS : AuthenticationMethod.USERNAME_PASSWORD;
+                } else if (typeString.equals(CFG_KEY_USER_PWD) || typeString.equals(CFG_KEY_USER_PWD_V2)) {
+                    return AuthenticationMethod.USERNAME_PASSWORD;
                 }
                 throw new InvalidSettingsException(
                         String.format("Unknown authentication method: '%s'. Possible values: '%s', '%s'", typeString,
-                                CFG_KEY_USER_PWD, CFG_KEY_KEY_FILE));
+                                CFG_KEY_USER_PWD_V2, CFG_KEY_KEY_FILE));
 
             }
 
@@ -462,7 +428,7 @@ final class SshConnectorNodeParameters implements NodeParameters {
             private static void saveInternal(final AuthenticationMethod param, final NodeSettingsWO settings) {
                 switch (param) {
                 case KEY_FILE -> settings.addString(ENTRY_KEY, CFG_KEY_KEY_FILE);
-                case USERNAME_PASSWORD, CREDENTIALS -> settings.addString(ENTRY_KEY, CFG_KEY_USER_PWD);
+                case USERNAME_PASSWORD -> settings.addString(ENTRY_KEY, CFG_KEY_USER_PWD_V2);
                 }
             }
 
@@ -474,87 +440,40 @@ final class SshConnectorNodeParameters implements NodeParameters {
 
         // ----- SECOND LEVEL NESTING NEEDED FOR BACKWARD COMPATIBILITY -----
 
-        @Persist(configKey = CFG_KEY_USER_PWD)
-        UserPwdAuthParameters m_userPwdAuth = new UserPwdAuthParameters();
+        @Persist(configKey = CFG_KEY_USER_PWD_V2)
+        @Migration(LoadFromUserPwdAuthMigration.class)
+        @Effect(predicate = IsUserPwdAuth.class, type = EffectType.SHOW)
+        @Widget(title = "Username & Password", description = "Credentials for username and password authentication.")
+        LegacyCredentials m_userPasswordAuth = new LegacyCredentials(new Credentials());
+
+        static final class LoadFromUserPwdAuthMigration
+                extends LegacyCredentialsAuthProviderSettings.FromUserPasswordAuthProviderSettingsMigration {
+
+            protected LoadFromUserPwdAuthMigration() {
+                super(new UserPasswordAuthProviderSettings(StandardAuthTypes.USER_PASSWORD, true));
+            }
+
+        }
 
         @Persist(configKey = CFG_KEY_KEY_FILE)
+        @Effect(predicate = IsKeyFileAuth.class, type = EffectType.SHOW)
         KeyFileAuthParameters m_keyFileAuth = new KeyFileAuthParameters();
-
-        static final class UserPwdAuthParameters implements NodeParameters {
-
-            private static final String ENTRY_KEY_CREDENTIALS = "credentials";
-
-            @Widget(title = "Username & password", description = """
-                    Authentication settings for username and password. Select "Use credentials" as authentication \
-                    method to provide the username and password via a credentials flow variable.
-                    """)
-            @Effect(predicate = IsUserPwdAuth.class, type = EffectType.SHOW)
-            @CredentialsWidget
-            @Persistor(UserPasswordPersistor.class)
-            Credentials m_userPassword = new Credentials(System.getProperty("user.name"), "");
-
-            @ValueProvider(UseCredentialsValueProvider.class)
-            @Persist(configKey = ENTRY_KEY_USE_CREDENTIALS)
-            boolean m_useCredentials;
-
-            @Widget(title = "Use credentials", description = "Use credentials from a flow variable.")
-            @Effect(predicate = IsCredentialsAuth.class, type = EffectType.SHOW)
-            @ChoicesProvider(CredentialsFlowVarChoicesProvider.class)
-            @Persist(configKey = ENTRY_KEY_CREDENTIALS)
-            String m_credentialsFlowVarName;
-
-            static final class UserPasswordPersistor implements NodeParametersPersistor<Credentials> {
-
-                /**
-                 * See {@link IDWithSecretAuthProviderSettings#SECRET_ENCRYPTION_KEY}.
-                 */
-                private static final String USER_PWD_ENCRYPTION_KEY = "laig9eeyeix:ae$Lo6lu";
-                private static final String ENTRY_KEY_USER = "user";
-                private static final String ENTRY_KEY_PASSWORD = "password";
-
-                @Override
-                public Credentials load(final NodeSettingsRO settings) throws InvalidSettingsException {
-                    final var user = settings.getString(ENTRY_KEY_USER, System.getProperty("user.name"));
-                    final var password = settings.getPassword(ENTRY_KEY_PASSWORD, USER_PWD_ENCRYPTION_KEY, "");
-                    return new Credentials(user, password);
-                }
-
-                @Override
-                public void save(final Credentials param, final NodeSettingsWO settings) {
-                    saveInternal(param, settings);
-                }
-
-                private static void saveInternal(final Credentials param, final NodeSettingsWO settings) {
-                    settings.addString(ENTRY_KEY_USER, param.getUsername());
-                    settings.addPassword(ENTRY_KEY_PASSWORD, USER_PWD_ENCRYPTION_KEY, param.getPassword());
-                }
-
-                @Override
-                public String[][] getConfigPaths() {
-                    return new String[][] { { ENTRY_KEY_USER } }; // See AP-14067: It is not possible to overwrite
-                                                                  // password fields
-                }
-            }
-        }
 
         static final class KeyFileAuthParameters implements NodeParameters {
 
             @Widget(title = "Username", description = "Username for key file authentication.")
-            @Effect(predicate = IsKeyFileAuth.class, type = EffectType.SHOW)
             @Persistor(KeyFileUserPersistor.class)
             @TextInputWidget(patternValidation = IsNotBlankValidation.class)
             String m_keyFileUser = System.getProperty("user.name");
 
             @Widget(title = "Key passphrase", description = "Passphrase for key file authentication.")
             @OptionalWidget(defaultProvider = KeyFilePasswordDefaultProvider.class)
-            @Effect(predicate = IsKeyFileAuth.class, type = EffectType.SHOW)
             @PasswordWidget
             @Persistor(KeyFilePwdPersistor.class)
             @ValueReference(KeyFilePwdRef.class)
             Optional<Credentials> m_keyFilePwd = Optional.empty();
 
             @Widget(title = "Key file", description = "Private key file for authentication.")
-            @Effect(predicate = IsKeyFileAuth.class, type = EffectType.SHOW)
             @Persistor(KeyFilePersistor.class)
             FileSelection m_keyFile = new FileSelection();
 

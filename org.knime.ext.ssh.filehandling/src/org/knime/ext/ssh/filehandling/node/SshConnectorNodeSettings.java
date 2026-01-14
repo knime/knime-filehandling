@@ -63,6 +63,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelNumber;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentialsAuthProviderSettings;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
 import org.knime.ext.ssh.filehandling.fs.SshFSConnectionConfig;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
@@ -497,6 +498,12 @@ public class SshConnectorNodeSettings {
                     .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD);
             cfg.setUserName(userPwdSettings.getUser(credentials::get));
             cfg.setPassword(userPwdSettings.getPassword(credentials::get));
+        } else if (auth.getAuthType() == StandardAuthTypes.USER_PASSWORD_V2) {
+            final LegacyCredentialsAuthProviderSettings credSettings = auth
+                    .getSettingsForAuthType(StandardAuthTypes.USER_PASSWORD_V2);
+            final var cred = credSettings.getCredentials(credentials);
+            cfg.setUserName(cred.getUsername());
+            cfg.setPassword(cred.getPassword());
         } else if (auth.getAuthType() == SshAuth.KEY_FILE_AUTH_TYPE) {
             final KeyFileAuthProviderSettings keyFileSettings = auth.getSettingsForAuthType(SshAuth.KEY_FILE_AUTH_TYPE);
             cfg.setUserName(keyFileSettings.getKeyUserModel().getStringValue());
