@@ -48,55 +48,66 @@
  */
 package org.knime.ext.ftp.filehandling.node;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.knime.core.webui.node.impl.WebUINodeConfiguration;
+import org.knime.core.webui.node.impl.WebUINodeFactory;
+import org.knime.filehandling.core.port.FileSystemPortObject;
 
 /**
  * Factory class for FTP Connection Node.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
+ * @author AI Migration Pipeline v1.2
  */
-public class FtpConnectorNodeFactory extends NodeFactory<FtpConnectorNodeModel> {
+@SuppressWarnings({ "restriction", "deprecation" })
+public class FtpConnectorNodeFactory extends WebUINodeFactory<FtpConnectorNodeModel> {
+
+    private static final String NODE_NAME = "FTP Connector";
+
+    private static final String NODE_ICON = "./file_system_connector.png";
+
+    private static final String SHORT_DESCRIPTION = """
+            Connects to remote file system via FTP in order to read/write files in downstream nodes.
+            """;
+
+    private static final String FULL_DESCRIPTION = """
+            <p>
+                This node connects to a remote FTP server. The resulting output port allows downstream nodes to
+                access the <i>files</i> of the remote server, e.g. to read or write, or to perform other file system
+                operations (browse/list files, copy, move, ...).
+            </p>
+            <p>
+                <b>Path syntax:</b> Paths for FTP are specified with a UNIX-like syntax, for example
+                <tt>/myfolder/file.csv</tt>, which is an absolute path that consists of:
+                <ol>
+                    <li>A leading slash (<tt>/</tt>).</li>
+                    <li>The name of a folder (<tt>myfolder</tt>), followed by a slash.</li>
+                    <li>Followed by the name of a file (<tt>file.csv</tt>).</li>
+                </ol>
+            </p>
+            """;
+
+    private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder() //
+            .name(NODE_NAME) //
+            .icon(NODE_ICON) //
+            .shortDescription(SHORT_DESCRIPTION) //
+            .fullDescription(FULL_DESCRIPTION) //
+            .modelSettingsClass(FtpConnectorNodeParameters.class) //
+            .nodeType(NodeType.Source) //
+            .sinceVersion(4, 3, 0) //
+            .addOutputPort("FTP File System Connection", FileSystemPortObject.TYPE, "FTP File System Connection.") //
+            .keywords("file", "remote", "transfer", "protocol", "FTP", "FTPS") //
+            .build();
 
     /**
-     * {@inheritDoc}
+     * Create a new factory.
      */
+    public FtpConnectorNodeFactory() {
+        super(CONFIGURATION);
+    }
+
     @Override
     public FtpConnectorNodeModel createNodeModel() {
         return new FtpConnectorNodeModel();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected int getNrNodeViews() {
-        return 0;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeView<FtpConnectorNodeModel> createNodeView(final int viewIndex,
-            final FtpConnectorNodeModel nodeModel) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected NodeDialogPane createNodeDialogPane() {
-        return new FtpConnectorNodeDialog();
     }
 }
