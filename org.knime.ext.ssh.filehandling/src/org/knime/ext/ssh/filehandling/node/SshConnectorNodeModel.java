@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -93,7 +94,7 @@ public class SshConnectorNodeModel extends NodeModel {
     private static final Consumer<StatusMessage> NOOP_STATUS_CONSUMER = s -> {
     };
 
-    private final SshConnectorNodeSettings m_settings;
+    private SshConnectorNodeSettings m_settings;
 
     private final NodeModelStatusConsumer m_statusConsumer = new NodeModelStatusConsumer(
             EnumSet.of(MessageType.ERROR, MessageType.WARNING));
@@ -101,6 +102,8 @@ public class SshConnectorNodeModel extends NodeModel {
     private String m_fsId;
 
     private SshFSConnection m_connection;
+
+    private final Supplier<SshConnectorNodeSettings> m_settingsCreator;
 
     /**
      * Creates new instance.
@@ -111,8 +114,8 @@ public class SshConnectorNodeModel extends NodeModel {
     protected SshConnectorNodeModel(final NodeCreationConfiguration creationConfig) {
         super(creationConfig.getPortConfig().orElseThrow(IllegalStateException::new).getInputPorts(),
                 creationConfig.getPortConfig().orElseThrow(IllegalStateException::new).getOutputPorts());
-
-        m_settings = new SshConnectorNodeSettings(creationConfig);
+        m_settingsCreator = () -> new SshConnectorNodeSettings(creationConfig);
+        m_settings = m_settingsCreator.get();
     }
 
     @Override
@@ -199,7 +202,8 @@ public class SshConnectorNodeModel extends NodeModel {
      */
     @Override
     protected void validateSettings(final NodeSettingsRO input) throws InvalidSettingsException {
-        m_settings.validateSettings(input);
+        SshConnectorNodeSettings sshConnectorNodeSettings = m_settingsCreator.get();
+        sshConnectorNodeSettings.validateSettings(input);
     }
 
     /**
@@ -207,6 +211,7 @@ public class SshConnectorNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO input) throws InvalidSettingsException {
+        m_settings = m_settingsCreator.get();
         m_settings.loadSettingsForModel(input);
     }
 

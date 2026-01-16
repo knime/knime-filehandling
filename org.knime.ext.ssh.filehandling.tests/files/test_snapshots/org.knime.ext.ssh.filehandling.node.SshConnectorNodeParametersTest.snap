@@ -5,13 +5,12 @@
       "port" : 22,
       "authentication" : {
         "type" : "USERNAME_PASSWORD",
-        "userPwdAuth" : {
-          "userPassword" : {
+        "userPasswordAuth" : {
+          "credentials" : {
             "isHiddenPassword" : false,
             "isHiddenSecondFactor" : false,
-            "username" : "snapshotTestUser"
-          },
-          "useCredentials" : false
+            "username" : ""
+          }
         },
         "keyFileAuth" : {
           "keyFileUser" : "snapshotTestUser",
@@ -132,29 +131,17 @@
                   "const" : "USERNAME_PASSWORD",
                   "title" : "Username & password"
                 }, {
-                  "const" : "CREDENTIALS",
-                  "title" : "Use credentials"
-                }, {
                   "const" : "KEY_FILE",
                   "title" : "Key file"
                 } ],
                 "title" : "Authentication method",
-                "description" : "Specify the authentication method to use.\n<ul>\n<li><b>Username &amp; password</b>: Authenticate with a username and password. Either enter a username and password, in which case the password will be persistently stored (in encrypted form) with the workflow. Or select \"Use credentials\" and a choose a credentials flow variable to supply the username and password. The password may be empty if the SSH server permits empty passwords.</li>\n<li><b>Use credentials</b>: Authenticate with a username and password stored in a credentials flow variable. The password may be empty if the SSH server permits empty passwords.</li>\n<li><b>Key file</b>: Authenticate using a private key file. You have to specify the Username and the private Key file. A Key passphrase can optionally be provided, in case the private key file is passphrase-protected. Note that the passphrase is persistently stored (in encrypted form) in the settings of this node and will be saved with the workflow. This node supports the following private key formats: RFC4716 (default OpenSSH2 private key format), PKCS#8, PKCS#1 (traditional PEM format, OpenSSL-compatible), and ppk (PuTTY format).</li>\n</ul>",
+                "description" : "Specify the authentication method to use.\n<ul>\n<li><b>Username &amp; password</b>: Authenticate with a username and password. Either enter a username and password, in which case the password will be persistently stored (in encrypted form) with the workflow. Or overwrite the setting using a credentials flow variable to supply the username and password. The password may be empty if the SSH server permits empty passwords.</li>\n<li><b>Key file</b>: Authenticate using a private key file. You have to specify the Username and the private Key file. A Key passphrase can optionally be provided, in case the private key file is passphrase-protected. Note that the passphrase is persistently stored (in encrypted form) in the settings of this node and will be saved with the workflow. This node supports the following private key formats: RFC4716 (default OpenSSH2 private key format), PKCS#8, PKCS#1 (traditional PEM format, OpenSSL-compatible), and ppk (PuTTY format).</li>\n</ul>",
                 "default" : "USERNAME_PASSWORD"
               },
-              "userPwdAuth" : {
+              "userPasswordAuth" : {
                 "type" : "object",
                 "properties" : {
-                  "credentialsFlowVarName" : {
-                    "type" : "string",
-                    "title" : "Use credentials",
-                    "description" : "Use credentials from a flow variable."
-                  },
-                  "useCredentials" : {
-                    "type" : "boolean",
-                    "default" : false
-                  },
-                  "userPassword" : {
+                  "credentials" : {
                     "type" : "object",
                     "properties" : {
                       "password" : {
@@ -170,34 +157,35 @@
                         "default" : ""
                       }
                     },
-                    "title" : "Username & password",
-                    "description" : "Authentication settings for username and password. Select \"Use credentials\" as authentication method to provide the username and password via a credentials flow variable.\n",
                     "default" : {
                       "isHiddenPassword" : false,
                       "isHiddenSecondFactor" : false,
-                      "username" : "snapshotTestUser"
+                      "username" : ""
                     }
+                  },
+                  "flowVarName" : {
+                    "type" : "string"
                   }
                 },
+                "title" : "Username & Password",
+                "description" : "Credentials for username and password authentication.",
                 "default" : {
-                  "userPassword" : {
+                  "credentials" : {
                     "isHiddenPassword" : false,
                     "isHiddenSecondFactor" : false,
-                    "username" : "snapshotTestUser"
-                  },
-                  "useCredentials" : false
+                    "username" : ""
+                  }
                 }
               }
             },
             "default" : {
               "type" : "USERNAME_PASSWORD",
-              "userPwdAuth" : {
-                "userPassword" : {
+              "userPasswordAuth" : {
+                "credentials" : {
                   "isHiddenPassword" : false,
                   "isHiddenSecondFactor" : false,
-                  "username" : "snapshotTestUser"
-                },
-                "useCredentials" : false
+                  "username" : ""
+                }
               },
               "keyFileAuth" : {
                 "keyFileUser" : "snapshotTestUser",
@@ -340,11 +328,9 @@
         "scope" : "#/properties/model/properties/authentication/properties/type"
       }, {
         "type" : "Control",
-        "scope" : "#/properties/model/properties/authentication/properties/userPwdAuth/properties/userPassword",
+        "scope" : "#/properties/model/properties/authentication/properties/userPasswordAuth",
         "options" : {
-          "passwordLabel" : "Password",
-          "usernameLabel" : "Username",
-          "format" : "credentials"
+          "format" : "legacyCredentials"
         },
         "rule" : {
           "effect" : "SHOW",
@@ -353,24 +339,6 @@
             "schema" : {
               "oneOf" : [ {
                 "const" : "USERNAME_PASSWORD"
-              } ]
-            }
-          }
-        }
-      }, {
-        "type" : "Control",
-        "scope" : "#/properties/model/properties/authentication/properties/userPwdAuth/properties/credentialsFlowVarName",
-        "options" : {
-          "format" : "dropDown"
-        },
-        "providedOptions" : [ "possibleValues" ],
-        "rule" : {
-          "effect" : "SHOW",
-          "condition" : {
-            "scope" : "#/properties/model/properties/authentication/properties/type",
-            "schema" : {
-              "oneOf" : [ {
-                "const" : "CREDENTIALS"
               } ]
             }
           }
@@ -565,20 +533,18 @@
               "type" : {
                 "configPaths" : [ [ "type" ], [ "user_pwd", "use_credentials" ] ]
               },
-              "userPwdAuth" : {
+              "userPasswordAuth" : {
                 "type" : "object",
                 "properties" : {
-                  "userPassword" : {
-                    "configPaths" : [ [ "user" ] ]
-                  },
-                  "useCredentials" : {
-                    "configKey" : "use_credentials"
-                  },
-                  "credentialsFlowVarName" : {
-                    "configKey" : "credentials"
+                  "credentials" : { },
+                  "flowVarName" : {
+                    "configPaths" : [ ]
                   }
                 },
-                "configKey" : "user_pwd"
+                "configKey" : "user_pwd_v2",
+                "deprecatedConfigKeys" : [ {
+                  "deprecated" : [ [ "user_pwd" ] ]
+                } ]
               },
               "keyFileAuth" : {
                 "type" : "object",
@@ -623,13 +589,6 @@
         "secondFactor" : ""
       }
     } ]
-  }, {
-    "scope" : "#/properties/model/properties/authentication/properties/userPwdAuth/properties/credentialsFlowVarName",
-    "providedOptionName" : "possibleValues",
-    "values" : [ {
-      "indices" : [ ],
-      "value" : [ ]
-    } ]
   } ],
   "globalUpdates" : [ {
     "trigger" : {
@@ -642,11 +601,6 @@
       "scope" : "#/properties/model/properties/authentication"
     },
     "dependencies" : [ "#/properties/model/properties/authentication", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/knownHostsFile", "#/properties/model/properties/maxExecChannelCount", "#/properties/model/properties/maxSessionCount", "#/properties/model/properties/port", "#/properties/model/properties/useKnownHostsFile" ]
-  }, {
-    "trigger" : {
-      "scope" : "#/properties/model/properties/authentication/properties/type"
-    },
-    "dependencies" : [ "#/properties/model/properties/authentication/properties/type" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/connectionTimeout"
