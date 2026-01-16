@@ -69,7 +69,6 @@ import org.knime.node.parameters.Widget;
 import org.knime.node.parameters.layout.Layout;
 import org.knime.node.parameters.layout.Section;
 import org.knime.node.parameters.migration.LoadDefaultsForAbsentFields;
-import org.knime.node.parameters.persistence.Persist;
 import org.knime.node.parameters.updates.ParameterReference;
 import org.knime.node.parameters.updates.StateProvider;
 import org.knime.node.parameters.updates.ValueReference;
@@ -89,8 +88,8 @@ class BoxConnectorNodeParameters implements NodeParameters {
     private static final int DEFAULT_TIMEOUT = 60;
 
     @Advanced
-    @Section(title = "Connection Settings")
-    interface ConnectionSettingsSection {
+    @Section(title = "Timeouts")
+    interface TimeoutsSection {
     }
 
     @Widget(title = "Working directory", description = """
@@ -100,15 +99,13 @@ class BoxConnectorNodeParameters implements NodeParameters {
             i.e. paths that do not have a leading slash. The default working directory is "/".""")
     @FileSelectionWidget(SingleFileSelectionMode.FOLDER)
     @WithCustomFileSystem(connectionProvider = BoxFileSystemConnectionProvider.class)
-    @Persist(configKey = "workingDirectory")
     String m_workingDirectory = BoxFileSystem.SEPARATOR;
 
     @Widget(title = "Connection timeout (seconds)", description = """
             Timeout in seconds to establish a connection,
             or 0 for an infinite timeout.""")
     @NumberInputWidget(minValidation = IsNonNegativeValidation.class)
-    @Persist(configKey = "connectionTimeout")
-    @Layout(ConnectionSettingsSection.class)
+    @Layout(TimeoutsSection.class)
     @ValueReference(ConnectionTimeoutRef.class)
     int m_connectionTimeout = DEFAULT_TIMEOUT;
 
@@ -119,8 +116,7 @@ class BoxConnectorNodeParameters implements NodeParameters {
             Timeout in seconds to read data from an established connection,
             or 0 for an infinite timeout.""")
     @NumberInputWidget(minValidation = IsNonNegativeValidation.class)
-    @Persist(configKey = "readTimeout")
-    @Layout(ConnectionSettingsSection.class)
+    @Layout(TimeoutsSection.class)
     @ValueReference(ReadTimeoutRef.class)
     int m_readTimeout = DEFAULT_TIMEOUT;
 

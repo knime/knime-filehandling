@@ -46,7 +46,7 @@
       },
       "providedOptions" : [ "fileSystemId" ]
     }, {
-      "label" : "Connection Settings",
+      "label" : "Timeouts",
       "type" : "Section",
       "options" : {
         "isAdvanced" : true
@@ -102,15 +102,9 @@
       "model" : {
         "type" : "object",
         "properties" : {
-          "workingDirectory" : {
-            "configKey" : "workingDirectory"
-          },
-          "connectionTimeout" : {
-            "configKey" : "connectionTimeout"
-          },
-          "readTimeout" : {
-            "configKey" : "readTimeout"
-          }
+          "workingDirectory" : { },
+          "connectionTimeout" : { },
+          "readTimeout" : { }
         }
       }
     }
