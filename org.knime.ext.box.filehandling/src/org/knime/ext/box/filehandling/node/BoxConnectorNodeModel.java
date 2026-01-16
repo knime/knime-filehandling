@@ -56,12 +56,10 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.core.webui.node.impl.WebUINodeModel;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.credentials.base.oauth.api.AccessTokenCredential;
@@ -78,7 +76,8 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  *
  * @author Alexander Bondaletov, Redfield SE
  */
-public class BoxConnectorNodeModel extends NodeModel {
+@SuppressWarnings({ "deprecation", "restriction" })
+public class BoxConnectorNodeModel extends WebUINodeModel<BoxConnectorNodeParameters> {
     private static final String FILE_SYSTEM_NAME = "Box";
 
     private final NodeModelStatusConsumer m_statusConsumer = new NodeModelStatusConsumer(
@@ -86,20 +85,20 @@ public class BoxConnectorNodeModel extends NodeModel {
 
     private String m_fsId;
     private BoxFSConnection m_fsConnection;
-    private final BoxConnectorSettings m_settings;
 
     /**
      * Creates new instance
      */
     protected BoxConnectorNodeModel() {
-        super(new PortType[] { CredentialPortObject.TYPE }, new PortType[] { FileSystemPortObject.TYPE });
-        m_settings = new BoxConnectorSettings();
+        super(new PortType[] { CredentialPortObject.TYPE }, new PortType[] { FileSystemPortObject.TYPE },
+                BoxConnectorNodeParameters.class);
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs, final BoxConnectorNodeParameters params)
+            throws InvalidSettingsException {
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
-        m_settings.validate();
+        params.validateInConfigure();
 
         if (inSpecs[0] != null) {
             final var optType = ((CredentialPortObjectSpec) inSpecs[0]).getCredentialType();
@@ -122,13 +121,14 @@ public class BoxConnectorNodeModel extends NodeModel {
     }
 
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
+    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
+            final BoxConnectorNodeParameters params) throws Exception {
         var credential = ((CredentialPortObject) inObjects[0]).getCredential(AccessTokenCredential.class)
                 .orElseThrow(() -> new InvalidSettingsException(
                         "Credential is not available. Please re-execute the authenticator node"));
         var token = credential.getAccessToken();
 
-        var config = m_settings.createFSConnectionConfig(token);
+        var config = params.createFSConnectionConfig(token);
         m_fsConnection = new BoxFSConnection(config);
 
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
@@ -146,21 +146,6 @@ public class BoxConnectorNodeModel extends NodeModel {
     protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         // noting to save
-    }
-
-    @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_settings.saveForModel(settings);
-    }
-
-    @Override
-    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.validateSettings(settings);
-    }
-
-    @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.loadForModel(settings);
     }
 
     @Override

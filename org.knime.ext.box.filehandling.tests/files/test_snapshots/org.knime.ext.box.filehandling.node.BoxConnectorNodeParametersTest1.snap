@@ -46,7 +46,7 @@
       },
       "providedOptions" : [ "fileSystemId" ]
     }, {
-      "label" : "Connection Settings",
+      "label" : "Timeouts",
       "type" : "Section",
       "options" : {
         "isAdvanced" : true
@@ -102,15 +102,9 @@
       "model" : {
         "type" : "object",
         "properties" : {
-          "workingDirectory" : {
-            "configKey" : "workingDirectory"
-          },
-          "connectionTimeout" : {
-            "configKey" : "connectionTimeout"
-          },
-          "readTimeout" : {
-            "configKey" : "readTimeout"
-          }
+          "workingDirectory" : { },
+          "connectionTimeout" : { },
+          "readTimeout" : { }
         }
       }
     }
@@ -120,16 +114,21 @@
       "id" : "after-open-dialog"
     },
     "triggerInitially" : true,
-    "dependencies" : [ "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/readTimeout" ]
+    "dependencies" : [ "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/readTimeout", "#/properties/model/properties/workingDirectory" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/connectionTimeout"
     },
-    "dependencies" : [ "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/readTimeout" ]
+    "dependencies" : [ "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/readTimeout", "#/properties/model/properties/workingDirectory" ]
   }, {
     "trigger" : {
       "scope" : "#/properties/model/properties/readTimeout"
     },
-    "dependencies" : [ "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/readTimeout" ]
+    "dependencies" : [ "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/readTimeout", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/workingDirectory"
+    },
+    "dependencies" : [ "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/readTimeout", "#/properties/model/properties/workingDirectory" ]
   } ]
 }

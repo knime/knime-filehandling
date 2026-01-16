@@ -69,7 +69,6 @@ import org.knime.node.parameters.Widget;
 import org.knime.node.parameters.layout.Layout;
 import org.knime.node.parameters.layout.Section;
 import org.knime.node.parameters.migration.LoadDefaultsForAbsentFields;
-import org.knime.node.parameters.persistence.Persist;
 import org.knime.node.parameters.updates.ParameterReference;
 import org.knime.node.parameters.updates.StateProvider;
 import org.knime.node.parameters.updates.ValueReference;
@@ -89,8 +88,8 @@ class BoxConnectorNodeParameters implements NodeParameters {
     private static final int DEFAULT_TIMEOUT = 60;
 
     @Advanced
-    @Section(title = "Connection Settings")
-    interface ConnectionSettingsSection {
+    @Section(title = "Timeouts")
+    interface TimeoutsSection {
     }
 
     @Widget(title = "Working directory", description = """
@@ -100,15 +99,17 @@ class BoxConnectorNodeParameters implements NodeParameters {
             i.e. paths that do not have a leading slash. The default working directory is "/".""")
     @FileSelectionWidget(SingleFileSelectionMode.FOLDER)
     @WithCustomFileSystem(connectionProvider = BoxFileSystemConnectionProvider.class)
-    @Persist(configKey = "workingDirectory")
+    @ValueReference(WorkingDirectoryRef.class)
     String m_workingDirectory = BoxFileSystem.SEPARATOR;
+
+    static final class WorkingDirectoryRef implements ParameterReference<String> {
+    }
 
     @Widget(title = "Connection timeout (seconds)", description = """
             Timeout in seconds to establish a connection,
             or 0 for an infinite timeout.""")
     @NumberInputWidget(minValidation = IsNonNegativeValidation.class)
-    @Persist(configKey = "connectionTimeout")
-    @Layout(ConnectionSettingsSection.class)
+    @Layout(TimeoutsSection.class)
     @ValueReference(ConnectionTimeoutRef.class)
     int m_connectionTimeout = DEFAULT_TIMEOUT;
 
@@ -119,20 +120,29 @@ class BoxConnectorNodeParameters implements NodeParameters {
             Timeout in seconds to read data from an established connection,
             or 0 for an infinite timeout.""")
     @NumberInputWidget(minValidation = IsNonNegativeValidation.class)
-    @Persist(configKey = "readTimeout")
-    @Layout(ConnectionSettingsSection.class)
+    @Layout(TimeoutsSection.class)
     @ValueReference(ReadTimeoutRef.class)
     int m_readTimeout = DEFAULT_TIMEOUT;
 
     static final class ReadTimeoutRef implements ParameterReference<Integer> {
     }
 
-    @Override
-    public void validate() throws InvalidSettingsException {
+    public void validateInConfigure() throws InvalidSettingsException {
         CheckUtils.checkSetting(
                 m_workingDirectory != null && !m_workingDirectory.isEmpty()
                         && m_workingDirectory.startsWith(BoxFileSystem.SEPARATOR),
                 "Working directory must be set to an absolute path.");
+    }
+
+    BoxFSConnectionConfig createFSConnectionConfig(final String accessToken) {
+        var config = new BoxFSConnectionConfig(m_workingDirectory);
+
+        config.setConnectionTimeout(Duration.ofSeconds(m_connectionTimeout));
+        config.setReadTimeout(Duration.ofSeconds(m_readTimeout));
+
+        config.setAccessToken(accessToken);
+
+        return config;
     }
 
     /**
@@ -146,11 +156,13 @@ class BoxConnectorNodeParameters implements NodeParameters {
 
         private Supplier<Integer> m_connectionTimeoutSupplier;
         private Supplier<Integer> m_readTimeoutSupplier;
+        private Supplier<String> m_workingDirectory;
 
         @Override
         public void init(final StateProviderInitializer initializer) {
             m_connectionTimeoutSupplier = initializer.computeFromValueSupplier(ConnectionTimeoutRef.class);
             m_readTimeoutSupplier = initializer.computeFromValueSupplier(ReadTimeoutRef.class);
+            m_workingDirectory = initializer.computeFromValueSupplier(WorkingDirectoryRef.class);
             initializer.computeAfterOpenDialog();
         }
 
@@ -162,15 +174,19 @@ class BoxConnectorNodeParameters implements NodeParameters {
 
         private FSConnection createConnection(final CredentialPortObject credentialPortObject)
                 throws InvalidSettingsException, IOException {
+            final var params = new BoxConnectorNodeParameters();
+            params.m_workingDirectory = m_workingDirectory.get();
+            if (params.m_workingDirectory == null || params.m_workingDirectory.isBlank()) {
+                params.m_workingDirectory = BoxFileSystem.SEPARATOR;
+            }
+            params.m_connectionTimeout = m_connectionTimeoutSupplier.get();
+            params.m_readTimeout = m_readTimeoutSupplier.get();
+            params.validateInConfigure();
+
             final var accessToken = credentialPortObject.getCredential(AccessTokenCredential.class)
                     .orElseThrow(() -> new InvalidSettingsException(NO_CREDENTIAL));
 
-            final var config = new BoxFSConnectionConfig(BoxFileSystem.SEPARATOR);
-            config.setConnectionTimeout(Duration.ofSeconds(m_connectionTimeoutSupplier.get()));
-            config.setReadTimeout(Duration.ofSeconds(m_readTimeoutSupplier.get()));
-            config.setAccessToken(accessToken.getAccessToken());
-
-            return new BoxFSConnection(config);
+            return new BoxFSConnection(params.createFSConnectionConfig(accessToken.getAccessToken()));
         }
     }
 
