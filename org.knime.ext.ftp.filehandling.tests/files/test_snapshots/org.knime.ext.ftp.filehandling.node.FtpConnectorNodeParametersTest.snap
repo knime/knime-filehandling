@@ -1,0 +1,601 @@
+{
+  "data" : {
+    "model" : {
+      "host" : "localhost",
+      "port" : 21,
+      "minConnections" : 1,
+      "maxConnections" : 10,
+      "useProxy" : false,
+      "auth" : {
+        "type" : "USERNAME_PASSWORD",
+        "userPassword" : {
+          "credentials" : {
+            "isHiddenPassword" : false,
+            "isHiddenSecondFactor" : false,
+            "username" : "jenkins"
+          }
+        },
+        "anonymous" : { }
+      },
+      "workingDirectory" : "/",
+      "connectionTimeout" : 30,
+      "readTimeout" : 30,
+      "useFtps" : false,
+      "verifyHostname" : true,
+      "useImplicitFtps" : false,
+      "reuseSSLSession" : true,
+      "timeZoneOffset" : 0
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "auth" : {
+            "type" : "object",
+            "properties" : {
+              "anonymous" : {
+                "type" : "object",
+                "default" : { }
+              },
+              "type" : {
+                "oneOf" : [ {
+                  "const" : "USERNAME_PASSWORD",
+                  "title" : "Username & password"
+                }, {
+                  "const" : "ANONYMOUS",
+                  "title" : "Anonymous"
+                } ],
+                "title" : "Authentication",
+                "description" : "Method of authentication to use.\n<ul>\n<li><b>Username &amp; password</b>: Authenticate with a credentials flow variable or by entering username and password directly.\nIn the latter case the password will be persistently stored (in encrypted form) with the workflow.\n</li>\n<li><b>Anonymous</b>: Authenticate with the anonymous user and a blank password.\n</li>\n</ul>",
+                "default" : "USERNAME_PASSWORD"
+              },
+              "userPassword" : {
+                "type" : "object",
+                "properties" : {
+                  "credentials" : {
+                    "type" : "object",
+                    "properties" : {
+                      "password" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "secondFactor" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "username" : {
+                        "type" : "string",
+                        "default" : ""
+                      }
+                    },
+                    "default" : {
+                      "isHiddenPassword" : false,
+                      "isHiddenSecondFactor" : false,
+                      "username" : ""
+                    }
+                  },
+                  "flowVarName" : {
+                    "type" : "string"
+                  }
+                },
+                "title" : "Username & password",
+                "description" : "Enter the username and password for authentication. The password will be persistently stored\n(in encrypted form) with the workflow if it is not provided via a flow variable.",
+                "default" : {
+                  "credentials" : {
+                    "isHiddenPassword" : false,
+                    "isHiddenSecondFactor" : false,
+                    "username" : "jenkins"
+                  }
+                }
+              }
+            },
+            "default" : {
+              "type" : "USERNAME_PASSWORD",
+              "userPassword" : {
+                "credentials" : {
+                  "isHiddenPassword" : false,
+                  "isHiddenSecondFactor" : false,
+                  "username" : "jenkins"
+                }
+              },
+              "anonymous" : { }
+            }
+          },
+          "connectionTimeout" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Connection timeout",
+            "description" : "Timeout in seconds to establish a connection or 0 for an infinite timeout.\n",
+            "default" : 30
+          },
+          "host" : {
+            "type" : "string",
+            "title" : "Host",
+            "description" : "Address of the host where the FTP server runs.",
+            "default" : "localhost"
+          },
+          "maxConnections" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Maximum FTP connections",
+            "description" : "Maximum number of (control) connections to open to the FTP server.\n",
+            "default" : 10
+          },
+          "minConnections" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Minimum FTP connections",
+            "description" : "Minimum number of (control) connections to open to the FTP server.\n",
+            "default" : 1
+          },
+          "port" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Port",
+            "description" : "Port that the FTP server is listening on for incoming connections.",
+            "default" : 21
+          },
+          "readTimeout" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Read timeout",
+            "description" : "Timeout in seconds to read a server response from a connection, or 0 for an infinite timeout.\n",
+            "default" : 30
+          },
+          "reuseSSLSession" : {
+            "type" : "boolean",
+            "title" : "Reuse SSL session",
+            "description" : "If checked the SSL/TLS session of the control connection is reused for the data connections. Most\nFTPS servers require SSL session reuse as a security measure in order to prevent attackers from\nhijacking data connections.",
+            "default" : true
+          },
+          "timeZoneOffset" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Time zone offset from GMT",
+            "description" : "Server time zone offset from Greenwich Mean Time (minutes).\n",
+            "default" : 0
+          },
+          "useFtps" : {
+            "type" : "boolean",
+            "title" : "Use FTPS",
+            "description" : "Attempts to communicate with the server using TLS-encryption (FTPS in explicit mode). If this option is\nselected, then it is not possible to connect using an HTTP proxy (see below).",
+            "default" : false
+          },
+          "useImplicitFtps" : {
+            "type" : "boolean",
+            "title" : "Use implicit FTPS",
+            "description" : "If checked, the node uses implicit FTPS, otherwise it uses explicit FTPS. Implicit FTPS commonly\nruns on port 990. Please also adjust the port accordingly if you changed it.",
+            "default" : false
+          },
+          "useProxy" : {
+            "type" : "boolean",
+            "title" : "Use HTTP proxy",
+            "description" : "If this option is selected, then the currently configured HTTP proxy from the KNIME preferences will be\nused to connect. This option is incompatible with 'Use FTPS'.",
+            "default" : false
+          },
+          "verifyHostname" : {
+            "type" : "boolean",
+            "title" : "Verify hostname",
+            "description" : "If checked, the hostname will be verified against the certificate. Otherwise, the node trusts the\nserver's SSL certificate even if it was generated for a different hostname.",
+            "default" : true
+          },
+          "workingDirectory" : {
+            "type" : "string",
+            "title" : "Working directory",
+            "description" : "Specify the working directory of the resulting file system connection, using the Path syntax explained\nabove. The working directory must be specified as an absolute path. A working directory allows downstream\nnodes to access files/folders using relative paths, i.e. paths that do not have a leading slash.\nThe default working directory is the root \"/\".",
+            "default" : "/"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Connection",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/host",
+        "options" : {
+          "validation" : {
+            "pattern" : {
+              "errorMessage" : "The field cannot be blank (it must contain at least one non-whitespace character).",
+              "parameters" : {
+                "pattern" : ".*\\S.*"
+              }
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/port",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 65535.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 65535.0
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 1.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 1.0
+              }
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/minConnections",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 1.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 1.0
+              }
+            }
+          },
+          "isAdvanced" : true
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/maxConnections",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 1.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 1.0
+              }
+            }
+          },
+          "isAdvanced" : true
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/useProxy",
+        "options" : {
+          "format" : "checkbox",
+          "isAdvanced" : true
+        },
+        "rule" : {
+          "effect" : "HIDE",
+          "condition" : {
+            "scope" : "#/properties/model/properties/useFtps",
+            "schema" : {
+              "const" : true
+            }
+          }
+        }
+      } ]
+    }, {
+      "label" : "Authentication",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/auth/properties/type"
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/auth/properties/userPassword",
+        "options" : {
+          "format" : "legacyCredentials"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/auth/properties/type",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "USERNAME_PASSWORD"
+              } ]
+            }
+          }
+        }
+      } ]
+    }, {
+      "label" : "FTPS",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/useFtps",
+        "options" : {
+          "format" : "checkbox"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/verifyHostname",
+        "options" : {
+          "format" : "checkbox",
+          "isAdvanced" : true
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/useFtps",
+            "schema" : {
+              "const" : true
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/useImplicitFtps",
+        "options" : {
+          "format" : "checkbox",
+          "isAdvanced" : true
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/useFtps",
+            "schema" : {
+              "const" : true
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/reuseSSLSession",
+        "options" : {
+          "format" : "checkbox",
+          "isAdvanced" : true
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/useFtps",
+            "schema" : {
+              "const" : true
+            }
+          }
+        }
+      } ]
+    }, {
+      "label" : "File System",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/workingDirectory",
+        "options" : {
+          "selectionMode" : "FOLDER",
+          "format" : "stringFileChooser"
+        },
+        "providedOptions" : [ "fileSystemId" ]
+      } ]
+    }, {
+      "label" : "Time Zone",
+      "type" : "Section",
+      "options" : {
+        "isAdvanced" : true
+      },
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/timeZoneOffset",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 1440.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 1440.0
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least -1440.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : -1440.0
+              }
+            }
+          }
+        }
+      } ]
+    }, {
+      "label" : "Timeouts",
+      "type" : "Section",
+      "options" : {
+        "isAdvanced" : true
+      },
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/connectionTimeout",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 0.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 0.0
+              }
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/readTimeout",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 0.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 0.0
+              }
+            }
+          }
+        }
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "host" : { },
+          "port" : { },
+          "minConnections" : { },
+          "maxConnections" : { },
+          "useProxy" : { },
+          "auth" : {
+            "type" : "object",
+            "properties" : {
+              "type" : {
+                "configPaths" : [ [ "type" ] ]
+              },
+              "userPassword" : {
+                "type" : "object",
+                "properties" : {
+                  "credentials" : { },
+                  "flowVarName" : {
+                    "configPaths" : [ ]
+                  }
+                },
+                "configKey" : "user_pwd_v2",
+                "deprecatedConfigKeys" : [ {
+                  "deprecated" : [ [ "user_pwd" ] ]
+                } ]
+              },
+              "anonymous" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          },
+          "workingDirectory" : { },
+          "connectionTimeout" : { },
+          "readTimeout" : { },
+          "useFtps" : {
+            "configKey" : "useFTPS"
+          },
+          "verifyHostname" : { },
+          "useImplicitFtps" : {
+            "configKey" : "useImplicitFTPS"
+          },
+          "reuseSSLSession" : { },
+          "timeZoneOffset" : { }
+        }
+      }
+    }
+  },
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/auth/properties/type"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/auth/properties/userPassword"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/connectionTimeout"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/host"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/maxConnections"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/minConnections"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/port"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/readTimeout"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/reuseSSLSession"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/timeZoneOffset"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/useFtps"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/useImplicitFtps"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/useProxy"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/verifyHostname"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/workingDirectory"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/type", "#/properties/model/properties/auth/properties/userPassword", "#/properties/model/properties/connectionTimeout", "#/properties/model/properties/host", "#/properties/model/properties/maxConnections", "#/properties/model/properties/minConnections", "#/properties/model/properties/port", "#/properties/model/properties/readTimeout", "#/properties/model/properties/reuseSSLSession", "#/properties/model/properties/timeZoneOffset", "#/properties/model/properties/useFtps", "#/properties/model/properties/useImplicitFtps", "#/properties/model/properties/useProxy", "#/properties/model/properties/verifyHostname", "#/properties/model/properties/workingDirectory" ]
+  } ]
+}

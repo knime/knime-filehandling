@@ -56,13 +56,10 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
-import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.impl.WebUINodeModel;
 import org.knime.ext.ftp.filehandling.fs.FtpFSConnection;
 import org.knime.ext.ftp.filehandling.fs.FtpFSConnectionConfig;
 import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;
@@ -71,13 +68,12 @@ import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
 /**
- * FTP Connection node.
+ * FTP Connector node model.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
  */
-class FtpConnectorNodeModel extends NodeModel {
-
-    private final FtpConnectorNodeSettings m_settings;
+@SuppressWarnings({ "deprecation", "restriction" })
+class FtpConnectorNodeModel extends WebUINodeModel<FtpConnectorNodeParameters> {
 
     private String m_fsId;
 
@@ -87,48 +83,38 @@ class FtpConnectorNodeModel extends NodeModel {
      * Creates new instance.
      */
     FtpConnectorNodeModel() {
-        super(new PortType[0], new PortType[] { FileSystemPortObject.TYPE });
-        m_settings = new FtpConnectorNodeSettings();
+        super(new PortType[0], new PortType[] { FileSystemPortObject.TYPE }, FtpConnectorNodeParameters.class);
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-        m_settings.validate();
-        m_settings.configureInModel(inSpecs, m -> {
-        }, getCredentialsProvider());
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs, final FtpConnectorNodeParameters params)
+            throws InvalidSettingsException {
+
+        final var prov = getCredentialsProvider();
+        params.validateOnConfigure(prov);
+
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-        final FtpFSConnectionConfig config = m_settings.toFSConnectionConfig(getCredentialsProvider());
+        final var config = params.toFSConnectionConfig(prov);
+
         return new PortObjectSpec[] { createSpec(config) };
     }
 
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        final FtpFSConnectionConfig config = m_settings.toFSConnectionConfig(getCredentialsProvider());
+    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
+            final FtpConnectorNodeParameters params) throws Exception {
+
+        final var config = params.toFSConnectionConfig(getCredentialsProvider());
 
         try {
             m_fsConnection = new FtpFSConnection(config);
-        } catch (Exception ex) {
+        } catch (Exception ex) { // NOSONAR
             final Throwable rootCause = ExceptionUtils.getRootCause(ex);
             setWarningMessage(ExceptionUtils.getMessage(rootCause));
             throw ex;
         }
+
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
         return new PortObject[] { new FileSystemPortObject(createSpec(config)) };
-    }
-
-    /**
-     * @param settings
-     *            FTP model settings.
-     * @param credentialsProvider
-     *            credentials provider.
-     * @return FTP connection.
-     * @throws IOException
-     * @throws InvalidSettingsException
-     */
-    public static FtpFSConnection createConnection(final FtpConnectorNodeSettings settings,
-            final CredentialsProvider credentialsProvider) throws IOException, InvalidSettingsException {
-        FtpFSConnectionConfig conf = settings.toFSConnectionConfig(credentialsProvider);
-        return new FtpFSConnection(conf);
     }
 
     private FileSystemPortObjectSpec createSpec(final FtpFSConnectionConfig config) {
@@ -140,27 +126,6 @@ class FtpConnectorNodeModel extends NodeModel {
     protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         setWarningMessage("Connection no longer available. Please re-execute the node.");
-    }
-
-    @Override
-    protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
-            throws IOException, CanceledExecutionException {
-        // nothing to save
-    }
-
-    @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_settings.saveSettingsForModel(settings);
-    }
-
-    @Override
-    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.validateSettings(settings);
-    }
-
-    @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.loadSettingsForModel(settings);
     }
 
     @Override
