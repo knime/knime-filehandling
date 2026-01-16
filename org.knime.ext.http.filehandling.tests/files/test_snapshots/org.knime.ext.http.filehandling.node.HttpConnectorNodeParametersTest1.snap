@@ -1,0 +1,299 @@
+{
+  "data" : {
+    "model" : {
+      "url" : "http://localhost",
+      "followRedirects" : true,
+      "sslIgnoreHostnameMismatches" : false,
+      "sslTrustAllCertificates" : false,
+      "auth" : {
+        "type" : "USERNAME_PASSWORD",
+        "userPassword" : {
+          "credentials" : {
+            "isHiddenPassword" : true,
+            "isHiddenSecondFactor" : false,
+            "username" : "Hewwo"
+          }
+        },
+        "none" : { }
+      },
+      "connectionTimeout" : 30,
+      "readTimeout" : 30
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "auth" : {
+            "type" : "object",
+            "properties" : {
+              "none" : {
+                "type" : "object",
+                "default" : { }
+              },
+              "type" : {
+                "oneOf" : [ {
+                  "const" : "USERNAME_PASSWORD",
+                  "title" : "Username & password"
+                }, {
+                  "const" : "NONE",
+                  "title" : "None"
+                } ],
+                "title" : "Authentication",
+                "description" : "Method of authentication to use.\n<ul>\n<li><b>Username &amp; password</b>: Authenticate with HTTP Basic authentication. Enter a <i>username</i> and <i>password</i>,\nin which case the password will be persistently stored (in encrypted form) with the workflow\nif not provided by a flow variable.</li>\n<li><b>None</b>: No authentication will be performed.</li>\n</ul>",
+                "default" : "NONE"
+              },
+              "userPassword" : {
+                "type" : "object",
+                "properties" : {
+                  "credentials" : {
+                    "type" : "object",
+                    "properties" : {
+                      "password" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "secondFactor" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "username" : {
+                        "type" : "string",
+                        "default" : ""
+                      }
+                    },
+                    "default" : {
+                      "isHiddenPassword" : false,
+                      "isHiddenSecondFactor" : false,
+                      "username" : ""
+                    }
+                  },
+                  "flowVarName" : {
+                    "type" : "string"
+                  }
+                },
+                "title" : "Username & password",
+                "description" : "Enter the username and password for HTTP Basic authentication.",
+                "default" : {
+                  "credentials" : {
+                    "isHiddenPassword" : false,
+                    "isHiddenSecondFactor" : false,
+                    "username" : "snapshotTestUser"
+                  }
+                }
+              }
+            },
+            "default" : {
+              "type" : "NONE",
+              "userPassword" : {
+                "credentials" : {
+                  "isHiddenPassword" : false,
+                  "isHiddenSecondFactor" : false,
+                  "username" : "snapshotTestUser"
+                }
+              },
+              "none" : { }
+            }
+          },
+          "connectionTimeout" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Connection timeout",
+            "description" : "Timeout in seconds to establish a connection, or 0 for an infinite timeout.",
+            "default" : 30
+          },
+          "followRedirects" : {
+            "type" : "boolean",
+            "title" : "Follow redirects",
+            "description" : "If checked, the node will follow redirects (HTTP status code <tt>3xx</tt>).",
+            "default" : true
+          },
+          "readTimeout" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Read timeout",
+            "description" : "Timeout in seconds to read a server response from a connection,\nor 0 for an infinite timeout.",
+            "default" : 30
+          },
+          "sslIgnoreHostnameMismatches" : {
+            "type" : "boolean",
+            "title" : "Ignore hostname mismatches",
+            "description" : "If checked, the node trusts the server's SSL certificate even if it was generated for a different\nhost.",
+            "default" : false
+          },
+          "sslTrustAllCertificates" : {
+            "type" : "boolean",
+            "title" : "Trust all certificates",
+            "description" : "If checked, the node trusts all SSL certificates regardless of their origin\nor expiration date.",
+            "default" : false
+          },
+          "url" : {
+            "type" : "string",
+            "title" : "URL",
+            "description" : "Base URL that specifies the <i>protocol</i> (<tt>http</tt> or <tt>https</tt>), a <i>host</i>, an\noptional <i>port</i> as well as an optional <i>path</i>, which will be used as the <i>working\ndirectory</i> of the file system connection.\nExample: <tt>https://hub.knime.com/knime/extensions</tt>.\nThe working directory allows downstream nodes to access files using\n<i>relative</i> paths, i.e. paths that do not have a leading slash.\nIf no path is specified in the URL, then the working directory is\nassumed to be <tt>/</tt>.",
+            "default" : "https://localhost"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Connection",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/url"
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/followRedirects",
+        "options" : {
+          "format" : "checkbox",
+          "isAdvanced" : true
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/sslIgnoreHostnameMismatches",
+        "options" : {
+          "format" : "checkbox",
+          "isAdvanced" : true
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/sslTrustAllCertificates",
+        "options" : {
+          "format" : "checkbox",
+          "isAdvanced" : true
+        }
+      } ]
+    }, {
+      "label" : "Authentication",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/auth/properties/type"
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/auth/properties/userPassword",
+        "options" : {
+          "format" : "legacyCredentials"
+        },
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/auth/properties/type",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "USERNAME_PASSWORD"
+              } ]
+            }
+          }
+        }
+      } ]
+    }, {
+      "label" : "Timeouts",
+      "type" : "Section",
+      "options" : {
+        "isAdvanced" : true
+      },
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/connectionTimeout",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 0.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 0.0
+              }
+            }
+          }
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/readTimeout",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 0.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 0.0
+              }
+            }
+          }
+        }
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "url" : { },
+          "followRedirects" : { },
+          "sslIgnoreHostnameMismatches" : { },
+          "sslTrustAllCertificates" : { },
+          "auth" : {
+            "type" : "object",
+            "properties" : {
+              "type" : {
+                "configPaths" : [ [ "type" ] ]
+              },
+              "userPassword" : {
+                "type" : "object",
+                "properties" : {
+                  "credentials" : { },
+                  "flowVarName" : {
+                    "configPaths" : [ ]
+                  }
+                },
+                "configKey" : "basic_v2",
+                "deprecatedConfigKeys" : [ {
+                  "deprecated" : [ [ "basic" ] ]
+                } ]
+              },
+              "none" : {
+                "type" : "object",
+                "properties" : { }
+              }
+            }
+          },
+          "connectionTimeout" : { },
+          "readTimeout" : { }
+        }
+      }
+    }
+  },
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/auth/properties/userPassword" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/auth/properties/userPassword"
+    },
+    "dependencies" : [ "#/properties/model/properties/auth/properties/userPassword" ]
+  } ]
+}

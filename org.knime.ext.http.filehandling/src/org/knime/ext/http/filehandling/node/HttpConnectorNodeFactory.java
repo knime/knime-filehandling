@@ -48,55 +48,76 @@
  */
 package org.knime.ext.http.filehandling.node;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.knime.core.webui.node.impl.WebUINodeConfiguration;
+import org.knime.core.webui.node.impl.WebUINodeFactory;
+import org.knime.filehandling.core.port.FileSystemPortObject;
 
 /**
  * Factory class for HTTP(S) Connector Node.
  *
  * @author Bjoern Lohrmann, KNIME GmbH
+ * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
+ * @author AI Migration Pipeline v1.2
  */
-public class HttpConnectorNodeFactory extends NodeFactory<HttpConnectorNodeModel> {
+@SuppressWarnings("restriction")
+public class HttpConnectorNodeFactory extends WebUINodeFactory<HttpConnectorNodeModel> {
+
+    private static final String NODE_NAME = "HTTP(S) Connector";
+
+    private static final String NODE_ICON = "./file_system_connector.png";
+
+    private static final String SHORT_DESCRIPTION = """
+            Connects to a web server with HTTP(S) in order to read files in downstream nodes.
+            """;
+
+    private static final String FULL_DESCRIPTION = """
+            <p>
+                This node connects to a web server with HTTP(S). The resulting output port allows downstream nodes to
+                read <i>files</i> from a webserver.
+            </p>
+            <p>
+                <b>Note: This connector provides very limited functionality!</b> It does not support listing, writing
+                or deleting files/folders, nor is it possible to create folders on the webserver. The only operation
+                supported is reading <i>single</i> files. Hence, with this file system it is not possible to
+                interactively browse files, use Writer nodes (e.g. CSV Writer), or read multiple files with a Reader
+                node.
+            </p>
+            <p>
+                <b>Path syntax:</b> Paths for HTTP(S) are specified with a UNIX-like syntax, and may be suffixed with
+                a query ('?') and or fragment ('#). Non-alphanumeric characters in paths - such as whitespace (" ") -
+                must be <a href="https://en.wikipedia.org/wiki/Percent-encoding">percent-encoded</a>. For example
+                <tt>/my%20folder/resource?myparam=myvalue#myfragment</tt> is an absolute path that consists of:
+                <ol>
+                    <li>A leading slash (<tt>/</tt>).</li>
+                    <li>The name of a folder (<tt>my folder</tt> with percent-encoding), followed by a slash.</li>
+                    <li>Followed by the name of a file/resource (<tt>resource</tt>).</li>
+                    <li>Followed by an (optional) query (<tt>?myparam=myvalue</tt>).</li>
+                    <li>Followed by an (optional) fragment (<tt>#myfragment</tt>).</li>
+                </ol>
+            </p>
+            """;
+
+    private static final WebUINodeConfiguration CONFIGURATION = WebUINodeConfiguration.builder() //
+        .name(NODE_NAME) //
+        .icon(NODE_ICON) //
+        .shortDescription(SHORT_DESCRIPTION) //
+        .fullDescription(FULL_DESCRIPTION) //
+        .modelSettingsClass(HttpConnectorNodeParameters.class) //
+        .nodeType(NodeType.Source) //
+        .sinceVersion(4, 3, 0) //
+        .keywords("http", "https", "web", "url", "file system", "connector") //
+        .addOutputPort("HTTP(S) File System Connection", FileSystemPortObject.TYPE, "HTTP(S) File System Connection.")
+        .build();
 
     /**
-     * {@inheritDoc}
+     * Create a new factory.
      */
+    public HttpConnectorNodeFactory() {
+        super(CONFIGURATION);
+    }
+
     @Override
     public HttpConnectorNodeModel createNodeModel() {
         return new HttpConnectorNodeModel();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected int getNrNodeViews() {
-        return 0;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public NodeView<HttpConnectorNodeModel> createNodeView(final int viewIndex,
-            final HttpConnectorNodeModel nodeModel) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected boolean hasDialog() {
-        return true;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected NodeDialogPane createNodeDialogPane() {
-        return new HttpConnectorNodeDialog();
     }
 }

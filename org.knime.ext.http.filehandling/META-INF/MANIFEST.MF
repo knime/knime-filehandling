@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: HTTP Connector node
 Bundle-SymbolicName: org.knime.ext.http.filehandling;singleton:=true
-Bundle-Version: 5.9.0.qualifier
+Bundle-Version: 5.11.0.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Require-Bundle: org.knime.core;bundle-version="[5.9.0,6.0.0)",
  org.knime.filehandling.core;bundle-version="[5.9.0,6.0.0)",
@@ -14,7 +14,9 @@ Require-Bundle: org.knime.core;bundle-version="[5.9.0,6.0.0)",
  org.apache.cxf.cxf-rt-rs-client;bundle-version="[4.0.3,5.0.0)",
  org.apache.cxf.cxf-rt-rs-extension-providers;bundle-version="[4.0.3,5.0.0)",
  org.apache.cxf.cxf-rt-transports-http;bundle-version="[4.0.3,5.0.0)",
- org.apache.cxf.cxf-rt-transports-http-hc;bundle-version="[4.0.3,5.0.0)"
+ org.apache.cxf.cxf-rt-transports-http-hc;bundle-version="[4.0.3,5.0.0)",
+ org.knime.core.ui;bundle-version="[5.10.0,6.0.0)",
+ org.knime.credentials.base;bundle-version="[5.9.0,6.0.0)"
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.knime.ext.http.filehandling.Activator
 Bundle-RequiredExecutionEnvironment: JavaSE-17
