@@ -54,6 +54,8 @@
 				<module>org.knime.ext.ssh.filehandling/libs/fetch_jars</module>
 				<module>org.knime.base.filehandling</module>
 				<module>org.knime.base.filehandling.tests</module>
+				<module>org.knime.ext.http.filehandling</module>
+				<module>org.knime.ext.http.filehandling.tests</module>
 				<module>org.knime.ext.smb.filehandling</module>
 				<module>org.knime.ext.smb.filehandling.tests</module>
 				<module>org.knime.ext.ssh.filehandling</module>
