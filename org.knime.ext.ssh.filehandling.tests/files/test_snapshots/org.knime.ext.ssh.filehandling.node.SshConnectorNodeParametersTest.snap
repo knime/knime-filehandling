@@ -531,7 +531,7 @@
             "type" : "object",
             "properties" : {
               "type" : {
-                "configPaths" : [ [ "type" ], [ "user_pwd", "use_credentials" ] ]
+                "configPaths" : [ [ "type" ] ]
               },
               "userPasswordAuth" : {
                 "type" : "object",

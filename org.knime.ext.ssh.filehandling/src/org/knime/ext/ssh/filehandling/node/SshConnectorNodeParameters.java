@@ -434,7 +434,7 @@ final class SshConnectorNodeParameters implements NodeParameters {
 
             @Override
             public String[][] getConfigPaths() {
-                return new String[][] { { ENTRY_KEY }, { CFG_KEY_USER_PWD, ENTRY_KEY_USE_CREDENTIALS } };
+                return new String[][] { { ENTRY_KEY } };
             }
         }
 
