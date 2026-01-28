@@ -70,7 +70,7 @@ final class AuthenticationContextFactory {
     static AuthenticationContext create(final SmbFSConnectionConfig config, final ExecutionMonitor exec)
             throws IOException {
 
-        if (config.getAuthType() == StandardAuthTypes.USER_PASSWORD) {
+        if (config.getAuthType() == SmbFSConnectionConfig.USER_PASSWORD_AUTH_TYPE) {
             return createUsernamePasswordAuthContext(config.getUser(), config.getPassword());
         } else if (config.getAuthType() == SmbFSConnectionConfig.KERBEROS_AUTH_TYPE) {
             return createKerberosAuthContext(exec);
