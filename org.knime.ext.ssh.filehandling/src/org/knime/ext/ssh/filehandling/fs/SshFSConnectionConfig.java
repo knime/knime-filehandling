@@ -50,7 +50,7 @@ package org.knime.ext.ssh.filehandling.fs;
 
 import java.time.Duration;
 
-import org.knime.ext.ssh.filehandling.node.SshConnectorNodeSettings;
+import org.knime.ext.ssh.filehandling.node.SshConnectorNodeModel;
 import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
 
 /**
@@ -62,9 +62,9 @@ public class SshFSConnectionConfig extends BaseFSConnectionConfig {
     private ConnectionToNodeModelBridge m_bridge;
 
     private Duration m_connectionTimeout = Duration
-            .ofSeconds(SshConnectorNodeSettings.DEFAULT_CONNECTION_TIMEOUT_SECONDS);
-    private int m_maxSftpSessionLimit = SshConnectorNodeSettings.DEFAULT_MAX_SESSION_COUNT;
-    private int m_maxExecChannelLimit = SshConnectorNodeSettings.DEFAULT_MAX_EXEC_CHANNEL_COUNT;
+            .ofSeconds(SshConnectorNodeModel.DEFAULT_CONNECTION_TIMEOUT_SECONDS);
+    private int m_maxSftpSessionLimit = SshConnectorNodeModel.DEFAULT_MAX_SESSION_COUNT;
+    private int m_maxExecChannelLimit = SshConnectorNodeModel.DEFAULT_MAX_EXEC_CHANNEL_COUNT;
     private int m_port = 22;
     private String m_host;
     private String m_userName;
