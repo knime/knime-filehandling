@@ -2,6 +2,8 @@
 <config xmlns="http://www.knime.org/2008/09/XMLConfig" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.knime.org/2008/09/XMLConfig http://www.knime.org/XMLConfig_2008_09.xsd" key="test">
     <entry key="host" type="xstring" value="localhost"/>
     <entry key="port" type="xint" value="22"/>
+    <entry key="maxSessionCount" type="xint" value="8"/>
+    <entry key="maxExecChannelCount" type="xint" value="1"/>
     <config key="auth">
         <entry key="type" type="xstring" value="key"/>
         <config key="user_pwd_v2">
@@ -58,10 +60,6 @@
             </config>
         </config>
     </config>
-    <entry key="workingDirectory" type="xstring" value="/"/>
-    <entry key="connectionTimeout" type="xint" value="30"/>
-    <entry key="maxSessionCount" type="xint" value="8"/>
-    <entry key="maxExecChannelCount" type="xint" value="1"/>
     <entry key="useKnownHosts" type="xboolean" value="false"/>
     <config key="knownHostsFile">
         <config key="path">
@@ -102,4 +100,6 @@
             <entry key="connected_fs" type="xboolean" value="true"/>
         </config>
     </config>
+    <entry key="workingDirectory" type="xstring" value="/"/>
+    <entry key="connectionTimeout" type="xint" value="30"/>
 </config>

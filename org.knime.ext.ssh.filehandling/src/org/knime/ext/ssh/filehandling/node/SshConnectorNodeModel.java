@@ -51,36 +51,27 @@ package org.knime.ext.ssh.filehandling.node;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.EnumSet;
+import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.NodeContext;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelection;
+import org.knime.core.webui.node.impl.WebUINodeModel;
 import org.knime.ext.ssh.filehandling.fs.ConnectionToNodeModelBridge;
 import org.knime.ext.ssh.filehandling.fs.SshFSConnection;
 import org.knime.ext.ssh.filehandling.fs.SshFSConnectionConfig;
 import org.knime.ext.ssh.filehandling.fs.SshFileSystem;
-import org.knime.ext.ssh.filehandling.node.auth.KeyFileAuthProviderSettings;
-import org.knime.ext.ssh.filehandling.node.auth.SshAuth;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
-import org.knime.filehandling.core.connections.FSPath;
-import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.ReadPathAccessor;
-import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
-import org.knime.filehandling.core.defaultnodesettings.status.NodeModelStatusConsumer;
-import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
-import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage.MessageType;
+import org.knime.filehandling.core.defaultnodesettings.FileSystemHelper;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
@@ -88,22 +79,29 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  * SSH Connection node.
  *
  * @author Vyacheslav Soldatov <vyacheslav@redfield.se>
+ * @author Jannik Löscher, KNIME GmbH, Konstanz, Germany
  */
-public class SshConnectorNodeModel extends NodeModel {
+@SuppressWarnings({ "deprecation", "restriction" })
+public class SshConnectorNodeModel extends WebUINodeModel<SshConnectorNodeParameters> {
 
-    private static final Consumer<StatusMessage> NOOP_STATUS_CONSUMER = s -> {
-    };
+    /**
+     * The default timeout
+     */
+    public static final int DEFAULT_CONNECTION_TIMEOUT_SECONDS = 30;
 
-    private SshConnectorNodeSettings m_settings;
+    /**
+     * The default maximum number of SFTP sessions
+     */
+    public static final int DEFAULT_MAX_SESSION_COUNT = 8;
 
-    private final NodeModelStatusConsumer m_statusConsumer = new NodeModelStatusConsumer(
-            EnumSet.of(MessageType.ERROR, MessageType.WARNING));
+    /**
+     * The default maximum number of concurrent shell sessions
+     */
+    public static final int DEFAULT_MAX_EXEC_CHANNEL_COUNT = 1;
 
     private String m_fsId;
 
     private SshFSConnection m_connection;
-
-    private final Supplier<SshConnectorNodeSettings> m_settingsCreator;
 
     /**
      * Creates new instance.
@@ -113,57 +111,35 @@ public class SshConnectorNodeModel extends NodeModel {
      */
     protected SshConnectorNodeModel(final NodeCreationConfiguration creationConfig) {
         super(creationConfig.getPortConfig().orElseThrow(IllegalStateException::new).getInputPorts(),
-                creationConfig.getPortConfig().orElseThrow(IllegalStateException::new).getOutputPorts());
-        m_settingsCreator = () -> new SshConnectorNodeSettings(creationConfig);
-        m_settings = m_settingsCreator.get();
+                creationConfig.getPortConfig().orElseThrow(IllegalStateException::new).getOutputPorts(),
+                SshConnectorNodeParameters.class);
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-        m_settings.validate();
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs, final SshConnectorNodeParameters params)
+            throws InvalidSettingsException {
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-        m_settings.configureInModel(inSpecs, m_statusConsumer, getCredentialsProvider());
-        m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
-        final SshFSConnectionConfig config = createConnectionConfig(m_settings, getCredentialsProvider(),
-                m_statusConsumer);
+        params.validateOnConfigure(getCredentialsProvider());
+        final var optFsCon = Optional.ofNullable(inSpecs.length > 0 ? inSpecs[0] : null);
+        final SshFSConnectionConfig config = createConnectionConfig(params, optFsCon, getCredentialsProvider());
         return new PortObjectSpec[] { createSpec(config) };
     }
 
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        final SshFSConnectionConfig config = createConnectionConfig(m_settings, getCredentialsProvider(),
-                m_statusConsumer);
+    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
+            final SshConnectorNodeParameters params) throws Exception {
+        final var optFsCon = Optional.ofNullable(inObjects.length > 0 ? inObjects[0].getSpec() : null);
+        final SshFSConnectionConfig config = createConnectionConfig(params, optFsCon, getCredentialsProvider());
         m_connection = new SshFSConnection(config);
-        m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
         FSConnectionRegistry.getInstance().register(m_fsId, m_connection);
         return new PortObject[] { new FileSystemPortObject(createSpec(config)) };
     }
 
-    /**
-     * @param settings
-     *            SSH connection settings.
-     * @param credentials
-     *            credentials provider.
-     * @return file system connection
-     * @throws InvalidSettingsException
-     * @throws IOException
-     */
-    public static SshFSConnection createConnection(final SshConnectorNodeSettings settings,
-            final CredentialsProvider credentials)
-            throws InvalidSettingsException, IOException {
-        return createConnection(settings, credentials, NOOP_STATUS_CONSUMER);
-    }
-
-    private static SshFSConnection createConnection(final SshConnectorNodeSettings settings,
-            final CredentialsProvider credentials,
-            final Consumer<StatusMessage> statusConsumer) throws InvalidSettingsException, IOException {
-        return new SshFSConnection(createConnectionConfig(settings, credentials, statusConsumer));
-    }
-
-    private static SshFSConnectionConfig createConnectionConfig(final SshConnectorNodeSettings settings,
-            final CredentialsProvider credentials, final Consumer<StatusMessage> statusConsumer)
+    static SshFSConnectionConfig createConnectionConfig(final SshConnectorNodeParameters params,
+            final Optional<PortObjectSpec> optFsConPort, final CredentialsProvider credentials)
             throws InvalidSettingsException {
-        return settings.toFSConnectionConfig(credentials, new DefaultBridge(settings, statusConsumer));
+
+        return params.toFSConnectionConfig(credentials, new DefaultBridge(params, optFsConPort));
     }
 
     private FileSystemPortObjectSpec createSpec(final SshFSConnectionConfig config) {
@@ -178,41 +154,6 @@ public class SshConnectorNodeModel extends NodeModel {
     protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         setWarningMessage("SSH connection no longer available. Please re-execute the node.");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
-            throws IOException, CanceledExecutionException {
-        // nothing to save
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void saveSettingsTo(final NodeSettingsWO output) {
-        m_settings.saveSettingsForModel(output);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void validateSettings(final NodeSettingsRO input) throws InvalidSettingsException {
-        SshConnectorNodeSettings sshConnectorNodeSettings = m_settingsCreator.get();
-        sshConnectorNodeSettings.validateSettings(input);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO input) throws InvalidSettingsException {
-        m_settings = m_settingsCreator.get();
-        m_settings.loadSettingsForModel(input);
     }
 
     @Override
@@ -235,37 +176,41 @@ public class SshConnectorNodeModel extends NodeModel {
 
     private static class DefaultBridge implements ConnectionToNodeModelBridge {
 
-        private final SshConnectorNodeSettings m_settings;
-
-        private final Consumer<StatusMessage> m_statusConsumer;
+        private final SshConnectorNodeParameters m_params;
 
         private final NodeContext m_nodeContext;
 
-        DefaultBridge(final SshConnectorNodeSettings settings, final Consumer<StatusMessage> statusConsumer) {
-            m_settings = settings;
-            m_statusConsumer = statusConsumer;
+        private Optional<PortObjectSpec> m_optFsConPort;
+
+        DefaultBridge(final SshConnectorNodeParameters params, final Optional<PortObjectSpec> optFsConPort) {
+            m_params = params;
+            m_optFsConPort = optFsConPort;
             m_nodeContext = CheckUtils.checkArgumentNotNull(NodeContext.getContext(), "Node context required");
         }
 
         @Override
         public void doWithKnownHostsFile(final Consumer<Path> operation) throws IOException, InvalidSettingsException {
-            doWithFileChooserModel(m_settings.getKnownHostsFileModel(), operation);
+            doWithFileChooserModel(m_params.m_knownHostsFile, operation);
         }
 
         @Override
         public void doWithKeysFile(final Consumer<Path> operation) throws IOException, InvalidSettingsException {
-            doWithFileChooserModel(m_settings.getAuthenticationSettings()
-                    .<KeyFileAuthProviderSettings>getSettingsForAuthType(SshAuth.KEY_FILE_AUTH_TYPE).getKeyFileModel(),
+            doWithFileChooserModel(m_params.m_authentication.m_keyFileAuth.m_keyFile,
                     operation);
         }
 
-        private void doWithFileChooserModel(final SettingsModelReaderFileChooser chooser,
+        private void doWithFileChooserModel(final FileSelection selection,
                 final Consumer<Path> operation) throws IOException, InvalidSettingsException {
 
             NodeContext.pushContext(m_nodeContext);
 
-            try (ReadPathAccessor accessor = chooser.createReadPathAccessor()) {
-                FSPath path = accessor.getRootPath(m_statusConsumer);
+            final var optFsCon = m_optFsConPort.map(FileSystemPortObjectSpec.class::cast)
+                    .flatMap(FileSystemPortObjectSpec::getFileSystemConnection);
+
+            try (final var fscon = FileSystemHelper.retrieveFSConnection(optFsCon, selection.getFSLocation())
+                    .orElseThrow(() -> new InvalidSettingsException("Please connect the file system connector node."));
+                    final var fs = fscon.getFileSystem()) {
+                final var path = fs.getPath(selection.getFSLocation());
                 operation.accept(path);
             } finally {
                 NodeContext.removeLastContext();
