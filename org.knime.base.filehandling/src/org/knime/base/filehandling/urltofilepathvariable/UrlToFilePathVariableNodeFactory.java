@@ -47,37 +47,48 @@
  */
 package org.knime.base.filehandling.urltofilepathvariable;
 
+import static org.knime.node.impl.description.PortDescription.fixedPort;
+
+import java.util.List;
+import java.util.Map;
+
+import org.knime.core.node.NodeDescription;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
+import org.knime.core.webui.node.dialog.NodeDialog;
+import org.knime.core.webui.node.dialog.NodeDialogFactory;
+import org.knime.core.webui.node.dialog.NodeDialogManager;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
+import org.knime.node.impl.description.DefaultNodeDescriptionUtil;
+import org.knime.node.impl.description.ExternalResource;
+import org.knime.node.impl.description.PortDescription;
 
 /**
  * Factory of url to file path variable converter node.
  *
  * @author Kilian Thiel, KNIME.com, Berlin, Germany
+ * @author Magnus Gohm, KNIME GmbH, Konstanz, Germany
+ * @author AI Migration Pipeline v1.2
  */
-public class UrlToFilePathVariableNodeFactory extends
-        NodeFactory<UrlToFilePathVariableNodeModel> {
+@SuppressWarnings("restriction")
+public class UrlToFilePathVariableNodeFactory extends NodeFactory<UrlToFilePathVariableNodeModel>
+    implements NodeDialogFactory, KaiNodeInterfaceFactory {
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public UrlToFilePathVariableNodeModel createNodeModel() {
         return new UrlToFilePathVariableNodeModel();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected int getNrNodeViews() {
         return 0;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public NodeView<UrlToFilePathVariableNodeModel> createNodeView(
             final int viewIndex,
@@ -85,19 +96,92 @@ public class UrlToFilePathVariableNodeFactory extends
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected boolean hasDialog() {
         return true;
     }
 
+    private static final String NODE_NAME = "URL to File Path (Variable)";
+
+    private static final String NODE_ICON = "urltofilepath.png";
+
+    private static final String SHORT_DESCRIPTION = """
+            Converts URLs into file paths.
+            """;
+
+    private static final String FULL_DESCRIPTION = """
+            Converts the url strings of the specified string flow variable into file path strings. Four string flow
+                variables will be set. The first contains the complete file path, the second the parent folder of the
+                file, the third contains the file name (without extension), and the last contains the file extension.
+                <br /> It can be specified whether the node will fail if an invalid url string occurs or a file location
+                does not exist. If failing is switched off (default) empty strings will set as values for each output
+                variable.
+            """;
+
+    private static final List<PortDescription> INPUT_PORTS = List.of(
+            fixedPort("Flow variable containing URL string", """
+                A string flow variable containing the url string to convert.
+                """)
+    );
+
+    private static final List<PortDescription> OUTPUT_PORTS = List.of(
+            fixedPort("Flow variables containing converted strings", """
+                Four additional string flow variables containing the file path, parent folder, the file name, and the
+                file extension.
+                """)
+    );
+
+    private static final List<ExternalResource> LINKS = List.of(
+         new ExternalResource(
+            "https://www.knime.com/knime-introductory-course/chapter7/section1/creation-and-usage-of-flow-variables",
+            """
+            KNIME E-Learning Course: Creation and usage of Flow Variables in a KNIME workflow
+            """)
+    );
+
     /**
      * {@inheritDoc}
+     * @since 5.11
      */
     @Override
-    protected NodeDialogPane createNodeDialogPane() {
-        return new UrlToFilePathVaribaleNodeDialog();
+    public NodeDialogPane createNodeDialogPane() {
+        return NodeDialogManager.createLegacyFlowVariableNodeDialog(createNodeDialog());
     }
+
+    /**
+     * {@inheritDoc}
+     * @since 5.11
+     */
+    @Override
+    public NodeDialog createNodeDialog() {
+        return new DefaultNodeDialog(SettingsType.MODEL, UrlToFilePathVariableNodeParameters.class);
+    }
+
+    @Override
+    public NodeDescription createNodeDescription() {
+        return DefaultNodeDescriptionUtil.createNodeDescription( //
+            NODE_NAME, //
+            NODE_ICON, //
+            INPUT_PORTS, //
+            OUTPUT_PORTS, //
+            SHORT_DESCRIPTION, //
+            FULL_DESCRIPTION, //
+            LINKS, //
+            UrlToFilePathVariableNodeParameters.class, //
+            null, //
+            NodeType.Manipulator, //
+            List.of(), //
+            null //
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     * @since 5.11
+     */
+    @Override
+    public KaiNodeInterface createKaiNodeInterface() {
+        return new DefaultKaiNodeInterface(Map.of(SettingsType.MODEL, UrlToFilePathVariableNodeParameters.class));
+    }
+
 }

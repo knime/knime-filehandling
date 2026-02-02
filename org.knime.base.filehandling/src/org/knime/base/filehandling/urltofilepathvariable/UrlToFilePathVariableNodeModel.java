@@ -143,17 +143,13 @@ class UrlToFilePathVariableNodeModel extends NodeModel {
     static final String DEF_FLOWVAR_FILEPATH_MISSING = "";
 
 
-    private SettingsModelString m_flowVarNameModel =
-        UrlToFilePathVaribaleNodeDialog.getFlowVariableModel();
+    private SettingsModelString m_flowVarNameModel = getFlowVariableModel();
 
-    private SettingsModelBoolean m_failOnInvalidUrlModel =
-        UrlToFilePathVaribaleNodeDialog.getFailOnInvalidSyntaxModel();
+    private SettingsModelBoolean m_failOnInvalidUrlModel = getFailOnInvalidSyntaxModel();
 
-    private SettingsModelBoolean m_failOnInvalidLocationModel =
-        UrlToFilePathVaribaleNodeDialog.getFailOnInvalidLocationModel();
+    private SettingsModelBoolean m_failOnInvalidLocationModel = getFailOnInvalidLocationModel();
 
-    private SettingsModelBoolean m_addPrefixToVarModel =
-        UrlToFilePathVaribaleNodeDialog.getAddPrefixToVariableModel();
+    private SettingsModelBoolean m_addPrefixToVarModel = getAddPrefixToVariableModel();
 
     /**
      * Creates new instance of <code>UrlToFilePathVariableNodeModel</code>.
@@ -336,5 +332,54 @@ class UrlToFilePathVariableNodeModel extends NodeModel {
             final ExecutionMonitor exec)
     throws IOException, CanceledExecutionException {
         // Nothing to do ...
+    }
+
+    /**
+     * Creates and returns the settings model, storing the selected variable.
+     *
+     * @return The settings model with the selected column.
+     */
+    static final SettingsModelString getFlowVariableModel() {
+        return new SettingsModelString(
+                UrlToFilePathVariableConfigKeys.VARIABLE_NAME,
+                UrlToFilePathVariableNodeModel.DEF_VARNAME);
+    }
+
+    /**
+     * Creates and returns the settings model, storing the "fail on invalid
+     * syntax" flag.
+     *
+     * @return The settings model, storing the "fail on invalid
+     * syntax" flag.
+     */
+    static final SettingsModelBoolean getFailOnInvalidSyntaxModel() {
+        return new SettingsModelBoolean(
+                UrlToFilePathVariableConfigKeys.FAIL_ON_INVALID_SYNTAX,
+                UrlToFilePathVariableNodeModel.DEF_FAIL_ON_INVALID_SYNTAX);
+    }
+
+    /**
+     * Creates and returns the settings model, storing the "fail on invalid
+     * location" flag.
+     *
+     * @return The settings model, storing the "fail on invalid
+     * location" flag.
+     */
+    static final SettingsModelBoolean getFailOnInvalidLocationModel() {
+        return new SettingsModelBoolean(
+                UrlToFilePathVariableConfigKeys.FAIL_ON_INVALID_LOCATION,
+                UrlToFilePathVariableNodeModel.DEF_FAIL_ON_INVALID_LOCATION);
+    }
+
+    /**
+     * Creates and returns the settings model, storing the "add prefix to
+     * variable" flag.
+     *
+     * @return The settings model, storing the "add prefix to variable" flag.
+     */
+    static final SettingsModelBoolean getAddPrefixToVariableModel() {
+        return new SettingsModelBoolean(
+                UrlToFilePathVariableConfigKeys.ADD_PREFIX_TO_VAR,
+                UrlToFilePathVariableNodeModel.DEF_ADD_PREFIX_TO_VARIABLE);
     }
 }
