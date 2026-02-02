@@ -43,68 +43,50 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
  */
-package org.knime.base.filehandling.urltofilepath;
+
+package org.knime.base.filehandling.urltofilepathvariable;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.DataType;
-import org.knime.core.data.def.StringCell;
-import org.knime.core.data.uri.URIDataCell;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettings;
-import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.dialog.SettingsType;
 import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersUtil;
 import org.knime.testing.node.dialog.DefaultNodeSettingsSnapshotTest;
 import org.knime.testing.node.dialog.SnapshotTestConfiguration;
 
 /**
- * Snapshot test for {@link UrlToFilePathNodeParameters}.
+ * Snapshot test for {@link UrlToFilePathVariableNodeParameters}.
+ *
+ * @author AI Migration Pipeline v1.2
  */
 @SuppressWarnings("restriction")
-final class UrlToFilePathNodeParametersTest extends DefaultNodeSettingsSnapshotTest {
+final class UrlToFilePathVariableNodeParametersTest extends DefaultNodeSettingsSnapshotTest {
 
-    UrlToFilePathNodeParametersTest() {
+    UrlToFilePathVariableNodeParametersTest() {
         super(getConfig());
     }
 
     private static SnapshotTestConfiguration getConfig() {
         return SnapshotTestConfiguration.builder() //
-            .withInputPortObjectSpecs(createInputPortSpecs()) //
-            .testJsonFormsForModel(UrlToFilePathNodeParameters.class) //
+            .testJsonFormsForModel(UrlToFilePathVariableNodeParameters.class) //
             .testJsonFormsWithInstance(SettingsType.MODEL, () -> readSettings()) //
             .testNodeSettingsStructure(() -> readSettings()) //
             .build();
     }
 
-    private static UrlToFilePathNodeParameters readSettings() {
+    private static UrlToFilePathVariableNodeParameters readSettings() {
         try {
-            var path = getSnapshotPath(UrlToFilePathNodeParameters.class).getParent().resolve("node_settings")
-                .resolve("UrlToFilePathNodeParameters.xml");
+            var path = getSnapshotPath(UrlToFilePathVariableNodeParameters.class).getParent().resolve("node_settings")
+                .resolve("UrlToFilePathVariableNodeParameters.xml");
             try (var fis = new FileInputStream(path.toFile())) {
                 var nodeSettings = NodeSettings.loadFromXML(fis);
                 return NodeParametersUtil.loadSettings(nodeSettings.getNodeSettings(SettingsType.MODEL.getConfigKey()),
-                    UrlToFilePathNodeParameters.class);
+                    UrlToFilePathVariableNodeParameters.class);
             }
         } catch (IOException | InvalidSettingsException e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    private static PortObjectSpec[] createInputPortSpecs() {
-        return new PortObjectSpec[]{createDefaultTestTableSpec()};
-    }
-
-    private static DataTableSpec createDefaultTestTableSpec() {
-        return new DataTableSpec(
-            new String[]{"URI", "String_Column", "Another_URI"},
-            new DataType[]{
-                URIDataCell.TYPE,
-                DataType.getType(StringCell.class),
-                URIDataCell.TYPE
-            }
-        );
     }
 }
