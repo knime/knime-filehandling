@@ -13,8 +13,8 @@
       },
       "workingDirectory" : "/",
       "encoding" : {
-        "encodingSelection" : "OS_DEFAULT",
-        "encoding" : "CP437"
+        "encoding" : "DEFAULT",
+        "customEncoding" : "UTF-8"
       }
     }
   },
@@ -27,16 +27,22 @@
           "encoding" : {
             "type" : "object",
             "properties" : {
-              "encoding" : {
+              "customEncoding" : {
                 "type" : "string",
                 "title" : "Custom encoding",
                 "description" : "Enter a custom encoding.",
-                "default" : "CP437"
+                "default" : "UTF-8"
               },
-              "encodingSelection" : {
+              "encoding" : {
                 "oneOf" : [ {
+                  "const" : "DEFAULT",
+                  "title" : "Default"
+                }, {
                   "const" : "OS_DEFAULT",
                   "title" : "OS default"
+                }, {
+                  "const" : "CP437",
+                  "title" : "CP437"
                 }, {
                   "const" : "UTF_8",
                   "title" : "UTF-8"
@@ -60,13 +66,13 @@
                   "title" : "Other"
                 } ],
                 "title" : "File encoding",
-                "description" : "Sets the character set/encoding to use when reading the names of the compressed files in the archive. By default, <a href=\"https://en.wikipedia.org/wiki/Code_page_437\">CP437</a> is chosen, which is used in some ZIP files.\n<ul>\n<li><b>OS default</b>: Uses the default encoding of the Java VM</li>\n<li><b>UTF-8</b></li>\n<li><b>UTF-16</b></li>\n<li><b>UTF-16BE</b></li>\n<li><b>UTF-16LE</b></li>\n<li><b>US-ASCII</b></li>\n<li><b>ISO-8859-1</b></li>\n<li><b>Other</b>: Use another encoding</li>\n</ul>",
-                "default" : "OS_DEFAULT"
+                "description" : "Sets the character set/encoding to use when reading the names of the compressed files in the archive. By default, UTF-8 is chosen.\n<ul>\n<li><b>Default</b>: Default (currently UTF-8)</li>\n<li><b>OS default</b>: Uses the default encoding of the Java VM</li>\n<li><b>CP437</b></li>\n<li><b>UTF-8</b></li>\n<li><b>UTF-16</b></li>\n<li><b>UTF-16BE</b></li>\n<li><b>UTF-16LE</b></li>\n<li><b>US-ASCII</b></li>\n<li><b>ISO-8859-1</b></li>\n<li><b>Other</b>: Use another encoding</li>\n</ul>",
+                "default" : "DEFAULT"
               }
             },
             "default" : {
-              "encodingSelection" : "OS_DEFAULT",
-              "encoding" : "CP437"
+              "encoding" : "DEFAULT",
+              "customEncoding" : "UTF-8"
             }
           },
           "file" : {
@@ -84,8 +90,8 @@
                 }
               }
             },
-            "title" : "Read from",
-            "description" : "Select a file system which stores the data you want to read. There are four default file system options to choose from: <br /> <ul> <li><i>Local File System:</i> Allows you to select a file/folder from your local system. </li> <li><i>Mountpoint:</i> Allows you to read from a mountpoint. When selected, a new drop-down menu appears to choose the mountpoint. Unconnected mountpoints are greyed out but can still be selected (note that browsing is disabled in this case). Go to the KNIME Explorer and connect to the mountpoint to enable browsing. A mountpoint is displayed in red if it was previously selected but is no longer available. You won't be able to save the dialog as long as you don't select a valid i.e. known mountpoint. </li> <li><i>Relative to:</i> Allows you to choose whether to resolve the path relative to the current mountpoint, current workflow or the current workflow's data area. When selected a new drop-down menu appears to choose which of the three options to use. </li> <li><i>Custom/KNIME URL:</i> Allows to specify a URL (e.g. file://, http:// or knime:// protocol). When selected, a spinner appears that allows you to specify the desired connection and read timeout in milliseconds. In case it takes longer to connect to the host / read the file, the node fails to execute. Browsing is disabled for this option. </li> </ul> To read from other file systems, click on <b>...</b> in the bottom left corner of the node icon followed by <i>Add File System Connection port</i>. Afterwards, connect the desired file system connector node to the newly added input port. The file system connection will then be shown in the drop-down menu. It is greyed out if the file system is not connected in which case you have to (re)execute the connector node first. Note: The default file systems listed above can't be selected if a file system is provided via the input port.",
+            "title" : "ZIP file",
+            "description" : "Select the ZIP or JAR archive file.",
             "default" : {
               "path" : {
                 "fsCategory" : "LOCAL",
@@ -109,45 +115,50 @@
   },
   "ui_schema" : {
     "elements" : [ {
-      "label" : "Settings",
+      "label" : "Input File",
       "type" : "Section",
       "elements" : [ {
         "type" : "Control",
         "scope" : "#/properties/model/properties/file",
         "options" : {
+          "fileExtensions" : [ ".zip", ".jar" ],
           "isLocal" : true,
-          "selectionMode" : "FILE",
           "spaceFSOptions" : {
             "mountId" : "Local space"
           },
           "format" : "fileChooser"
         }
-      }, {
-        "type" : "Control",
-        "scope" : "#/properties/model/properties/workingDirectory",
-        "options" : {
-          "selectionMode" : "FOLDER",
-          "format" : "stringFileChooser"
-        },
-        "providedOptions" : [ "fileSystemId" ]
       } ]
     }, {
       "label" : "Encoding",
       "type" : "Section",
+      "options" : {
+        "isAdvanced" : true
+      },
       "elements" : [ {
         "type" : "Control",
-        "scope" : "#/properties/model/properties/encoding/properties/encodingSelection",
+        "scope" : "#/properties/model/properties/encoding/properties/encoding",
         "options" : {
           "format" : "dropDown"
         },
         "providedOptions" : [ "possibleValues" ]
       }, {
         "type" : "Control",
-        "scope" : "#/properties/model/properties/encoding/properties/encoding",
+        "scope" : "#/properties/model/properties/encoding/properties/customEncoding",
+        "options" : {
+          "validation" : {
+            "pattern" : {
+              "errorMessage" : "The field cannot be blank (it must contain at least one non-whitespace character).",
+              "parameters" : {
+                "pattern" : ".*\\S.*"
+              }
+            }
+          }
+        },
         "rule" : {
           "effect" : "SHOW",
           "condition" : {
-            "scope" : "#/properties/model/properties/encoding/properties/encodingSelection",
+            "scope" : "#/properties/model/properties/encoding/properties/encoding",
             "schema" : {
               "oneOf" : [ {
                 "const" : "OTHER"
@@ -155,6 +166,18 @@
             }
           }
         }
+      } ]
+    }, {
+      "label" : "File System",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/workingDirectory",
+        "options" : {
+          "selectionMode" : "FOLDER",
+          "format" : "stringFileChooser"
+        },
+        "providedOptions" : [ "fileSystemId" ]
       } ]
     } ]
   },
@@ -168,23 +191,29 @@
             "configPaths" : [ [ "file", "path" ] ]
           },
           "workingDirectory" : {
-            "configKey" : "workingDirectory"
+            "configPaths" : [ [ "working_directory" ] ]
           },
           "encoding" : {
-            "configPaths" : [ [ "useDefaultEncoding" ], [ "encoding" ] ]
+            "configPaths" : [ [ "encoding" ], [ "useDefaultEncoding" ] ]
           }
         }
       }
     }
   },
   "initialUpdates" : [ {
-    "scope" : "#/properties/model/properties/encoding/properties/encodingSelection",
+    "scope" : "#/properties/model/properties/encoding/properties/encoding",
     "providedOptionName" : "possibleValues",
     "values" : [ {
       "indices" : [ ],
       "value" : [ {
+        "id" : "DEFAULT",
+        "text" : "Default"
+      }, {
         "id" : "OS_DEFAULT",
         "text" : "OS default (UTF-8)"
+      }, {
+        "id" : "CP437",
+        "text" : "CP437"
       }, {
         "id" : "UTF_8",
         "text" : "UTF-8"

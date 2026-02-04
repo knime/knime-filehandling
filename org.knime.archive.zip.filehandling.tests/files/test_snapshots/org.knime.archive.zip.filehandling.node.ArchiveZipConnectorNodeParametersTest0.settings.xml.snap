@@ -3,8 +3,9 @@
     <config key="file">
         <config key="path">
             <entry key="location_present" type="xboolean" value="true"/>
-            <entry key="file_system_type" type="xstring" value="LOCAL"/>
-            <entry key="path" type="xstring" value="/home/halilyerlikaya/Downloads/Lectures-20251126.zip"/>
+            <entry key="file_system_type" type="xstring" value="CONNECTED"/>
+            <entry key="file_system_specifier" type="xstring" value="knime-server:testing.knime.com/knime"/>
+            <entry key="path" type="xstring" value="./knimetemp-7656805217fb43ca/zip_cp437_with_funny_chars.zip"/>
         </config>
         <config key="filter_mode">
             <entry key="filter_mode" type="xstring" value="FILE"/>
@@ -39,7 +40,7 @@
             <entry key="connected_fs" type="xboolean" value="true"/>
         </config>
     </config>
-    <entry key="workingDirectory" type="xstring" value="/"/>
+    <entry key="working_directory" type="xstring" value="/"/>
     <entry key="useDefaultEncoding" type="xboolean" value="false"/>
     <entry key="encoding" type="xstring" value="CP437"/>
 </config>

@@ -124,13 +124,23 @@ public class ArchiveZipConnectorNodeFactory extends ConfigurableNodeFactory<Arch
                 archive.
             """;
     private static final String FULL_DESCRIPTION = """
-            <p> This node creates a file system connection that allows to read the files/folders stored inside a ZIP
+            <p>
+                This node creates a file system connection that allows to read the files/folders stored inside a ZIP
                 archive. The resulting file system connection output port allows downstream nodes to read the compressed
-                files from a zip archive file. </p> <p> <b>Path syntax:</b> Paths for this connector are specified with
-                a UNIX-like syntax such as /myfolder/myfile. An absolute path consists of: <ol> <li>A leading slash
-                ("/").</li> <li>Followed by the path to the file ("myfolder/myfile" in the above example).</li> </ol>
-                </p> <p> <b>Note:</b> When the ZIP file changes, this node has to be reset and re-executed, otherwise
-                its behavior is undefined, which may result in errors and/or invalid data being read. </p>
+                files from a zip archive file.
+            </p>
+            <p>
+                <b>Path syntax:</b> Paths for this connector are specified with a UNIX-like syntax such as
+                <code>/myfolder/myfile</code>. An absolute path consists of:
+                <ul>
+                    <li>A leading slash ("/").</li>
+                    <li>Followed by the path to the file ("myfolder/myfile" in the above example).</li>
+                </ul>
+            </p>
+            <p>
+                <b>Note:</b> When the ZIP file changes, this node has to be reset and re-executed, otherwise
+                its behavior is undefined, which may result in errors and/or invalid data being read.
+            </p>
             """;
     private static final List<PortDescription> INPUT_PORTS = List.of(
             dynamicPort("Input File System", "Input File System", """

@@ -48,9 +48,11 @@ package org.knime.archive.zip.filehandling.node;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -58,6 +60,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnection;
 import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnectionConfig;
 import org.knime.archive.zip.filehandling.fs.ArchiveZipFileSystem;
+import org.knime.filehandling.core.connections.FSPath;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
@@ -66,15 +69,20 @@ import org.knime.core.node.context.ports.PortsConfiguration;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FSConnectionProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelection;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelectionWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.LegacyReaderFileSelectionPersistor;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelectionWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.SingleFileSelectionMode;
 import org.knime.core.webui.node.dialog.defaultdialog.internal.file.WithCustomFileSystem;
-import org.knime.filehandling.core.connections.FSPath;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.validation.custom.CustomValidation;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.validation.custom.SimpleValidation;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileReaderWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.widget.PersistWithin;
 import org.knime.filehandling.core.defaultnodesettings.EnumConfig;
 import org.knime.filehandling.core.defaultnodesettings.filechooser.reader.SettingsModelReaderFileChooser;
 import org.knime.filehandling.core.defaultnodesettings.filtermode.SettingsModelFilterMode.FilterMode;
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage;
+import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
+import org.knime.node.parameters.Advanced;
 import org.knime.node.parameters.NodeParameters;
 import org.knime.node.parameters.NodeParametersInput;
 import org.knime.node.parameters.Widget;
@@ -96,6 +104,8 @@ import org.knime.node.parameters.widget.choices.ChoicesProvider;
 import org.knime.node.parameters.widget.choices.EnumChoice;
 import org.knime.node.parameters.widget.choices.EnumChoicesProvider;
 import org.knime.node.parameters.widget.choices.Label;
+import org.knime.node.parameters.widget.text.TextInputWidget;
+import org.knime.node.parameters.widget.text.TextInputWidgetValidation.PatternValidation.IsNotBlankValidation;
 
 /**
  * Node parameters for ZIP Archive Connector.
@@ -106,54 +116,31 @@ import org.knime.node.parameters.widget.choices.Label;
 @SuppressWarnings("restriction")
 class ArchiveZipConnectorNodeParameters implements NodeParameters {
 
-    private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
-
-    private static final String KEY_FILE = "file";
-
-    private static final String KEY_ENCODING = "encoding";
-
+    private static final String DEFAULT_ENCODING = "UTF-8";
     private static final String[] FILE_EXTENSIONS = {".zip", ".jar"};
-
-    private static final String DEFAULT_ENCODING = "CP437";
-
-    private static final String CFG_USE_DEFAULT_ENCODING = "useDefaultEncoding";
 
     // ----- LAYOUTS -----
 
-    @Section(title = "Settings")
-    interface SettingsSection {
+    @Section(title = "Input File")
+    interface InputFileSection {
     }
 
     @Section(title = "Encoding")
-    @After(SettingsSection.class)
+    @After(InputFileSection.class)
+    @Advanced
     interface EncodingSection {
+    }
+
+    @Section(title = "File System")
+    @After(EncodingSection.class)
+    interface FileSystemSection {
     }
 
     // ----- SETTINGS PARAMETERS -----
 
-    @Widget(title = "Read from", description = """
-            Select a file system which stores the data you want to read. There are four default file system \
-            options to choose from: <br /> <ul> <li><i>Local File System:</i> Allows you to select a \
-            file/folder from your local system. </li> <li><i>Mountpoint:</i> Allows you to read from a \
-            mountpoint. When selected, a new drop-down menu appears to choose the mountpoint. Unconnected \
-            mountpoints are greyed out but can still be selected (note that browsing is disabled in this \
-            case). Go to the KNIME Explorer and connect to the mountpoint to enable browsing. A mountpoint is \
-            displayed in red if it was previously selected but is no longer available. You won't be able to \
-            save the dialog as long as you don't select a valid i.e. known mountpoint. </li> <li><i>Relative \
-            to:</i> Allows you to choose whether to resolve the path relative to the current mountpoint, \
-            current workflow or the current workflow's data area. When selected a new drop-down menu appears \
-            to choose which of the three options to use. </li> <li><i>Custom/KNIME URL:</i> Allows to specify \
-            a URL (e.g. file://, http:// or knime:// protocol). When selected, a spinner appears that allows \
-            you to specify the desired connection and read timeout in milliseconds. In case it takes longer \
-            to connect to the host / read the file, the node fails to execute. Browsing is disabled for this \
-            option. </li> </ul> To read from other file systems, click on <b>...</b> in the bottom left \
-            corner of the node icon followed by <i>Add File System Connection port</i>. Afterwards, connect \
-            the desired file system connector node to the newly added input port. The file system connection \
-            will then be shown in the drop-down menu. It is greyed out if the file system is not connected in \
-            which case you have to (re)execute the connector node first. Note: The default file systems \
-            listed above can't be selected if a file system is provided via the input port.""")
-    @Layout(SettingsSection.class)
-    @FileSelectionWidget(SingleFileSelectionMode.FILE)
+    @Widget(title = "ZIP file", description = "Select the ZIP or JAR archive file.")
+    @Layout(InputFileSection.class)
+    @FileReaderWidget(fileExtensions = {".zip", ".jar"})
     @ValueReference(FileSelectionRef.class)
     @Persistor(FileSelectionPersistor.class)
     @Migrate
@@ -163,8 +150,29 @@ class ArchiveZipConnectorNodeParameters implements NodeParameters {
     }
 
     static final class FileSelectionPersistor extends LegacyReaderFileSelectionPersistor {
+        private static final String KEY_FILE = "file";
+
         public FileSelectionPersistor() {
             super(KEY_FILE);
+        }
+    }
+
+    static final class WorkingDirectoryPersistor implements NodeParametersPersistor<String> {
+        private static final String KEY = "working_directory";
+
+        @Override
+        public String load(final NodeSettingsRO settings) throws InvalidSettingsException {
+            return settings.getString(KEY, ArchiveZipFileSystem.SEPARATOR);
+        }
+
+        @Override
+        public void save(final String value, final NodeSettingsWO settings) {
+            settings.addString(KEY, value);
+        }
+
+        @Override
+        public String[][] getConfigPaths() {
+            return new String[][]{{KEY}};
         }
     }
 
@@ -173,12 +181,23 @@ class ArchiveZipConnectorNodeParameters implements NodeParameters {
             The working directory must be specified as an absolute path. A
             working directory allows downstream nodes to access files/folders using <i>relative</i> paths,
             i.e. paths that do not have a leading backslash. The default working directory is "/".""")
-    @Layout(SettingsSection.class)
+    @TextInputWidget
+    @Persistor(WorkingDirectoryPersistor.class)
+    @Layout(FileSystemSection.class)
     @FileSelectionWidget(SingleFileSelectionMode.FOLDER)
     @WithCustomFileSystem(connectionProvider = FileSystemConnectionProvider.class)
-    @Persist(configKey = KEY_WORKING_DIRECTORY)
+    @CustomValidation(WorkingDirectoryValidator.class)
     @ValueReference(WorkingDirectoryRef.class)
     String m_workingDirectory = ArchiveZipFileSystem.SEPARATOR;
+
+    static final class WorkingDirectoryValidator extends SimpleValidation<String> {
+        @Override
+        public void validate(final String value) throws InvalidSettingsException {
+            if (StringUtils.isBlank(value) || !value.startsWith(ArchiveZipFileSystem.SEPARATOR)) {
+                throw new InvalidSettingsException("Working directory must be an absolute path (start with /).");
+            }
+        }
+    }
 
     interface WorkingDirectoryRef extends ParameterReference<String> {
     }
@@ -187,14 +206,13 @@ class ArchiveZipConnectorNodeParameters implements NodeParameters {
 
     @Widget(title = "Encoding", description = """
             Sets the character set/encoding to use when reading the names of the compressed files in the \
-            archive. By default, <a href="https://en.wikipedia.org/wiki/Code_page_437">CP437</a> is chosen, \
-            which is used in some ZIP files. You can specify any other encoding supported by Java. Choosing \
+            archive. By default, UTF-8 is chosen. You can specify any other encoding supported by Java. Choosing \
             "OS default" uses the default encoding of the Java VM, which may depend on the locale or the Java \
             property "file.encoding".""")
     @Layout(EncodingSection.class)
-    @Persistor(EncodingPersistor.class)
     @ValueReference(EncodingRef.class)
-    @Migrate
+        @PersistWithin.PersistEmbedded
+        @Persistor(EncodingParametersPersistor.class)
     EncodingParameters m_encoding = new EncodingParameters();
 
     static final class EncodingRef implements ParameterReference<EncodingParameters> {
@@ -207,6 +225,8 @@ class ArchiveZipConnectorNodeParameters implements NodeParameters {
      * working directory using the exact same Zip connection this node is providing.
      */
     static final class FileSystemConnectionProvider implements StateProvider<FSConnectionProvider> {
+
+        private static final Consumer<StatusMessage> NO_OP_CONSUMER = s -> {}; // NOSONAR
 
         private Supplier<FileSelection> m_fileSupplier;
 
@@ -224,70 +244,66 @@ class ArchiveZipConnectorNodeParameters implements NodeParameters {
 
         @Override
         public FSConnectionProvider computeState(final NodeParametersInput parametersInput) {
-            return () -> {// NOSONAR: Longer lambda acceptable, as it improves readability
-                final var params = new ArchiveZipConnectorNodeParameters();
-                params.m_file = m_fileSupplier.get();
-                params.m_encoding = m_encodingSupplier.get();
-                params.m_workingDirectory = m_workingDirectorySupplier.get();
-
-                final var portsConfiguration = parametersInput.getPortsConfiguration();
-                final var inSpecs = parametersInput.getInPortSpecs();
-
-                ArchiveZipFSConnectionConfig config = null;
-                try {
-                    config = params.createFSConnectionConfig(portsConfiguration, inSpecs, s -> {
-                    });
-                    return new ArchiveZipFSConnection(config);
-                } catch (final IOException t) {
-                    if (config != null) {
-                        try {
-                            config.close();
-                        } catch (final IOException e) {
-                            throw new IOException("Invalid configuration.",e);
-                        }
-                    }
-                    throw t;
-                }
-            };
+            return () -> createConnection(parametersInput);
         }
 
-        private static void closeQuietly(final Closeable closeable) {
-            if (closeable == null) {
-                return;
+        private ArchiveZipFSConnection createConnection(final NodeParametersInput parametersInput) throws IOException {
+            final var params = new ArchiveZipConnectorNodeParameters();
+            params.m_file = m_fileSupplier.get();
+            params.m_encoding = m_encodingSupplier.get();
+            params.m_workingDirectory = m_workingDirectorySupplier.get();
+            
+            if (StringUtils.isBlank(params.m_workingDirectory) || !params.m_workingDirectory.startsWith(ArchiveZipFileSystem.SEPARATOR)) {
+                params.m_workingDirectory = ArchiveZipFileSystem.SEPARATOR;
             }
+
+            final var portsConfiguration = parametersInput.getPortsConfiguration();
+            final var inSpecs = parametersInput.getInPortSpecs();
+
+            ArchiveZipFSConnectionConfig config = null;
             try {
-                closeable.close();
-            } catch (IOException e) { //NOSONAR
-                // quietly ignored
+                config = params.createFSConnectionConfig(portsConfiguration, inSpecs, NO_OP_CONSUMER);
+                return new ArchiveZipFSConnection(config);
+            } catch (final IOException t) {
+                if (config != null) {
+                    try {
+                        config.close();
+                    } catch (final IOException e) {
+                        t.addSuppressed(e);
+                    }
+                }
+                throw t;
+            } catch (InvalidSettingsException e) {
+                if (config != null) {
+                    try {
+                        config.close();
+                    } catch (final IOException ioe) {
+                        e.addSuppressed(ioe);
+                    }
+                }
+                throw new IOException(e);
             }
         }
     }
 
     static final class EncodingParameters implements NodeParameters {
 
-        static final class EncodingChoicesProvider implements EnumChoicesProvider<FileEncodingOption> {
-            @Override
-            public List<EnumChoice<FileEncodingOption>> computeState(final NodeParametersInput context) {
-                return Arrays.stream(FileEncodingOption.values()).map(FileEncodingOption::toEnumChoice).toList();
-            }
-        }
-
         @Widget(title = "File encoding", description = """
                 Sets the character set/encoding to use when reading the names of the compressed files in the \
-                archive. By default, <a href="https://en.wikipedia.org/wiki/Code_page_437">CP437</a> is chosen, \
-                which is used in some ZIP files.""")
+                archive. By default, UTF-8 is chosen.""")
         @ChoicesProvider(EncodingChoicesProvider.class)
         @ValueReference(EncodingSelectionRef.class)
-        FileEncodingOption m_encodingSelection = FileEncodingOption.OS_DEFAULT;
+        FileEncodingOption m_encoding = FileEncodingOption.DEFAULT;
 
         static final class EncodingSelectionRef implements ParameterReference<FileEncodingOption> {
         }
 
         @Widget(title = "Custom encoding", description = "Enter a custom encoding.")
-        @Effect(predicate = IsOtherEncoding.class, type = EffectType.SHOW)
+        @Effect(predicate = EncodingParameters.IsOtherEncoding.class, type = EffectType.SHOW)
+        @TextInputWidget(patternValidation = IsNotBlankValidation.class)
         @ValueReference(CustomEncodingRef.class)
         @Layout(EncodingSection.class)
-        String m_encoding = DEFAULT_ENCODING;
+        String m_customEncoding = DEFAULT_ENCODING;
 
         static final class CustomEncodingRef implements ParameterReference<String> {
         }
@@ -300,56 +316,61 @@ class ArchiveZipConnectorNodeParameters implements NodeParameters {
         }
     }
 
-    static final class EncodingPersistor implements NodeParametersPersistor<EncodingParameters> {
+    static final class EncodingParametersPersistor implements NodeParametersPersistor<EncodingParameters> {
+
+        private static final String KEY_ENCODING = "encoding";
+        private static final String CFG_USE_DEFAULT_ENCODING = "useDefaultEncoding";
 
         @Override
         public EncodingParameters load(final NodeSettingsRO settings) throws InvalidSettingsException {
             final var params = new EncodingParameters();
-            var useDefault = true;
-            if (settings.containsKey(CFG_USE_DEFAULT_ENCODING)) {
-                useDefault = settings.getBoolean(CFG_USE_DEFAULT_ENCODING, true);
+            params.m_encoding = FileEncodingOption.DEFAULT;
+
+            if (settings.containsKey(KEY_ENCODING)) {
+                var loadedEncoding = settings.getString(KEY_ENCODING, DEFAULT_ENCODING);
+                params.m_encoding = FileEncodingOption.fromPersistId(loadedEncoding);
+                if (params.m_encoding == FileEncodingOption.OTHER) {
+                    params.m_customEncoding = loadedEncoding;
+                }
             }
 
-            if (useDefault) {
-                params.m_encodingSelection = FileEncodingOption.OS_DEFAULT;
-            } else {
-                if (settings.containsKey(KEY_ENCODING)) {
-                    var loadedEncoding = settings.getString(KEY_ENCODING, DEFAULT_ENCODING);
-                    params.m_encodingSelection = FileEncodingOption.fromPersistId(loadedEncoding);
-                    if (params.m_encodingSelection == FileEncodingOption.OTHER) {
-                        params.m_encoding = loadedEncoding;
-                    }
-                } else {
-                    params.m_encodingSelection = FileEncodingOption.OS_DEFAULT;
-                }
+            if (settings.containsKey(CFG_USE_DEFAULT_ENCODING) && settings.getBoolean(CFG_USE_DEFAULT_ENCODING)) {
+                params.m_encoding = FileEncodingOption.DEFAULT;
             }
             return params;
         }
 
         @Override
-        public void save(final EncodingParameters param, final NodeSettingsWO settings) {
-            if (param.m_encodingSelection == FileEncodingOption.OS_DEFAULT) {
-                settings.addBoolean(CFG_USE_DEFAULT_ENCODING, true);
-                settings.addString(KEY_ENCODING, "OS default");
-            } else {
-                settings.addBoolean(CFG_USE_DEFAULT_ENCODING, false);
-                if (param.m_encodingSelection == FileEncodingOption.OTHER) {
-                    settings.addString(KEY_ENCODING, param.m_encoding);
+        public void save(final EncodingParameters params, final NodeSettingsWO settings) {
+            final boolean useDefault = params.m_encoding == FileEncodingOption.DEFAULT;
+            settings.addBoolean(CFG_USE_DEFAULT_ENCODING, useDefault);
+
+            String encoding = DEFAULT_ENCODING;
+            if (!useDefault) {
+                if (params.m_encoding == FileEncodingOption.OTHER) {
+                    encoding = params.m_customEncoding;
+                } else if (params.m_encoding == FileEncodingOption.OS_DEFAULT) {
+                    encoding = FileEncodingOption.OS_DEFAULT.m_persistId;
                 } else {
-                    settings.addString(KEY_ENCODING, param.m_encodingSelection.m_persistId);
+                    encoding = params.m_encoding.m_persistId;
                 }
             }
+            settings.addString(KEY_ENCODING, encoding);
         }
 
         @Override
         public String[][] getConfigPaths() {
-            return new String[][]{{CFG_USE_DEFAULT_ENCODING}, {KEY_ENCODING}};
+            return new String[][]{{KEY_ENCODING}, {CFG_USE_DEFAULT_ENCODING}};
         }
     }
 
     enum FileEncodingOption {
+            @Label(value = "Default", description = "Default (currently UTF-8)")
+            DEFAULT(null),
             @Label(value = "OS default", description = "Uses the default encoding of the Java VM") //
-            OS_DEFAULT(null, "OS default (" + java.nio.charset.Charset.defaultCharset().name() + ")"), //
+            OS_DEFAULT("OS default", "OS default (" + Charset.defaultCharset().name() + ")"), //
+            @Label("CP437") //
+            CP437("CP437"), //
             @Label("UTF-8") //
             UTF_8("UTF-8"), //
             @Label("UTF-16") //
@@ -380,7 +401,7 @@ class ArchiveZipConnectorNodeParameters implements NodeParameters {
 
         static FileEncodingOption fromPersistId(final String persistId) {
             if (persistId == null) {
-                return OS_DEFAULT;
+                return DEFAULT;
             }
             return Arrays.stream(FileEncodingOption.values()) //
                 .filter(option -> Objects.equals(persistId, option.m_persistId)) //
@@ -396,40 +417,15 @@ class ArchiveZipConnectorNodeParameters implements NodeParameters {
         }
     }
 
-    void load(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_file = new FileSelectionPersistor().load(settings);
-        m_encoding = new EncodingPersistor().load(settings);
-        m_workingDirectory = settings.getString(KEY_WORKING_DIRECTORY, ArchiveZipFileSystem.SEPARATOR);
-    }
-
-    void save(final NodeSettingsWO settings) {
-        new FileSelectionPersistor().save(m_file, settings);
-        new EncodingPersistor().save(m_encoding, settings);
-        settings.addString(KEY_WORKING_DIRECTORY, m_workingDirectory);
-    }
-
-    @Override
-    public void validate() throws InvalidSettingsException {
-        validateOnConfigure();
-    }
-
-    void validateOnConfigure() throws InvalidSettingsException {
-        if (m_file.getFSLocation() == null || StringUtils.isBlank(m_file.getFSLocation().getPath())) {
-            throw new InvalidSettingsException("File must be specified.");
-        }
-        if (StringUtils.isBlank(m_workingDirectory)) {
-            throw new InvalidSettingsException("Working directory must be specified.");
-        }
-    }
-
     ArchiveZipFSConnectionConfig createFSConnectionConfig(final PortsConfiguration portsConfig,
         final PortObjectSpec[] inSpecs, final Consumer<StatusMessage> statusConsumer)
         throws IOException, InvalidSettingsException {
 
         final var fileChooser = new SettingsModelReaderFileChooser( //
-            KEY_FILE, //
+            FileSelectionPersistor.KEY_FILE, //
             portsConfig, //
-            ArchiveZipConnectorNodeFactory.FS_CONNECT_GRP_ID, EnumConfig.create(FilterMode.FILE), FILE_EXTENSIONS);
+            ArchiveZipConnectorNodeFactory.FS_CONNECT_GRP_ID, EnumConfig.create(FilterMode.FILE),
+            FILE_EXTENSIONS);
 
         // Populate fileChooser from FileSelection
         final var tempSettings = new NodeSettings("tmpsettings");
@@ -448,37 +444,46 @@ class ArchiveZipConnectorNodeParameters implements NodeParameters {
             final FSPath zipFilePath = pathAccessor.getRootPath(statusConsumer);
             fsConfig.setZipFilePath(zipFilePath);
 
-            final boolean useDefault = m_encoding.m_encodingSelection == FileEncodingOption.OS_DEFAULT;
+            final boolean useDefault = m_encoding.m_encoding == FileEncodingOption.DEFAULT;
             fsConfig.setUseDefaultEncoding(useDefault);
 
             String encoding = DEFAULT_ENCODING;
             if (!useDefault) {
-                if (m_encoding.m_encodingSelection == FileEncodingOption.OTHER) {
-                    encoding = m_encoding.m_encoding;
+                if (m_encoding.m_encoding == FileEncodingOption.OTHER) {
+                    encoding = m_encoding.m_customEncoding;
+                } else if (m_encoding.m_encoding == FileEncodingOption.OS_DEFAULT) {
+                    encoding = Charset.defaultCharset().name();
                 } else {
-                    encoding = m_encoding.m_encodingSelection.m_persistId;
+                    encoding = m_encoding.m_encoding.m_persistId;
                 }
             }
             fsConfig.setEncoding(encoding);
 
         } catch (IOException e) { //NOSONAR
-            FileSystemConnectionProvider.closeQuietly(pathAccessor);
+            try {
+                pathAccessor.close();
+            } catch (Exception ignored) {
+                // ignore
+            }
             throw e;
         }
         return fsConfig;
     }
 
-    void configure(final PortsConfiguration portsConfig, final PortObjectSpec[] inSpecs,
-        final Consumer<StatusMessage> statusConsumer) throws InvalidSettingsException {
-        final var fileChooser = new SettingsModelReaderFileChooser( //
-            KEY_FILE, //
-            portsConfig, //
-            ArchiveZipConnectorNodeFactory.FS_CONNECT_GRP_ID, EnumConfig.create(FilterMode.FILE), FILE_EXTENSIONS);
+    @Override
+    public void validate() throws InvalidSettingsException {
+        if (m_file.getFSLocation() == null || StringUtils.isBlank(m_file.getFSLocation().getPath())) {
+            throw new InvalidSettingsException("File must be specified.");
+        }
+        if (StringUtils.isBlank(m_workingDirectory) || !m_workingDirectory.startsWith(ArchiveZipFileSystem.SEPARATOR)) {
+            throw new InvalidSettingsException("Working directory must be an absolute path (start with /).");
+        }
+    }
 
-        final var tempSettings = new NodeSettings("tmpsettings");
-        new FileSelectionPersistor().save(m_file, tempSettings);
-        fileChooser.loadSettingsFrom(tempSettings);
-
-        fileChooser.configureInModel(inSpecs, statusConsumer);
+    static final class EncodingChoicesProvider implements EnumChoicesProvider<FileEncodingOption> {
+        @Override
+        public List<EnumChoice<FileEncodingOption>> computeState(final NodeParametersInput context) {
+            return Arrays.stream(FileEncodingOption.values()).map(FileEncodingOption::toEnumChoice).toList();
+        }
     }
 }
