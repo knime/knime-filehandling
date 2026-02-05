@@ -80,7 +80,7 @@ import org.knime.node.parameters.widget.choices.FlowVariableChoicesProvider;
 @SuppressWarnings("restriction")
 final class UrlToFilePathVariableNodeParameters implements NodeParameters {
 
-    @Section(title = "Failing behavior")
+    @Section(title = "Failing Behavior")
     interface FailingBehaviorSection {
     }
 
