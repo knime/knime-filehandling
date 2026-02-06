@@ -58,13 +58,10 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
-import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.impl.WebUINodeModel;
 import org.knime.ext.http.filehandling.fs.HttpFSConnection;
 import org.knime.ext.http.filehandling.fs.HttpFSConnectionConfig;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
@@ -76,11 +73,10 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-class HttpConnectorNodeModel extends NodeModel {
+@SuppressWarnings({ "deprecation", "restriction" })
+class HttpConnectorNodeModel extends WebUINodeModel<HttpConnectorNodeParameters> {
 
     private static final String FILE_SYSTEM_NAME = "HTTP";
-
-    private final HttpConnectorNodeSettings m_settings;
 
     private String m_fsId;
 
@@ -90,28 +86,26 @@ class HttpConnectorNodeModel extends NodeModel {
      * Creates new instance.
      */
     HttpConnectorNodeModel() {
-        super(new PortType[0], new PortType[] { FileSystemPortObject.TYPE });
-        m_settings = new HttpConnectorNodeSettings();
+        super(new PortType[0], new PortType[] { FileSystemPortObject.TYPE }, HttpConnectorNodeParameters.class);
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-        m_settings.validate();
-        m_settings.configureInModel(inSpecs, m -> {
-        }, getCredentialsProvider());
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs, final HttpConnectorNodeParameters params)
+            throws InvalidSettingsException {
+        params.validateOnConfigure(getCredentialsProvider());
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-        return new PortObjectSpec[] { createSpec() };
+        return new PortObjectSpec[] { createSpec(params) };
     }
 
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        final CredentialsProvider credProvider = getCredentialsProvider();
-        final HttpFSConnectionConfig config = m_settings.toFSConnectionConfig(credProvider::get);
+    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
+            final HttpConnectorNodeParameters params) throws Exception {
+        final HttpFSConnectionConfig config = params.toFSConnectionConfig(getCredentialsProvider());
         final HttpFSConnection fsConnection = new HttpFSConnection(config);
         testConnection(fsConnection);
         m_fsConnection = fsConnection;
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
-        return new PortObject[] { new FileSystemPortObject(createSpec()) };
+        return new PortObject[] { new FileSystemPortObject(createSpec(params)) };
     }
 
     @SuppressWarnings("resource")
@@ -122,12 +116,11 @@ class HttpConnectorNodeModel extends NodeModel {
         }
     }
 
-    private FileSystemPortObjectSpec createSpec() {
-        final CredentialsProvider credProvider = getCredentialsProvider();
+    private FileSystemPortObjectSpec createSpec(final HttpConnectorNodeParameters params) {
 
         return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, //
                 m_fsId, //
-                m_settings.toFSConnectionConfig(credProvider::get).createFSLocationSpec());
+                params.toFSConnectionConfig(getCredentialsProvider()).createFSLocationSpec());
     }
 
     @Override
@@ -140,21 +133,6 @@ class HttpConnectorNodeModel extends NodeModel {
     protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         // nothing to save
-    }
-
-    @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_settings.saveSettingsForModel(settings);
-    }
-
-    @Override
-    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.validateSettings(settings);
-    }
-
-    @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.loadSettingsForModel(settings);
     }
 
     @Override
