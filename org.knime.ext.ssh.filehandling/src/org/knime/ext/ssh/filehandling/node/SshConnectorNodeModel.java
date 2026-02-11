@@ -135,7 +135,7 @@ public class SshConnectorNodeModel extends NodeModel {
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
 
         Logger logger = Logger.getLogger("org.apache.sshd");
-        logger.setLevel(Level.INFO);
+        logger.setLevel(Level.DEBUG);
 
         final SshFSConnectionConfig config = createConnectionConfig(m_settings, getCredentialsProvider(),
                 m_statusConsumer);
