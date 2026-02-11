@@ -7,7 +7,7 @@ Automatic-Module-Name: org.knime.ext.ftp.filehandling.tests
 Fragment-Host: org.knime.ext.ftp.filehandling;bundle-version="[5.11.0,6.0.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit;bundle-version="[4.13.2,5.0.0)",
- org.knime.testing;bundle-version="[5.6.0,6.0.0)",
+ org.knime.testing;bundle-version="[5.10.0,6.0.0)",
  junit-jupiter-api;bundle-version="[5.9.2,6.0.0)",
  junit-platform-suite-api;bundle-version="[1.9.2,2.0.0)",
  junit-jupiter-params;bundle-version="[5.9.2,6.0.0)",
