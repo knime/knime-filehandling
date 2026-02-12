@@ -55,8 +55,6 @@ import java.util.EnumSet;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
@@ -133,10 +131,6 @@ public class SshConnectorNodeModel extends NodeModel {
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-
-        Logger logger = Logger.getLogger("org.apache.sshd");
-        logger.setLevel(Level.DEBUG);
-
         final SshFSConnectionConfig config = createConnectionConfig(m_settings, getCredentialsProvider(),
                 m_statusConsumer);
         m_connection = new SshFSConnection(config);
