@@ -50,6 +50,7 @@ package org.knime.archive.zip.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.EnumSet;
 
 import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnection;
@@ -81,7 +82,8 @@ class ArchiveZipConnectorNodeModel extends NodeModel {
     private String m_fsId;
     private ArchiveZipFSConnection m_fsConnection;
 
-    private final ArchiveZipConnectorNodeSettings m_settings;
+    private final ArchiveZipConnectorNodeParameters m_parameters = new ArchiveZipConnectorNodeParameters();
+    private final NodeCreationConfiguration m_nodeCreationConfig;
     private final NodeModelStatusConsumer m_statusConsumer = new NodeModelStatusConsumer(
             EnumSet.of(MessageType.ERROR, MessageType.WARNING));
 
@@ -92,15 +94,15 @@ class ArchiveZipConnectorNodeModel extends NodeModel {
     protected ArchiveZipConnectorNodeModel(final NodeCreationConfiguration cfg) {
         super(cfg.getPortConfig().orElseThrow(IllegalStateException::new).getInputPorts(),
                 cfg.getPortConfig().orElseThrow(IllegalStateException::new).getOutputPorts());
-        m_settings = new ArchiveZipConnectorNodeSettings(cfg);
+        m_nodeCreationConfig = cfg;
     }
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-        m_settings.validate();
+        m_parameters.validate();
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-        m_settings.configureInModel(inSpecs, m_statusConsumer);
+        m_parameters.configure(m_nodeCreationConfig.getPortConfig().orElseThrow(), inSpecs, m_statusConsumer);
         return new PortObjectSpec[] { createSpec() };
     }
 
@@ -114,7 +116,9 @@ class ArchiveZipConnectorNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
-        final var config = m_settings.createFSConnectionConfig(m_statusConsumer); //NOSONAR
+        final var inSpecs = Arrays.stream(inObjects).map(PortObject::getSpec).toArray(PortObjectSpec[]::new);
+        final var config = m_parameters.createFSConnectionConfig(
+                m_nodeCreationConfig.getPortConfig().orElseThrow(), inSpecs, m_statusConsumer); //NOSONAR
         m_fsConnection = new ArchiveZipFSConnection(config);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
         return new PortObject[] { new FileSystemPortObject(createSpec()) };
@@ -134,18 +138,21 @@ class ArchiveZipConnectorNodeModel extends NodeModel {
 
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_settings.saveForModel(settings);
+        m_parameters.save(settings);
     }
 
     @Override
     protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.validate(settings);
+        final var temp = new ArchiveZipConnectorNodeParameters();
+        temp.load(settings);
+        temp.validate();
     }
 
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.loadForModel(settings);
+        m_parameters.load(settings);
     }
+
 
     @Override
     protected void onDispose() {

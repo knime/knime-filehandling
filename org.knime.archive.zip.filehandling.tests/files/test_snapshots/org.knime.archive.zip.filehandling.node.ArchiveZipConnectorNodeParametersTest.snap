@@ -1,0 +1,234 @@
+{
+  "data" : {
+    "model" : {
+      "file" : {
+        "path" : {
+          "fsCategory" : "LOCAL",
+          "path" : "",
+          "timeout" : 10000,
+          "context" : {
+            "fsToString" : "(LOCAL, )"
+          }
+        }
+      },
+      "workingDirectory" : "/",
+      "encoding" : {
+        "encodingSelection" : "OS_DEFAULT",
+        "encoding" : "CP437"
+      }
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "encoding" : {
+            "type" : "object",
+            "properties" : {
+              "encoding" : {
+                "type" : "string",
+                "title" : "Custom encoding",
+                "description" : "Enter a custom encoding.",
+                "default" : "CP437"
+              },
+              "encodingSelection" : {
+                "oneOf" : [ {
+                  "const" : "OS_DEFAULT",
+                  "title" : "OS default"
+                }, {
+                  "const" : "UTF_8",
+                  "title" : "UTF-8"
+                }, {
+                  "const" : "UTF_16",
+                  "title" : "UTF-16"
+                }, {
+                  "const" : "UTF_16BE",
+                  "title" : "UTF-16BE"
+                }, {
+                  "const" : "UTF_16LE",
+                  "title" : "UTF-16LE"
+                }, {
+                  "const" : "US_ASCII",
+                  "title" : "US-ASCII"
+                }, {
+                  "const" : "ISO_8859_1",
+                  "title" : "ISO-8859-1"
+                }, {
+                  "const" : "OTHER",
+                  "title" : "Other"
+                } ],
+                "title" : "File encoding",
+                "description" : "Sets the character set/encoding to use when reading the names of the compressed files in the archive. By default, <a href=\"https://en.wikipedia.org/wiki/Code_page_437\">CP437</a> is chosen, which is used in some ZIP files.\n<ul>\n<li><b>OS default</b>: Uses the default encoding of the Java VM</li>\n<li><b>UTF-8</b></li>\n<li><b>UTF-16</b></li>\n<li><b>UTF-16BE</b></li>\n<li><b>UTF-16LE</b></li>\n<li><b>US-ASCII</b></li>\n<li><b>ISO-8859-1</b></li>\n<li><b>Other</b>: Use another encoding</li>\n</ul>",
+                "default" : "OS_DEFAULT"
+              }
+            },
+            "default" : {
+              "encodingSelection" : "OS_DEFAULT",
+              "encoding" : "CP437"
+            }
+          },
+          "file" : {
+            "type" : "object",
+            "properties" : {
+              "path" : {
+                "type" : "object",
+                "default" : {
+                  "fsCategory" : "LOCAL",
+                  "path" : "",
+                  "timeout" : 10000,
+                  "context" : {
+                    "fsToString" : "(LOCAL, )"
+                  }
+                }
+              }
+            },
+            "title" : "Read from",
+            "description" : "Select a file system which stores the data you want to read. There are four default file system options to choose from: <br /> <ul> <li><i>Local File System:</i> Allows you to select a file/folder from your local system. </li> <li><i>Mountpoint:</i> Allows you to read from a mountpoint. When selected, a new drop-down menu appears to choose the mountpoint. Unconnected mountpoints are greyed out but can still be selected (note that browsing is disabled in this case). Go to the KNIME Explorer and connect to the mountpoint to enable browsing. A mountpoint is displayed in red if it was previously selected but is no longer available. You won't be able to save the dialog as long as you don't select a valid i.e. known mountpoint. </li> <li><i>Relative to:</i> Allows you to choose whether to resolve the path relative to the current mountpoint, current workflow or the current workflow's data area. When selected a new drop-down menu appears to choose which of the three options to use. </li> <li><i>Custom/KNIME URL:</i> Allows to specify a URL (e.g. file://, http:// or knime:// protocol). When selected, a spinner appears that allows you to specify the desired connection and read timeout in milliseconds. In case it takes longer to connect to the host / read the file, the node fails to execute. Browsing is disabled for this option. </li> </ul> To read from other file systems, click on <b>...</b> in the bottom left corner of the node icon followed by <i>Add File System Connection port</i>. Afterwards, connect the desired file system connector node to the newly added input port. The file system connection will then be shown in the drop-down menu. It is greyed out if the file system is not connected in which case you have to (re)execute the connector node first. Note: The default file systems listed above can't be selected if a file system is provided via the input port.",
+            "default" : {
+              "path" : {
+                "fsCategory" : "LOCAL",
+                "path" : "",
+                "timeout" : 10000,
+                "context" : {
+                  "fsToString" : "(LOCAL, )"
+                }
+              }
+            }
+          },
+          "workingDirectory" : {
+            "type" : "string",
+            "title" : "Working directory",
+            "description" : "Specify the <i>working directory</i> of the resulting file system connection.\nThe working directory must be specified as an absolute path. A\nworking directory allows downstream nodes to access files/folders using <i>relative</i> paths,\ni.e. paths that do not have a leading backslash. The default working directory is \"/\".",
+            "default" : "/"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "Settings",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/file",
+        "options" : {
+          "isLocal" : true,
+          "selectionMode" : "FILE",
+          "spaceFSOptions" : {
+            "mountId" : "Local space"
+          },
+          "format" : "fileChooser"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/workingDirectory",
+        "options" : {
+          "selectionMode" : "FOLDER",
+          "format" : "stringFileChooser"
+        },
+        "providedOptions" : [ "fileSystemId" ]
+      } ]
+    }, {
+      "label" : "Encoding",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/encoding/properties/encodingSelection",
+        "options" : {
+          "format" : "dropDown"
+        },
+        "providedOptions" : [ "possibleValues" ]
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/encoding/properties/encoding",
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/encoding/properties/encodingSelection",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "OTHER"
+              } ]
+            }
+          }
+        }
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "file" : {
+            "configPaths" : [ [ "file", "path" ] ]
+          },
+          "workingDirectory" : {
+            "configKey" : "workingDirectory"
+          },
+          "encoding" : {
+            "configPaths" : [ [ "useDefaultEncoding" ], [ "encoding" ] ]
+          }
+        }
+      }
+    }
+  },
+  "initialUpdates" : [ {
+    "scope" : "#/properties/model/properties/encoding/properties/encodingSelection",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ {
+        "id" : "OS_DEFAULT",
+        "text" : "OS default (UTF-8)"
+      }, {
+        "id" : "UTF_8",
+        "text" : "UTF-8"
+      }, {
+        "id" : "UTF_16",
+        "text" : "UTF-16"
+      }, {
+        "id" : "UTF_16BE",
+        "text" : "UTF-16BE"
+      }, {
+        "id" : "UTF_16LE",
+        "text" : "UTF-16LE"
+      }, {
+        "id" : "US_ASCII",
+        "text" : "US-ASCII"
+      }, {
+        "id" : "ISO_8859_1",
+        "text" : "ISO-8859-1"
+      }, {
+        "id" : "OTHER",
+        "text" : "Other"
+      } ]
+    } ]
+  } ],
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/encoding", "#/properties/model/properties/file", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/encoding"
+    },
+    "dependencies" : [ "#/properties/model/properties/encoding", "#/properties/model/properties/file", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/file"
+    },
+    "dependencies" : [ "#/properties/model/properties/encoding", "#/properties/model/properties/file", "#/properties/model/properties/workingDirectory" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/workingDirectory"
+    },
+    "dependencies" : [ "#/properties/model/properties/encoding", "#/properties/model/properties/file", "#/properties/model/properties/workingDirectory" ]
+  } ]
+}
