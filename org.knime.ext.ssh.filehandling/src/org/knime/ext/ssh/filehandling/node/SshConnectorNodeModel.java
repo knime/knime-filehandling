@@ -131,12 +131,25 @@ public class SshConnectorNodeModel extends NodeModel {
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        final SshFSConnectionConfig config = createConnectionConfig(m_settings, getCredentialsProvider(),
-                m_statusConsumer);
-        m_connection = new SshFSConnection(config);
-        m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
-        FSConnectionRegistry.getInstance().register(m_fsId, m_connection);
-        return new PortObject[] { new FileSystemPortObject(createSpec(config)) };
+
+        // make sure that bouncycastle bcprov from the target platform is found and
+        // used. Other plugins may contain duplicates of bcprov, and those duplicates
+        // might get loaded by accident by the default TCCL. This may result in ED25519
+        // keys not being loadable (see AP-25617)
+        final var cl = Thread.currentThread().getContextClassLoader();
+        try {
+
+            final SshFSConnectionConfig config = createConnectionConfig(m_settings, getCredentialsProvider(),
+                    m_statusConsumer);
+            m_connection = new SshFSConnection(config);
+            m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
+            FSConnectionRegistry.getInstance().register(m_fsId, m_connection);
+
+            return new PortObject[] { new FileSystemPortObject(createSpec(config)) };
+
+        } finally {
+            Thread.currentThread().setContextClassLoader(cl);
+        }
     }
 
     /**
