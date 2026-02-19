@@ -62,6 +62,8 @@
 				<module>org.knime.ext.ssh.filehandling.tests</module>
 				<module>org.knime.ext.ftp.filehandling</module>
 				<module>org.knime.ext.ftp.filehandling.tests</module>
+				<module>org.knime.archive.zip.filehandling.tests</module>
+				<module>org.knime.archive.zip.filehandling</module>
 			</modules>
 		</profile>
 	</profiles>

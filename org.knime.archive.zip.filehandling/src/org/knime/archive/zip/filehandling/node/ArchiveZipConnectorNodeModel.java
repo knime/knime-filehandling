@@ -50,6 +50,7 @@ package org.knime.archive.zip.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.EnumSet;
 
 import org.knime.archive.zip.filehandling.fs.ArchiveZipFSConnection;
@@ -58,12 +59,10 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeModel;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.context.NodeCreationConfiguration;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.webui.node.impl.WebUINodeModel;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.defaultnodesettings.status.NodeModelStatusConsumer;
 import org.knime.filehandling.core.defaultnodesettings.status.StatusMessage.MessageType;
@@ -75,13 +74,13 @@ import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
  *
  * @author Dragan Keselj, KNIME GmbH
  */
-class ArchiveZipConnectorNodeModel extends NodeModel {
+class ArchiveZipConnectorNodeModel extends WebUINodeModel<ArchiveZipConnectorNodeParameters> {//NOSONAR this NodeModel is the decided one
     private static final String FILE_SYSTEM_NAME = "ZIP Archive";
 
     private String m_fsId;
     private ArchiveZipFSConnection m_fsConnection;
 
-    private final ArchiveZipConnectorNodeSettings m_settings;
+    private final NodeCreationConfiguration m_nodeCreationConfig;
     private final NodeModelStatusConsumer m_statusConsumer = new NodeModelStatusConsumer(
             EnumSet.of(MessageType.ERROR, MessageType.WARNING));
 
@@ -91,16 +90,17 @@ class ArchiveZipConnectorNodeModel extends NodeModel {
      */
     protected ArchiveZipConnectorNodeModel(final NodeCreationConfiguration cfg) {
         super(cfg.getPortConfig().orElseThrow(IllegalStateException::new).getInputPorts(),
-                cfg.getPortConfig().orElseThrow(IllegalStateException::new).getOutputPorts());
-        m_settings = new ArchiveZipConnectorNodeSettings(cfg);
+                cfg.getPortConfig().orElseThrow(IllegalStateException::new).getOutputPorts(),
+                ArchiveZipConnectorNodeParameters.class);
+        m_nodeCreationConfig = cfg;
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-        m_settings.validate();
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs, final ArchiveZipConnectorNodeParameters params)
+            throws InvalidSettingsException {
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-        m_settings.configureInModel(inSpecs, m_statusConsumer);
+        params.validate();
         return new PortObjectSpec[] { createSpec() };
     }
 
@@ -112,9 +112,12 @@ class ArchiveZipConnectorNodeModel extends NodeModel {
 
     @SuppressWarnings("resource")
     @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
+    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
+            final ArchiveZipConnectorNodeParameters params) throws Exception {
         m_statusConsumer.setWarningsIfRequired(this::setWarningMessage);
-        final var config = m_settings.createFSConnectionConfig(m_statusConsumer); //NOSONAR
+        final var inSpecs = Arrays.stream(inObjects).map(PortObject::getSpec).toArray(PortObjectSpec[]::new);
+        final var config = params.createFSConnectionConfig(
+                m_nodeCreationConfig.getPortConfig().orElseThrow(), inSpecs, m_statusConsumer); //NOSONAR
         m_fsConnection = new ArchiveZipFSConnection(config);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
         return new PortObject[] { new FileSystemPortObject(createSpec()) };
@@ -130,21 +133,6 @@ class ArchiveZipConnectorNodeModel extends NodeModel {
     protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         // nothing to save
-    }
-
-    @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_settings.saveForModel(settings);
-    }
-
-    @Override
-    protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.validate(settings);
-    }
-
-    @Override
-    protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.loadForModel(settings);
     }
 
     @Override
