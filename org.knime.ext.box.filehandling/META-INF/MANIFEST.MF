@@ -17,8 +17,7 @@ Bundle-ClassPath: .,
  libs/bcprov-jdk18on-1.78.1.jar,
  libs/bcutil-jdk18on-1.78.1.jar,
  libs/box-java-sdk-4.10.0.jar,
- libs/jose4j-0.9.4.jar,
+ libs/jose4j-0.9.6.jar,
  libs/minimal-json-0.9.5.jar
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Automatic-Module-Name: org.knime.ext.box.filehandling
-
