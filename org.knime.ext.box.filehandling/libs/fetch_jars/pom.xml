@@ -38,6 +38,19 @@
 			<groupId>com.box</groupId>
 			<artifactId>box-java-sdk</artifactId>
 			<version>4.10.0</version>
+			<exclusions>
+				<exclusion>
+					<!-- Exclude old jose4j with CVEs (see AP-25728) -->
+					<groupId>org.bitbucket.b_c</groupId>
+					<artifactId>jose4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- Add patched jose4j without CVEs (fixed since 0.9.6) -->
+		<dependency>
+			<groupId>org.bitbucket.b_c</groupId>
+			<artifactId>jose4j</artifactId>
+			<version>0.9.6</version>
 		</dependency>
 	</dependencies>
 
@@ -60,19 +73,19 @@
 							<goal>copy-dependencies</goal>
 						</goals>
 					</execution>
-                    <execution>
-                        <id>copy-src-jars</id>
-                        <configuration>
-                            <includeScope>runtime</includeScope>
-                            <outputDirectory>../</outputDirectory>
-                            <excludeGroupIds>org.slf4j, com.squareup, org.jetbrains</excludeGroupIds>
-                            <classifier>sources</classifier>
-                        </configuration>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                    </execution>
+					<execution>
+						<id>copy-src-jars</id>
+						<configuration>
+							<includeScope>runtime</includeScope>
+							<outputDirectory>../</outputDirectory>
+							<excludeGroupIds>org.slf4j, com.squareup, org.jetbrains</excludeGroupIds>
+							<classifier>sources</classifier>
+						</configuration>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
