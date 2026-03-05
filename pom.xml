@@ -29,18 +29,16 @@
 				<module>org.knime.ext.box.filehandling/libs/fetch_jars</module>
 				<module>org.knime.ext.ssh.filehandling/libs/fetch_jars</module>
 				<module>org.knime.base.filehandling</module>
+				<module>org.knime.archive.zip.filehandling</module>
 				<module>org.knime.ext.ftp.filehandling</module>
 				<module>org.knime.ext.http.filehandling</module>
 				<module>org.knime.ext.ssh.filehandling</module>
 				<module>org.knime.ext.smb.filehandling</module>
 				<module>org.knime.ext.box.authenticator</module>
-				<module>org.knime.ext.box.authenticator.tests</module>
 				<module>org.knime.ext.box.filehandling</module>
-				<module>org.knime.ext.box.filehandling.tests</module>
 				<module>org.knime.features.base.filehandling</module>
 				<module>org.knime.features.ext.box.filehandling</module>
 				<module>org.knime.update.filehandling</module>
-				<module>org.knime.archive.zip.filehandling</module>
 			</modules>
 			<activation>
 				<activeByDefault>true</activeByDefault>
@@ -50,20 +48,25 @@
 			<id>test</id>
 			<modules>
 				<module>org.knime.ext.smb.filehandling/libs/fetch_jars</module>
-				<module>org.knime.ext.ftp.filehandling.tests/lib/fetch_jars</module>
+				<module>org.knime.ext.box.filehandling/libs/fetch_jars</module>
 				<module>org.knime.ext.ssh.filehandling/libs/fetch_jars</module>
+				<module>org.knime.ext.ftp.filehandling.tests/lib/fetch_jars</module>
 				<module>org.knime.base.filehandling</module>
 				<module>org.knime.base.filehandling.tests</module>
-				<module>org.knime.ext.http.filehandling</module>
-				<module>org.knime.ext.http.filehandling.tests</module>
-				<module>org.knime.ext.smb.filehandling</module>
-				<module>org.knime.ext.smb.filehandling.tests</module>
-				<module>org.knime.ext.ssh.filehandling</module>
-				<module>org.knime.ext.ssh.filehandling.tests</module>
+				<module>org.knime.archive.zip.filehandling</module>
+				<module>org.knime.archive.zip.filehandling.tests</module>
 				<module>org.knime.ext.ftp.filehandling</module>
 				<module>org.knime.ext.ftp.filehandling.tests</module>
-				<module>org.knime.archive.zip.filehandling.tests</module>
-				<module>org.knime.archive.zip.filehandling</module>
+				<module>org.knime.ext.http.filehandling</module>
+				<module>org.knime.ext.http.filehandling.tests</module>
+				<module>org.knime.ext.ssh.filehandling</module>
+				<module>org.knime.ext.ssh.filehandling.tests</module>
+				<module>org.knime.ext.smb.filehandling</module>
+				<module>org.knime.ext.smb.filehandling.tests</module>
+				<module>org.knime.ext.box.authenticator</module>
+				<module>org.knime.ext.box.authenticator.tests</module>
+				<module>org.knime.ext.box.filehandling</module>
+				<module>org.knime.ext.box.filehandling.tests</module>
 			</modules>
 		</profile>
 	</profiles>
@@ -79,11 +82,11 @@
 			<layout>p2</layout>
 			<url>${knime.base.p2}</url>
 		</repository>
-        <repository>
-            <id>p2-knime-filehandling-core</id>
-            <layout>p2</layout>
-            <url>${knime.filehandling.core.p2}</url>
-        </repository>
+		<repository>
+			<id>p2-knime-filehandling-core</id>
+			<layout>p2</layout>
+			<url>${knime.filehandling.core.p2}</url>
+		</repository>
 		<repository>
 			<id>p2-knime-credentials-base</id>
 			<layout>p2</layout>
@@ -99,11 +102,11 @@
 			<layout>p2</layout>
 			<url>${knime.core.ui.p2}</url>
 		</repository>
-                <repository>
-                        <id>p2-knime-svg</id>
-                        <layout>p2</layout>
-                        <url>${knime.svg.p2}</url>
-                </repository>
+		<repository>
+			<id>p2-knime-svg</id>
+			<layout>p2</layout>
+			<url>${knime.svg.p2}</url>
+		</repository>
 		<repository>
 			<id>p2-knime-expressions</id>
 			<layout>p2</layout>

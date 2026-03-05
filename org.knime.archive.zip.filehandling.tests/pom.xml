@@ -9,11 +9,11 @@
 		<artifactId>knime-filehandling</artifactId>
 		<version>${revision}${changelist}</version>
 	</parent>
-	<artifactId>org.knime.ext.http.filehandling.tests</artifactId>
+	<artifactId>org.knime.archive.zip.filehandling.tests</artifactId>
 	<packaging>eclipse-test-plugin</packaging>
 
 	<properties>
-		<revision>5.11.0</revision>
+		<revision>5.12.0</revision>
 		<sonar.sources/>
 		<sonar.tests>src</sonar.tests>
 	</properties>
