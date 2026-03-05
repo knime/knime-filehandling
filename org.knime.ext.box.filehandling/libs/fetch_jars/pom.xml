@@ -37,7 +37,7 @@
 		<dependency>
 			<groupId>com.box</groupId>
 			<artifactId>box-java-sdk</artifactId>
-			<version>4.10.0</version>
+			<version>4.16.4</version>
 			<exclusions>
 				<exclusion>
 					<!-- Exclude old jose4j with CVEs (see AP-25728) -->
@@ -66,7 +66,7 @@
 						<configuration>
 							<includeScope>runtime</includeScope>
 							<outputDirectory>../</outputDirectory>
-							<excludeGroupIds>org.slf4j, com.squareup, org.jetbrains</excludeGroupIds>
+							<excludeGroupIds>org.slf4j, com.squareup, org.jetbrains, org.bouncycastle</excludeGroupIds>
 						</configuration>
 						<phase>package</phase>
 						<goals>
@@ -78,7 +78,7 @@
 						<configuration>
 							<includeScope>runtime</includeScope>
 							<outputDirectory>../</outputDirectory>
-							<excludeGroupIds>org.slf4j, com.squareup, org.jetbrains</excludeGroupIds>
+							<excludeGroupIds>org.slf4j, com.squareup, org.jetbrains, org.bouncycastle</excludeGroupIds>
 							<classifier>sources</classifier>
 						</configuration>
 						<phase>package</phase>
