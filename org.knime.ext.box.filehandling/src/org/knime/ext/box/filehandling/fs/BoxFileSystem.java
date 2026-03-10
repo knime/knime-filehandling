@@ -53,8 +53,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Collections;
 
+import org.knime.core.util.auth.OkHttpProxyAuthenticator;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
-import org.knime.okhttp3.OkHttpProxyAuthenticator;
 
 import com.box.sdk.BoxAPIConnection;
 import com.box.sdk.BoxAPIException;
