@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Tests for KNIME HTTP Filehandling Extension
 Bundle-SymbolicName: org.knime.ext.http.filehandling.tests;singleton:=true
-Bundle-Version: 5.11.0.qualifier
+Bundle-Version: 5.12.0.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Fragment-Host: org.knime.ext.http.filehandling;bundle-version="[5.11.0,6.0.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-17
