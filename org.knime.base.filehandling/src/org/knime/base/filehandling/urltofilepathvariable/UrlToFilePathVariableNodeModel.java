@@ -67,6 +67,7 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 import org.knime.core.node.port.flowvariable.FlowVariablePortObject;
 import org.knime.core.node.port.flowvariable.FlowVariablePortObjectSpec;
+import org.knime.core.node.workflow.VariableType;
 import org.knime.core.util.FileUtil;
 
 /**
@@ -165,6 +166,12 @@ class UrlToFilePathVariableNodeModel extends NodeModel {
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs)
             throws InvalidSettingsException {
+        if (!getAvailableFlowVariables().containsKey(m_flowVarNameModel.getStringValue())) {
+            getAvailableFlowVariables(VariableType.StringType.INSTANCE).values().stream()
+                .findFirst()
+                .map(v -> v.getName())
+                .ifPresent(m_flowVarNameModel::setStringValue);
+        }
         convert();
         return new PortObjectSpec[] {FlowVariablePortObjectSpec.INSTANCE};
     }
