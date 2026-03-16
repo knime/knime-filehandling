@@ -71,8 +71,8 @@ class StringsToBinaryObjectsNodeParameters implements NodeParameters {
      * Column selection: Column that will be converted.
      */
     @Widget(title = "Column selection", description = """
-            Select columns to be included in the Cronbach Alpha calculation.
-            Only numeric columns are available for selection.
+            Select the column containing the strings to be converted to binary objects.
+            Only columns of type String are available for selection.
             """)
     @ChoicesProvider(AllColumnsProvider.class)
     String m_columnselection = "";
@@ -131,11 +131,13 @@ class StringsToBinaryObjectsNodeParameters implements NodeParameters {
     }
 
     static final class EncodingChoicesProvider implements EnumChoicesProvider<Encoding> {
-
         @Override
         public List<Encoding> choices(final NodeParametersInput context) {
             return Stream.of(Encodings.getAllEncodings())
-                    .map(Encoding::valueOf)
+                    .map(s -> {
+                        String enumName = s.replace("-", "_");
+                        return Encoding.valueOf(enumName);
+                    })
                     .toList();
         }
     }
