@@ -41,7 +41,7 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Oct 30, 2012 (Patrick Winter): created
  */
@@ -60,8 +60,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * <code>NodeDialog</code> for the node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 public class StringsToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
@@ -103,5 +103,4 @@ public class StringsToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
         addDialogComponent(new DialogComponentString(m_columnname, "Name", true, 20));
         closeCurrentGroup();
     }
-
 }
