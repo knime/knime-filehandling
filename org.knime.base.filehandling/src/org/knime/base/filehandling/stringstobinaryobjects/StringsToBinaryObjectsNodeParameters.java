@@ -53,6 +53,12 @@ import org.knime.node.parameters.NodeParameters;
 import org.knime.node.parameters.NodeParametersInput;
 import org.knime.node.parameters.Widget;
 import org.knime.node.parameters.migration.LoadDefaultsForAbsentFields;
+import org.knime.node.parameters.updates.Effect;
+import org.knime.node.parameters.updates.Effect.EffectType;
+import org.knime.node.parameters.updates.EffectPredicate;
+import org.knime.node.parameters.updates.EffectPredicateProvider;
+import org.knime.node.parameters.updates.ParameterReference;
+import org.knime.node.parameters.updates.ValueReference;
 import org.knime.node.parameters.widget.choices.ChoicesProvider;
 import org.knime.node.parameters.widget.choices.EnumChoicesProvider;
 import org.knime.node.parameters.widget.choices.RadioButtonsWidget;
@@ -104,20 +110,22 @@ class StringsToBinaryObjectsNodeParameters implements NodeParameters {
     }
 
     /**
-     * Append or replace: Append or replace the selected column with the new column.
+     * Append or replace toggle using the existing ReplacePolicy enum.
      */
     @Widget(title = "Append or replace",
             description = "Choose whether to append a new column or replace the selected column.")
     @ValueSwitchWidget
     @RadioButtonsWidget
-    AppendOrReplace m_replace = AppendOrReplace.APPEND;
+    @ValueReference(AppendOrReplace.Ref.class)
+    ReplacePolicy m_replace = ReplacePolicy.APPEND;
 
     /**
-     * New column name: Name of the appended column.
+     * New column name: Only shown when 'Append' is selected.
      */
     @Widget(title = "New column name",
         description = "Name of the appended column.")
     @TextInputWidget(placeholder = "New column name")
+    @Effect(predicate = ReplacePolicy.IsReplace.class, type = EffectType.HIDE)
     String m_columnname = "New Column";
 
     /**
@@ -126,8 +134,70 @@ class StringsToBinaryObjectsNodeParameters implements NodeParameters {
     enum AppendOrReplace {
         @org.knime.node.parameters.widget.choices.Label("Append")
         APPEND,
+
         @org.knime.node.parameters.widget.choices.Label("Replace")
-        REPLACE
+        REPLACE;
+
+        // The NodeModel uses getStringValue().
+        // We must ensure the conversion logic matches the old ReplacePolicy.
+        @Override
+        public String toString() {
+            // Converts APPEND -> Append, REPLACE -> Replace
+            String name = name().toLowerCase();
+            return name.substring(0, 1).toUpperCase() + name.substring(1);
+        }
+
+        public static AppendOrReplace fromString(final String value) {
+            // Handle case-insensitive lookup to be safe
+            return AppendOrReplace.valueOf(value.toUpperCase());
+        }
+
+        static final class Ref implements ParameterReference<AppendOrReplace> {}
+
+        static final class IsReplace implements EffectPredicateProvider {
+            @Override
+            public EffectPredicate init(final PredicateInitializer i) {
+                return i.getEnum(AppendOrReplace.Ref.class).isOneOf(REPLACE);
+            }
+        }
+    }
+    enum ReplacePolicy {
+
+        @org.knime.node.parameters.widget.choices.Label("Append")
+        APPEND("Append"),
+
+        @org.knime.node.parameters.widget.choices.Label("Replace")
+        REPLACE("Replace");
+
+        private final String m_name;
+
+        ReplacePolicy(final String name) {
+            m_name = name;
+        }
+
+        String getName() {
+            return m_name;
+        }
+
+        // --- Add these for the new NodeParameters API ---
+
+        /** Reference for the Parameter API. */
+        static final class Ref implements ParameterReference<ReplacePolicy> {}
+
+        /** Predicate to check if "Replace" is selected. */
+        static final class IsReplace implements EffectPredicateProvider {
+            @Override
+            public EffectPredicate init(final PredicateInitializer i) {
+                // This matches the enum constant REPLACE
+                return i.getEnum(ReplacePolicy.Ref.class).isOneOf(REPLACE);
+            }
+        }
+
+        // --- End of additions ---
+
+        static String[] getAllSettings() {
+            return new String[]{APPEND.getName(), REPLACE.getName()};
+        }
     }
 
     static final class EncodingChoicesProvider implements EnumChoicesProvider<Encoding> {
