@@ -68,6 +68,7 @@ import org.knime.node.parameters.updates.ParameterReference;
 import org.knime.node.parameters.updates.StateProvider;
 import org.knime.node.parameters.updates.ValueProvider;
 import org.knime.node.parameters.updates.ValueReference;
+import org.knime.node.parameters.updates.internal.StateProviderInitializerInternal;
 import org.knime.node.parameters.widget.choices.ChoicesProvider;
 import org.knime.node.parameters.widget.choices.ValueSwitchWidget;
 import org.knime.node.parameters.widget.choices.util.ColumnSelectionUtil;
@@ -163,7 +164,7 @@ class PNGsToBinaryObjectsNodeSettings implements NodeParameters {
 
         @Override
         public void init(final StateProviderInitializer initializer) {
-            initializer.computeAfterOpenDialog();
+            ((StateProviderInitializerInternal)initializer).computeOnParametersLoaded();
             m_valueSupplier = initializer.getValueSupplier(ColumnSelectionRef.class);
         }
 
