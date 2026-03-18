@@ -49,6 +49,7 @@ package org.knime.base.filehandling.urltofilepath;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
@@ -186,6 +187,17 @@ class UrlToFilePathNodeModel extends SimpleStreamableFunctionNodeModel {
         if (noStringCols <= 0) {
             throw new InvalidSettingsException(
                     "No columns containing string values in input table!");
+        }
+        // Auto-guess string col (first String/URI-compatible column) if not set
+        final var stringColName = m_stringColMode.getStringValue();
+        if (stringColName == null || stringColName.isEmpty()
+                || (stringColName.equals(DEF_COLNAME) && !dataSpec.containsName(DEF_COLNAME))) {
+            Optional.ofNullable(dataSpec).stream() //
+                .flatMap(spec -> spec.stream()) //
+                .filter(col -> col.getType().isCompatible(StringValue.class)
+                    || col.getType().isCompatible(URIDataValue.class)) //
+                .map(DataColumnSpec::getName) //
+                .findFirst().ifPresent(m_stringColMode::setStringValue);
         }
         // check if all included columns are available in the spec
         String selectedColName = m_stringColMode.getStringValue();
