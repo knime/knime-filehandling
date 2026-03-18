@@ -49,6 +49,7 @@ package org.knime.base.filehandling.uritostring;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
@@ -206,6 +207,15 @@ class URIToStringNodeModel extends NodeModel {
      */
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
+        // Auto-guess column name (first URIDataValue-compatible column) if not set
+        final var columnName = m_columnselection.getStringValue();
+        if (columnName == null || columnName.isEmpty()) {
+            Optional.ofNullable(inSpecs[0]).stream() //
+                .flatMap(spec -> spec.stream()) //
+                .filter(col -> col.getType().isCompatible(URIDataValue.class)) //
+                .map(DataColumnSpec::getName) //
+                .findFirst().ifPresent(m_columnselection::setStringValue);
+        }
         // createColumnRearranger will check the settings
         DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};
