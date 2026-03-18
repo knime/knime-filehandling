@@ -53,6 +53,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
@@ -80,8 +81,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 class ExtractURIInfoNodeModel extends NodeModel {
@@ -133,8 +134,8 @@ class ExtractURIInfoNodeModel extends NodeModel {
 
     /**
      * Create a rearranger that appends the selected information.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @return Rearranger that will append the selected columns
      * @throws InvalidSettingsException If the settings are incorrect
@@ -194,8 +195,8 @@ class ExtractURIInfoNodeModel extends NodeModel {
 
     /**
      * Create the correspondent string cell to the selected URI cell.
-     * 
-     * 
+     *
+     *
      * @param row The row with the URI cell
      * @param spec Specification of the input table
      * @param newCols Number of new columns
@@ -286,8 +287,8 @@ class ExtractURIInfoNodeModel extends NodeModel {
 
     /**
      * Check if the settings are all valid.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -310,6 +311,15 @@ class ExtractURIInfoNodeModel extends NodeModel {
      */
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
+        // Auto-guess column name (first URIDataValue-compatible column) if not set
+        final var columnName = m_columnselection.getStringValue();
+        if (columnName == null || columnName.isEmpty()) {
+            Optional.ofNullable(inSpecs[0]).stream() //
+                .flatMap(spec -> spec.stream()) //
+                .filter(col -> col.getType().isCompatible(URIDataValue.class)) //
+                .map(DataColumnSpec::getName) //
+                .findFirst().ifPresent(m_columnselection::setStringValue);
+        }
         // createColumnRearranger will check the settings
         DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};
