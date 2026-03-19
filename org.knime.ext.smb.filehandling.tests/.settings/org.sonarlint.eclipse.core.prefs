@@ -3,6 +3,6 @@ bindingSuggestionsDisabled=false
 eclipse.preferences.version=1
 idePrefixKey=
 indexingBasedOnEclipsePlugIns=true
-projectKey=KNIME_knime-filehandling
+projectKey=knime_knime-filehandling
 serverId=SonarCloud
 sqPrefixKey=org.knime.ext.smb.filehandling.tests

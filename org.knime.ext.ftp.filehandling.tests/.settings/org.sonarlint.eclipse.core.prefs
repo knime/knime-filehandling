@@ -2,5 +2,5 @@ autoEnabled=true
 bindingSuggestionsDisabled=true
 eclipse.preferences.version=1
 indexingBasedOnEclipsePlugIns=true
-projectKey=KNIME_knime-filehandling
+projectKey=knime_knime-filehandling
 serverId=SonarCloud
