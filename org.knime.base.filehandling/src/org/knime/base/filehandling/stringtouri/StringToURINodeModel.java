@@ -50,6 +50,7 @@ package org.knime.base.filehandling.stringtouri;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 
 import org.apache.commons.io.FilenameUtils;
 import org.knime.base.filehandling.NodeUtils;
@@ -237,6 +238,15 @@ class StringToURINodeModel extends NodeModel {
      */
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
+        // Auto-guess column name (first compatible column) if not set
+        final var columnName = m_columnselection.getStringValue();
+        if (columnName == null || columnName.isEmpty()) {
+            Optional.ofNullable(inSpecs[0]).stream() //
+                .flatMap(spec -> spec.stream()) //
+                .filter(StringToURINodeParameters::colIsStringButNotURI) //
+                .map(DataColumnSpec::getName) //
+                .findFirst().ifPresent(m_columnselection::setStringValue);
+        }
         // createColumnRearranger will check the settings
         DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};

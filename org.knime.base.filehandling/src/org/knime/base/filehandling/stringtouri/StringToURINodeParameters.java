@@ -99,7 +99,7 @@ final class StringToURINodeParameters implements NodeParameters {
             .stream().findFirst();
     }
 
-    private static boolean colIsStringButNotURI(final DataColumnSpec col) {
+    static boolean colIsStringButNotURI(final DataColumnSpec col) {
         return col.getType().isCompatible(StringValue.class) && !col.getType().isCompatible(URIDataValue.class);
     }
 
