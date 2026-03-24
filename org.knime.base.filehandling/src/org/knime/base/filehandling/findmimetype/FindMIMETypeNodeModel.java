@@ -49,6 +49,7 @@ package org.knime.base.filehandling.findmimetype;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.mime.MIMEMap;
@@ -75,8 +76,8 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 
 /**
  * This is the model implementation.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
 class FindMIMETypeNodeModel extends NodeModel {
@@ -105,8 +106,8 @@ class FindMIMETypeNodeModel extends NodeModel {
     /**
      * Create a rearranger that appends new columns with extension and MIME-Type
      * information.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @return Rearranger that will append the columns
      * @throws InvalidSettingsException If the settings are incorrect
@@ -137,8 +138,8 @@ class FindMIMETypeNodeModel extends NodeModel {
     /**
      * Create the correspondent extension and MIME-Type cells to the selected
      * URI cell.
-     * 
-     * 
+     *
+     *
      * @param row The row with the URI cell
      * @param spec Specification of the input table
      * @return Extension and MIME-Type cells
@@ -162,8 +163,8 @@ class FindMIMETypeNodeModel extends NodeModel {
 
     /**
      * Check if the settings are all valid.
-     * 
-     * 
+     *
+     *
      * @param inSpec Specification of the input table
      * @throws InvalidSettingsException If the settings are incorrect
      */
@@ -186,6 +187,15 @@ class FindMIMETypeNodeModel extends NodeModel {
      */
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
+        // Auto-guess column selection (last URIData-compatible column) if not set
+        if (m_columnselection.getStringValue() == null || m_columnselection.getStringValue().isEmpty()) {
+            Optional.ofNullable(inSpecs[0]).stream().flatMap(spec -> spec.stream()) //
+            .filter(col -> col.getType().isCompatible(URIDataValue.class)) //
+            .reduce((first, second) -> second) //
+            .map(DataColumnSpec::getName) //
+            .ifPresent(m_columnselection::setStringValue); //
+        }
+
         // createColumnRearranger will check the settings
         DataTableSpec outSpec = createColumnRearranger(inSpecs[0]).createSpec();
         return new DataTableSpec[]{outSpec};
