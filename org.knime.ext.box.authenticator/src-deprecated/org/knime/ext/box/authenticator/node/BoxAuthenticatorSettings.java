@@ -136,6 +136,7 @@ public class BoxAuthenticatorSettings implements NodeParameters {
     }
 
     @Layout(BoxAppSection.class)
+    @ValueReference(BoxAppSettings.Ref.class)
     BoxAppSettings m_boxApp = new BoxAppSettings();
 
     @Widget(title = "Type", description = "Authentication method to use.")
