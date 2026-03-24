@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,58 +42,68 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- *
- * History
- *   Sep 3, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.filestobinaryobjects;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
+import org.knime.core.data.def.StringCell;
+import org.knime.core.data.uri.URIDataCell;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettings;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersUtil;
+import org.knime.testing.node.dialog.DefaultNodeSettingsSnapshotTest;
+import org.knime.testing.node.dialog.SnapshotTestConfiguration;
+
 /**
- * Enums for replace policies.
+ * Snapshot test for {@link FilesToBinaryObjectsNodeParameters}.
  *
- *
- * @author Patrick Winter, KNIME AG, Zurich, Switzerland
+ * @author Thomas Reifenberger, TNG Technology Consulting GmbH
  */
-@Deprecated
-enum ReplacePolicy {
+@SuppressWarnings("restriction")
+final class FilesToBinaryObjectsNodeParametersTest extends DefaultNodeSettingsSnapshotTest {
 
-    /**
-     * Append new column.
-     */
-    APPEND("Append"),
-
-    /**
-     * Replace source column.
-     */
-    REPLACE("Replace");
-
-    private final String m_name;
-
-    /**
-     * @param name Name of this policy
-     * @deprecated
-     */
-    @Deprecated
-    ReplacePolicy(final String name) {
-        m_name = name;
+    FilesToBinaryObjectsNodeParametersTest() {
+        super(getConfig());
     }
 
-    /**
-     * @return Name of this policy
-     * @deprecated
-     */
-    @Deprecated
-    String getName() {
-        return m_name;
+    private static SnapshotTestConfiguration getConfig() {
+        return SnapshotTestConfiguration.builder() //
+            .withInputPortObjectSpecs(createInputPortSpecs()) //
+            .testJsonFormsForModel(FilesToBinaryObjectsNodeParameters.class) //
+            .testJsonFormsWithInstance(SettingsType.MODEL, () -> readSettings()) //
+            .testNodeSettingsStructure(() -> readSettings()) //
+            .build();
     }
 
-    /**
-     * @return Array of all replace policy settings
-     * @deprecated
-     */
-    @Deprecated
-    static String[] getAllSettings() {
-        return new String[]{APPEND.getName(), REPLACE.getName()};
+    private static FilesToBinaryObjectsNodeParameters readSettings() {
+        try {
+            var path = getSnapshotPath(FilesToBinaryObjectsNodeParameters.class).getParent().resolve("node_settings")
+                .resolve("FilesToBinaryObjectsNodeParameters.xml");
+            try (var fis = new FileInputStream(path.toFile())) {
+                var nodeSettings = NodeSettings.loadFromXML(fis);
+                return NodeParametersUtil.loadSettings(
+                    nodeSettings.getNodeSettings(SettingsType.MODEL.getConfigKey()),
+                    FilesToBinaryObjectsNodeParameters.class);
+            }
+        } catch (IOException | InvalidSettingsException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
+    private static PortObjectSpec[] createInputPortSpecs() {
+        return new PortObjectSpec[]{createDefaultTestTableSpec()};
+    }
+
+    private static DataTableSpec createDefaultTestTableSpec() {
+        return new DataTableSpec( //
+            new String[]{"URI", "Other_Column"}, //
+            new DataType[]{DataType.getType(URIDataCell.class), DataType.getType(StringCell.class)});
+    }
 }
+

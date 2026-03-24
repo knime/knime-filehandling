@@ -43,60 +43,49 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.filestobinaryobjects;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import org.knime.core.data.uri.URIDataValue;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
-import org.knime.core.node.defaultnodesettings.DialogComponentString;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
-
 /**
- * <code>NodeDialog</code> for the node.
+ * Enums for replace policies.
  *
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
-@Deprecated
-class FilesToBinaryObjectsNodeDialog extends DefaultNodeSettingsPane {
-
-    private SettingsModelString m_uricolumn;
-
-    private SettingsModelString m_bocolumnname;
-
-    private SettingsModelString m_replace;
+enum ReplacePolicy {
 
     /**
-     * New pane for configuring the node dialog.
-     * @deprecated
+     * Append new column.
      */
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    protected FilesToBinaryObjectsNodeDialog() {
-        super();
-        m_uricolumn = SettingsFactory.createURIColumnSettings();
-        m_replace = SettingsFactory.createReplacePolicySettings();
-        m_bocolumnname = SettingsFactory.createBinaryObjectColumnNameSettings(m_replace);
-        m_replace.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
-                m_bocolumnname.setEnabled(append);
-            }
-        });
-        // URI column
-        addDialogComponent(new DialogComponentColumnNameSelection(m_uricolumn, "URI column", 0, URIDataValue.class));
-        createNewGroup("New column...");
-        // Replace setting
-        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "", ReplacePolicy.getAllSettings()));
-        // Binary object column name
-        addDialogComponent(new DialogComponentString(m_bocolumnname, "Name", true, 20));
-        closeCurrentGroup();
+    APPEND("Append"),
+
+    /**
+     * Replace source column.
+     */
+    REPLACE("Replace");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this policy
+     */
+    ReplacePolicy(final String name) {
+        m_name = name;
     }
+
+    /**
+     * @return Name of this policy
+     */
+    String getName() {
+        return m_name;
+    }
+
+    /**
+     * @return Array of all replace policy settings
+     */
+    static String[] getAllSettings() {
+        return new String[]{APPEND.getName(), REPLACE.getName()};
+    }
+
 }
