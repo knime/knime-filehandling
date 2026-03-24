@@ -55,7 +55,6 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
-@Deprecated
 final class SettingsFactory {
 
     private SettingsFactory() {
@@ -67,9 +66,7 @@ final class SettingsFactory {
      *
      *
      * @return URI column <code>SettingsModel</code>
-     * @deprecated
      */
-    @Deprecated
     static SettingsModelString createURIColumnSettings() {
         return new SettingsModelString("uricolumn", "");
     }
@@ -81,9 +78,7 @@ final class SettingsFactory {
      * @param replacePolicy <code>SettingsModel</code> for the replace policy
      *            setting
      * @return Binary object column name <code>SettingsModel</code>
-     * @deprecated
      */
-    @Deprecated
     static SettingsModelString createBinaryObjectColumnNameSettings(final SettingsModelString replacePolicy) {
         SettingsModelString columnName = new SettingsModelString("binaryobjectcolumnname", "BinaryObject");
         columnName.setEnabled(replacePolicy.getStringValue().equals(ReplacePolicy.APPEND.getName()));
@@ -95,9 +90,7 @@ final class SettingsFactory {
      *
      *
      * @return Replace <code>SettingsModel</code>
-     * @deprecated
      */
-    @Deprecated
     static SettingsModelString createReplacePolicySettings() {
         return new SettingsModelString("replace", ReplacePolicy.APPEND.getName());
     }

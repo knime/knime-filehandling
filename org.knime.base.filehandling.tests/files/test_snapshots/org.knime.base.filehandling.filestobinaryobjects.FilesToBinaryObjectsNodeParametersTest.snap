@@ -1,0 +1,111 @@
+{
+  "data" : {
+    "model" : {
+      "uriColumn" : "",
+      "appendOrReplace" : "APPEND",
+      "binaryObjectColumnName" : "BinaryObject"
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "appendOrReplace" : {
+            "oneOf" : [ {
+              "const" : "APPEND",
+              "title" : "Append"
+            }, {
+              "const" : "REPLACE",
+              "title" : "Replace"
+            } ],
+            "title" : "Append or replace",
+            "description" : "Determines whether the binary object column is appended to the table or replaces the URI column.",
+            "default" : "APPEND"
+          },
+          "binaryObjectColumnName" : {
+            "type" : "string",
+            "title" : "New column name",
+            "description" : "The name for the newly appended binary object column. Only relevant when \"Append\" is selected.",
+            "default" : "BinaryObject"
+          },
+          "uriColumn" : {
+            "type" : "string",
+            "title" : "URI column",
+            "description" : "The column containing the paths to the files that should be loaded as binary objects.",
+            "default" : ""
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/uriColumn",
+      "options" : {
+        "format" : "dropDown"
+      },
+      "providedOptions" : [ "possibleValues" ]
+    }, {
+      "label" : "Output Column",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/appendOrReplace",
+        "options" : {
+          "format" : "valueSwitch"
+        }
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/binaryObjectColumnName",
+        "rule" : {
+          "effect" : "SHOW",
+          "condition" : {
+            "scope" : "#/properties/model/properties/appendOrReplace",
+            "schema" : {
+              "oneOf" : [ {
+                "const" : "APPEND"
+              } ]
+            }
+          }
+        }
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "uriColumn" : {
+            "configKey" : "uricolumn"
+          },
+          "appendOrReplace" : {
+            "configPaths" : [ [ "replace" ] ]
+          },
+          "binaryObjectColumnName" : {
+            "configKey" : "binaryobjectcolumnname"
+          }
+        }
+      }
+    }
+  },
+  "initialUpdates" : [ {
+    "scope" : "#/properties/model/properties/uriColumn",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ {
+        "id" : "URI",
+        "text" : "URI",
+        "type" : {
+          "id" : "org.knime.core.data.uri.URIDataValue",
+          "text" : "URI"
+        }
+      } ]
+    } ]
+  } ]
+}

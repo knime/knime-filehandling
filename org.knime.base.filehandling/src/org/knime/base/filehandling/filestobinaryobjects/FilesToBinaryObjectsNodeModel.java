@@ -83,7 +83,6 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
-@Deprecated
 final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(FilesToBinaryObjectsNodeModel.class);
@@ -96,9 +95,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     /**
      * Constructor for the node model.
-     * @deprecated
      */
-    @Deprecated
     protected FilesToBinaryObjectsNodeModel() {
         super(1, 1);
         m_uricolumn = SettingsFactory.createURIColumnSettings();
@@ -111,7 +108,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
-            throws Exception {
+        throws Exception {
         ColumnRearranger rearranger = createColumnRearranger(inData[0].getDataTableSpec(), exec);
         BufferedDataTable out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
@@ -123,12 +120,11 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      *
      * @param inSpec Specification of the input table
      * @param exec Context of this execution
-     * @return Rearranger that will add a binary object column or replace the
-     *         URI column
+     * @return Rearranger that will add a binary object column or replace the URI column
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec, final ExecutionContext exec)
-            throws InvalidSettingsException {
+        throws InvalidSettingsException {
         boolean replace = m_replace.getStringValue().equals(ReplacePolicy.REPLACE.getName());
         // Check settings for correctness
         checkSettings(inSpec);
@@ -193,9 +189,28 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
+        autoGuessUriColumn(inSpecs[0]);
         // createColumnRearranger will check the settings
         DataTableSpec outSpec = createColumnRearranger(inSpecs[0], null).createSpec();
         return new DataTableSpec[]{outSpec};
+    }
+
+    /**
+     * Auto-guesses the URI column if the current selection is empty or no longer present in the spec. Selects the first
+     * column compatible with {@link URIDataValue}.
+     *
+     * @param inSpec Specification of the input table
+     */
+    private void autoGuessUriColumn(final DataTableSpec inSpec) {
+        if (!m_uricolumn.getStringValue().isEmpty()) {
+            return;
+        }
+        for (DataColumnSpec col : inSpec) {
+            if (col.getType().isCompatible(URIDataValue.class)) {
+                m_uricolumn.setStringValue(col.getName());
+                return;
+            }
+        }
     }
 
     /**
@@ -232,8 +247,8 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec)
+        throws IOException, CanceledExecutionException {
         // Not used
     }
 
@@ -241,12 +256,11 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec)
+        throws IOException, CanceledExecutionException {
         // Not used
     }
 
-    @Deprecated
     private final class FilesToBinaryCellFactory extends SingleCellFactory {
 
         private final BinaryObjectCellFactory m_bocellfactory;
@@ -259,7 +273,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
         private final AtomicInteger m_totalCount = new AtomicInteger();
 
         private FilesToBinaryCellFactory(final DataColumnSpec newColSpec, final BinaryObjectCellFactory bocellfactory,
-                final int colIndex) {
+            final int colIndex) {
             super(newColSpec);
             m_bocellfactory = bocellfactory;
             m_colIndex = colIndex;
@@ -280,7 +294,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
                 URL url = uri.toURL();
                 input = url.openStream();
                 return m_bocellfactory.create(input);
-            } catch (Exception e) {
+            } catch (Exception e) { // NOSONAR: catch-all is intentional to handle all read errors gracefully
                 String error = "Can't read \"" + uri + "\": " + e.getMessage();
                 if (m_errorCount.getAndIncrement() == 0) {
                     error = error + " (suppressing further warnings)";
@@ -293,8 +307,8 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
                 if (input != null) {
                     try {
                         input.close();
-                    } catch (Exception e) {
-                        // ignore
+                    } catch (Exception e) { // NOSONAR: catch-all is intentional to handle all errors gracefully
+                        LOGGER.debug("Failed to close input stream for \"" + uri + "\"", e);
                     }
                 }
             }
