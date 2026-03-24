@@ -50,13 +50,23 @@ package org.knime.ext.box.authenticator.node;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentials;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.validation.custom.CustomValidation;
+import org.knime.credentials.base.node.CredentialVariableMigration;
 import org.knime.credentials.base.node.CredentialsSettings;
 import org.knime.node.parameters.Widget;
-import org.knime.node.parameters.widget.choices.ChoicesProvider;
+import org.knime.node.parameters.migration.Migration;
+import org.knime.node.parameters.updates.ParameterReference;
+import org.knime.node.parameters.widget.credentials.Credentials;
+import org.knime.node.parameters.widget.credentials.CredentialsWidget;
 
 /**
  * Implementation of {@link CredentialsSettings} to supply the ID and secret of
  * a confidential OAuth2 app.
+ *
+ * Any instance must be annotated with a {@code ValueReference} to {@link Ref}
+ * for the validation to work.
+ *
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
@@ -64,32 +74,47 @@ import org.knime.node.parameters.widget.choices.ChoicesProvider;
 public class BoxAppSettings implements CredentialsSettings {
 
     /**
-     * The name of the Credentials flow variable.
+     * The credential
      */
-    @Widget(title = "App ID and secret (flow variable)", //
+    @Widget(title = "App ID and secret", //
             description = """
-                    Specifies a credentials flow variable with the app/client ID and secret of the custom Box app.
+                    Specifies the app/client ID and secret of the custom Box app.
                     These fields can be found in the configuration settings of your custom Box app.
                     """)
-    @ChoicesProvider(CredentialsFlowVarChoicesProvider.class)
-    public String m_flowVariable;
+    @Migration(CredentialVariableMigration.class)
+    @CustomValidation(BoxCredentialValidator.class)
+    @CredentialsWidget(usernameLabel = "ID", passwordLabel = "Secret") // NOSONAR not a password
+
+    public LegacyCredentials m_secret = new LegacyCredentials(new Credentials());
+
+    /**
+     * Used to reference this class for the validation.
+     */
+    public interface Ref extends ParameterReference<BoxAppSettings> {
+    }
+
+    static final class BoxCredentialValidator extends AbstractCredentialsValidator<BoxAppSettings> {
+        BoxCredentialValidator() {
+            super(Ref.class);
+        }
+    }
 
     @Override
-    public String flowVariableName() {
-        return m_flowVariable;
+    public LegacyCredentials getCredential() {
+        return m_secret;
     }
 
     /**
-     * If a flow variable has been specified, this method validates that a username
-     * and password are present in the flow variable. This method should be used
-     * during the configure phase, to reduce logspam if the credentials flow
-     * variable is not there yet.
+     * If a credential has been specified, this method validates that a username and
+     * password are present. This method should be used during the configure phase,
+     * to reduce logspam if the credential is not there yet.
      *
      * @param credsProvider
-     *            Used to access the flow variable.
+     *            Used to access the credential.
      * @throws InvalidSettingsException
-     *             when username or password was not present in the flow variable.
+     *             when username or password was not present in the credential.
      */
+    @Override
     public void validateOnConfigure(final CredentialsProvider credsProvider) throws InvalidSettingsException {
         if (retrieve(credsProvider).isPresent()) {
             validateLogin(credsProvider, "Client/App ID is required");
@@ -98,16 +123,15 @@ public class BoxAppSettings implements CredentialsSettings {
     }
 
     /**
-     * This method validates both presence and validity of a credentials flow
-     * variable. This method should be used during the execute phase.
+     * This method validates both presence and validity of a credential. This method
+     * should be used during the execute phase.
      *
      * @param credsProvider
-     *            Used to access the flow variable.
+     *            Used to access the credential.
      * @throws InvalidSettingsException
-     *             when flow variable was not present or invalid.
+     *             when credential was not present or invalid.
      */
     public void validateOnExecute(final CredentialsProvider credsProvider) throws InvalidSettingsException {
-        validateFlowVariable(credsProvider);
         validateLogin(credsProvider, "Client/App ID is required");
         validateSecret(credsProvider, "Client/App secret is required");
     }

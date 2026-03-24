@@ -1,7 +1,15 @@
 {
   "data" : {
     "model" : {
-      "boxApp" : { },
+      "boxApp" : {
+        "secret" : {
+          "credentials" : {
+            "isHiddenPassword" : false,
+            "isHiddenSecondFactor" : false,
+            "username" : ""
+          }
+        }
+      },
       "authType" : "OAUTH",
       "redirectUrl" : "http://localhost:33749/"
     }
@@ -27,13 +35,55 @@
           "boxApp" : {
             "type" : "object",
             "properties" : {
-              "flowVariable" : {
-                "type" : "string",
-                "title" : "App ID and secret (flow variable)",
-                "description" : "Specifies a credentials flow variable with the app/client ID and secret of the custom Box app.\nThese fields can be found in the configuration settings of your custom Box app.\n"
+              "secret" : {
+                "type" : "object",
+                "properties" : {
+                  "credentials" : {
+                    "type" : "object",
+                    "properties" : {
+                      "password" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "secondFactor" : {
+                        "type" : "string",
+                        "default" : ""
+                      },
+                      "username" : {
+                        "type" : "string",
+                        "default" : ""
+                      }
+                    },
+                    "default" : {
+                      "isHiddenPassword" : false,
+                      "isHiddenSecondFactor" : false,
+                      "username" : ""
+                    }
+                  },
+                  "flowVarName" : {
+                    "type" : "string"
+                  }
+                },
+                "title" : "App ID and secret",
+                "description" : "Specifies the app/client ID and secret of the custom Box app.\nThese fields can be found in the configuration settings of your custom Box app.\n",
+                "default" : {
+                  "credentials" : {
+                    "isHiddenPassword" : false,
+                    "isHiddenSecondFactor" : false,
+                    "username" : ""
+                  }
+                }
               }
             },
-            "default" : { }
+            "default" : {
+              "secret" : {
+                "credentials" : {
+                  "isHiddenPassword" : false,
+                  "isHiddenSecondFactor" : false,
+                  "username" : ""
+                }
+              }
+            }
           },
           "enterpriseId" : {
             "type" : "string",
@@ -62,11 +112,12 @@
       "type" : "Section",
       "elements" : [ {
         "type" : "Control",
-        "scope" : "#/properties/model/properties/boxApp/properties/flowVariable",
+        "scope" : "#/properties/model/properties/boxApp/properties/secret",
         "options" : {
-          "format" : "dropDown"
-        },
-        "providedOptions" : [ "possibleValues" ]
+          "passwordLabel" : "Secret",
+          "usernameLabel" : "ID",
+          "format" : "legacyCredentials"
+        }
       } ]
     }, {
       "label" : "Authentication method",
@@ -131,10 +182,10 @@
           } ],
           "displayErrorMessage" : true,
           "showTitleAndDescription" : false,
-          "dependencies" : [ "#/properties/model/properties/boxApp/properties/flowVariable", "#/properties/model/properties/authType", "#/properties/model/properties/enterpriseId", "#/properties/model/properties/redirectUrl" ],
+          "dependencies" : [ "#/properties/model/properties/boxApp/properties/secret", "#/properties/model/properties/authType", "#/properties/model/properties/enterpriseId", "#/properties/model/properties/redirectUrl" ],
           "updateOptions" : {
             "updateHandler" : "org.knime.ext.box.authenticator.node.BoxAuthenticatorSettings$LoginUpdateHandler",
-            "dependencies" : [ "#/properties/model/properties/boxApp/properties/flowVariable", "#/properties/model/properties/authType", "#/properties/model/properties/enterpriseId", "#/properties/model/properties/redirectUrl" ]
+            "dependencies" : [ "#/properties/model/properties/boxApp/properties/secret", "#/properties/model/properties/authType", "#/properties/model/properties/enterpriseId", "#/properties/model/properties/redirectUrl" ]
           }
         },
         "rule" : {
@@ -160,7 +211,18 @@
           "boxApp" : {
             "type" : "object",
             "properties" : {
-              "flowVariable" : { }
+              "secret" : {
+                "type" : "object",
+                "properties" : {
+                  "credentials" : { },
+                  "flowVarName" : {
+                    "configPaths" : [ ]
+                  }
+                },
+                "deprecatedConfigKeys" : [ {
+                  "deprecated" : [ [ "flowVariable" ] ]
+                } ]
+              }
             }
           },
           "authType" : { },
@@ -173,12 +235,16 @@
       }
     }
   },
-  "initialUpdates" : [ {
-    "scope" : "#/properties/model/properties/boxApp/properties/flowVariable",
-    "providedOptionName" : "possibleValues",
-    "values" : [ {
-      "indices" : [ ],
-      "value" : [ ]
-    } ]
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/boxApp" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/boxApp"
+    },
+    "dependencies" : [ "#/properties/model/properties/boxApp" ]
   } ]
 }
