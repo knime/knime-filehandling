@@ -103,12 +103,5 @@
         }
       } ]
     } ]
-  } ],
-  "globalUpdates" : [ {
-    "trigger" : {
-      "id" : "after-open-dialog"
-    },
-    "triggerInitially" : true,
-    "dependencies" : [ "#/properties/model/properties/columnSelection" ]
   } ]
 }
