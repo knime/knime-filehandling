@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,36 +42,69 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
- * History
- *   Sep 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.findmimetype;
 
-import org.knime.core.data.uri.URIDataValue;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
+import org.knime.core.data.def.StringCell;
+import org.knime.core.data.uri.URIDataCell;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettings;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersUtil;
+import org.knime.testing.node.dialog.DefaultNodeSettingsSnapshotTest;
+import org.knime.testing.node.dialog.SnapshotTestConfiguration;
 
 /**
- * <code>NodeDialog</code> for the node.
- * 
- * 
- * @author Patrick Winter, KNIME AG, Zurich, Switzerland
+ * Snapshot test for {@link FindMIMETypeNodeParameters}.
  */
-class FindMIMETypeNodeDialog extends DefaultNodeSettingsPane {
+@SuppressWarnings("restriction")
+final class FindMIMETypeNodeParametersTest extends DefaultNodeSettingsSnapshotTest {
 
-    private SettingsModelString m_columnselection;
+    FindMIMETypeNodeParametersTest() {
+        super(getConfig());
+    }
 
-    /**
-     * New pane for configuring the node dialog.
-     */
-    @SuppressWarnings("unchecked")
-    protected FindMIMETypeNodeDialog() {
-        super();
-        m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        // Column selection
-        addDialogComponent(new DialogComponentColumnNameSelection(m_columnselection, "Column selection", 0,
-                URIDataValue.class));
+    private static SnapshotTestConfiguration getConfig() {
+        return SnapshotTestConfiguration.builder() //
+            .withInputPortObjectSpecs(createInputPortSpecs()) //
+            .testJsonFormsForModel(FindMIMETypeNodeParameters.class) //
+            .testJsonFormsWithInstance(SettingsType.MODEL, () -> readSettings()) //
+            .testNodeSettingsStructure(() -> readSettings()) //
+            .build();
+    }
+
+    private static FindMIMETypeNodeParameters readSettings() {
+        try {
+            var path = getSnapshotPath(FindMIMETypeNodeParameters.class).getParent().resolve("node_settings")
+                .resolve("FindMIMETypeNodeParameters.xml");
+            try (var fis = new FileInputStream(path.toFile())) {
+                var nodeSettings = NodeSettings.loadFromXML(fis);
+                return NodeParametersUtil.loadSettings(nodeSettings.getNodeSettings(SettingsType.MODEL.getConfigKey()),
+                    FindMIMETypeNodeParameters.class);
+            }
+        } catch (IOException | InvalidSettingsException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static PortObjectSpec[] createInputPortSpecs() {
+        return new PortObjectSpec[]{createDefaultTestTableSpec()};
+    }
+
+    private static DataTableSpec createDefaultTestTableSpec() {
+        return new DataTableSpec(
+            new String[]{"URI", "String_Column", "Another_URI"},
+            new DataType[]{
+                URIDataCell.TYPE,
+                DataType.getType(StringCell.class),
+                URIDataCell.TYPE
+            }
+        );
     }
 }
