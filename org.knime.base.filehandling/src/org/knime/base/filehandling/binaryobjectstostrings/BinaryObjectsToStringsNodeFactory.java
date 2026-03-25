@@ -41,63 +41,112 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.binaryobjectstostrings;
 
+import static org.knime.node.impl.description.PortDescription.fixedPort;
+
+import java.util.List;
+import java.util.Map;
+
+import org.knime.core.node.NodeDescription;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
+import org.knime.core.webui.node.dialog.NodeDialog;
+import org.knime.core.webui.node.dialog.NodeDialogFactory;
+import org.knime.core.webui.node.dialog.NodeDialogManager;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
+import org.knime.node.impl.description.DefaultNodeDescriptionUtil;
+import org.knime.node.impl.description.PortDescription;
 
 /**
- * <code>NodeFactory</code> for node.
- * 
- * 
+ * <code>NodeFactory</code> for the "Binary Objects to Strings" node.
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
+ * @author Tim Crundall, TNG Technology Consulting GmbH
+ * @author AI Migration Pipeline v1.2
  */
-public class BinaryObjectsToStringsNodeFactory extends NodeFactory<BinaryObjectsToStringsNodeModel> {
+@SuppressWarnings({"restriction", "removal"})
+public class BinaryObjectsToStringsNodeFactory extends NodeFactory<BinaryObjectsToStringsNodeModel>
+    implements NodeDialogFactory, KaiNodeInterfaceFactory {
 
-    /**
-     * {@inheritDoc}
-     */
+    private static final String NODE_NAME = "Binary Objects to Strings";
+
+    private static final String NODE_ICON = "./binaryobjectstostrings16x16.png";
+
+    private static final String SHORT_DESCRIPTION = "Converts the binary objects of a column to strings.";
+
+    private static final String FULL_DESCRIPTION = "This node converts the binary object cells to string cells.";
+
+    private static final List<PortDescription> INPUT_PORTS = List.of( //
+        fixedPort("Input table", "Table that contains the binary objects that will be converted.") //
+    );
+
+    private static final List<PortDescription> OUTPUT_PORTS = List.of( //
+        fixedPort("Output table", "Input table with string column either appended or replacing the binary objects.") //
+    );
+
     @Override
     public BinaryObjectsToStringsNodeModel createNodeModel() {
         return new BinaryObjectsToStringsNodeModel();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public int getNrNodeViews() {
         return 0;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public NodeView<BinaryObjectsToStringsNodeModel> createNodeView(final int viewIndex,
-            final BinaryObjectsToStringsNodeModel nodeModel) {
+        final BinaryObjectsToStringsNodeModel nodeModel) {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean hasDialog() {
         return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new BinaryObjectsToStringsNodeDialog();
+        return NodeDialogManager.createLegacyFlowVariableNodeDialog(createNodeDialog());
+    }
+
+    @Override
+    public NodeDialog createNodeDialog() {
+        return new DefaultNodeDialog(SettingsType.MODEL, BinaryObjectsToStringsNodeParameters.class);
+    }
+
+    @Override
+    public NodeDescription createNodeDescription() {
+        return DefaultNodeDescriptionUtil.createNodeDescription( //
+            NODE_NAME, //
+            NODE_ICON, //
+            INPUT_PORTS, //
+            OUTPUT_PORTS, //
+            SHORT_DESCRIPTION, //
+            FULL_DESCRIPTION, //
+            List.of(), //
+            BinaryObjectsToStringsNodeParameters.class, //
+            null, //
+            NodeType.Manipulator, //
+            List.of(), //
+            null //
+        );
+    }
+
+    @Override
+    public KaiNodeInterface createKaiNodeInterface() {
+        return new DefaultKaiNodeInterface(Map.of(SettingsType.MODEL, BinaryObjectsToStringsNodeParameters.class));
     }
 
 }
