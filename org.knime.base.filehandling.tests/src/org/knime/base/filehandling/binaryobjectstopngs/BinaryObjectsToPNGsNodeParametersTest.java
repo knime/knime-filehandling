@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,61 +42,64 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
- * History
- *   Oct 30, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.binaryobjectstopngs;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import java.io.FileInputStream;
+import java.io.IOException;
 
-import org.knime.core.data.blob.BinaryObjectDataValue;
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentButtonGroup;
-import org.knime.core.node.defaultnodesettings.DialogComponentColumnNameSelection;
-import org.knime.core.node.defaultnodesettings.DialogComponentString;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.DataType;
+import org.knime.core.data.blob.BinaryObjectDataCell;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeSettings;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersUtil;
+import org.knime.testing.node.dialog.DefaultNodeSettingsSnapshotTest;
+import org.knime.testing.node.dialog.SnapshotTestConfiguration;
 
 /**
- * <code>NodeDialog</code> for the node.
- * 
- * 
- * @author Patrick Winter, KNIME AG, Zurich, Switzerland
+ * Snapshot test for {@link BinaryObjectsToPNGsNodeParameters}.
+ *
+ * @author Tim Crundall, TNG Technology Consulting GmbH
  */
-public class BinaryObjectsToPNGsNodeDialog extends DefaultNodeSettingsPane {
+@SuppressWarnings("restriction")
+final class BinaryObjectsToPNGsNodeParametersTest extends DefaultNodeSettingsSnapshotTest {
 
-    private SettingsModelString m_columnselection;
-
-    private SettingsModelString m_columnname;
-
-    private SettingsModelString m_replace;
-
-    /**
-     * New pane for configuring the node dialog.
-     */
-    @SuppressWarnings("unchecked")
-    protected BinaryObjectsToPNGsNodeDialog() {
-        super();
-        m_columnselection = SettingsFactory.createColumnSelectionSettings();
-        m_replace = SettingsFactory.createReplacePolicySettings();
-        m_columnname = SettingsFactory.createColumnNameSettings(m_replace);
-        m_replace.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                boolean append = m_replace.getStringValue().equals(ReplacePolicy.APPEND.getName());
-                m_columnname.setEnabled(append);
-            }
-        });
-        // Column selection
-        addDialogComponent(new DialogComponentColumnNameSelection(m_columnselection, "Column selection", 0,
-                BinaryObjectDataValue.class));
-        createNewGroup("New column...");
-        // Replace
-        addDialogComponent(new DialogComponentButtonGroup(m_replace, false, "", ReplacePolicy.getAllSettings()));
-        // Column name
-        addDialogComponent(new DialogComponentString(m_columnname, "Name", true, 20));
-        closeCurrentGroup();
+    BinaryObjectsToPNGsNodeParametersTest() {
+        super(getConfig());
     }
 
+    private static SnapshotTestConfiguration getConfig() {
+        return SnapshotTestConfiguration.builder() //
+            .withInputPortObjectSpecs(createInputPortSpecs()) //
+            .testJsonFormsForModel(BinaryObjectsToPNGsNodeParameters.class) //
+            .testJsonFormsWithInstance(SettingsType.MODEL, () -> readSettings()) //
+            .testNodeSettingsStructure(() -> readSettings()) //
+            .build();
+    }
+
+    private static BinaryObjectsToPNGsNodeParameters readSettings() {
+        try {
+            var path = getSnapshotPath(BinaryObjectsToPNGsNodeParameters.class).getParent().resolve("node_settings")
+                .resolve("BinaryObjectsToPNGsNodeParameters.xml");
+            try (var fis = new FileInputStream(path.toFile())) {
+                var nodeSettings = NodeSettings.loadFromXML(fis);
+                return NodeParametersUtil.loadSettings(nodeSettings.getNodeSettings(SettingsType.MODEL.getConfigKey()),
+                    BinaryObjectsToPNGsNodeParameters.class);
+            }
+        } catch (IOException | InvalidSettingsException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static PortObjectSpec[] createInputPortSpecs() {
+        return new PortObjectSpec[]{createDefaultTestTableSpec()};
+    }
+
+    private static DataTableSpec createDefaultTestTableSpec() {
+        return new DataTableSpec(new String[]{"foo"},
+            new DataType[]{DataType.getType(BinaryObjectDataCell.class), });
+    }
 }

@@ -41,63 +41,114 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- * 
+ *
  * History
  *   Sep 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.binaryobjectstopngs;
 
+import static org.knime.node.impl.description.PortDescription.fixedPort;
+
+import java.util.List;
+import java.util.Map;
+
+import org.knime.core.node.NodeDescription;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
+import org.knime.core.webui.node.dialog.NodeDialog;
+import org.knime.core.webui.node.dialog.NodeDialogFactory;
+import org.knime.core.webui.node.dialog.NodeDialogManager;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
+import org.knime.node.impl.description.DefaultNodeDescriptionUtil;
+import org.knime.node.impl.description.PortDescription;
 
 /**
  * <code>NodeFactory</code> for node.
- * 
- * 
+ *
+ *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
+ *
+ * @author Tim Crundall, TNG Technology Consulting GmbH
+ *
+ * @author AI Migration Pipeline v1.2
  */
-public class BinaryObjectsToPNGsNodeFactory extends NodeFactory<BinaryObjectsToPNGsNodeModel> {
+@SuppressWarnings({"restriction", "removal"})
+public class BinaryObjectsToPNGsNodeFactory extends NodeFactory<BinaryObjectsToPNGsNodeModel>
+    implements NodeDialogFactory, KaiNodeInterfaceFactory {
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public BinaryObjectsToPNGsNodeModel createNodeModel() {
         return new BinaryObjectsToPNGsNodeModel();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public int getNrNodeViews() {
         return 0;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public NodeView<BinaryObjectsToPNGsNodeModel> createNodeView(final int viewIndex,
-            final BinaryObjectsToPNGsNodeModel nodeModel) {
+    public NodeView<BinaryObjectsToPNGsNodeModel> createNodeView( //
+        final int viewIndex, //
+        final BinaryObjectsToPNGsNodeModel nodeModel //
+    ) {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean hasDialog() {
         return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    private static final String NODE_NAME = "Binary Objects to PNGs";
+
+    private static final String NODE_ICON = "./binaryobjectstopngs16x16.png";
+
+    private static final String SHORT_DESCRIPTION = "Converts the binary objects of a column to PNGs.";
+
+    private static final String FULL_DESCRIPTION = "This node converts the binary object cells to PNG cells.";
+
+    private static final List<PortDescription> INPUT_PORTS =
+        List.of(fixedPort("Input table", "Table that contains the binary objects that will be converted."));
+
+    private static final List<PortDescription> OUTPUT_PORTS = List
+        .of(fixedPort("Output table", "Input table with PNG column either appended or replacing the binary objects."));
+
     @Override
     public NodeDialogPane createNodeDialogPane() {
-        return new BinaryObjectsToPNGsNodeDialog();
+        return NodeDialogManager.createLegacyFlowVariableNodeDialog(createNodeDialog());
+    }
+
+    @Override
+    public NodeDialog createNodeDialog() {
+        return new DefaultNodeDialog(SettingsType.MODEL, BinaryObjectsToPNGsNodeParameters.class);
+    }
+
+    @Override
+    public NodeDescription createNodeDescription() {
+        return DefaultNodeDescriptionUtil.createNodeDescription( //
+            NODE_NAME, //
+            NODE_ICON, //
+            INPUT_PORTS, //
+            OUTPUT_PORTS, //
+            SHORT_DESCRIPTION, //
+            FULL_DESCRIPTION, //
+            List.of(), //
+            BinaryObjectsToPNGsNodeParameters.class, //
+            null, //
+            NodeType.Manipulator, //
+            List.of(), //
+            null //
+        );
+    }
+
+    @Override
+    public KaiNodeInterface createKaiNodeInterface() {
+        return new DefaultKaiNodeInterface(Map.of(SettingsType.MODEL, BinaryObjectsToPNGsNodeParameters.class));
     }
 
 }
