@@ -96,6 +96,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     /**
      * Constructor for the node model.
+     * 
      * @deprecated
      */
     @Deprecated
@@ -111,7 +112,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
-            throws Exception {
+        throws Exception {
         ColumnRearranger rearranger = createColumnRearranger(inData[0].getDataTableSpec(), exec);
         BufferedDataTable out = exec.createColumnRearrangeTable(inData[0], rearranger, exec);
         return new BufferedDataTable[]{out};
@@ -123,12 +124,11 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      *
      * @param inSpec Specification of the input table
      * @param exec Context of this execution
-     * @return Rearranger that will add a binary object column or replace the
-     *         URI column
+     * @return Rearranger that will add a binary object column or replace the URI column
      * @throws InvalidSettingsException If the settings are incorrect
      */
     private ColumnRearranger createColumnRearranger(final DataTableSpec inSpec, final ExecutionContext exec)
-            throws InvalidSettingsException {
+        throws InvalidSettingsException {
         boolean replace = m_replace.getStringValue().equals(ReplacePolicy.REPLACE.getName());
         // Check settings for correctness
         checkSettings(inSpec);
@@ -193,9 +193,28 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
+        autoGuessUriColumn(inSpecs[0]);
         // createColumnRearranger will check the settings
         DataTableSpec outSpec = createColumnRearranger(inSpecs[0], null).createSpec();
         return new DataTableSpec[]{outSpec};
+    }
+
+    /**
+     * Auto-guesses the URI column if the current selection is empty or no longer present in the spec. Selects the first
+     * column compatible with {@link URIDataValue}.
+     *
+     * @param inSpec Specification of the input table
+     */
+    private void autoGuessUriColumn(final DataTableSpec inSpec) {
+        if (!m_uricolumn.getStringValue().isEmpty()) {
+            return;
+        }
+        for (DataColumnSpec col : inSpec) {
+            if (col.getType().isCompatible(URIDataValue.class)) {
+                m_uricolumn.setStringValue(col.getName());
+                return;
+            }
+        }
     }
 
     /**
@@ -232,8 +251,8 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void loadInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+    protected void loadInternals(final File internDir, final ExecutionMonitor exec)
+        throws IOException, CanceledExecutionException {
         // Not used
     }
 
@@ -241,8 +260,8 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     @Override
-    protected void saveInternals(final File internDir, final ExecutionMonitor exec) throws IOException,
-            CanceledExecutionException {
+    protected void saveInternals(final File internDir, final ExecutionMonitor exec)
+        throws IOException, CanceledExecutionException {
         // Not used
     }
 
@@ -259,7 +278,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
         private final AtomicInteger m_totalCount = new AtomicInteger();
 
         private FilesToBinaryCellFactory(final DataColumnSpec newColSpec, final BinaryObjectCellFactory bocellfactory,
-                final int colIndex) {
+            final int colIndex) {
             super(newColSpec);
             m_bocellfactory = bocellfactory;
             m_colIndex = colIndex;
