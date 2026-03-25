@@ -43,63 +43,55 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Sep 5, 2012 (Patrick Winter): created
+ *   Sep 3, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.filestobinaryobjects;
 
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
-
 /**
- * Factory for SettingsModels.
+ * Enums for replace policies.
  *
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
-@Deprecated
-final class SettingsFactory {
-
-    private SettingsFactory() {
-        // Disables default constructor
-    }
+enum ReplacePolicy {
 
     /**
-     * Factory method for the URI column setting.
-     *
-     *
-     * @return URI column <code>SettingsModel</code>
+     * Append new column.
+     */
+    APPEND("Append"),
+
+    /**
+     * Replace source column.
+     */
+    REPLACE("Replace");
+
+    private final String m_name;
+
+    /**
+     * @param name Name of this policy
      * @deprecated
      */
     @Deprecated
-    static SettingsModelString createURIColumnSettings() {
-        return new SettingsModelString("uricolumn", "");
+    ReplacePolicy(final String name) {
+        m_name = name;
     }
 
     /**
-     * Factory method for the binary object column name setting.
-     *
-     *
-     * @param replacePolicy <code>SettingsModel</code> for the replace policy
-     *            setting
-     * @return Binary object column name <code>SettingsModel</code>
+     * @return Name of this policy
      * @deprecated
      */
     @Deprecated
-    static SettingsModelString createBinaryObjectColumnNameSettings(final SettingsModelString replacePolicy) {
-        SettingsModelString columnName = new SettingsModelString("binaryobjectcolumnname", "BinaryObject");
-        columnName.setEnabled(replacePolicy.getStringValue().equals(ReplacePolicy.APPEND.getName()));
-        return columnName;
+    String getName() {
+        return m_name;
     }
 
     /**
-     * Factory method for the replace setting.
-     *
-     *
-     * @return Replace <code>SettingsModel</code>
+     * @return Array of all replace policy settings
      * @deprecated
      */
     @Deprecated
-    static SettingsModelString createReplacePolicySettings() {
-        return new SettingsModelString("replace", ReplacePolicy.APPEND.getName());
+    static String[] getAllSettings() {
+        return new String[]{APPEND.getName(), REPLACE.getName()};
     }
 
 }

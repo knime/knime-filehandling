@@ -74,7 +74,6 @@ import static org.knime.node.impl.description.PortDescription.fixedPort;
  * @author Thomas Reifenberger, TNG Technology Consulting GmbH
  * @author AI Migration Pipeline v1.2
  */
-@Deprecated
 @SuppressWarnings("restriction")
 public class FilesToBinaryObjectsNodeFactory extends NodeFactory<FilesToBinaryObjectsNodeModel> implements NodeDialogFactory, KaiNodeInterfaceFactory {
 

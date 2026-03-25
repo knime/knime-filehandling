@@ -83,7 +83,6 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
-@Deprecated
 final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(FilesToBinaryObjectsNodeModel.class);
@@ -96,10 +95,7 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
 
     /**
      * Constructor for the node model.
-     * 
-     * @deprecated
      */
-    @Deprecated
     protected FilesToBinaryObjectsNodeModel() {
         super(1, 1);
         m_uricolumn = SettingsFactory.createURIColumnSettings();
@@ -265,7 +261,6 @@ final class FilesToBinaryObjectsNodeModel extends NodeModel {
         // Not used
     }
 
-    @Deprecated
     private final class FilesToBinaryCellFactory extends SingleCellFactory {
 
         private final BinaryObjectCellFactory m_bocellfactory;

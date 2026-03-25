@@ -43,56 +43,56 @@
  * ------------------------------------------------------------------------
  *
  * History
- *   Sep 3, 2012 (Patrick Winter): created
+ *   Sep 5, 2012 (Patrick Winter): created
  */
 package org.knime.base.filehandling.filestobinaryobjects;
 
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
+
 /**
- * Enums for replace policies.
+ * Factory for SettingsModels.
  *
  *
  * @author Patrick Winter, KNIME AG, Zurich, Switzerland
  */
-@Deprecated
-enum ReplacePolicy {
+final class SettingsFactory {
 
-    /**
-     * Append new column.
-     */
-    APPEND("Append"),
-
-    /**
-     * Replace source column.
-     */
-    REPLACE("Replace");
-
-    private final String m_name;
-
-    /**
-     * @param name Name of this policy
-     * @deprecated
-     */
-    @Deprecated
-    ReplacePolicy(final String name) {
-        m_name = name;
+    private SettingsFactory() {
+        // Disables default constructor
     }
 
     /**
-     * @return Name of this policy
-     * @deprecated
+     * Factory method for the URI column setting.
+     *
+     *
+     * @return URI column <code>SettingsModel</code>
      */
-    @Deprecated
-    String getName() {
-        return m_name;
+    static SettingsModelString createURIColumnSettings() {
+        return new SettingsModelString("uricolumn", "");
     }
 
     /**
-     * @return Array of all replace policy settings
-     * @deprecated
+     * Factory method for the binary object column name setting.
+     *
+     *
+     * @param replacePolicy <code>SettingsModel</code> for the replace policy
+     *            setting
+     * @return Binary object column name <code>SettingsModel</code>
      */
-    @Deprecated
-    static String[] getAllSettings() {
-        return new String[]{APPEND.getName(), REPLACE.getName()};
+    static SettingsModelString createBinaryObjectColumnNameSettings(final SettingsModelString replacePolicy) {
+        SettingsModelString columnName = new SettingsModelString("binaryobjectcolumnname", "BinaryObject");
+        columnName.setEnabled(replacePolicy.getStringValue().equals(ReplacePolicy.APPEND.getName()));
+        return columnName;
+    }
+
+    /**
+     * Factory method for the replace setting.
+     *
+     *
+     * @return Replace <code>SettingsModel</code>
+     */
+    static SettingsModelString createReplacePolicySettings() {
+        return new SettingsModelString("replace", ReplacePolicy.APPEND.getName());
     }
 
 }
