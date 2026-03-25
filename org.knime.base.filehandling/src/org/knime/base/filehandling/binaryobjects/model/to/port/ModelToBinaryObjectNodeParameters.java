@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,35 +42,26 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ------------------------------------------------------------------------
- *
- * History
- *   Oct 30, 2012 (Patrick Winter): created
  */
+
 package org.knime.base.filehandling.binaryobjects.model.to.port;
 
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
-import org.knime.core.node.defaultnodesettings.DialogComponentString;
+import org.knime.node.parameters.NodeParameters;
+import org.knime.node.parameters.Widget;
+import org.knime.node.parameters.migration.LoadDefaultsForAbsentFields;
+import org.knime.node.parameters.persistence.Persist;
 
 /**
- * <code>NodeDialog</code> for the node.
+ * Node parameters for Model to Binary Object.
  *
- *
- * @author Eric Axt, KNIME GmbH, Konstanz, Germany
+ * @author Tim Crundall, TNG Technology Consulting GmbH
+ * @author AI Migration Pipeline v1.2
  */
-final class ModelToBinaryObjectNodeDialog extends DefaultNodeSettingsPane {
+@LoadDefaultsForAbsentFields
+final class ModelToBinaryObjectNodeParameters implements NodeParameters {
 
-    /**
-     * New pane for configuring the node dialog.
-     */
-    protected ModelToBinaryObjectNodeDialog() {
-        super();
-        var columnname = SettingsFactory.createColumnNameSettings();
+    @Widget(title = "New column name", description = "Name of the new column.")
+    @Persist(configKey = "columnname")
+    String m_columnName = "";
 
-        // Column selection
-        createNewGroup("New column");
-
-        // Column name
-        addDialogComponent(new DialogComponentString(columnname, "Name", true, 20));
-        closeCurrentGroup();
-    }
 }
