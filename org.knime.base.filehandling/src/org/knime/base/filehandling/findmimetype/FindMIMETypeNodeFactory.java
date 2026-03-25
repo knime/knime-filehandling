@@ -56,7 +56,6 @@ import org.knime.core.webui.node.dialog.NodeDialogManager;
 import org.knime.core.webui.node.dialog.SettingsType;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
-import org.knime.core.node.NodeFactory.NodeType;
 import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
 import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
 import org.knime.core.node.NodeDescription;
@@ -75,7 +74,8 @@ import static org.knime.node.impl.description.PortDescription.fixedPort;
  * @author AI Migration Pipeline v1.2
  */
 @SuppressWarnings("restriction")
-public class FindMIMETypeNodeFactory extends NodeFactory<FindMIMETypeNodeModel> implements NodeDialogFactory, KaiNodeInterfaceFactory {
+public class FindMIMETypeNodeFactory extends NodeFactory<FindMIMETypeNodeModel>
+    implements NodeDialogFactory, KaiNodeInterfaceFactory {
 
     @Override
     public FindMIMETypeNodeModel createNodeModel() {

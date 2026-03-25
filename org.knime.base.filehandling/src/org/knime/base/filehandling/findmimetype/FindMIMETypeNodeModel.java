@@ -189,7 +189,7 @@ class FindMIMETypeNodeModel extends NodeModel {
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
         // Auto-guess column selection (last URIData-compatible column) if not set
         if (m_columnselection.getStringValue() == null || m_columnselection.getStringValue().isEmpty()) {
-            Optional.ofNullable(inSpecs[0]).stream().flatMap(spec -> spec.stream()) //
+            Optional.ofNullable(inSpecs[0]).stream().flatMap(DataTableSpec::stream) //
             .filter(col -> col.getType().isCompatible(URIDataValue.class)) //
             .reduce((first, second) -> second) //
             .map(DataColumnSpec::getName) //
