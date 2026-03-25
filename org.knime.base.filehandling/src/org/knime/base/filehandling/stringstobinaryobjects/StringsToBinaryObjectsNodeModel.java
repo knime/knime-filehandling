@@ -49,6 +49,7 @@ package org.knime.base.filehandling.stringstobinaryobjects;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.core.data.DataCell;
@@ -221,6 +222,15 @@ class StringsToBinaryObjectsNodeModel extends NodeModel {
      */
     @Override
     protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
+        // Auto-guess column selection (last String-compatible column) if not set
+        if (m_columnselection.getStringValue() == null || m_columnselection.getStringValue().isEmpty()) {
+            Optional.ofNullable(inSpecs[0]).stream().flatMap(DataTableSpec::stream) //
+                .filter(col -> col.getType().isCompatible(StringValue.class)) //
+                .reduce((first, second) -> second) //
+                .map(DataColumnSpec::getName) //
+                .ifPresent(m_columnselection::setStringValue); //
+        }
+
         // createColumnRearranger will check the settings
         DataTableSpec outSpec = createColumnRearranger(inSpecs[0], null).createSpec();
         return new DataTableSpec[]{outSpec};
