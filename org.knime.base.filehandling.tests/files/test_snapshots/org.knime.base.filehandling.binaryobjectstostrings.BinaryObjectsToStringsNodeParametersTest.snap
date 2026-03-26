@@ -1,0 +1,138 @@
+{
+  "data" : {
+    "model" : {
+      "columnSelection" : "",
+      "decoding" : "UTF_8",
+      "outputMode" : "REPLACE",
+      "newColumnName" : "String"
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnSelection" : {
+            "type" : "string",
+            "title" : "Column selection",
+            "description" : "Column containing the binary objects that will be converted to strings.",
+            "default" : ""
+          },
+          "decoding" : {
+            "oneOf" : [ {
+              "const" : "US_ASCII",
+              "title" : "US-ASCII"
+            }, {
+              "const" : "ISO_8859_1",
+              "title" : "ISO-8859-1"
+            }, {
+              "const" : "UTF_8",
+              "title" : "UTF-8"
+            }, {
+              "const" : "UTF_16BE",
+              "title" : "UTF-16BE"
+            }, {
+              "const" : "UTF_16LE",
+              "title" : "UTF-16LE"
+            }, {
+              "const" : "UTF_16",
+              "title" : "UTF-16"
+            } ],
+            "title" : "Decoding",
+            "description" : "Character set used to decode the binary object bytes into a string. Common choices are UTF-8 (the default), UTF-16, and US-ASCII.\n<ul>\n<li><b>US-ASCII</b>: Seven-bit ASCII (ISO646-US / Basic Latin block of Unicode).</li>\n<li><b>ISO-8859-1</b>: ISO Latin Alphabet No. 1 (ISO-LATIN-1).</li>\n<li><b>UTF-8</b>: Eight-bit UCS Transformation Format.</li>\n<li><b>UTF-16BE</b>: Sixteen-bit UCS Transformation Format, big-endian byte order.</li>\n<li><b>UTF-16LE</b>: Sixteen-bit UCS Transformation Format, little-endian byte order.</li>\n<li><b>UTF-16</b>: Sixteen-bit UCS Transformation Format, byte order identified by an optional byte-order mark.</li>\n</ul>",
+            "default" : "UTF_8"
+          },
+          "newColumnName" : {
+            "type" : "string",
+            "title" : "New column name",
+            "description" : "Name of the appended column. Only applicable when \"Append\" is selected.",
+            "default" : "String"
+          },
+          "outputMode" : {
+            "oneOf" : [ {
+              "const" : "REPLACE",
+              "title" : "Replace"
+            }, {
+              "const" : "APPEND",
+              "title" : "Append"
+            } ],
+            "title" : "Output handling",
+            "description" : "Determines whether to append a new string column or to replace the selected binary object column.\n<ul>\n<li><b>Replace</b>: Replaces the selected binary object column with the string column.</li>\n<li><b>Append</b>: Appends a new string column to the table.</li>\n</ul>",
+            "default" : "REPLACE"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/columnSelection",
+      "options" : {
+        "format" : "dropDown"
+      },
+      "providedOptions" : [ "possibleValues" ]
+    }, {
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/decoding"
+    }, {
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/outputMode",
+      "options" : {
+        "format" : "valueSwitch"
+      }
+    }, {
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/newColumnName",
+      "rule" : {
+        "effect" : "SHOW",
+        "condition" : {
+          "scope" : "#/properties/model/properties/outputMode",
+          "schema" : {
+            "oneOf" : [ {
+              "const" : "APPEND"
+            } ]
+          }
+        }
+      }
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "columnSelection" : {
+            "configKey" : "columnselection"
+          },
+          "decoding" : {
+            "configPaths" : [ [ "decoding" ] ]
+          },
+          "outputMode" : {
+            "configPaths" : [ [ "replace" ] ]
+          },
+          "newColumnName" : {
+            "configKey" : "columnname"
+          }
+        }
+      }
+    }
+  },
+  "initialUpdates" : [ {
+    "scope" : "#/properties/model/properties/columnSelection",
+    "providedOptionName" : "possibleValues",
+    "values" : [ {
+      "indices" : [ ],
+      "value" : [ {
+        "id" : "Binary data",
+        "text" : "Binary data",
+        "type" : {
+          "id" : "org.knime.core.data.blob.BinaryObjectDataValue",
+          "text" : "Binary Object"
+        }
+      } ]
+    } ]
+  } ]
+}
