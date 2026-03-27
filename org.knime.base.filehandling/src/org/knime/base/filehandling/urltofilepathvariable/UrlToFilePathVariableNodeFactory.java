@@ -133,9 +133,9 @@ public class UrlToFilePathVariableNodeFactory extends NodeFactory<UrlToFilePathV
 
     private static final List<ExternalResource> LINKS = List.of(
          new ExternalResource(
-            "https://www.knime.com/knime-introductory-course/chapter7/section1/creation-and-usage-of-flow-variables",
+            "https://docs.knime.com/ap/latest/analytics_platform_flow_control_guide/#flow-variables",
             """
-            KNIME E-Learning Course: Creation and usage of Flow Variables in a KNIME workflow
+            KNIME Documentation: Creation and usage of flow variables in a KNIME workflow
             """)
     );
 
