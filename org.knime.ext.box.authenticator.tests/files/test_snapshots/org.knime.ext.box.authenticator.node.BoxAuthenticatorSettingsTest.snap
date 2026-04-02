@@ -88,7 +88,7 @@
           "enterpriseId" : {
             "type" : "string",
             "title" : "Enterprise ID",
-            "description" : "The Box Enterprise ID when authenticating as a\n<a href=\"https://developer.box.com/guides/getting-started/user-types/service-account/\">\nservice account</a>.\n"
+            "description" : "The Box Enterprise ID when authenticating as a\n<a href=\"https://developer.box.com/platform/user-types#service-account/\">\nservice account</a>.\n"
           },
           "redirectUrl" : {
             "type" : "string",
