@@ -147,7 +147,7 @@ public class BoxAuthenticatorSettings implements NodeParameters {
 
     @Widget(title = "Enterprise ID", description = """
             The Box Enterprise ID when authenticating as a
-            <a href="https://developer.box.com/guides/getting-started/user-types/service-account/">
+            <a href="https://developer.box.com/platform/user-types#service-account/">
             service account</a>.
             """)
     @Layout(AuthenticationSection.Body.class)
