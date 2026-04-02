@@ -100,7 +100,7 @@ public class BoxAuthenticatorNodeFactory extends WebUINodeFactory<BoxAuthenticat
                     </li>
 
                     <li>Request approval of your app
-                    <a href="https://developer.box.com/guides/authorization/custom-app-approval/"> as described here.
+                    <a href="https://developer.box.com/guides/authorization/platform-app-approval/"> as described here.
                     </a>
                     </li>
 
@@ -124,7 +124,7 @@ public class BoxAuthenticatorNodeFactory extends WebUINodeFactory<BoxAuthenticat
                     </li>
 
                     <li>Request approval of your app
-                    <a href="https://developer.box.com/guides/authorization/custom-app-approval/"> as described here.
+                    <a href="https://developer.box.com/guides/authorization/platform-app-approval/"> as described here.
                     </a>
                     </li>
 
