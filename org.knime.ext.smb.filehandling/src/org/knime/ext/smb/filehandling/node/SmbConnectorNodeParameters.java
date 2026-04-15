@@ -55,7 +55,6 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.impl.NodeParametersInputImpl;
 import org.knime.node.parameters.widget.file.customfilesystem.FSConnectionProvider;
 import org.knime.node.parameters.widget.file.FileSelectionWidget;
 import org.knime.node.parameters.widget.file.SingleFileSelectionMode;
@@ -398,7 +397,7 @@ final class SmbConnectorNodeParameters implements NodeParameters {
 
         private static CredentialsProvider getCredentialsProvider(
                 final NodeParametersInput input) {
-            return ((NodeParametersInputImpl) input).getCredentialsProvider().orElseThrow();
+            return input.getCredentialsProvider().orElseThrow();
         }
     }
 
