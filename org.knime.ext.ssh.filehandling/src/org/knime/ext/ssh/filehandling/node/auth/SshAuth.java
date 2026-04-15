@@ -49,7 +49,7 @@
 package org.knime.ext.ssh.filehandling.node.auth;
 
 import org.knime.core.node.context.NodeCreationConfiguration;
-import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentialsAuthProviderSettings;
+import org.knime.node.parameters.legacy.widget.credentials.LegacyCredentialsAuthProviderSettings;
 import org.knime.filehandling.core.connections.base.auth.AuthSettings;
 import org.knime.filehandling.core.connections.base.auth.AuthType;
 import org.knime.filehandling.core.connections.base.auth.StandardAuthTypes;

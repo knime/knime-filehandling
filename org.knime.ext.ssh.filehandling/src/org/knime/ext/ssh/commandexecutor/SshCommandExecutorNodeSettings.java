@@ -65,11 +65,10 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.util.Pair;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileReaderWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelection;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelectionWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.SingleFileSelectionMode;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.AfterAllOf;
+import org.knime.node.parameters.widget.file.FileReaderWidget;
+import org.knime.node.parameters.widget.file.FileSelection;
+import org.knime.node.parameters.widget.file.FileSelectionWidget;
+import org.knime.node.parameters.widget.file.SingleFileSelectionMode;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomCommandEncodingSelected.CommandEncodingRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomDangerousCharactersDefined.CustomForbiddenCharactersDefinedRef;
 import org.knime.ext.ssh.commandexecutor.SshCommandExecutorNodeSettings.IsCustomOutputEncodingSelected.OutputEncodingRef;
@@ -141,7 +140,8 @@ final class SshCommandExecutorNodeSettings implements NodeParameters {
 
     @Section(title = "Timeouts")
     @Advanced
-    @AfterAllOf(value = { @After(OutputSection.class), @After(SecuritySection.class) })
+    @After(OutputSection.class)
+    @After(SecuritySection.class)
     interface TimeoutsSection {
 
     }

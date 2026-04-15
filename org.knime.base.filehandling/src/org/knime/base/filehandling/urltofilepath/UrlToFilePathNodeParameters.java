@@ -51,7 +51,7 @@ import java.util.List;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.StringValue;
 import org.knime.core.data.uri.URIDataValue;
-import org.knime.core.webui.node.dialog.defaultdialog.util.updates.StateComputationFailureException;
+import org.knime.node.parameters.updates.StateComputationAbortException;
 import org.knime.node.parameters.NodeParameters;
 import org.knime.node.parameters.NodeParametersInput;
 import org.knime.node.parameters.Widget;
@@ -62,7 +62,7 @@ import org.knime.node.parameters.persistence.Persist;
 import org.knime.node.parameters.updates.ParameterReference;
 import org.knime.node.parameters.updates.ValueProvider;
 import org.knime.node.parameters.updates.ValueReference;
-import org.knime.node.parameters.updates.legacy.AutoGuessValueProvider;
+import org.knime.node.parameters.legacy.updates.AutoGuessValueProvider;
 import org.knime.node.parameters.widget.choices.ChoicesProvider;
 import org.knime.node.parameters.widget.choices.util.ColumnSelectionUtil;
 import org.knime.node.parameters.widget.choices.util.CompatibleColumnsProvider;
@@ -111,12 +111,12 @@ final class UrlToFilePathNodeParameters implements NodeParameters {
 
         @Override
         protected String autoGuessValue(final NodeParametersInput parametersInput)
-            throws StateComputationFailureException {
+            throws StateComputationAbortException {
 
             final var spec = parametersInput.getInTableSpec(0);
             // if input table is not available or default column name actually exists, abort update
             if (spec.isEmpty() || spec.get().containsName(UrlToFilePathNodeModel.DEF_COLNAME)) {
-                throw new StateComputationFailureException();
+                throw new StateComputationAbortException();
             }
             return guessColumnName(parametersInput);
         }

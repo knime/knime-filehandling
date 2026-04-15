@@ -60,15 +60,15 @@ import org.knime.core.data.blob.BinaryObjectDataValue;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelectionWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSystemOption;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.SingleFileSelectionMode;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.WithFileSystem;
-import org.knime.core.webui.node.dialog.defaultdialog.setting.singleselection.RowIDChoice;
-import org.knime.core.webui.node.dialog.defaultdialog.setting.singleselection.StringOrEnum;
-import org.knime.core.webui.node.dialog.defaultdialog.util.updates.StateComputationFailureException;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Modification;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Modification.WidgetGroupModifier;
+import org.knime.node.parameters.widget.file.FileSelectionWidget;
+import org.knime.node.parameters.widget.file.FileSystemOption;
+import org.knime.node.parameters.widget.file.SingleFileSelectionMode;
+import org.knime.node.parameters.widget.file.WithFileSystem;
+import org.knime.node.parameters.widget.choices.RowIDChoice;
+import org.knime.node.parameters.widget.choices.StringOrEnum;
+import org.knime.node.parameters.updates.StateComputationAbortException;
+import org.knime.node.parameters.modification.Modification;
+import org.knime.node.parameters.modification.Modification.WidgetGroupModifier;
 import org.knime.node.parameters.NodeParameters;
 import org.knime.node.parameters.NodeParametersInput;
 import org.knime.node.parameters.Widget;
@@ -79,8 +79,8 @@ import org.knime.node.parameters.migration.LoadDefaultsForAbsentFields;
 import org.knime.node.parameters.persistence.NodeParametersPersistor;
 import org.knime.node.parameters.persistence.Persist;
 import org.knime.node.parameters.persistence.Persistor;
-import org.knime.node.parameters.persistence.legacy.LegacyFileWriterWithOverwritePolicyOptions;
-import org.knime.node.parameters.persistence.legacy.LegacyFileWriterWithOverwritePolicyOptions.OverwritePolicy;
+import org.knime.node.parameters.legacy.widget.file.LegacyFileWriterWithOverwritePolicyOptions;
+import org.knime.node.parameters.legacy.widget.file.LegacyFileWriterWithOverwritePolicyOptions.OverwritePolicy;
 import org.knime.node.parameters.updates.Effect;
 import org.knime.node.parameters.updates.Effect.EffectType;
 import org.knime.node.parameters.updates.EffectPredicate;
@@ -88,7 +88,7 @@ import org.knime.node.parameters.updates.EffectPredicateProvider;
 import org.knime.node.parameters.updates.ParameterReference;
 import org.knime.node.parameters.updates.ValueProvider;
 import org.knime.node.parameters.updates.ValueReference;
-import org.knime.node.parameters.updates.legacy.AutoGuessValueProvider;
+import org.knime.node.parameters.legacy.updates.AutoGuessValueProvider;
 import org.knime.node.parameters.widget.choices.ChoicesProvider;
 import org.knime.node.parameters.widget.choices.ColumnChoicesProvider;
 import org.knime.node.parameters.widget.choices.Label;
@@ -339,7 +339,7 @@ class BinaryObjectsToFilesNodeParameters implements NodeParameters {
 
         @Override
         protected StringOrEnum<RowIDChoice> autoGuessValue(final NodeParametersInput parametersInput)
-            throws StateComputationFailureException {
+            throws StateComputationAbortException {
             var tableSpecs = parametersInput.getInPortSpecs();
             var tableSpec = (DataTableSpec)tableSpecs[tableSpecs.length - 1];
             if (tableSpec == null) {
