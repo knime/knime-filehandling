@@ -59,7 +59,7 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
-import org.knime.core.webui.node.impl.WebUINodeModel;
+import org.knime.node.parameters.legacy.nodeimpl.WebUINodeModel;
 import org.knime.ext.ftp.filehandling.fs.FtpFSConnection;
 import org.knime.ext.ftp.filehandling.fs.FtpFSConnectionConfig;
 import org.knime.ext.ftp.filehandling.fs.FtpFileSystem;

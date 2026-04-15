@@ -50,8 +50,8 @@ package org.knime.ext.ssh.commandexecutor;
 
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.port.flowvariable.FlowVariablePortObject;
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeFactory;
+import org.knime.node.parameters.legacy.nodeimpl.WebUINodeConfiguration;
+import org.knime.node.parameters.legacy.nodeimpl.WebUINodeFactory;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 
 /**

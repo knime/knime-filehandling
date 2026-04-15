@@ -50,8 +50,8 @@ package org.knime.ext.box.authenticator.node;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.setting.credentials.LegacyCredentials;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.validation.custom.CustomValidation;
+import org.knime.node.parameters.legacy.widget.credentials.LegacyCredentials;
+import org.knime.node.parameters.experimental.validation.CustomValidation;
 import org.knime.credentials.base.node.CredentialVariableMigration;
 import org.knime.credentials.base.node.CredentialsSettings;
 import org.knime.node.parameters.Widget;

@@ -54,7 +54,7 @@ import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
+import org.knime.node.parameters.legacy.nodeimpl.WebUINodeConfiguration;
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.credentials.base.CredentialRef;

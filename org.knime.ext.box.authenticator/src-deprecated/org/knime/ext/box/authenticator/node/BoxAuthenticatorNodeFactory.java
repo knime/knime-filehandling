@@ -48,8 +48,8 @@
  */
 package org.knime.ext.box.authenticator.node;
 
-import org.knime.core.webui.node.impl.WebUINodeConfiguration;
-import org.knime.core.webui.node.impl.WebUINodeFactory;
+import org.knime.node.parameters.legacy.nodeimpl.WebUINodeConfiguration;
+import org.knime.node.parameters.legacy.nodeimpl.WebUINodeFactory;
 import org.knime.credentials.base.CredentialPortObject;
 
 /**

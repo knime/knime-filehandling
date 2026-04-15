@@ -53,7 +53,7 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.FlowVariable;
 import org.knime.core.node.workflow.VariableType;
-import org.knime.core.webui.node.dialog.defaultdialog.util.updates.StateComputationFailureException;
+import org.knime.node.parameters.updates.StateComputationAbortException;
 import org.knime.node.parameters.NodeParameters;
 import org.knime.node.parameters.NodeParametersInput;
 import org.knime.node.parameters.Widget;
@@ -66,7 +66,7 @@ import org.knime.node.parameters.persistence.Persistor;
 import org.knime.node.parameters.updates.ParameterReference;
 import org.knime.node.parameters.updates.ValueProvider;
 import org.knime.node.parameters.updates.ValueReference;
-import org.knime.node.parameters.updates.legacy.AutoGuessValueProvider;
+import org.knime.node.parameters.legacy.updates.AutoGuessValueProvider;
 import org.knime.node.parameters.widget.choices.ChoicesProvider;
 import org.knime.node.parameters.widget.choices.FlowVariableChoicesProvider;
 
@@ -142,7 +142,7 @@ final class UrlToFilePathVariableNodeParameters implements NodeParameters {
 
         @Override
         protected String autoGuessValue(final NodeParametersInput parametersInput)
-            throws StateComputationFailureException {
+            throws StateComputationAbortException {
             return parametersInput.getAvailableInputFlowVariables(VariableType.StringType.INSTANCE).values().stream()
                 .findFirst().map(v -> v.getName()).orElse(null);
         }
