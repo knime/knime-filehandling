@@ -57,7 +57,6 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.impl.NodeParametersInputImpl;
 import org.knime.node.parameters.legacy.widget.credentials.LegacyCredentials;
 import org.knime.node.parameters.legacy.widget.credentials.LegacyCredentialsAuthProviderSettings;
 import org.knime.node.parameters.experimental.validation.CustomValidation;
@@ -334,7 +333,7 @@ final class HttpConnectorNodeParameters implements NodeParameters {
     }
 
     private static CredentialsProvider getCredentialsProvider(final NodeParametersInput input) {
-        return ((NodeParametersInputImpl) input).getCredentialsProvider().orElseThrow();
+        return input.getCredentialsProvider().orElseThrow();
     }
 
     /**

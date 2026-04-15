@@ -62,7 +62,6 @@ import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.util.proxy.ProxyProtocol;
 import org.knime.core.util.proxy.search.GlobalProxySearch;
-import org.knime.core.webui.node.dialog.defaultdialog.impl.NodeParametersInputImpl;
 import org.knime.node.parameters.widget.file.customfilesystem.FSConnectionProvider;
 import org.knime.node.parameters.widget.file.FileSelectionWidget;
 import org.knime.node.parameters.widget.file.SingleFileSelectionMode;
@@ -601,7 +600,7 @@ final class FtpConnectorNodeParameters implements NodeParameters {
         }
 
         private static CredentialsProvider getCredentialsProvider(final NodeParametersInput input) {
-            return ((NodeParametersInputImpl) input).getCredentialsProvider().orElseThrow();
+            return input.getCredentialsProvider().orElseThrow();
         }
 
         static final class PortMaxValidation extends MaxValidation {

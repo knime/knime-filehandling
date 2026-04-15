@@ -55,7 +55,6 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.impl.NodeParametersInputImpl;
 import org.knime.node.parameters.experimental.button.ButtonWidget;
 import org.knime.node.parameters.experimental.button.CancelableActionHandler;
 import org.knime.node.parameters.experimental.validation.WidgetHandlerException;
@@ -187,12 +186,12 @@ public class BoxAuthenticatorSettings implements NodeParameters {
                 throws WidgetHandlerException {
 
             try {
-                settings.validateOnExecute(((NodeParametersInputImpl) context).getCredentialsProvider().orElseThrow());
+                settings.validateOnExecute(context.getCredentialsProvider().orElseThrow());
             } catch (InvalidSettingsException e) { // NOSONAR
                 throw new WidgetHandlerException(e.getMessage());
             }
 
-            final var credentialsProvider = ((NodeParametersInputImpl) context).getCredentialsProvider().orElseThrow();
+            final var credentialsProvider = context.getCredentialsProvider().orElseThrow();
 
             try {
                 return CredentialCache
